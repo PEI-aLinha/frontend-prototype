@@ -7,6 +7,7 @@ import { Button, Chip, Drawer, HistoryList, Note, RiskLevelBadge, Tabs, useToast
 import { toHistory } from '../history'
 import { computeRiskLevel, describeRule } from './computeRiskLevel'
 import { RiskFields } from './RiskFields'
+import { RiskStatusActions } from './RiskStatusActions'
 import { emptyRisk, riskToValues, toRiskInput, validateRisk, type RiskErrors } from './riskFormModel'
 
 interface Props {
@@ -65,7 +66,7 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
       description={risk ? undefined : 'O nível é calculado pelo sistema a partir da probabilidade e do impacto.'}
       chip={risk ? <><RiskLevelBadge level={computeRiskLevel(risk.probability, risk.impact).level} /><Chip tone="neutral">{RISK_STATUS_LABEL[risk.status]}</Chip></> : undefined}
       footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form="risk-form" loading={save.isPending}>{risk ? 'Guardar alterações' : 'Registar risco'}</Button></>}>
-      {risk ? <Tabs tabs={[{ value: 'risco', label: 'Risco', content: form }, { value: 'historico', label: 'Histórico', content: <RiskHistory riskId={risk.id} users={users} /> }]} /> : form}
+      {risk ? <Tabs tabs={[{ value: 'risco', label: 'Risco', content: form }, { value: 'estado', label: 'Estado', content: <RiskStatusActions risk={risk} onDone={onClose} /> }, { value: 'historico', label: 'Histórico', content: <RiskHistory riskId={risk.id} users={users} /> }]} /> : form}
     </Drawer>
   )
 }

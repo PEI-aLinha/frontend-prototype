@@ -1,18 +1,19 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ArrowRight, Plus, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Download, Plus, ShieldCheck } from 'lucide-react'
 import type { Level, Risk } from '../../../api/contracts'
-import { useActions, useAssets, useRiskLinks, useRisks, useUsers } from '../../../api/queries'
+import { useActions, useAssets, useRiskLinks, useRisks, useToday, useUsers } from '../../../api/queries'
 import { RISK_MATRIX } from '../../../config/riskMatrix'
-import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, TREATMENT_LABEL } from '../../../config/labels'
+import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
 import {
-  Button, Card, Chip, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows,
+  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows,
   type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
 import { RiskEditDrawer, RiskReadDrawer } from './RiskDrawer'
+import { exportRiskRegister } from './exportRisks'
 
 const levelOf = (p: number, i: number): Level => computeRiskLevel(p, i).level
 
@@ -28,6 +29,9 @@ export function RisksPage() {
   const users = useUsers(org.id)
   const actions = useActions(org.id)
   const [raisedBy, setRaisedBy] = useState<string | null>(null)
+  const today = useToday()
+  const residual = params.get('matriz') === 'residual'
+  const showArchived = params.get('arquivados') === '1'
 
   const update = (next: Record<string, string | null>) => {
     const p = new URLSearchParams(params)
@@ -42,8 +46,11 @@ export function RisksPage() {
   const cellI = Number(params.get('i')) || null
   const cell = cellP && cellI ? { probability: cellP, impact: cellI } : null
 
-  const all = useMemo(() => [...(risks.data ?? [])].sort((a, b) => computeRiskLevel(b.probability, b.impact).score - computeRiskLevel(a.probability, a.impact).score), [risks.data])
-  const visible = cell ? all.filter((r) => r.probability === cell.probability && r.impact === cell.impact) : all
+  const everything = useMemo(() => risks.data ?? [], [risks.data])
+  const archived = everything.filter((r) => r.status === 'arquivado')
+  const all = useMemo(() => everything.filter((r) => showArchived || r.status !== 'arquivado').sort((a, b) => computeRiskLevel(b.probability, b.impact).score - computeRiskLevel(a.probability, a.impact).score), [everything, showArchived])
+  const pos = (r: Risk) => (residual && r.residualProbability && r.residualImpact ? { p: r.residualProbability, i: r.residualImpact } : { p: r.probability, i: r.impact })
+  const visible = cell ? all.filter((r) => pos(r).p === cell.probability && pos(r).i === cell.impact) : all
 
   const error = risks.error ?? assets.error ?? users.error ?? actions.error ?? links.error
   const ready = risks.data && assets.data && users.data && actions.data && links.data
@@ -58,7 +65,11 @@ export function RisksPage() {
     { id: 'threat', accessorFn: (r) => r.threat, header: 'Risco', cell: (c) => <div><p className="font-bold">{c.row.original.threat}</p><p className="text-[13px] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 330 } },
     { id: 'treatment', accessorFn: (r) => r.treatment ?? '', header: 'Tratamento', cell: (c) => (c.row.original.treatment ? <span className="font-semibold">{TREATMENT_LABEL[c.row.original.treatment]}</span> : <span className="text-muted">—</span>), meta: { width: 120 } },
     { id: 'actions', accessorFn: (r) => linkedActions(r).length, header: 'Ações ligadas', cell: (c) => { const n = linkedActions(c.row.original).length; return n ? <Chip>{n} {n === 1 ? 'ação' : 'ações'}</Chip> : <span className="text-[13px] text-muted">Nenhuma</span> }, meta: { width: 130 } },
-    { id: 'status', accessorFn: (r) => r.status, header: 'Estado', cell: (c) => <span className="text-[13px] text-ink-soft">{RISK_STATUS_LABEL[c.row.original.status]}</span>, meta: { width: 130 } },
+    { id: 'status', accessorFn: (r) => r.status, header: 'Estado', cell: (c) => {
+      const r = c.row.original
+      const late = r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado'
+      return <div><p className="text-[13px] text-ink-soft">{RISK_STATUS_LABEL[r.status]}</p>{r.reviewDate && <p className={late ? 'text-[12px] font-bold text-risk-high-ink' : 'text-[12px] text-muted'}>{late ? 'Revisão atrasada' : `Rever a ${shortDate(r.reviewDate)}`}</p>}</div>
+    }, meta: { width: 150 } },
     { id: 'owner', accessorFn: (r) => owner(r.ownerId)?.name ?? '', header: 'Responsável', cell: (c) => { const u = owner(c.row.original.ownerId); return u ? <Person initials={u.initials} name={u.name} /> : '—' } },
   ] : [
     { id: 'level', accessorFn: (r) => computeRiskLevel(r.probability, r.impact).score, header: 'Nível', cell: (c) => <RiskLevelBadge level={levelOf(c.row.original.probability, c.row.original.impact)} />, meta: { width: 110 } },
@@ -68,7 +79,7 @@ export function RisksPage() {
 
   const selected = all.find((r) => r.id === params.get('risco')) ?? null
   const isNew = params.get('novo') === '1'
-  const counts = (l: Level) => all.filter((r) => levelOf(r.probability, r.impact) === l).length
+  const counts = (l: Level) => all.filter((r) => levelOf(pos(r).p, pos(r).i) === l).length
 
   return (
     <>
@@ -76,7 +87,10 @@ export function RisksPage() {
         eyebrow={org.name}
         title={editable ? 'Registo de riscos' : 'Riscos'}
         subtitle={editable ? 'Segundo a ISO/IEC 27005. O nível é calculado: probabilidade × impacto.' : 'Os riscos que a consultora identificou e o que está a ser feito para os reduzir.'}
-        actions={can('create', 'risk') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
+        actions={<>
+          {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! })}>Exportar registo</Button>}
+          {can('create', 'risk') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
+        </>}
       />
 
       {raisedBy && (
@@ -111,11 +125,16 @@ export function RisksPage() {
                 <Eyebrow><Term k="matriz">Matriz de risco</Term> · {RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</Eyebrow>
                 {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
               </div>
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                <Segmented ariaLabel="Mostrar risco" value={residual ? 'residual' : 'inerente'} onChange={(v) => update({ matriz: v === 'residual' ? 'residual' : null, p: null, i: null })}
+                  options={[{ value: 'inerente', label: 'Risco atual' }, { value: 'residual', label: 'Depois das ações' }]} />
+                <span className="text-[12px] text-muted">{residual ? <>Mostra o <Term k="riscoResidual">risco residual</Term> previsto. Riscos sem previsão ficam na posição atual.</> : 'Mostra o risco hoje, antes das ações.'}</span>
+              </div>
               <p className="mb-3 text-[13px] text-ink-soft">
                 Cada quadrado conta os riscos com essa <Term k="probabilidade">probabilidade</Term> (linhas) e esse <Term k="impacto">impacto</Term> (colunas). Quanto mais acima e à direita, mais grave. Clique num quadrado para filtrar a tabela.
               </p>
               <RiskMatrix probability={RISK_MATRIX.probability} impact={RISK_MATRIX.impact} levelOf={levelOf}
-                count={(p, i) => all.filter((r) => r.probability === p && r.impact === i).length}
+                count={(p, i) => all.filter((r) => pos(r).p === p && pos(r).i === i).length}
                 selected={cell} onSelect={(c) => update({ p: c ? String(c.probability) : null, i: c ? String(c.impact) : null })} compact />
             </Card>
             <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
@@ -142,6 +161,7 @@ export function RisksPage() {
                   <p className="font-bold">{editable ? r.threat : r.plainLanguage ?? r.threat}</p>
                   <p className="text-[13px] text-ink-soft">{assetName(r.assetId)}</p>
                   <p className="mt-1 text-[12px] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} ações</p>
+                  {editable && r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado' && <p className="text-[12px] font-bold text-risk-high-ink">Revisão atrasada</p>}
                 </div>
                 <RiskLevelBadge level={levelOf(r.probability, r.impact)} />
               </div>
@@ -151,6 +171,12 @@ export function RisksPage() {
               : <p className="px-5 py-8 text-center text-[14px] text-ink-soft">Nenhum risco nesta célula da matriz.</p>}
           />
           {cell && <p className="-mt-4 text-[13px] text-ink-soft">A mostrar {visible.length} de {all.length} riscos (filtro da matriz).</p>}
+          {editable && archived.length > 0 && (
+            <label className="-mt-3 flex items-center gap-2 text-[13px] text-ink-soft">
+              <input type="checkbox" className="size-4 accent-[var(--color-brand)]" checked={showArchived} onChange={(e) => update({ arquivados: e.target.checked ? '1' : null })} />
+              Mostrar riscos arquivados ({archived.length})
+            </label>
+          )}
 
           {editable ? (
             <>

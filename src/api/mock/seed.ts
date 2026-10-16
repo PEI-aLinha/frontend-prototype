@@ -25,7 +25,7 @@ export interface DemoState {
   today: string
 }
 
-export const STATE_VERSION = 3
+export const STATE_VERSION = 4
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -129,6 +129,10 @@ const OTHER_RISKS: Risk[] = [
   }),
 ]
 
+const PHISHING: Risk = risk('rsk-phishing', 'Phishing aos trabalhadores', 'Os trabalhadores nunca tiveram formação e recebem emails de faturas falsas. Um clique pode dar acesso ao email e ao ERP.', null, 2, 2, 16, {
+  plainLanguage: 'Um email falso pode enganar um trabalhador e abrir a porta a um ataque.',
+})
+
 const RANSOMWARE: Risk = risk('rsk-ransomware', 'Ransomware no servidor de produção', 'Um ataque de ransomware cifra o servidor de produção e as cópias acessíveis na rede. A produção para até repor os sistemas.', 'ast-servidor', 2, 3, 16, {
   treatment: 'mitigar', status: 'em_tratamento', residualProbability: 1, residualImpact: 3, createdAt: at(16, '15:40'), updatedAt: at(16, '15:40'),
   plainLanguage: 'Um vírus pode bloquear o servidor e parar a produção durante dias.',
@@ -196,26 +200,29 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
     entries.push(...ASSETS_PEDRO.map((a) => audit(15, a.createdAt.slice(11, 16), PEDRO, 'create', 'asset', a.id, `Registou o ativo "${a.name}"`, { criticality: a.criticality })))
     entries.push(audit(15, '09:42', PEDRO, 'complete', 'task', ASSET_TASK_ID, 'Concluiu a tarefa de registo de ativos (4 registados)'))
     entries.push(audit(14, '10:20', null, 'propose', 'roadmap', ORG_ID, 'Roadmap proposto pela IA a partir das lacunas da avaliação (por validar)', null, 'ai'))
-    risks = OTHER_RISKS
-    entries.push(...OTHER_RISKS.map((r) => audit(16, '15:00', MARTA, 'create', 'risk', r.id, `Registou o risco "${r.threat}"`)))
+    risks = [...OTHER_RISKS, PHISHING].map((r) => ({ ...r, reviewDate: '2027-04-16' }))
+    entries.push(...[...OTHER_RISKS, PHISHING].map((r) => audit(16, '15:00', MARTA, 'create', 'risk', r.id, `Registou o risco "${r.threat}"`)))
     comments.push({ id: 'cmt-plc', assetId: 'ast-plc', authorId: MARTA, body: 'Bom registo. Confirme se os PLC têm acesso remoto do fornecedor — isso muda a análise de riscos.', createdAt: at(16, '14:30') })
     entries.push(audit(16, '14:30', MARTA, 'comment', 'comment', 'ast-plc', 'Comentou o ativo "PLC das linhas de montagem"'))
   }
 
   if (snapshot === 'c3') {
-    risks = [
+    const c3Risks: Risk[] = [
       RANSOMWARE,
       { ...OTHER_RISKS[0], treatment: 'mitigar', status: 'em_tratamento' },
       { ...OTHER_RISKS[1], treatment: 'mitigar', status: 'em_tratamento' },
       { ...OTHER_RISKS[2], treatment: 'mitigar', status: 'em_tratamento' },
       { ...OTHER_RISKS[3], treatment: 'aceitar', status: 'aceite', acceptanceJustification: 'Risco baixo. Revemos as permissões das pastas de RH na revisão trimestral.' },
+      { ...PHISHING, treatment: 'mitigar', status: 'em_tratamento' },
     ]
+    risks = c3Risks.map((r) => ({ ...r, reviewDate: r.id === 'rsk-email' ? '2026-10-10' : '2027-04-16' }))
     links = [
       { id: 'lnk-1', riskId: 'rsk-ransomware', remediationActionId: 'act-mfa' },
       { id: 'lnk-2', riskId: 'rsk-ransomware', remediationActionId: 'act-teste-backups' },
       { id: 'lnk-3', riskId: 'rsk-backups', remediationActionId: 'act-teste-backups' },
       { id: 'lnk-4', riskId: 'rsk-erp-mfa', remediationActionId: 'act-mfa' },
       { id: 'lnk-5', riskId: 'rsk-ot', remediationActionId: 'act-segmentar-ot' },
+      { id: 'lnk-6', riskId: 'rsk-phishing', remediationActionId: 'act-formacao' },
     ]
     roadmap.validated = true
     roadmap.validatedAt = at(16, '17:05')

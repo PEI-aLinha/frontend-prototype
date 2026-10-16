@@ -34,6 +34,7 @@ export const RISK_STATUS_LABEL: Record<RiskStatus, string> = {
   em_tratamento: 'Em tratamento',
   tratado: 'Tratado',
   aceite: 'Aceite',
+  arquivado: 'Arquivado',
 }
 
 export const ACTION_STATUS_LABEL: Record<ActionStatus, string> = {

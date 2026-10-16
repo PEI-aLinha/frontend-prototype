@@ -1,7 +1,7 @@
 // Hooks TanStack Query por cima dos contratos. Os componentes usam só isto, nunca o mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { AssetBulkChange, AssetInput, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
+import type { AssetBulkChange, AssetInput, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
 
 export const keys = {
   org: (slug: string) => ['org', slug] as const,
@@ -136,4 +136,9 @@ export function useBulkUpdateAssets(org: Id) {
 export function useBulkDeleteAssets(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: (ids: Id[]) => api.assets.bulkDeleteAssets(org, ids), onSuccess: () => invalidate('assets', 'audit', 'risks') })
+}
+
+export function useSetRiskStatus(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: ({ id, change }: { id: Id; change: RiskStatusChange }) => api.assets.setRiskStatus(org, id, change), onSuccess: () => invalidate('risks', 'audit') })
 }

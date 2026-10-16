@@ -318,7 +318,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           const { actionIds, ...fields } = input
           const stamp = now()
           saved = before
-            ? { ...before, ...fields, status: riskStatus(input), updatedAt: stamp }
+            ? { ...before, ...fields, status: before.status === 'arquivado' || before.status === 'tratado' ? before.status : riskStatus(input), updatedAt: stamp }
             : { ...fields, id: newId('rsk'), organizationId: org, status: riskStatus(input), createdBy: me.id, createdAt: stamp, updatedAt: stamp }
           const risks = before ? s.risks.map((x) => (x.id === id ? saved : x)) : [...s.risks, saved]
 
@@ -336,6 +336,23 @@ export function createMockApi(getActor: ActorProvider): Api {
             entries.push(auditEntry({ organizationId: org, userId: me.id, action: 'link', entityType: 'risk_action', entityId: saved.id, summary: names.length ? `Ligou o risco a ${names.length} ${names.length === 1 ? 'ação' : 'ações'} do roadmap: ${names.join('; ')}` : 'Removeu as ligações a ações do roadmap', before: { actionIds: previous }, after: { actionIds } }))
           }
           return { ...s, risks, links, audit: [...s.audit, ...entries] }
+        })
+        return saved
+      }),
+
+      setRiskStatus: (org, id, change) => simulate(() => {
+        if (actor().role !== 'consultor') deny()
+        let saved!: Risk
+        write((s, me) => {
+          const r = s.risks.find((x) => x.id === id && x.organizationId === org)
+          if (!r) throw new ApiError('Risco não encontrado', 404)
+          if (change.status === 'tratado' && !r.treatment) throw new ApiError('Defina primeiro o tratamento do risco.', 409)
+          if (change.status === 'arquivado' && change.reason.trim().length < 5) throw new ApiError('Explique porque arquiva o risco.', 422)
+          const status: Risk['status'] = change.status === 'reaberto' ? (r.treatment === 'aceitar' ? 'aceite' : r.treatment ? 'em_tratamento' : 'por_tratar') : change.status
+          saved = { ...r, status, archivedReason: change.status === 'arquivado' ? change.reason.trim() : undefined, updatedAt: now() }
+          const verb = { tratado: 'Marcou como tratado', arquivado: 'Arquivou', reaberto: 'Reabriu' }[change.status]
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: change.status, entityType: 'risk', entityId: id, summary: `${verb} o risco "${r.threat}"${change.status === 'arquivado' ? `: ${change.reason.trim()}` : ''}`, before: { status: r.status }, after: { status } })
+          return { ...s, risks: s.risks.map((x) => (x.id === id ? saved : x)), audit: [...s.audit, entry] }
         })
         return saved
       }),

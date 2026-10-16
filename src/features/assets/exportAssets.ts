@@ -14,8 +14,12 @@ function csvCell(v: string): string {
   return `"${safe.replace(/"/g, '""')}"`
 }
 
+export function toCsvWith(headers: string[], rows: string[][]): string {
+  return [headers, ...rows].map((r) => r.map(csvCell).join(';')).join('\r\n')
+}
+
 export function toCsv(rows: string[][]): string {
-  return [HEADERS, ...rows].map((r) => r.map(csvCell).join(';')).join('\r\n')
+  return toCsvWith(HEADERS, rows)
 }
 
 export function downloadCsv(filename: string, csv: string): void {

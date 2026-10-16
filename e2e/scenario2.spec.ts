@@ -50,7 +50,7 @@ test('Cenário 2 — Marta regista o risco de ransomware, liga ações e o roadm
 
   // 5. Matriz: clicar na célula filtra a tabela
   await page.getByRole('button', { name: /Probabilidade Média, impacto Alto/ }).click()
-  await expect(page.getByText('A mostrar 1 de 5 riscos (filtro da matriz).')).toBeVisible()
+  await expect(page.getByText('A mostrar 1 de 6 riscos (filtro da matriz).')).toBeVisible()
   await shot(page, 'c2-06-matriz')
 
   // Efeito no roadmap

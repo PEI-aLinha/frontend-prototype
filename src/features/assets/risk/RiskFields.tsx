@@ -7,7 +7,7 @@ import { RoadmapActionPicker } from '../../assessment/public'
 import { Field, OptionGroup, RiskLevelBadge, Segmented, Select, Term, TextArea, TextInput, cn } from '../../../ui'
 import type { GlossaryKey } from '../../../config/glossary'
 import { computeRiskLevel, describeRule } from './computeRiskLevel'
-import { NO_ASSET, SUGGESTED_ACTIONS, type RiskErrors, type RiskFormValues } from './riskFormModel'
+import { NO_ASSET, REVIEW_OPTIONS, SUGGESTED_ACTIONS, type RiskErrors, type RiskFormValues } from './riskFormModel'
 
 interface Props {
   values: RiskFormValues
@@ -104,6 +104,10 @@ export function RiskFields({ values: v, onChange, errors, assets, users, actions
           </>
         )}
       </div>
+
+      <Field label="Próxima revisão" hint="A ISO/IEC 27005 pede que cada risco seja revisto periodicamente. Recebe um lembrete nessa data.">
+        {(p) => <Select id={p.id} describedBy={p.describedBy} value={v.reviewDate} onChange={(x) => set('reviewDate', x)} options={REVIEW_OPTIONS} />}
+      </Field>
 
       <Field label="O que isto significa para a empresa" optional hint="Uma frase simples que o Rui vê depois de validar o roadmap.">
         {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} rows={2} value={v.plainLanguage} onChange={(e) => set('plainLanguage', e.target.value)} placeholder="Ex.: Um vírus pode bloquear o servidor e parar a produção durante dias." />}

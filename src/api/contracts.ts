@@ -111,7 +111,7 @@ export interface TaskInput {
 }
 
 export type Treatment = 'mitigar' | 'aceitar' | 'evitar' | 'partilhar'
-export type RiskStatus = 'por_tratar' | 'em_tratamento' | 'tratado' | 'aceite'
+export type RiskStatus = 'por_tratar' | 'em_tratamento' | 'tratado' | 'aceite' | 'arquivado'
 
 export interface Risk {
   id: Id
@@ -129,6 +129,10 @@ export interface Risk {
   residualImpact?: number
   status: RiskStatus
   plainLanguage?: string
+  /** Próxima revisão do risco (a ISO/IEC 27005 pede revisão periódica). */
+  reviewDate?: IsoDate
+  /** Motivo, quando arquivado (o risco deixou de existir ou foi duplicado). */
+  archivedReason?: string
   createdBy: Id
   createdAt: IsoDate
   updatedAt: IsoDate
@@ -146,8 +150,11 @@ export interface RiskInput {
   residualProbability?: number
   residualImpact?: number
   plainLanguage?: string
+  reviewDate?: IsoDate
   actionIds: Id[]
 }
+
+export type RiskStatusChange = { status: 'tratado' } | { status: 'arquivado'; reason: string } | { status: 'reaberto' }
 
 /** assets.risk_action — liga um risco a uma ação do roadmap só por ID (sem FK entre plugins). */
 export interface RiskActionLink {
@@ -189,6 +196,7 @@ export interface AssetsApi {
   listRisks(org: Id): Promise<Risk[]>
   getRisk(org: Id, id: Id): Promise<Risk>
   saveRisk(org: Id, input: RiskInput, id?: Id): Promise<Risk>
+  setRiskStatus(org: Id, id: Id, change: RiskStatusChange): Promise<Risk>
   listRiskLinks(org: Id): Promise<RiskActionLink[]>
   updateTask(org: Id, id: Id, change: { dueDate?: IsoDate; status?: 'cancelada' }): Promise<Task>
   remindTask(org: Id, id: Id): Promise<void>

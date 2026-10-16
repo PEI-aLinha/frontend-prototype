@@ -13,8 +13,15 @@ export interface RiskFormValues {
   hasResidual: boolean
   residualProbability: number | null
   residualImpact: number | null
+  reviewDate: string
   actionIds: Id[]
 }
+
+export const REVIEW_OPTIONS = [
+  { value: '2027-01-16', label: 'Daqui a 3 meses (16 jan. 2027)' },
+  { value: '2027-04-16', label: 'Daqui a 6 meses (16 abr. 2027)' },
+  { value: '2027-10-16', label: 'Daqui a 1 ano (16 out. 2027)' },
+]
 
 export type RiskErrors = Partial<Record<'threat' | 'probability' | 'impact' | 'treatment' | 'actionIds' | 'acceptanceJustification' | 'residual', string>>
 
@@ -23,7 +30,7 @@ export const NO_ASSET = 'nenhum'
 export function emptyRisk(assetId?: string | null): RiskFormValues {
   return {
     assetId: assetId ?? NO_ASSET, threat: '', description: '', ownerId: 'u-rui', probability: null, impact: null, treatment: null,
-    acceptanceJustification: '', plainLanguage: '', hasResidual: false, residualProbability: null, residualImpact: null, actionIds: [],
+    acceptanceJustification: '', plainLanguage: '', hasResidual: false, residualProbability: null, residualImpact: null, reviewDate: '2027-04-16', actionIds: [],
   }
 }
 
@@ -31,7 +38,7 @@ export function riskToValues(r: Risk, actionIds: Id[]): RiskFormValues {
   return {
     assetId: r.assetId ?? NO_ASSET, threat: r.threat, description: r.description, ownerId: r.ownerId ?? '', probability: r.probability, impact: r.impact,
     treatment: r.treatment, acceptanceJustification: r.acceptanceJustification ?? '', plainLanguage: r.plainLanguage ?? '',
-    hasResidual: r.residualProbability !== undefined, residualProbability: r.residualProbability ?? null, residualImpact: r.residualImpact ?? null, actionIds,
+    hasResidual: r.residualProbability !== undefined, residualProbability: r.residualProbability ?? null, residualImpact: r.residualImpact ?? null, reviewDate: r.reviewDate ?? '2027-04-16', actionIds,
   }
 }
 
@@ -60,6 +67,7 @@ export function toRiskInput(v: RiskFormValues): RiskInput {
     plainLanguage: v.plainLanguage.trim() || undefined,
     residualProbability: v.hasResidual ? v.residualProbability ?? undefined : undefined,
     residualImpact: v.hasResidual ? v.residualImpact ?? undefined : undefined,
+    reviewDate: v.reviewDate,
     actionIds: v.treatment === 'mitigar' ? v.actionIds : [],
   }
 }
