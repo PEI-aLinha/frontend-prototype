@@ -83,7 +83,7 @@ const QUESTION_TASK: Task = {
 
 const ASSET_TASK: Task = {
   id: ASSET_TASK_ID, organizationId: ORG_ID, kind: 'ativos',
-  title: 'Registar servidores, rede e sistemas de produção', context: 'Inventário de ativos',
+  title: 'Registar servidores, rede e sistemas de produção', scope: 'Servidores, rede e sistemas de produção', context: 'Inventário de ativos',
   assigneeId: PEDRO, assignedBy: RUI, dueDate: '2026-10-15', status: 'pendente', expectedCount: 4, createdAt: at(13, '11:20'),
 }
 

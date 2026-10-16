@@ -64,3 +64,4 @@ graphify-out
 test-results/
 playwright-report/
 .shot.mjs
+e2e/__screenshots__/

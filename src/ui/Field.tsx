@@ -68,7 +68,7 @@ export function Select({ id, value, onChange, options, placeholder = 'Escolherâ€
         aria-label={ariaLabel}
         aria-describedby={describedBy}
         aria-invalid={invalid || undefined}
-        className={cn(controlClass(invalid), 'flex items-center justify-between gap-2 text-left data-[placeholder]:text-muted', size === 'sm' && '!py-2 !px-3 text-[13px] font-semibold')}
+        className={cn(controlClass(invalid, size), 'flex items-center justify-between gap-2 text-left data-[placeholder]:text-muted [&>span]:truncate')}
       >
         <RSelect.Value placeholder={placeholder} />
         <RSelect.Icon>

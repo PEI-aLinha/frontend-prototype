@@ -1,0 +1,68 @@
+import { Link } from 'react-router'
+import { useAssets, useRisks, useRoadmapStatus, useServices, useTasks } from '../../api/queries'
+import { dateTime, RISK_LEVEL_LABEL } from '../../config/labels'
+import { useTenant } from '../../core/tenant'
+import { useCan } from '../../core/useCan'
+import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
+import { Button, Eyebrow, HighlightCard, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
+import type { Level } from '../../api/contracts'
+
+/** Início do Responsável designado (06 / 14), com o cartão "Riscos" depois da validação (cenário 3). */
+export function HomePage() {
+  const org = useTenant()
+  const can = useCan()
+  const assets = useAssets(org.id)
+  const services = useServices(org.id)
+  const tasks = useTasks(org.id)
+  const roadmap = useRoadmapStatus(org.id)
+  const seeRisks = can('view', 'risk')
+  const risks = useRisks(org.id, seeRisks)
+
+  const assetTask = tasks.data?.find((t) => t.kind === 'ativos')
+  const inventoryDone = assetTask?.status === 'concluida'
+  const validated = roadmap.data?.validated
+  const submitted = !!roadmap.data?.assessmentCompletedAt
+
+  const levels = (risks.data ?? []).map((r) => ({ level: computeRiskLevel(r.probability, r.impact).level, status: r.status }))
+  const top: Level | null = levels.some((l) => l.level === 'alto') ? 'alto' : levels.some((l) => l.level === 'medio') ? 'medio' : levels.length ? 'baixo' : null
+  const topCount = levels.filter((l) => l.level === top).length
+  const topTreating = levels.filter((l) => l.level === top).every((l) => l.status === 'em_tratamento' || l.status === 'aceite')
+
+  const base = `/org/${org.slug}`
+  const subtitle = validated ? 'A Marta Ferreira validou os resultados e o roadmap.' : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : 'O questionário fica guardado. Pode continuar quando quiser.'
+
+  return (
+    <>
+      <header className="flex flex-col gap-2">
+        <Eyebrow className="text-[12px]">{org.name}</Eyebrow>
+        <h1 className="text-[30px] font-extrabold title-tight">Olá, Rui</h1>
+        <p className="text-[16px] text-ink-soft">{subtitle}</p>
+      </header>
+
+      <HighlightCard
+        eyebrow="Avaliação de maturidade · NIS2 + RGPD"
+        title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : '8 de 18 perguntas respondidas'}
+        action={<Button variant="inverse" disabled title="Fora deste protótipo">{validated ? 'Ver roadmap →' : 'Continuar avaliação →'}</Button>}
+      >
+        <ProgressBar value={submitted ? 18 : 8} max={18} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
+        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} pela Marta Ferreira` : submitted ? 'Submetida qua., 14 out. às 10:12 · a Marta Ferreira está a rever' : '1 pergunta atribuída a Pedro Almeida · guardado às 17:44'}
+      </HighlightCard>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {seeRisks && risks.data && top ? (
+          <Link to={`${base}/riscos`} className="flex flex-col rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]">
+            <div className="flex items-start justify-between"><Eyebrow>Riscos</Eyebrow><RiskLevelBadge level={top} /></div>
+            <p className="mt-1.5 text-[18px] font-extrabold">{topCount} {topCount === 1 ? 'risco' : 'riscos'} {RISK_LEVEL_LABEL[top].toLowerCase()}{topCount === 1 ? '' : 's'} · {topTreating ? 'em tratamento' : 'por tratar'}</p>
+            <p className="mt-1.5 text-[13px] text-ink-soft">{levels.length} riscos registados pela consultora</p>
+          </Link>
+        ) : (
+          <StatCard label="Enquadramento" value="Entidade importante" caption="Sugestão indicativa · aguarda o CNCS" />
+        )}
+        <Link to={`${base}/ativos`} className="contents">
+          <StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? 2} serviços críticos · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />
+        </Link>
+        <StatCard label="Consultora" value="Marta Ferreira" caption={validated ? 'Acompanha as ações de risco alto' : 'Valida os resultados quando terminar'} />
+      </div>
+    </>
+  )
+}

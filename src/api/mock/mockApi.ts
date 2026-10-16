@@ -179,7 +179,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           const assignee = user(s, input.assigneeId)
           const existing = s.tasks.find((t) => t.kind === 'ativos' && t.assigneeId === assignee.id && t.status === 'pendente')
           task = {
-            id: existing?.id ?? 'task-ativos', organizationId: org, kind: 'ativos', title: input.title, context: 'Inventário de ativos',
+            id: existing?.id ?? 'task-ativos', organizationId: org, kind: 'ativos', title: `Registar ${input.title.charAt(0).toLowerCase()}${input.title.slice(1)}`, scope: input.title, context: 'Inventário de ativos',
             assigneeId: assignee.id, assignedBy: me.id, dueDate: input.dueDate, status: 'pendente', expectedCount: 4, createdAt: now(),
           }
           const tasks = [...s.tasks.filter((t) => t.id !== task.id), task]

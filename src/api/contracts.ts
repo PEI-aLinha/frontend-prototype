@@ -87,6 +87,8 @@ export interface Task {
   organizationId: Id
   kind: 'ativos' | 'pergunta'
   title: string
+  /** O que registar (ex.: "Servidores, rede e sistemas de produção"). */
+  scope?: string
   context: string
   assigneeId: Id
   assignedBy: Id
