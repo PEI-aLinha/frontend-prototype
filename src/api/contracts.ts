@@ -80,7 +80,7 @@ export interface Asset {
 
 export type AssetInput = Pick<Asset, 'name' | 'type' | 'criticalServiceId' | 'ownerId' | 'criticality' | 'location' | 'taskId'>
 
-export type TaskStatus = 'pendente' | 'concluida'
+export type TaskStatus = 'pendente' | 'concluida' | 'cancelada'
 
 export interface Task {
   id: Id
@@ -181,6 +181,8 @@ export interface AssetsApi {
   getRisk(org: Id, id: Id): Promise<Risk>
   saveRisk(org: Id, input: RiskInput, id?: Id): Promise<Risk>
   listRiskLinks(org: Id): Promise<RiskActionLink[]>
+  updateTask(org: Id, id: Id, change: { dueDate?: IsoDate; status?: 'cancelada' }): Promise<Task>
+  remindTask(org: Id, id: Id): Promise<void>
   listComments(org: Id, assetId: Id): Promise<AssetComment[]>
   addComment(org: Id, assetId: Id, body: string): Promise<AssetComment>
 }
@@ -247,6 +249,29 @@ export interface AuditApi {
 export interface DirectoryApi {
   getOrganization(slug: string): Promise<Organization>
   listUsers(org: Id): Promise<User[]>
+  /** "Hoje" da demonstração (cada cenário passa-se num dia). */
+  getToday(): Promise<IsoDate>
+}
+
+export type NotificationKind = 'tarefa' | 'tarefa_concluida' | 'lembrete' | 'prazo' | 'comentario' | 'roadmap' | 'avaliacao' | 'integracao' | 'risco'
+
+export interface AppNotification {
+  id: Id
+  organizationId: Id
+  userId: Id
+  kind: NotificationKind
+  title: string
+  body: string
+  link: string | null
+  channels: Array<'app' | 'email'>
+  read: boolean
+  createdAt: IsoDate
+}
+
+export interface NotificationsApi {
+  list(): Promise<AppNotification[]>
+  markRead(id: Id): Promise<void>
+  markAllRead(): Promise<void>
 }
 
 export interface Api {
@@ -254,6 +279,7 @@ export interface Api {
   assessment: AssessmentApi
   audit: AuditApi
   directory: DirectoryApi
+  notifications: NotificationsApi
 }
 
 export class ApiError extends Error {

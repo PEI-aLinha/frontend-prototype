@@ -10,6 +10,7 @@ import { RegisterAssetsPage } from '../features/assets/RegisterAssetsPage'
 import { HomePage } from '../features/home/HomePage'
 import { TasksPage } from '../features/tasks/TasksPage'
 import { AnalystOnly } from './AnalystOnly'
+import { TeamPage } from '../features/team/TeamPage'
 import { ConsultantRoadmap } from './ConsultantRoadmap'
 import { RisksPage } from '../features/assets/risk/RisksPage'
 import { PortfolioPage } from '../features/portfolio/PortfolioPage'
@@ -34,7 +35,7 @@ export const router = createBrowserRouter([
           { path: 'roadmap', element: <Guard resource="roadmap"><ConsultantRoadmap /></Guard> },
           { path: 'riscos', element: <Guard resource="risk" reason="O registo de riscos fica visível depois de a consultora validar o roadmap."><RisksPage /></Guard> },
           { path: 'avaliacao', element: <OutOfScope eyebrow="Componentes Águeda, Lda." title="Avaliação" /> },
-          { path: 'equipa', element: <OutOfScope eyebrow="Componentes Águeda, Lda." title="Equipa" /> },
+          { path: 'equipa', element: <Guard resource="asset_task" action="assign"><TeamPage /></Guard> },
         ],
       },
       {

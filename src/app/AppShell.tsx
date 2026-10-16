@@ -21,11 +21,13 @@ interface AppShellProps {
   user: { initials: string; name: string; subtitle: string }
   /** Entradas da tab bar no mobile (por omissão, todas). */
   tabs?: NavItem[]
+  /** Ações globais (ex.: notificações), no topo da navegação e do cabeçalho mobile. */
+  tools?: ReactNode
   children: ReactNode
 }
 
 /** Navegação lateral de 232 px no desktop; topo + tab bar no mobile (390). */
-export function AppShell({ sections, user, tabs, children }: AppShellProps) {
+export function AppShell({ sections, user, tabs, tools, children }: AppShellProps) {
   const tabItems = tabs ?? sections.flatMap((s) => s.items)
   return (
     <div className="min-h-dvh bg-paper md:flex">
@@ -34,7 +36,7 @@ export function AppShell({ sections, user, tabs, children }: AppShellProps) {
       </a>
 
       <aside className="sticky top-0 hidden h-dvh w-[232px] shrink-0 flex-col border-r border-line-soft bg-paper-soft px-5 pb-7 pt-8 md:flex">
-        <div className="pl-1"><Logo /></div>
+        <div className="flex items-center justify-between pl-1"><Logo />{tools}</div>
         <nav aria-label="Navegação principal" className="mt-9 flex flex-1 flex-col gap-5 overflow-y-auto">
           {sections.map((s, i) => (
             <div key={i} className="flex flex-col gap-1">
@@ -68,7 +70,7 @@ export function AppShell({ sections, user, tabs, children }: AppShellProps) {
 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line-soft bg-paper/95 px-5 backdrop-blur md:hidden">
         <Logo className="!text-[24px]" />
-        <Avatar initials={user.initials} size={28} label={user.name} />
+        <div className="flex items-center gap-1">{tools}<Avatar initials={user.initials} size={28} label={user.name} /></div>
       </header>
 
       <main id="conteudo" className="min-w-0 flex-1 px-14 pb-16 pt-11 max-lg:px-8 max-md:px-5 max-md:pb-28 max-md:pt-6">

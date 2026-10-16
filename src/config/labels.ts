@@ -82,3 +82,14 @@ export function dateTime(iso: string): string {
   const mm = String(d.getMinutes()).padStart(2, '0')
   return `${d.getDate()} ${MONTHS[d.getMonth()]} · ${hh}:${mm}`
 }
+
+export type DueTone = 'late' | 'soon' | 'ok'
+
+/** Estado do prazo face ao "hoje" da demonstração. */
+export function dueStatus(due: string, today: string): { label: string; tone: DueTone } {
+  const days = Math.round((parse(due).getTime() - parse(today).getTime()) / 86_400_000)
+  if (days < 0) return { label: `Atrasada ${-days} ${days === -1 ? 'dia' : 'dias'}`, tone: 'late' }
+  if (days === 0) return { label: 'Termina hoje', tone: 'soon' }
+  if (days === 1) return { label: 'Termina amanhã', tone: 'soon' }
+  return { label: `Faltam ${days} dias`, tone: 'ok' }
+}

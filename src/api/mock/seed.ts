@@ -1,6 +1,6 @@
 // Dados de demonstração (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Datas em outubro de 2026.
 import type {
-  Asset, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
+  AppNotification, Asset, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
   Risk, RiskActionLink, RoadmapStatus, Task, User,
 } from '../contracts'
 
@@ -21,9 +21,11 @@ export interface DemoState {
   roadmap: Record<string, RoadmapStatus>
   portfolio: PortfolioClient[]
   audit: AuditEntry[]
+  notifications: AppNotification[]
+  today: string
 }
 
-export const STATE_VERSION = 1
+export const STATE_VERSION = 2
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -239,7 +241,30 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
     roadmap: { [ORG_ID]: roadmap },
     portfolio: portfolio(snapshot),
     audit: entries,
+    notifications: seedNotifications(snapshot),
+    today: snapshot === 'c1' ? '2026-10-13' : '2026-10-16',
   }
+}
+
+function seedNotifications(snapshot: SnapshotId): AppNotification[] {
+  const n = (id: string, userId: string, kind: AppNotification['kind'], title: string, body: string, link: string | null, day: number, time: string, read = false): AppNotification =>
+    ({ id, organizationId: ORG_ID, userId, kind, title, body, link, channels: ['app', 'email'], read, createdAt: at(day, time) })
+  const base = [
+    n('ntf-welcome', RUI, 'avaliacao', 'A Marta Ferreira é a sua consultora', 'Ela valida os resultados, o roadmap e os riscos antes de os ver.', '/org/componentes-agueda/inicio', 9, '09:30', true),
+    n('ntf-q-done', RUI, 'tarefa_concluida', 'O Pedro respondeu à pergunta técnica', 'Cópias de segurança: "Sim, mas a reposição nunca foi testada".', '/org/componentes-agueda/avaliacao', 12, '16:20', true),
+    n('ntf-pedro-q', PEDRO, 'tarefa', 'Nova tarefa: pergunta técnica', 'O Rui Santos pediu-lhe para responder a uma pergunta sobre cópias de segurança.', '/org/componentes-agueda/tarefas', 12, '10:05', true),
+  ]
+  if (snapshot === 'c1') return base
+  const c2 = [
+    n('ntf-pedro-assets', PEDRO, 'tarefa', 'Nova tarefa: registar ativos', 'Servidores, rede e sistemas de produção · até qui., 15 out.', '/org/componentes-agueda/tarefas/task-ativos/ativos', 13, '11:20', true),
+    n('ntf-assets-done', RUI, 'tarefa_concluida', 'O Pedro concluiu o registo de ativos', '4 ativos técnicos registados. O inventário está completo.', '/org/componentes-agueda/ativos', 15, '09:42'),
+    n('ntf-marta-submitted', MARTA, 'avaliacao', 'Componentes Águeda submeteu a avaliação', 'Reveja os resultados, registe os riscos e valide o roadmap.', '/clientes/componentes-agueda/visao-geral', 14, '10:12'),
+    n('ntf-comment', RUI, 'comentario', 'A Marta comentou um ativo', '"PLC das linhas de montagem": confirme se os PLC têm acesso remoto do fornecedor.', '/org/componentes-agueda/ativos?ativo=ast-plc', 16, '14:30'),
+  ]
+  const c3 = snapshot === 'c3' ? [
+    n('ntf-validated', RUI, 'roadmap', 'Roadmap e riscos validados', 'A Marta Ferreira validou o plano de ação. Já pode ver os riscos da empresa.', '/org/componentes-agueda/riscos', 16, '17:05'),
+  ] : []
+  return [...c3, ...c2, ...base]
 }
 
 export const SNAPSHOTS: Array<{ id: SnapshotId; label: string; hint: string }> = [

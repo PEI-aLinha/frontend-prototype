@@ -10,6 +10,7 @@ import { useSession } from '../core/session'
 import { TenantProvider } from '../core/tenant'
 import { ErrorState, SkeletonRows } from '../ui'
 import { AppShell, type NavItem, type NavSection } from './AppShell'
+import { NotificationBell } from './NotificationBell'
 
 function OrgGate({ slug, children }: { slug: string; children: (org: NonNullable<ReturnType<typeof useOrganization>['data']>) => ReactNode }) {
   const org = useOrganization(slug)
@@ -48,7 +49,7 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
     ]
   }
   return (
-    <AppShell sections={[{ items }]} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
+    <AppShell tools={<NotificationBell />} sections={[{ items }]} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
       <Outlet />
     </AppShell>
   )
@@ -63,7 +64,7 @@ export function ConsultantLayout() {
   const portfolio: NavItem = { to: '/carteira', label: 'Carteira de clientes', shortLabel: 'Clientes', icon: Briefcase, end: true }
   if (!org) {
     return (
-      <AppShell sections={[{ items: [portfolio] }]} user={user}>
+      <AppShell tools={<NotificationBell />} sections={[{ items: [portfolio] }]} user={user}>
         <Outlet />
       </AppShell>
     )
@@ -81,7 +82,7 @@ export function ConsultantLayout() {
         ]
         const sections: NavSection[] = [{ items: [portfolio] }, { heading: o.name.replace(', Lda.', ''), items: client }]
         return (
-          <AppShell sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[4]]}>
+          <AppShell tools={<NotificationBell />} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[4]]}>
             <Outlet />
           </AppShell>
         )

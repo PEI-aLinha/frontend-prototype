@@ -17,6 +17,8 @@ export const keys = {
   roadmap: (org: Id) => ['roadmap', org] as const,
   portfolio: () => ['portfolio'] as const,
   audit: (org: Id, entityId?: Id) => ['audit', org, entityId ?? 'all'] as const,
+  notifications: () => ['notifications'] as const,
+  today: () => ['today'] as const,
 }
 
 const enabled = (org: Id | undefined) => ({ enabled: !!org })
@@ -36,7 +38,7 @@ export const useAudit = (org?: Id, entityId?: Id, on = true) => useQuery({ query
 
 function useInvalidate() {
   const qc = useQueryClient()
-  return (...prefixes: string[]) => Promise.all(prefixes.map((p) => qc.invalidateQueries({ queryKey: [p] })))
+  return (...prefixes: string[]) => Promise.all([...prefixes, 'notifications'].map((p) => qc.invalidateQueries({ queryKey: [p] })))
 }
 
 export function useSaveAsset(org: Id) {
@@ -96,4 +98,27 @@ export function useProposeAction(org: Id) {
 export function useValidateRoadmap(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: () => api.assessment.validateRoadmap(org), onSuccess: () => invalidate('roadmap', 'portfolio', 'audit', 'risks', 'links') })
+}
+
+export const useNotifications = () => useQuery({ queryKey: keys.notifications(), queryFn: () => api.notifications.list() })
+export const useToday = () => useQuery({ queryKey: keys.today(), queryFn: () => api.directory.getToday(), staleTime: Infinity })
+
+export function useMarkNotificationRead() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: (id: Id) => api.notifications.markRead(id), onSuccess: () => qc.invalidateQueries({ queryKey: keys.notifications() }) })
+}
+
+export function useMarkAllNotificationsRead() {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: () => api.notifications.markAllRead(), onSuccess: () => qc.invalidateQueries({ queryKey: keys.notifications() }) })
+}
+
+export function useUpdateTask(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: ({ id, change }: { id: Id; change: { dueDate?: string; status?: 'cancelada' } }) => api.assets.updateTask(org, id, change), onSuccess: () => invalidate('tasks', 'audit') })
+}
+
+export function useRemindTask(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (id: Id) => api.assets.remindTask(org, id), onSuccess: () => invalidate('audit') })
 }

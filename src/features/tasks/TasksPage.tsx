@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { Check, Minus } from 'lucide-react'
-import { useAssets, useTasks } from '../../api/queries'
-import { shortDay } from '../../config/labels'
+import { useAssets, useTasks, useToday } from '../../api/queries'
+import { dueStatus, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { Button, Card, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, cn } from '../../ui'
 
@@ -12,9 +12,10 @@ export function TasksPage() {
   const org = useTenant()
   const navigate = useNavigate()
   const tasks = useTasks(org.id)
+  const today = useToday()
   const assets = useAssets(org.id)
 
-  const list = tasks.data ?? []
+  const list = (tasks.data ?? []).filter((t) => t.status !== 'cancelada')
   const open = list.filter((t) => t.status === 'pendente')
   const done = list.filter((t) => t.status === 'concluida')
   const registered = (taskId: string) => (assets.data ?? []).filter((a) => a.taskId === taskId).length
@@ -24,7 +25,7 @@ export function TasksPage() {
     <TaskCard
       key={t.id}
       type={t.kind === 'ativos' ? 'Ativos' : 'Pergunta técnica'}
-      due={`Até ${shortDay(t.dueDate)}`}
+      due={`Até ${shortDay(t.dueDate)}${today.data ? ` · ${dueStatus(t.dueDate, today.data).label}` : ''}`}
       title={t.title}
       meta={t.kind === 'ativos' ? `${t.context} · ${registered(t.id)} de ${t.expectedCount ?? 4} registados` : t.context}
       done={t.status === 'concluida'}

@@ -3,6 +3,8 @@ import {
   type Id, type RemediationAction, type Risk, type RiskInput, type Task, type User,
 } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
+import { notify } from './notify'
+import { shortDayPt } from './dates'
 import type { DemoState } from './seed'
 
 /** Quem está a fazer o pedido. Na API real vem do token (Keycloak). */
@@ -72,6 +74,17 @@ export function createMockApi(getActor: ActorProvider): Api {
       listUsers: (org) => simulate(() => {
         requireOrg(getState(), org)
         return getState().users
+      }),
+      getToday: () => simulate(() => getState().today),
+    },
+
+    notifications: {
+      list: () => simulate(() => getState().notifications.filter((n) => n.userId === getActor().userId)),
+      markRead: (id) => simulate(() => {
+        setState((s) => ({ ...s, notifications: s.notifications.map((n) => (n.id === id && n.userId === getActor().userId ? { ...n, read: true } : n)) }))
+      }),
+      markAllRead: () => simulate(() => {
+        setState((s) => ({ ...s, notifications: s.notifications.map((n) => (n.userId === getActor().userId ? { ...n, read: true } : n)) }))
       }),
     },
 
@@ -184,7 +197,10 @@ export function createMockApi(getActor: ActorProvider): Api {
           }
           const tasks = [...s.tasks.filter((t) => t.id !== task.id), task]
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'assign', entityType: 'task', entityId: task.id, summary: `Atribuiu ao ${assignee.name} o registo de ${input.title.toLowerCase()}`, before: null, after: { assigneeId: assignee.id, dueDate: input.dueDate } })
-          return { ...s, tasks, audit: [...s.audit, entry] }
+          return notify({ ...s, tasks, audit: [...s.audit, entry] }, {
+            organizationId: org, userId: assignee.id, kind: 'tarefa', title: 'Nova tarefa: registar ativos',
+            body: `${me.name} pediu-lhe: ${input.title} · até ${shortDayPt(input.dueDate)}`, link: `/org/componentes-agueda/tarefas/${task.id}/ativos`,
+          })
         })
         return task
       }),
@@ -198,9 +214,40 @@ export function createMockApi(getActor: ActorProvider): Api {
           task = { ...t, status: 'concluida' }
           const count = s.assets.filter((a) => a.taskId === id).length
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'complete', entityType: 'task', entityId: id, summary: `Concluiu a tarefa de registo de ativos (${count} registados)`, before: { status: t.status }, after: { status: 'concluida' } })
-          return { ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }
+          return notify({ ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }, {
+            organizationId: org, userId: t.assignedBy, kind: 'tarefa_concluida', title: `${me.name.split(' ')[0]} concluiu o registo de ativos`,
+            body: `${count} ativos técnicos registados. Veja-os no inventário.`, link: '/org/componentes-agueda/ativos',
+          })
         })
         return task
+      }),
+
+      updateTask: (org, id, change) => simulate(() => {
+        if (actor().role !== 'responsavel') deny()
+        let task!: Task
+        write((s, me) => {
+          const t = s.tasks.find((x) => x.id === id)
+          if (!t) throw new ApiError('Tarefa não encontrada', 404)
+          if (t.status !== 'pendente') throw new ApiError('Só pode alterar tarefas pendentes.', 409)
+          if (change.dueDate && change.dueDate < s.today) throw new ApiError('O novo prazo não pode ser no passado.', 422)
+          task = { ...t, ...change }
+          const assignee = s.users.find((u) => u.id === t.assigneeId)
+          const summary = change.status === 'cancelada' ? `Cancelou a tarefa "${t.title}"` : `Mudou o prazo da tarefa "${t.title}" para ${shortDayPt(change.dueDate!)}`
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'update', entityType: 'task', entityId: id, summary, before: { dueDate: t.dueDate, status: t.status }, after: { dueDate: task.dueDate, status: task.status } })
+          const next = { ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }
+          return assignee ? notify(next, { organizationId: org, userId: assignee.id, kind: 'tarefa', title: change.status === 'cancelada' ? 'Tarefa cancelada' : 'Prazo alterado', body: change.status === 'cancelada' ? `${me.name} cancelou: ${t.title}.` : `${t.title} · novo prazo ${shortDayPt(change.dueDate!)}`, link: '/org/componentes-agueda/tarefas' }) : next
+        })
+        return task
+      }),
+
+      remindTask: (org, id) => simulate(() => {
+        if (actor().role !== 'responsavel') deny()
+        write((s, me) => {
+          const t = s.tasks.find((x) => x.id === id)
+          if (!t || t.status !== 'pendente') throw new ApiError('Só pode lembrar tarefas pendentes.', 409)
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'remind', entityType: 'task', entityId: id, summary: `Enviou um lembrete da tarefa "${t.title}"`, before: null, after: null })
+          return notify({ ...s, audit: [...s.audit, entry] }, { organizationId: org, userId: t.assigneeId, kind: 'lembrete', title: `Lembrete de ${me.name.split(' ')[0]}`, body: `${t.title} · até ${shortDayPt(t.dueDate)}`, link: t.kind === 'ativos' ? `/org/componentes-agueda/tarefas/${t.id}/ativos` : '/org/componentes-agueda/tarefas' })
+        })
       }),
 
       listRisks: (org) => simulate(() => {
@@ -270,7 +317,9 @@ export function createMockApi(getActor: ActorProvider): Api {
         write((s, me) => {
           const a = s.assets.find((x) => x.id === assetId)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'comment', entityType: 'comment', entityId: assetId, summary: `Comentou o ativo "${a?.name ?? assetId}"`, before: null, after: { body: comment.body } })
-          return { ...s, comments: [...s.comments, comment], audit: [...s.audit, entry] }
+          const owner = s.users.find((u) => u.role === 'responsavel')
+          const next = { ...s, comments: [...s.comments, comment], audit: [...s.audit, entry] }
+          return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'comentario', title: `${me.name.split(' ')[0]} comentou um ativo`, body: `"${a?.name}": ${comment.body}`, link: `/org/componentes-agueda/ativos?ativo=${assetId}` }) : next
         })
         return comment
       }),
@@ -312,7 +361,9 @@ export function createMockApi(getActor: ActorProvider): Api {
           status = { ...s.roadmap[org], validated: true, validatedAt: now(), validatedBy: me.id }
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'validate', entityType: 'roadmap', entityId: org, summary: 'Validou o roadmap', before: { validated: false }, after: { validated: true } })
           const portfolio = s.portfolio.map((p) => (p.organization.id === org ? { ...p, stage: 'Roadmap validado', stageTone: 'neutral' as const, nextStep: 'Acompanhar ações de risco alto' } : p))
-          return { ...s, roadmap: { ...s.roadmap, [org]: status }, portfolio, audit: [...s.audit, entry] }
+          const owner = s.users.find((u) => u.role === 'responsavel')
+          const next = { ...s, roadmap: { ...s.roadmap, [org]: status }, portfolio, audit: [...s.audit, entry] }
+          return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'roadmap', title: 'Roadmap e riscos validados', body: `${me.name} validou o plano de ação. Já pode ver os riscos da empresa.`, link: '/org/componentes-agueda/riscos' }) : next
         })
         return status
       }),
