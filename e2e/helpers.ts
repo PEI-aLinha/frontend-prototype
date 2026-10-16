@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 export const ORG = '/org/componentes-agueda'
 
@@ -32,12 +32,8 @@ export async function pickOption(page: Page, label: string | RegExp, option: str
 export async function shot(page: Page, name: string) {
   await page.waitForTimeout(350)
   await expect(page.locator('[role=status][aria-label^="A carregar"]')).toHaveCount(0)
-  await page.screenshot({ path: `e2e/__screenshots__/${test_project()}/${name}.png`, fullPage: true })
+  await page.screenshot({ path: `e2e/__screenshots__/${test.info().project.name}/${name}.png`, fullPage: true })
 }
-
-let project = 'desktop'
-export const setProject = (p: string) => { project = p }
-const test_project = () => project
 
 /** Abre um ativo: linha da tabela no desktop, cartão no mobile. */
 export async function openAsset(page: Page, name: string) {

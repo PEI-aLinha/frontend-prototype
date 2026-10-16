@@ -1,7 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { openAsset, ORG, pickOption, setProject, shot, start, switchPersona } from './helpers'
-
-test.beforeEach(({}, info) => setProject(info.project.name))
+import { openAsset, ORG, pickOption, shot, start, switchPersona } from './helpers'
 
 test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, Rui vê o inventário completo', async ({ page }) => {
   await start(page, `${ORG}/ativos`, 'rui')
