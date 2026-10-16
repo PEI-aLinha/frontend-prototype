@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { NavLink } from 'react-router'
 import type { LucideIcon } from 'lucide-react'
 import { Avatar, Logo, cn } from '../ui'
+import { MobileTabBar } from './MobileTabBar'
 
 export interface NavItem {
   to: string
@@ -19,7 +20,7 @@ export interface NavSection {
 interface AppShellProps {
   sections: NavSection[]
   user: { initials: string; name: string; subtitle: string }
-  /** Mobile tab bar entries (all by default). */
+  /** Mobile tab bar entries, in order (all by default; extras go under "Mais"). */
   tabs?: NavItem[]
   /** Global actions (e.g. notifications), at the top of the navigation and the mobile header. */
   tools?: ReactNode
@@ -77,25 +78,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
         <div className="mx-auto flex max-w-[1152px] flex-col gap-7">{children}</div>
       </main>
 
-      <nav aria-label="Navegação principal (mobile)" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line-soft bg-paper/95 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur md:hidden">
-        {tabItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) => cn('flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px]', isActive ? 'font-bold text-brand' : 'font-semibold text-ink-soft')}
-          >
-            {({ isActive }) => (
-              <>
-                <span className={cn('grid h-7 w-12 place-items-center rounded-full transition-colors', isActive && 'bg-brand-soft')}>
-                  <item.icon className="size-[18px]" strokeWidth={isActive ? 2.25 : 1.75} aria-hidden />
-                </span>
-                {item.shortLabel ?? item.label}
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+      <MobileTabBar items={tabItems} />
     </div>
   )
 }

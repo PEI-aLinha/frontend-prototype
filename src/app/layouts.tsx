@@ -51,7 +51,7 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
     ]
   }
   return (
-    <AppShell tools={<NotificationBell />} sections={[{ items }]} tabs={persona.role === 'analista' ? undefined : items.filter((i) => !i.to.endsWith('/integracoes'))} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
+    <AppShell tools={<NotificationBell />} sections={[{ items }]} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
       <Outlet />
     </AppShell>
   )
@@ -85,7 +85,7 @@ export function ConsultantLayout() {
         ]
         const sections: NavSection[] = [{ items: [portfolio] }, { heading: o.name.replace(', Lda.', ''), items: client }]
         return (
-          <AppShell tools={<NotificationBell />} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[5]]}>
+          <AppShell tools={<NotificationBell />} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[0], client[4], client[5]]}>
             <Outlet />
           </AppShell>
         )
