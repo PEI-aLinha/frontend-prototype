@@ -32,7 +32,9 @@ export async function pickOption(page: Page, label: string | RegExp, option: str
 export async function shot(page: Page, name: string) {
   await page.waitForTimeout(350)
   await expect(page.locator('[role=status][aria-label^="A carregar"]')).toHaveCount(0)
-  await page.screenshot({ path: `e2e/__screenshots__/${test.info().project.name}/${name}.png`, fullPage: true })
+  const dialogOpen = await page.getByRole('dialog').count()
+  if (dialogOpen) await page.waitForTimeout(400)
+  await page.screenshot({ path: `e2e/__screenshots__/${test.info().project.name}/${name}.png`, fullPage: !dialogOpen })
 }
 
 /** Abre um ativo: linha da tabela no desktop, cartão no mobile. */

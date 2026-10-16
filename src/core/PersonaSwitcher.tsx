@@ -54,7 +54,7 @@ export function PersonaSwitcher() {
     <Menu.Root open={open} onOpenChange={setOpen}>
       <Menu.Trigger
         aria-label={`Demonstração: a ver como ${persona.name}. Mudar de persona (Alt+P)`}
-        className="fixed bottom-4 right-4 z-[85] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[12px] font-bold text-ink-soft shadow-[0_6px_20px_rgba(32,33,36,0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:right-3"
+        className="fixed bottom-[76px] left-5 z-[85] md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[12px] font-bold text-ink-soft shadow-[0_6px_20px_rgba(32,33,36,0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:left-auto max-md:right-3"
       >
         <Avatar initials={persona.initials} size={24} />
         <span className="max-sm:hidden">Demo · {persona.firstName}</span>
@@ -62,7 +62,7 @@ export function PersonaSwitcher() {
         <ChevronUp className="size-3.5" aria-hidden />
       </Menu.Trigger>
       <Menu.Portal>
-        <Menu.Content side="top" align="end" sideOffset={8} className="z-[95] w-[300px] rounded-[14px] border border-line-soft bg-paper p-1.5 shadow-[0_16px_48px_rgba(32,33,36,0.18)] animate-pop-in">
+        <Menu.Content side="top" align="start" sideOffset={8} className="z-[95] w-[300px] rounded-[14px] border border-line-soft bg-paper p-1.5 shadow-[0_16px_48px_rgba(32,33,36,0.18)] animate-pop-in">
           <Menu.Label className="eyebrow px-2.5 pb-1 pt-2 text-[10.5px] text-muted">Ver como</Menu.Label>
           {Object.values(PERSONAS).map((p) => (
             <Menu.Item key={p.key} onSelect={() => switchTo(p.key)} className={itemCls}>

@@ -10,6 +10,11 @@ import { RegisterAssetsPage } from '../features/assets/RegisterAssetsPage'
 import { HomePage } from '../features/home/HomePage'
 import { TasksPage } from '../features/tasks/TasksPage'
 import { AnalystOnly } from './AnalystOnly'
+import { ConsultantRoadmap } from './ConsultantRoadmap'
+import { RisksPage } from '../features/assets/risk/RisksPage'
+import { PortfolioPage } from '../features/portfolio/PortfolioPage'
+import { ClientOverviewPage } from '../features/portfolio/ClientOverviewPage'
+import { HistoryPage } from '../features/portfolio/HistoryPage'
 
 export const router = createBrowserRouter([
   {
@@ -26,7 +31,8 @@ export const router = createBrowserRouter([
           { path: 'ativos', element: <Guard resource="asset"><AssetsPage /></Guard> },
           { path: 'tarefas', element: <AnalystOnly><TasksPage /></AnalystOnly> },
           { path: 'tarefas/:taskId/ativos', element: <AnalystOnly><RegisterAssetsPage /></AnalystOnly> },
-          { path: 'roadmap', element: <OutOfScope eyebrow="Componentes Águeda, Lda." title="Resultados e roadmap" /> },
+          { path: 'roadmap', element: <Guard resource="roadmap"><ConsultantRoadmap /></Guard> },
+          { path: 'riscos', element: <Guard resource="risk" reason="O registo de riscos fica visível depois de a consultora validar o roadmap."><RisksPage /></Guard> },
           { path: 'avaliacao', element: <OutOfScope eyebrow="Componentes Águeda, Lda." title="Avaliação" /> },
           { path: 'equipa', element: <OutOfScope eyebrow="Componentes Águeda, Lda." title="Equipa" /> },
         ],
@@ -34,12 +40,19 @@ export const router = createBrowserRouter([
       {
         path: 'carteira',
         element: <ConsultantLayout />,
-        children: [],
+        children: [{ index: true, element: <PortfolioPage /> }],
       },
       {
         path: 'clientes/:org',
         element: <ConsultantLayout />,
-        children: [],
+        children: [
+          { index: true, element: <ClientOverviewPage /> },
+          { path: 'visao-geral', element: <ClientOverviewPage /> },
+          { path: 'roadmap', element: <ConsultantRoadmap /> },
+          { path: 'ativos', element: <AssetsPage /> },
+          { path: 'riscos', element: <RisksPage /> },
+          { path: 'historico', element: <HistoryPage /> },
+        ],
       },
       { path: '*', element: <HomeRedirect /> },
     ],
