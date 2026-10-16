@@ -2,8 +2,8 @@ import { ApiError, type AssessmentApi, type AssessmentSection, type DemoActor } 
 import { notify } from './notify'
 import { auditEntry, getState, setState, simulate } from './store'
 
-/** answeredC1 conta as respostas do Rui; a pergunta delegada soma 1 quando o analista responde. */
-/** Secções da avaliação de maturidade (resumo; o questionário completo é outro plugin). */
+/** answeredC1 counts Rui's answers; the delegated question adds 1 when the analyst answers. */
+/** Maturity assessment sections (summary; the full questionnaire is another plugin). */
 const SECTIONS: Array<Omit<AssessmentSection, 'delegated' | 'answered'> & { answeredC1: number; questionTask?: string }> = [
   { id: 'sec-gov', name: 'Governação e responsabilidades', total: 8, answeredC1: 8 },
   { id: 'sec-ativos', name: 'Gestão de ativos', total: 6, answeredC1: 6 },

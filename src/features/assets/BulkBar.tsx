@@ -6,7 +6,7 @@ import { useTenant } from '../../core/tenant'
 import { Button, Select, useToast } from '../../ui'
 import type { Inventory } from './useInventory'
 
-/** Barra de ações em massa sobre os ativos selecionados. */
+/** Bulk action bar for the selected assets. */
 export function BulkBar({ ids, inventory, onDone }: { ids: string[]; inventory: Inventory; onDone: () => void }) {
   const org = useTenant()
   const toast = useToast()

@@ -19,7 +19,7 @@ function OrgGate({ slug, children }: { slug: string; children: (org: NonNullable
   return <TenantProvider org={org.data}>{children(org.data)}</TenantProvider>
 }
 
-/** Rui (Responsável designado) e Pedro (Analista): /org/:org/* */
+/** Rui (designated manager) and Pedro (analyst): /org/:org/* */
 export function ClientLayout() {
   const { org = '' } = useParams()
   const { persona } = useSession()

@@ -11,7 +11,7 @@ interface AssetFormProps {
   services: CriticalService[]
   owners: User[]
   errors: Errors
-  /** Outros ativos que podem ser dependências (o próprio fica de fora). */
+  /** Other assets that can be dependencies (excluding itself). */
   others?: Array<{ id: string; name: string }>
 }
 

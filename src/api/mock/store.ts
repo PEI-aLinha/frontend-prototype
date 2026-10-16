@@ -17,7 +17,7 @@ function load(): DemoState {
       if (parsed.version === STATE_VERSION) return parsed
     }
   } catch {
-    // localStorage indisponível ou dados corrompidos: recomeça com os dados de demonstração.
+    // localStorage unavailable or corrupted data: start over with the demo data.
   }
   return buildSnapshot('c1')
 }
@@ -26,7 +26,7 @@ function persist(): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   } catch {
-    // Sem persistência (modo privado): o protótipo continua a funcionar em memória.
+    // No persistence (private mode): the prototype keeps working in memory.
   }
 }
 
@@ -34,7 +34,7 @@ export function getState(): Readonly<DemoState> {
   return state
 }
 
-/** Substitui o estado de forma imutável e grava. */
+/** Replaces the state immutably and saves it. */
 export function setState(update: (s: DemoState) => DemoState): void {
   state = update(state)
   persist()
@@ -65,11 +65,11 @@ export function setFailureMode(on: boolean): void {
     if (on) localStorage.setItem(FAIL_KEY, '1')
     else localStorage.removeItem(FAIL_KEY)
   } catch {
-    // ignorado: sem localStorage não há modo de falha.
+    // ignored: without localStorage there is no failure mode.
   }
 }
 
-/** Latência simulada (200–600 ms). Em testes (navigator.webdriver) usa o mínimo. */
+/** Simulated latency (200–600 ms). In tests (navigator.webdriver) uses the minimum. */
 export async function simulate<T>(work: () => T): Promise<T> {
   const fast = typeof navigator !== 'undefined' && navigator.webdriver
   const delay = fast ? 120 : MIN_LATENCY + Math.random() * (MAX_LATENCY - MIN_LATENCY)

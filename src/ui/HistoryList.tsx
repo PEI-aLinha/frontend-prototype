@@ -11,7 +11,7 @@ export interface HistoryItem {
   context?: string
 }
 
-/** Histórico de alterações (RF29): quem, quando, o quê. */
+/** Change history (RF29): who, when, what. */
 export function HistoryList({ items }: { items: HistoryItem[] }) {
   if (items.length === 0) return <p className="text-[14px] text-muted">Ainda não há alterações registadas.</p>
   return (

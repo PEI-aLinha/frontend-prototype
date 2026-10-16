@@ -15,7 +15,7 @@ function view(s: Readonly<DemoState>, id: ProviderId): IntegrationConnection {
   return { provider: provider(id), status: c?.status ?? 'disponivel', connectedBy: c?.connectedBy ?? null, connectedAt: c?.connectedAt ?? null, lastSyncAt: c?.lastSyncAt ?? null, secretRef: c?.secretRef ?? null, assignedTo: c?.assignedTo ?? null, errorMessage: c?.errorMessage }
 }
 
-/** Ligações a sistemas do cliente, só de leitura. As credenciais ficam no cofre (OpenBao). */
+/** Read-only connections to the client's systems. Credentials stay in the vault (OpenBao). */
 export function createIntegrationsMock(getActor: () => DemoActor): IntegrationsApi {
   const me = (): User => {
     const u = getState().users.find((x) => x.id === getActor().userId)
@@ -29,7 +29,7 @@ export function createIntegrationsMock(getActor: () => DemoActor): IntegrationsA
     throw new ApiError('Não tem permissão para ligar esta integração.', 403)
   }
 
-  /** Sincroniza: cria sugestões novas e atualiza evidências desta integração. */
+  /** Syncs: creates new suggestions and updates the evidence for this integration. */
   const syncInto = (s: DemoState, id: ProviderId): DemoState => {
     const known = new Set(s.discoveries.map((d) => d.name))
     const fresh = DISCOVERIES[id].filter((d) => !known.has(d.name)).map((d) => ({ ...d, id: newId('dsc'), status: 'proposto' as const, resolvedAssetId: null }))

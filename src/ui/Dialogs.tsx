@@ -13,7 +13,7 @@ interface BaseProps {
   footer?: ReactNode
 }
 
-/** Modal: véu ink 45 %, janela branca raio 20, padding 28/32, gap 18, largura 540. */
+/** Modal: ink 45% overlay, white window radius 20, padding 28/32, gap 18, width 540. */
 export function Modal({ open, onOpenChange, title, description, chip, children, footer, width = 540 }: BaseProps & { width?: number }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -37,7 +37,7 @@ export function Modal({ open, onOpenChange, title, description, chip, children, 
   )
 }
 
-/** Painel lateral para detalhe e edição (no mobile ocupa o ecrã, de baixo para cima). */
+/** Side panel for detail and editing (full screen on mobile, sliding up from the bottom). */
 export function Drawer({ open, onOpenChange, title, description, chip, children, footer, width = 520, eyebrow }: BaseProps & { width?: number; eyebrow?: ReactNode }) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>

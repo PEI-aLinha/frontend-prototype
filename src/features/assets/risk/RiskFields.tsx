@@ -31,7 +31,7 @@ function ScaleField({ label, kind, value, onChange, error, term }: { label: stri
   )
 }
 
-/** Nível calculado ao vivo, com a regra visível. Nunca escolhido à mão. */
+/** Level computed live, with the rule visible. Never picked by hand. */
 export function LiveLevel({ probability, impact, label = 'Nível de risco', compact }: { probability: number | null; impact: number | null; label?: string; compact?: boolean }) {
   const ready = probability !== null && impact !== null
   const result = ready ? computeRiskLevel(probability, impact) : null

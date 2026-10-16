@@ -1,5 +1,5 @@
-// Contratos entre a interface e os dados. Uma interface por plugin (AssetsApi, AssessmentApi, AuditApi).
-// A implementação mock vive em src/api/mock; a real (core Kotlin/Spring Modulith) só tem de cumprir estes tipos.
+// Contracts between the UI and the data. One interface per plugin (AssetsApi, AssessmentApi, AuditApi).
+// The mock implementation lives in src/api/mock; the real one (Kotlin/Spring Modulith core) only has to satisfy these types.
 import type { Level } from '../config/riskMatrix'
 
 export type { Level }
@@ -44,8 +44,8 @@ export interface AuditEntry {
   createdAt: IsoDate
 }
 
-// ---------------- assets (plugin Riscos e Ativos) ----------------
-// D1: armazenamento e sistema_producao_ot ainda não existem no enum do DBML.
+// ---------------- assets (Risks and Assets plugin) ----------------
+// D1: armazenamento and sistema_producao_ot do not exist in the DBML enum yet.
 export type AssetType =
   | 'servidor' | 'rede' | 'aplicacao' | 'base_dados' | 'equipamento' | 'servico_cloud'
   | 'armazenamento' | 'sistema_producao_ot' | 'outro'
@@ -58,7 +58,7 @@ export interface CriticalService {
   criticality: Level
 }
 
-/** Valor especial de "serviço crítico" quando o ativo suporta todos os serviços. */
+/** Special "critical service" value when the asset supports all services. */
 export const ALL_SERVICES = 'todos'
 
 export interface Asset {
@@ -69,13 +69,13 @@ export interface Asset {
   type: AssetType
   ownerId: Id | null
   criticality: Level
-  /** D4: não existe no DBML. */
+  /** D4: does not exist in the DBML. */
   location?: string
-  /** Outros ativos de que este depende para funcionar (ex.: o ERP depende da rede). */
+  /** Other assets this one depends on to work (e.g. the ERP depends on the network). */
   dependsOn?: Id[]
-  /** Origem do registo: manual, importação de ficheiro ou integração. */
+  /** Record origin: manual, file import or integration. */
   source?: 'manual' | 'importacao' | 'integracao'
-  /** Tarefa de registo que originou o ativo (quando registado por um analista). */
+  /** Registration task that created the asset (when registered by an analyst). */
   taskId?: Id
   createdBy: Id
   createdAt: IsoDate
@@ -92,14 +92,14 @@ export interface Task {
   id: Id
   organizationId: Id
   kind: 'ativos' | 'pergunta' | 'integracao'
-  /** Pergunta técnica: resposta do analista. */
+  /** Technical question: the analyst's answer. */
   answer?: QuestionAnswer
-  /** Pergunta técnica: ajuda pré-gerada pela IA (D10), só informativa. */
+  /** Technical question: AI-pregenerated help (D10), informational only. */
   aiHelp?: string
-  /** Para tarefas de integração: que sistema ligar. */
+  /** For integration tasks: which system to connect. */
   provider?: ProviderId
   title: string
-  /** O que registar (ex.: "Servidores, rede e sistemas de produção"). */
+  /** What to register (e.g. "Servidores, rede e sistemas de produção"). */
   scope?: string
   context: string
   assigneeId: Id
@@ -128,16 +128,16 @@ export interface Risk {
   ownerId: Id | null
   probability: number
   impact: number
-  // risk_level é derivado (computeRiskLevel) e não é guardado.
+  // risk_level is derived (computeRiskLevel) and not stored.
   treatment: Treatment | null
   acceptanceJustification?: string
   residualProbability?: number
   residualImpact?: number
   status: RiskStatus
   plainLanguage?: string
-  /** Próxima revisão do risco (a ISO/IEC 27005 pede revisão periódica). */
+  /** Next risk review (ISO/IEC 27005 requires periodic review). */
   reviewDate?: IsoDate
-  /** Motivo, quando arquivado (o risco deixou de existir ou foi duplicado). */
+  /** Reason, when archived (the risk no longer exists or was a duplicate). */
   archivedReason?: string
   createdBy: Id
   createdAt: IsoDate
@@ -162,7 +162,7 @@ export interface RiskInput {
 
 export type RiskStatusChange = { status: 'tratado' } | { status: 'arquivado'; reason: string } | { status: 'reaberto' }
 
-/** assets.risk_action — liga um risco a uma ação do roadmap só por ID (sem FK entre plugins). */
+/** assets.risk_action — links a risk to a roadmap action by ID only (no FK across plugins). */
 export interface RiskActionLink {
   id: Id
   riskId: Id
@@ -210,7 +210,7 @@ export interface AssetsApi {
   addComment(org: Id, assetId: Id, body: string): Promise<AssetComment>
 }
 
-// ---------------- assessment (plugin Avaliação; só o mínimo do roadmap) ----------------
+// ---------------- assessment (Assessment plugin; roadmap minimum only) ----------------
 export type ActionStatus = 'por_iniciar' | 'em_curso' | 'concluida'
 
 export interface RemediationAction {
@@ -218,7 +218,7 @@ export interface RemediationAction {
   organizationId: Id
   findingId: Id
   description: string
-  /** 1 = mais urgente. Prioridade de base (proposta pela IA ou pela consultora). */
+  /** 1 = most urgent. Base priority (proposed by the AI or the consultant). */
   priority: number
   dueDate: IsoDate | null
   assignedTo: Id | null
@@ -264,14 +264,14 @@ export interface AssessmentSection {
   name: string
   answered: number
   total: number
-  /** Perguntas desta secção delegadas a um analista. */
+  /** Questions in this section delegated to an analyst. */
   delegated: Array<{ taskId: Id; assigneeId: Id; status: Task['status'] }>
 }
 
 export interface AssessmentSummary {
   status: 'em_curso' | 'submetida' | 'validada'
   sections: AssessmentSection[]
-  /** Nível de maturidade (1–5), só depois da validação. */
+  /** Maturity level (1–5), only after validation. */
   maturity: number | null
 }
 
@@ -285,7 +285,7 @@ export interface AssessmentApi {
   listPortfolio(): Promise<PortfolioClient[]>
 }
 
-// ---------------- core: auditoria, diretório ----------------
+// ---------------- core: audit, directory ----------------
 export interface AuditApi {
   list(org: Id, filter?: { entityId?: Id; entityType?: AuditEntry['entityType'] }): Promise<AuditEntry[]>
 }
@@ -293,7 +293,7 @@ export interface AuditApi {
 export interface DirectoryApi {
   getOrganization(slug: string): Promise<Organization>
   listUsers(org: Id): Promise<User[]>
-  /** "Hoje" da demonstração (cada cenário passa-se num dia). */
+  /** Demo "today" (each scenario takes place on one day). */
   getToday(): Promise<IsoDate>
 }
 
@@ -335,12 +335,12 @@ export class ApiError extends Error {
   }
 }
 
-/** Identidade de quem faz o pedido (na API real vem do token de sessão). */
+/** Identity of the requester (in the real API it comes from the session token). */
 export interface DemoActor {
   userId: Id
 }
 
-// ---------------- integrações (plugins Provider, RF37 / US37) ----------------
+// ---------------- integrations (Provider plugins, RF37 / US37) ----------------
 export type ProviderId = 'microsoft365' | 'intune' | 'firewall' | 'backups' | 'google' | 'aws'
 export type ConnectionStatus = 'disponivel' | 'pedido' | 'ligado' | 'erro'
 
@@ -349,11 +349,11 @@ export interface ProviderInfo {
   name: string
   category: string
   description: string
-  /** O que a integração lê (sempre só leitura). */
+  /** What the integration reads (always read-only). */
   reads: string[]
-  /** O que traz para o aLinha. */
+  /** What it brings into aLinha. */
   brings: string[]
-  /** Se não se aplica a esta empresa (ex.: não usa AWS). */
+  /** Whether it does not apply to this company (e.g. does not use AWS). */
   applies: boolean
 }
 
@@ -363,7 +363,7 @@ export interface IntegrationConnection {
   connectedBy: Id | null
   connectedAt: IsoDate | null
   lastSyncAt: IsoDate | null
-  /** Referência ao segredo no cofre (OpenBao); a credencial nunca chega ao browser. */
+  /** Reference to the secret in the vault (OpenBao); the credential never reaches the browser. */
   secretRef: string | null
   assignedTo: Id | null
   errorMessage?: string
@@ -379,7 +379,7 @@ export interface DiscoveredAsset {
   details: string
   suggestedServiceId: Id | typeof ALL_SERVICES | null
   suggestedCriticality: Level
-  /** Ativo do inventário que parece ser o mesmo. */
+  /** Inventory asset that looks like the same one. */
   possibleMatchId: Id | null
   status: DiscoveryStatus
   resolvedAssetId: Id | null

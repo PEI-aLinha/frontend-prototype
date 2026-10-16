@@ -1,2 +1,2 @@
-// Superfície pública do plugin Riscos e Ativos.
+// Public surface of the Risks and Assets plugin.
 export { useRiskSignals } from './useRiskSignals'

@@ -7,7 +7,7 @@ import { RoadmapPage } from '../features/assessment/public'
 import { useRiskSignals } from '../features/assets/public'
 import { EmptyState, PageHeader } from '../ui'
 
-/** Composição: o roadmap (Avaliação) recebe os sinais de risco (Riscos e Ativos) só por contrato. */
+/** Composition: the roadmap (Assessment) receives the risk signals (Risks and Assets) only through the contract. */
 export function ConsultantRoadmap() {
   const signals = useRiskSignals()
   const org = useTenant()

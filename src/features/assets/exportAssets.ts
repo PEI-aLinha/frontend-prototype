@@ -9,7 +9,7 @@ export function assetRows(assets: Asset[], inv: Inventory): string[][] {
 }
 
 function csvCell(v: string): string {
-  // Evita injeção de fórmulas em folhas de cálculo e escapa aspas.
+  // Prevents spreadsheet formula injection and escapes quotes.
   const safe = /^[=+\-@]/.test(v) ? `'${v}` : v
   return `"${safe.replace(/"/g, '""')}"`
 }
@@ -34,7 +34,7 @@ export function downloadCsv(filename: string, csv: string): void {
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 
-/** "PDF" simulado: abre uma versão para imprimir/guardar como PDF. */
+/** Simulated "PDF": opens a printable version to print/save as PDF. */
 export function printList(orgName: string, rows: string[][]): void {
   const w = window.open('', '_blank', 'noopener=no')
   if (!w) return

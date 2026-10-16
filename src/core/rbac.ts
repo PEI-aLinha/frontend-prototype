@@ -13,7 +13,7 @@ type Matrix = Partial<Record<Resource, Partial<Record<Action, Rule>>>>
 
 const clientSeesRisks = (ctx: RbacContext) => FLAGS.RISKS_VISIBLE_TO_CLIENT_AFTER_VALIDATION && !!ctx.roadmapValidated
 
-// RNF08: permissões por papel. O analista só vê os ativos da sua tarefa (filtro no fornecedor de dados).
+// RNF08: role-based permissions. The analyst only sees the assets of their task (filtered in the data provider).
 const MATRIX: Record<Role, Matrix> = {
   responsavel: {
     asset: { view: true, create: true, edit: true, delete: true },

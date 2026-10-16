@@ -19,19 +19,19 @@ interface DataTableProps<T> {
   getRowId: (row: T) => string
   onRowClick?: (row: T) => void
   rowLabel?: (row: T) => string
-  /** Versão em cartões para o mobile. */
+  /** Card version for mobile. */
   renderCard?: (row: T) => ReactNode
   footer?: ReactNode
   empty?: ReactNode
   initialSorting?: SortingState
   caption: string
   highlightId?: string | null
-  /** Seleção de linhas (ações em massa). */
+  /** Row selection (bulk actions). */
   selected?: string[]
   onSelectedChange?: (ids: string[]) => void
 }
 
-/** Tabela: cartão raio 16, cabeçalho paper-soft com eyebrows 11, linhas 14/20 com separador line-soft. */
+/** Table: radius 16 card, paper-soft header with 11 eyebrows, 14/20 rows with line-soft separator. */
 const boxCls = 'size-4 cursor-pointer rounded accent-[var(--color-brand)]'
 
 export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, renderCard, footer, empty, initialSorting = [], caption, highlightId, selected, onSelectedChange }: DataTableProps<T>) {

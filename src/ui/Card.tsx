@@ -18,7 +18,7 @@ interface StatCardProps {
   accent?: ReactNode
 }
 
-/** Cartão de resumo: eyebrow 11 + valor ExtraBold 18 + legenda 13. */
+/** Summary card: eyebrow 11 + ExtraBold 18 value + 13 caption. */
 export function StatCard({ label, value, caption, onClick, accent }: StatCardProps) {
   const body = (
     <>

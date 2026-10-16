@@ -19,7 +19,7 @@ const SAMPLE = [
   'Balança industrial;Máquina;Produção de componentes;Pavilhão 1;;Muito alta',
 ].join('\n')
 
-/** Importar ativos de uma folha de cálculo (CSV), com pré-visualização e validação linha a linha. */
+/** Import assets from a spreadsheet (CSV), with preview and row-by-row validation. */
 export function ImportModal({ open, onClose, inventory }: { open: boolean; onClose: () => void; inventory: Inventory }) {
   const org = useTenant()
   const toast = useToast()

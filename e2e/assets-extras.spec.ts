@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto(`${ORG}/ativos`)
 })
 
-test('Importar ativos de CSV com pré-visualização e erros por linha', async ({ page }) => {
+test('Import assets from CSV with preview and per-row errors', async ({ page }) => {
   await page.getByRole('button', { name: 'Importar de Excel (CSV)' }).click()
   const dialog = page.getByRole('dialog', { name: 'Importar ativos de uma folha de cálculo' })
   await dialog.getByRole('button', { name: 'Usar ficheiro de exemplo' }).click()
@@ -20,7 +20,7 @@ test('Importar ativos de CSV com pré-visualização e erros por linha', async (
   await expect(page.getByText('11', { exact: true })).toBeVisible()
 })
 
-test('Vista por serviço, dependências e ações em massa', async ({ page }, info) => {
+test('By-service view, dependencies and bulk actions', async ({ page }, info) => {
   await page.getByRole('radio', { name: 'Por serviço' }).click()
   await expect(page.getByRole('region', { name: 'Produção de componentes' })).toBeVisible()
   await shot(page, 'a-02-por-servico')
@@ -43,7 +43,7 @@ test('Vista por serviço, dependências e ações em massa', async ({ page }, in
   await expect(page.getByText('Criticidade alterada em 2 ativos')).toBeVisible()
 })
 
-test('Exportar mostra o que falta antes de comunicar ao CNCS', async ({ page }) => {
+test('Export shows what is missing before reporting to CNCS', async ({ page }) => {
   await page.getByRole('button', { name: 'Exportar Lista de Ativos' }).first().click()
   await expect(page.getByText('1 ativo tem informação em falta')).toBeVisible()
   await expect(page.getByText(/falta serviço crítico/)).toBeVisible()

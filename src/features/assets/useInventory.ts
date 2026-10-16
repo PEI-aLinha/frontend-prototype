@@ -15,7 +15,7 @@ export interface Inventory {
   user: (id: string | null) => User | undefined
 }
 
-/** Junta ativos, serviços, utilizadores e (se permitido) riscos. */
+/** Combines assets, services, users and (if allowed) risks. */
 export function useInventory() {
   const org = useTenant()
   const can = useCan()

@@ -42,7 +42,7 @@ export function riskToValues(r: Risk, actionIds: Id[]): RiskFormValues {
   }
 }
 
-/** Regras do tratamento (ISO/IEC 27005): mitigar exige ≥1 ação; aceitar exige justificação. */
+/** Treatment rules (ISO/IEC 27005): mitigate requires ≥1 action; accept requires a justification. */
 export function validateRisk(v: RiskFormValues): RiskErrors {
   const e: RiskErrors = {}
   if (v.threat.trim().length < 5) e.threat = 'Descreva a ameaça (ex.: Ransomware no servidor de produção).'
@@ -72,7 +72,7 @@ export function toRiskInput(v: RiskFormValues): RiskInput {
   }
 }
 
-/** Ações sugeridas pelo tipo de ativo (regra simples e visível, sem IA). */
+/** Actions suggested by asset type (simple, visible rule, no AI). */
 export const SUGGESTED_ACTIONS: Record<string, Id[]> = {
   servidor: ['act-mfa', 'act-teste-backups'],
   armazenamento: ['act-teste-backups', 'act-politica-backups'],

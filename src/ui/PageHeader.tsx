@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Eyebrow } from './Card'
 
-/** Eyebrow + título 30 + subtítulo; ações à direita, na base do título. */
+/** Eyebrow + 30 title + subtitle; actions on the right, aligned to the title baseline. */
 export function PageHeader({ eyebrow, title, subtitle, actions }: { eyebrow: ReactNode; title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
     <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">

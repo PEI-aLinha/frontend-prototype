@@ -17,7 +17,7 @@ import { exportRiskRegister } from './exportRisks'
 
 const levelOf = (p: number, i: number): Level => computeRiskLevel(p, i).level
 
-/** Registo de riscos: consultora edita; cliente vê em só leitura depois da validação (D3). */
+/** Risk register: consultant edits; client sees it read-only after validation (D3). */
 export function RisksPage() {
   const org = useTenant()
   const can = useCan()

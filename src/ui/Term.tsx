@@ -4,7 +4,7 @@ import { HelpCircle } from 'lucide-react'
 import { GLOSSARY, type GlossaryKey } from '../config/glossary'
 import { cn } from './cn'
 
-/** Termo técnico com explicação em linguagem simples (clique ou teclado). */
+/** Technical term with a plain-language explanation (click or keyboard). */
 export function Term({ k, children, icon, className }: { k: GlossaryKey; children?: ReactNode; icon?: boolean; className?: string }) {
   const entry = GLOSSARY[k]
   return (

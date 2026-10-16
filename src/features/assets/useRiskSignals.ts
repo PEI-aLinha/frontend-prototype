@@ -5,7 +5,7 @@ import { useCan } from '../../core/useCan'
 import type { RiskSignal } from '../assessment/public'
 import { computeRiskLevel } from './risk/computeRiskLevel'
 
-/** Sinais de risco por ação do roadmap: só IDs e níveis, nada do interior do plugin. */
+/** Risk signals per roadmap action: only IDs and levels, nothing from the plugin internals. */
 export function useRiskSignals(): RiskSignal[] {
   const org = useTenant()
   const can = useCan()

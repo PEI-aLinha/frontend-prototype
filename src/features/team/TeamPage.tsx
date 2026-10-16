@@ -17,7 +17,7 @@ const ROLE_HINT: Record<string, string> = {
 
 const TONE_CLASS = { late: 'bg-risk-high text-risk-high-ink', soon: 'bg-risk-medium text-risk-medium-ink', ok: 'bg-signal-soft text-brand' }
 
-/** Equipa: quem tem acesso e as tarefas que o Responsável designado atribuiu (RF06, US14). */
+/** Team: who has access and the tasks the designated manager assigned (RF06, US14). */
 export function TeamPage() {
   const org = useTenant()
   const users = useUsers(org.id)

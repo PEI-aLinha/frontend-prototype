@@ -1,17 +1,17 @@
 import { expect, test } from '@playwright/test'
 import { openAsset, ORG, pickOption, shot, start, switchPersona } from './helpers'
 
-test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, Rui vê o inventário completo', async ({ page }) => {
+test('Scenario 1 — Rui assigns registration, Pedro registers the technical assets, Rui sees the full inventory', async ({ page }) => {
   await start(page, `${ORG}/ativos`, 'rui')
 
-  // 07 — Rui abre Ativos
+  // 07 — Rui opens Assets
   await expect(page.getByRole('heading', { name: 'Ativos e serviços críticos' })).toBeVisible()
   await expect(page.getByText('Este inventário é a base da análise de riscos e da Lista de Ativos que a empresa tem de comunicar ao CNCS.')).toBeVisible()
   await expect(page.getByText('Registados por si')).toBeVisible()
   await expect(page.getByText('Servidores, rede e sistemas de produção').last()).toBeVisible()
   await shot(page, 'c1-07-ativos')
 
-  // 07b — modal Atribuir registo
+  // 07b — Assign registration modal
   await page.getByRole('button', { name: 'Atribuir ao Pedro' }).click()
   const dialog = page.getByRole('dialog', { name: 'Atribuir registo de ativos' })
   await expect(dialog).toBeVisible()
@@ -25,7 +25,7 @@ test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, R
   await expect(page.getByText('Atribuído · até qui., 15 out.')).toBeVisible()
   await shot(page, 'c1-07c-atribuido')
 
-  // 09 — Pedro: As minhas tarefas
+  // 09 — Pedro: My tasks
   await switchPersona(page, 'Pedro Almeida')
   await expect(page.getByRole('heading', { name: 'Olá, Pedro' })).toBeVisible()
   await expect(page.getByText('Registar servidores, rede e sistemas de produção')).toBeVisible()
@@ -33,7 +33,7 @@ test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, R
   await shot(page, 'c1-09-tarefas')
   await page.getByRole('button', { name: 'Registar' }).click()
 
-  // 11 — Registar ativos técnicos
+  // 11 — Register technical assets
   await expect(page.getByRole('heading', { name: 'Registar ativos técnicos' })).toBeVisible()
   const assets: Array<[string, string, string, string]> = [
     ['Servidor de produção', 'Servidor', 'Sala técnica', 'Produção de componentes'],
@@ -50,7 +50,7 @@ test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, R
   }
   await expect(page.getByText('3 de 4 registados')).toBeVisible()
 
-  // validação: nome vazio
+  // validation: empty name
   await page.getByRole('button', { name: 'Guardar e adicionar outro' }).click()
   await expect(page.getByText('Indique o nome do ativo (pelo menos 2 letras).')).toBeVisible()
 
@@ -62,7 +62,7 @@ test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, R
   await expect(page.getByText('Tarefa concluída · o Rui foi notificado')).toBeVisible()
   await expect(page.getByText('Tem 1 tarefa atribuída pelo Rui Santos.')).toBeVisible()
 
-  // Pergunta técnica delegada, com ajuda da IA só informativa
+  // Delegated technical question, with informational-only AI help
   await page.getByRole('button', { name: 'Responder' }).click()
   await expect(page.getByText('Gerado por IA · apenas informativo')).toBeVisible()
   await page.getByRole('button', { name: 'Enviar resposta' }).click()
@@ -75,12 +75,12 @@ test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, R
   await expect(page.getByText('Resposta enviada ao Rui Santos')).toBeVisible()
   await expect(page.getByText('Não tem tarefas pendentes. O Rui Santos foi notificado.')).toBeVisible()
 
-  // Pedro só vê os ativos da sua tarefa
+  // Pedro only sees the assets of his task
   await page.goto(`${ORG}/tarefas/task-ativos/ativos`)
   await expect(page.getByText('4 de 4 registados')).toBeVisible()
   await expect(page.getByText('ERP de gestão e faturação')).toHaveCount(0)
 
-  // De volta ao Rui
+  // Back to Rui
   await switchPersona(page, 'Rui Santos')
   await page.goto(`${ORG}/ativos`)
   await expect(page.getByText('4 registados pelo Pedro Almeida')).toBeVisible()
@@ -94,7 +94,7 @@ test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, R
   await shot(page, 'c1-07d-completo')
 })
 
-test('Cenário 1 — extras: filtros, detalhe com histórico, editar, serviços e exportação', async ({ page }) => {
+test('Scenario 1 — extras: filters, detail with history, edit, services and export', async ({ page }) => {
   await start(page, `${ORG}/ativos`, 'rui', 'c2')
   await switchPersona(page, 'Rui Santos')
   await page.goto(`${ORG}/ativos`)

@@ -5,7 +5,7 @@ export interface RiskScore {
   level: Level
 }
 
-/** Nível de risco calculado por regra (probabilidade × impacto). Nunca escolhido à mão. */
+/** Risk level computed by rule (probability × impact). Never picked by hand. */
 export function computeRiskLevel(probability: number, impact: number, config: RiskMatrixConfig = RISK_MATRIX): RiskScore {
   const valid = (steps: RiskMatrixConfig['probability'], v: number) => steps.some((s) => s.value === v)
   if (!valid(config.probability, probability) || !valid(config.impact, impact)) {
@@ -17,7 +17,7 @@ export function computeRiskLevel(probability: number, impact: number, config: Ri
   return { score, level: band.level }
 }
 
-/** Texto da regra, ex.: "Média × Alto = Alto". */
+/** Rule text, e.g. "Média × Alto = Alto". */
 export function describeRule(probability: number, impact: number, config: RiskMatrixConfig = RISK_MATRIX): string {
   const p = config.probability.find((s) => s.value === probability)?.label ?? '?'
   const i = config.impact.find((s) => s.value === impact)?.label ?? '?'

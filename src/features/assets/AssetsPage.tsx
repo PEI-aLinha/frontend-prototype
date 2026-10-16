@@ -69,7 +69,7 @@ function taskState(tasks: Task[]): { task: Task | null; state: 'empty' | 'assign
   return { task, state: task.status === 'concluida' ? 'done' : 'assigned' }
 }
 
-/** 07 / 07b / 07c — Ativos e serviços críticos. Também serve a vista da consultora. */
+/** 07 / 07b / 07c — Assets and critical services. Also serves the consultant's view. */
 export function AssetsPage() {
   const org = useTenant()
   const can = useCan()

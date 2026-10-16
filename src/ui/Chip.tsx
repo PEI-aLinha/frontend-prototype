@@ -23,7 +23,7 @@ export function Chip({ tone = 'signal', children, className, icon }: { tone?: To
   )
 }
 
-/** Criticidade: Alta = chip escuro, Média = signal, Baixa = neutro. */
+/** Criticality: High = dark chip, Medium = signal, Low = neutral. */
 export function CriticalityChip({ level }: { level: Level }) {
   const tone: Tone = level === 'alto' ? 'dark' : level === 'medio' ? 'signal' : 'neutral'
   return <Chip tone={tone}>{CRITICALITY_LABEL[level]}</Chip>
@@ -31,7 +31,7 @@ export function CriticalityChip({ level }: { level: Level }) {
 
 const RISK_ICON: Record<Level, typeof Circle> = { baixo: Circle, medio: TriangleAlert, alto: OctagonAlert }
 
-/** Nível de risco: cor + ícone + texto (nunca só cor). */
+/** Risk level: color + icon + text (never color alone). */
 export function RiskLevelBadge({ level, prefix, size = 'md' }: { level: Level; prefix?: string; size?: 'md' | 'lg' }) {
   const cls = riskCellClass(level)
   const Icon = RISK_ICON[level]
@@ -44,7 +44,7 @@ export function RiskLevelBadge({ level, prefix, size = 'md' }: { level: Level; p
   )
 }
 
-/** Etiqueta obrigatória em todo o conteúdo de IA. */
+/** Mandatory label on all AI content. */
 export function AIBadge({ kind = 'proposal', onDark }: { kind?: 'proposal' | 'info'; onDark?: boolean }) {
   return (
     <span className={cn('inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-bold leading-[1.2]', onDark ? 'bg-brand text-signal-soft' : 'border border-brand-soft bg-paper text-brand')}>

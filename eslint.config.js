@@ -5,8 +5,8 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-// Isolamento entre plugins: features/assets e features/assessment só comunicam
-// através de src/api/contracts e do ficheiro public.ts de cada feature.
+// Plugin isolation: features/assets and features/assessment only communicate
+// through src/api/contracts and each feature's public.ts file.
 const isolation = (other) => ({
   'no-restricted-imports': ['error', {
     patterns: [{

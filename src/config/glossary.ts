@@ -1,4 +1,4 @@
-// Glossário em linguagem simples. Cada termo técnico da interface aponta para uma entrada daqui.
+// Plain-language glossary. Every technical term in the UI points to an entry here.
 export interface GlossaryEntry {
   term: string
   short: string

@@ -7,7 +7,7 @@ import { useCan } from '../../core/useCan'
 import { Button, CriticalityChip, Drawer, Field, Note, Segmented, TextInput, useToast } from '../../ui'
 import type { Inventory } from './useInventory'
 
-/** Gerir serviços críticos (RF35). */
+/** Manage critical services (RF35). */
 export function ServicesDrawer({ open, onClose, inventory }: { open: boolean; onClose: () => void; inventory: Inventory }) {
   const org = useTenant()
   const can = useCan()

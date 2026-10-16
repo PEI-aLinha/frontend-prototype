@@ -5,7 +5,7 @@ import { useSetRiskStatus } from '../../../api/queries'
 import { useTenant } from '../../../core/tenant'
 import { Button, Field, TextInput, useToast } from '../../../ui'
 
-/** Fecho do ciclo do risco: tratado (as ações estão feitas), arquivado (deixou de existir) ou reaberto. */
+/** Closing the risk lifecycle: treated (actions are done), archived (no longer exists) or reopened. */
 export function RiskStatusActions({ risk, onDone }: { risk: Risk; onDone: () => void }) {
   const org = useTenant()
   const toast = useToast()

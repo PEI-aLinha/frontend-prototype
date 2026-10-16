@@ -1,6 +1,6 @@
 import type { Asset } from '../../api/contracts'
 
-/** Ativos que deixam de funcionar (direta ou indiretamente) se este falhar. */
+/** Assets that stop working (directly or indirectly) if this one fails. */
 export function affectedBy(assetId: string, assets: Asset[]): Asset[] {
   const out = new Map<string, Asset>()
   const queue = [assetId]

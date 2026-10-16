@@ -27,7 +27,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      {/* Canto inferior esquerdo da área de conteúdo (depois da navegação de 232 px). */}
+      {/* Bottom-left corner of the content area (after the 232 px navigation). */}
       <div aria-live="polite" className="pointer-events-none fixed bottom-6 left-[288px] z-[90] flex flex-col gap-2 max-md:bottom-auto max-md:left-5 max-md:right-5 max-md:top-[72px]">
         {items.map((t) => (
           <div
@@ -47,6 +47,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useToast(): ToastApi {
   const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast fora de ToastProvider')
+  if (!ctx) throw new Error('useToast must be used within ToastProvider')
   return ctx
 }

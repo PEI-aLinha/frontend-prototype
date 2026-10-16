@@ -1,4 +1,4 @@
-// Catálogo simulado de plugins Provider (RF37). Todos só de leitura.
+// Simulated catalog of Provider plugins (RF37). All read-only.
 import type { CollectedEvidence, DiscoveredAsset, ProviderId, ProviderInfo } from '../contracts'
 
 export const PROVIDERS: ProviderInfo[] = [

@@ -1,7 +1,7 @@
 import type { Api, DemoActor } from './contracts'
 import { createMockApi } from './mock/mockApi'
 
-// Ponto único de troca: para ligar à API real, criar createHttpApi() com os mesmos contratos.
+// Single swap point: to connect to the real API, create createHttpApi() with the same contracts.
 let currentActor: DemoActor = { userId: 'u-rui' }
 
 export function setActor(actor: DemoActor): void {

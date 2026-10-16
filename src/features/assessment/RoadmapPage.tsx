@@ -12,7 +12,7 @@ import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './pr
 
 type View = 'base' | 'riscos'
 
-/** Avaliação e roadmap (mínimo do plugin Avaliação): mostra o efeito dos riscos na prioridade. */
+/** Assessment and roadmap (minimal Assessment plugin): shows the effect of risks on priority. */
 export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const org = useTenant()
   const can = useCan()

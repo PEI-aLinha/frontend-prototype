@@ -7,7 +7,7 @@ import { Button, Chip, Modal, Note, cn, useToast } from '../../ui'
 
 const STEPS = ['O que lemos', 'Autorizar', 'Primeira leitura'] as const
 
-/** Ligação simulada em três passos. Na versão real, o passo 2 abre a página de consentimento do fornecedor (OAuth). */
+/** Simulated three-step connection. In the real version, step 2 opens the provider's consent page (OAuth). */
 export function ConnectModal({ provider, open, onClose }: { provider: ProviderInfo | null; open: boolean; onClose: () => void }) {
   const org = useTenant()
   const toast = useToast()

@@ -3,7 +3,7 @@ import { canRole, type Action, type Resource } from './rbac'
 import { useSession } from './session'
 import { useOptionalTenant } from './tenant'
 
-/** can(action, resource) para o utilizador atual, no contexto da organização ativa. */
+/** can(action, resource) for the current user, in the context of the active organization. */
 export function useCan(): (action: Action, resource: Resource) => boolean {
   const { persona } = useSession()
   const org = useOptionalTenant()

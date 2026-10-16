@@ -11,11 +11,11 @@ interface Props {
   selected: Id[]
   onChange: (ids: Id[]) => void
   error?: string
-  /** Sugestões (ex.: ações do mesmo controlo), mostradas primeiro. */
+  /** Suggestions (e.g. actions for the same control), shown first. */
   suggested?: Id[]
 }
 
-/** Seletor das ações do roadmap (plugin Avaliação), exposto aos outros plugins por public.ts. */
+/** Roadmap action picker (Assessment plugin), exposed to other plugins via public.ts. */
 export function RoadmapActionPicker({ orgId, actions, selected, onChange, error, suggested = [] }: Props) {
   const toast = useToast()
   const propose = useProposeAction(orgId)

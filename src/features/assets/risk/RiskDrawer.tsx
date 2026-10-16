@@ -77,7 +77,7 @@ function RiskHistory({ riskId, users }: { riskId: string; users: User[] }) {
   return audit.data ? <HistoryList items={toHistory(audit.data, users)} /> : <p className="text-[14px] text-muted">A carregar…</p>
 }
 
-/** Vista do cliente (D3): só leitura, linguagem simples. */
+/** Client view (D3): read-only, plain language. */
 export function RiskReadDrawer({ open, onClose, risk, assets, users, actions, links }: Omit<Props, 'initialAssetId' | 'onSaved'>) {
   if (!risk) return null
   const { level } = computeRiskLevel(risk.probability, risk.impact)

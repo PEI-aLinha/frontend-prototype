@@ -54,7 +54,7 @@ function Suggestion({ d, assets, services, providerName, canDecide }: Omit<Props
   )
 }
 
-/** Fila de ativos encontrados pelas integrações. Nada entra no inventário sem decisão humana. */
+/** Queue of assets found by integrations. Nothing enters the inventory without a human decision. */
 export function DiscoveryList(props: Props) {
   const pending = props.items.filter((d) => d.status === 'proposto')
   const done = props.items.filter((d) => d.status !== 'proposto')

@@ -5,7 +5,7 @@ import { dateTime } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { Button, Chip, HighlightCard, NextSteps, PageHeader, StatCard } from '../../ui'
 
-/** Visão geral do cliente (consultora). Ponto de entrada do cenário 2. */
+/** Client overview (consultant). Entry point for scenario 2. */
 export function ClientOverviewPage() {
   const org = useTenant()
   const roadmap = useRoadmapStatus(org.id)

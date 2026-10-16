@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from './cn'
 
-/** Linha "por registar": caixa tracejada 36×36 com "+", título, texto e ação à direita. */
+/** "To register" row: dashed 36×36 box with "+", title, text and action on the right. */
 export function PendingRow({ title, text, action, assigned }: { title: string; text: string; action: ReactNode; assigned?: boolean }) {
   return (
     <div className={cn('flex items-center gap-3.5 px-5 py-4 max-md:flex-wrap', assigned && 'bg-paper-soft')}>

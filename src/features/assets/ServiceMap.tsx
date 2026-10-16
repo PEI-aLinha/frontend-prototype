@@ -4,7 +4,7 @@ import { ASSET_TYPE_LABEL } from '../../config/labels'
 import { CriticalityChip, Eyebrow, RiskLevelBadge, Term } from '../../ui'
 import type { Inventory } from './useInventory'
 
-/** Vista "Por serviço": que ativos mantêm cada serviço crítico a funcionar. */
+/** "By service" view: which assets keep each critical service running. */
 export function ServiceMap({ assets, inventory, onOpen }: { assets: Asset[]; inventory: Inventory; onOpen: (a: Asset) => void }) {
   const groups = [
     ...inventory.services.map((s) => ({ id: s.id, name: s.name, criticality: s.criticality, items: assets.filter((a) => a.criticalServiceId === s.id) })),

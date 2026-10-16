@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { ORG, shot, start } from './helpers'
 
-test('Cenário 3 — Rui vê os riscos em só leitura depois da validação', async ({ page }) => {
+test('Scenario 3 — Rui sees the risks read-only after validation', async ({ page }) => {
   await start(page, `${ORG}/inicio`, 'rui', 'c3')
   await page.goto(`${ORG}/inicio`)
   await expect(page.getByText('1 risco alto · em tratamento')).toBeVisible()
@@ -20,7 +20,7 @@ test('Cenário 3 — Rui vê os riscos em só leitura depois da validação', as
   await shot(page, 'c3-03-risco')
 })
 
-test('Permissões — antes da validação o Rui não vê riscos e o Pedro nunca vê', async ({ page }) => {
+test('Permissions — before validation Rui cannot see risks and Pedro never can', async ({ page }) => {
   await start(page, `${ORG}/riscos`, 'rui', 'c2')
   await page.goto(`${ORG}/riscos?as=rui`)
   await expect(page.getByText('Este ecrã não está disponível para o seu papel')).toBeVisible()

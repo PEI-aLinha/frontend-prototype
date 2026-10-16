@@ -1,4 +1,4 @@
-// Decisão D2: escala de risco configurável. Mudar para 5×5 é só editar este ficheiro.
+// Decision D2: configurable risk scale. Switching to 5×5 only requires editing this file.
 export type Level = 'baixo' | 'medio' | 'alto'
 
 export interface ScaleStep {

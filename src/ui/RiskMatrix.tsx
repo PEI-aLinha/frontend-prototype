@@ -19,7 +19,7 @@ interface RiskMatrixProps {
   compact?: boolean
 }
 
-/** Heatmap gerado a partir da configuração (3×3 hoje, 5×5 amanhã). Probabilidade em linhas, impacto em colunas. */
+/** Heatmap generated from the config (3×3 today, 5×5 tomorrow). Probability in rows, impact in columns. */
 export function RiskMatrix({ probability, impact, levelOf, count, selected, onSelect, compact }: RiskMatrixProps) {
   const rows = [...probability].reverse()
   const size = compact ? 'h-14' : 'h-[72px]'

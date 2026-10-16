@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 export const ORG = '/org/componentes-agueda'
 
-/** Começa num snapshot limpo dos dados de demonstração, com uma persona. */
+/** Starts from a clean snapshot of the demo data, as a persona. */
 export async function start(page: Page, path: string, as: 'rui' | 'pedro' | 'marta', snapshot: 'c1' | 'c2' | 'c3' = 'c1') {
   await page.goto('/_design')
   await page.evaluate(() => localStorage.clear())
@@ -37,7 +37,7 @@ export async function shot(page: Page, name: string) {
   await page.screenshot({ path: `e2e/__screenshots__/${test.info().project.name}/${name}.png`, fullPage: !dialogOpen })
 }
 
-/** Abre um ativo: linha da tabela no desktop, cartão no mobile. */
+/** Opens an asset: table row on desktop, card on mobile. */
 export async function openAsset(page: Page, name: string) {
   const row = page.getByRole('row', { name: `Abrir ${name}` })
   const card = page.getByRole('button', { name: new RegExp(`^${name}`) })

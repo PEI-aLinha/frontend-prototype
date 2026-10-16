@@ -11,7 +11,7 @@ import { DemoGuide, type GuideStep } from './DemoGuide'
 
 const itemCls = 'flex cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] outline-none data-[highlighted]:bg-paper-soft'
 
-/** Seletor de persona discreto para a demonstração (canto inferior direito, ou ⌥P / Alt+P). */
+/** Unobtrusive persona switcher for the demo (bottom-right corner, or ⌥P / Alt+P). */
 export function PersonaSwitcher() {
   const { persona, setPersona } = useSession()
   const navigate = useNavigate()
@@ -50,7 +50,7 @@ export function PersonaSwitcher() {
     setGuide(false)
     if (st.snapshot) { resetDemo(st.snapshot); qc.clear() }
     setPersona(st.as)
-    // Depois de o modal fechar, para o clique não cair no ecrã de destino.
+    // After the modal closes, so the click does not land on the target screen.
     window.setTimeout(() => navigate(`${st.path}${st.path.includes('?') ? '&' : '?'}as=${st.as}`), 0)
   }
 

@@ -88,7 +88,7 @@ function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; pro
   )
 }
 
-/** Integrações com sistemas da empresa (RF37 / US37). Só leitura; o humano decide o que entra. */
+/** Integrations with the company's systems (RF37 / US37). Read-only; a human decides what gets in. */
 export function IntegrationsPage() {
   const org = useTenant()
   const { persona } = useSession()

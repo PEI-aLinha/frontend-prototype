@@ -11,7 +11,7 @@ const ICON: Record<NotificationKind, typeof Bell> = {
   roadmap: ShieldCheck, avaliacao: ClipboardList, integracao: Plug, risco: ShieldCheck,
 }
 
-/** Centro de notificações (app). As mesmas notificações seguem por email (simulado). */
+/** Notification center (in-app). The same notifications are also sent by email (simulated). */
 export function NotificationBell({ compact }: { compact?: boolean }) {
   const navigate = useNavigate()
   const list = useNotifications()

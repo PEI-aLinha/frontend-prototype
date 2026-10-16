@@ -7,7 +7,7 @@ import { useSession } from '../core/session'
 import { useCan } from '../core/useCan'
 import { EmptyState } from '../ui'
 
-/** Protege um ecrã pelo papel (RNF08). */
+/** Guards a screen by role (RNF08). */
 export function Guard({ resource, action = 'view', children, reason }: { resource: Resource; action?: Action; children: ReactNode; reason?: string }) {
   const can = useCan()
   const { persona } = useSession()

@@ -10,7 +10,7 @@ export function TenantProvider({ org, children }: { org: Organization; children:
 // eslint-disable-next-line react-refresh/only-export-components
 export function useTenant(): Organization {
   const org = useContext(TenantContext)
-  if (!org) throw new Error('useTenant fora de TenantProvider')
+  if (!org) throw new Error('useTenant must be used within TenantProvider')
   return org
 }
 

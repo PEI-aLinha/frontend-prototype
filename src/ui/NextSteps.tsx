@@ -10,7 +10,7 @@ export interface NextStep {
   cta?: string
 }
 
-/** Checklist "O que fazer a seguir": diz a cada pessoa qual é o próximo passo. */
+/** "What to do next" checklist: tells each person their next step. */
 export function NextSteps({ title = 'O que fazer a seguir', steps }: { title?: string; steps: NextStep[] }) {
   const next = steps.findIndex((s) => !s.done)
   const done = steps.filter((s) => s.done).length

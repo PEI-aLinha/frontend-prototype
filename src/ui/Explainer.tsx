@@ -3,7 +3,7 @@ import { ChevronDown, Lightbulb } from 'lucide-react'
 import { cn } from './cn'
 
 interface ExplainerProps {
-  /** Chave para lembrar se a pessoa fechou a explicação (por browser). */
+  /** Key to remember whether the person dismissed the explanation (per browser). */
   id: string
   title?: string
   intro: ReactNode
@@ -19,7 +19,7 @@ function readCollapsed(id: string): boolean {
   }
 }
 
-/** "Como funciona este ecrã": explicação curta em passos, que se pode recolher. */
+/** "How this screen works": short step-by-step explanation that can be collapsed. */
 export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps, footer }: ExplainerProps) {
   const [collapsed, setCollapsed] = useState(() => readCollapsed(id))
   const toggle = () => {
@@ -28,7 +28,7 @@ export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps
     try {
       localStorage.setItem(`alinha-explainer-${id}`, next ? 'closed' : 'open')
     } catch {
-      // sem persistência: fica só nesta sessão
+      // no persistence: lasts only for this session
     }
   }
   return (

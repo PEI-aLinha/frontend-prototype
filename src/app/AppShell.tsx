@@ -19,14 +19,14 @@ export interface NavSection {
 interface AppShellProps {
   sections: NavSection[]
   user: { initials: string; name: string; subtitle: string }
-  /** Entradas da tab bar no mobile (por omissão, todas). */
+  /** Mobile tab bar entries (all by default). */
   tabs?: NavItem[]
-  /** Ações globais (ex.: notificações), no topo da navegação e do cabeçalho mobile. */
+  /** Global actions (e.g. notifications), at the top of the navigation and the mobile header. */
   tools?: ReactNode
   children: ReactNode
 }
 
-/** Navegação lateral de 232 px no desktop; topo + tab bar no mobile (390). */
+/** 232 px side navigation on desktop; top bar + tab bar on mobile (390). */
 export function AppShell({ sections, user, tabs, tools, children }: AppShellProps) {
   const tabItems = tabs ?? sections.flatMap((s) => s.items)
   return (

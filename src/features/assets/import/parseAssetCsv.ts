@@ -26,7 +26,7 @@ const HEADERS: Record<string, keyof RawRow> = {
 
 const CRITICALITY: Record<string, Level> = { alta: 'alto', alto: 'alto', media: 'medio', medio: 'medio', baixa: 'baixo', baixo: 'baixo' }
 
-/** Divide uma linha CSV respeitando aspas ("a;b" fica num só campo). */
+/** Splits a CSV line respecting quotes ("a;b" stays in a single field). */
 export function splitCsvLine(line: string, sep: string): string[] {
   const out: string[] = []
   let cur = ''
@@ -54,7 +54,7 @@ function typeFrom(label: string): AssetType | null {
   return null
 }
 
-/** Lê o CSV da Lista de Ativos e valida cada linha. Nunca grava nada: só prepara a pré-visualização. */
+/** Reads the Asset List CSV and validates each row. Never saves anything: only prepares the preview. */
 export function parseAssetCsv(text: string, ctx: { services: CriticalService[]; users: User[]; existingNames: string[] }): { rows: ParsedRow[]; error: string | null } {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter((l) => l.trim())
   if (lines.length < 2) return { rows: [], error: 'O ficheiro tem de ter uma linha de cabeçalho e pelo menos um ativo.' }

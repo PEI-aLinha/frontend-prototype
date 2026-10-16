@@ -1,6 +1,6 @@
 import type { Id, Level } from '../../api/contracts'
 
-/** Sinal de risco recebido do plugin Riscos e Ativos, só por ID de ação (contrato). */
+/** Risk signal received from the Risks and Assets plugin, by action ID only (contract). */
 export interface RiskSignal {
   actionId: Id
   level: Level
@@ -12,7 +12,7 @@ export interface PrioritizedAction<T extends { id: Id; priority: number }> {
   rank: number
   baseRank: number
   topRisk: RiskSignal | null
-  /** Ex.: "Prioridade aumentada pelo risco: Ransomware no servidor de produção". */
+  /** E.g. "Prioridade aumentada pelo risco: Ransomware no servidor de produção". */
   reason: string | null
 }
 
@@ -23,8 +23,8 @@ function byBase<T extends { id: Id; priority: number }>(a: T, b: T): number {
 }
 
 /**
- * Reordena o roadmap pelos riscos reais (RF36): primeiro as ações ligadas aos riscos mais altos,
- * depois a prioridade de base. Função pura e determinística.
+ * Reorders the roadmap by actual risks (RF36): first the actions linked to the highest risks,
+ * then by base priority. Pure, deterministic function.
  */
 export function prioritizeRoadmap<T extends { id: Id; priority: number }>(actions: readonly T[], signals: readonly RiskSignal[]): PrioritizedAction<T>[] {
   const base = [...actions].sort(byBase)

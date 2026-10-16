@@ -3,7 +3,7 @@ import { shot, start } from './helpers'
 
 const RISKS = '/clientes/componentes-agueda/riscos'
 
-test('Riscos — residual, revisão atrasada, arquivar e reabrir', async ({ page }) => {
+test('Risks — residual, overdue review, archive and reopen', async ({ page }) => {
   await start(page, RISKS, 'marta', 'c3')
   await page.goto(`${RISKS}?as=marta`)
   await expect(page.getByText('Revisão atrasada').locator('visible=true').first()).toBeVisible()

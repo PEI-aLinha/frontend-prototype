@@ -8,7 +8,7 @@ const HEADERS = ['Risco', 'Ativo', 'Probabilidade', 'Impacto', 'Nível', 'Tratam
 
 interface Ctx { assets: Asset[]; users: User[]; actions: RemediationAction[]; links: RiskActionLink[] }
 
-/** Exporta o registo de riscos (ISO/IEC 27005) para CSV, para auditorias ou para a administração. */
+/** Exports the risk register (ISO/IEC 27005) to CSV, for audits or for management. */
 export function exportRiskRegister(risks: Risk[], ctx: Ctx): void {
   const label = (steps: typeof RISK_MATRIX.probability, v: number) => steps.find((s) => s.value === v)?.label ?? String(v)
   const rows = risks.map((r) => [

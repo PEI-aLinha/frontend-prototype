@@ -1,4 +1,4 @@
-// Hooks TanStack Query por cima dos contratos. Os componentes usam só isto, nunca o mock.
+// TanStack Query hooks on top of the contracts. Components use only these, never the mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
 import type { AssetBulkChange, AssetInput, QuestionAnswer, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'

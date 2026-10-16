@@ -4,7 +4,7 @@ import { ErrorState, HistoryList, PageHeader, SkeletonRows } from '../../ui'
 
 const CONTEXT: Record<string, string> = { asset: 'Ativos', critical_service: 'Serviços críticos', risk: 'Riscos', risk_action: 'Riscos ↔ roadmap', task: 'Tarefas', remediation_action: 'Roadmap', roadmap: 'Roadmap', comment: 'Comentários' }
 
-/** Histórico de alterações da organização (RF29): quem, quando, o quê. */
+/** Organization's change history (RF29): who, when, what. */
 export function HistoryPage() {
   const org = useTenant()
   const audit = useAudit(org.id)

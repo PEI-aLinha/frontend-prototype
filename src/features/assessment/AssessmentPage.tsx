@@ -5,7 +5,7 @@ import { Avatar, Card, Chip, ErrorState, Eyebrow, Explainer, NextSteps, Note, Pa
 
 const STATUS = { em_curso: 'Em curso', submetida: 'Concluída · a aguardar validação', validada: 'Validada pela consultora' } as const
 
-/** Avaliação de maturidade do Rui: resumo por secção e perguntas delegadas. O questionário é outro plugin. */
+/** Rui's maturity assessment: summary per section and delegated questions. The questionnaire is another plugin. */
 export function AssessmentPage() {
   const org = useTenant()
   const assessment = useAssessment(org.id)

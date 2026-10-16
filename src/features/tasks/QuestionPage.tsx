@@ -14,7 +14,7 @@ const CHOICES: Array<{ value: AnswerChoice; label: string; hint: string }> = [
   { value: 'nao_sei', label: 'Não sei', hint: 'Não tenho como confirmar. O Rui decide como responder.' },
 ]
 
-/** Pergunta técnica delegada ao analista (ecrã 10 / D10). */
+/** Technical question delegated to the analyst (screen 10 / D10). */
 export function QuestionPage() {
   const { taskId } = useParams()
   const org = useTenant()

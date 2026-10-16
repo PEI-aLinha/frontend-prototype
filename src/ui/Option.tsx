@@ -17,7 +17,7 @@ interface OptionGroupProps<T extends string> {
   error?: string
 }
 
-/** Opções em cartão (radio). Selecionada: brand-soft + borda brand + texto Bold brand. */
+/** Card options (radio). Selected: brand-soft + brand border + Bold brand text. */
 export function OptionGroup<T extends string>({ name, value, onChange, options, legend, columns = 1, error }: OptionGroupProps<T>) {
   const id = useId()
   return (

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { validateAsset, type AssetFormValues, type Errors } from './assetFormModel'
 
-/** Gestão do estado do formulário com validação no envio. */
+/** Form state management with validation on submit. */
 export function useAssetForm(initial: AssetFormValues) {
   const [values, setValues] = useState(initial)
   const [errors, setErrors] = useState<Errors>({})

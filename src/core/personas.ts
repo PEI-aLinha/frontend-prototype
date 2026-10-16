@@ -13,7 +13,7 @@ export interface Persona {
   description: string
 }
 
-// Personas do relatório técnico (§2.3). Usadas só pelo seletor de demonstração.
+// Personas from the technical report (§2.3). Used only by the demo switcher.
 export const PERSONAS: Record<PersonaKey, Persona> = {
   rui: { key: 'rui', userId: 'u-rui', name: 'Rui Santos', firstName: 'Rui', initials: 'RS', role: 'responsavel', subtitle: 'Componentes Águeda', description: 'Responsável designado · diretor administrativo e financeiro' },
   pedro: { key: 'pedro', userId: 'u-pedro', name: 'Pedro Almeida', firstName: 'Pedro', initials: 'PA', role: 'analista', subtitle: 'Analista', description: 'Analista · técnico de informática externo' },

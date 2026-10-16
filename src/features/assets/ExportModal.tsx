@@ -14,7 +14,7 @@ function missing(a: Asset): string[] {
   return out
 }
 
-/** Verificação antes de comunicar: cada ativo deve ter responsável, serviço e localização. */
+/** Check before reporting: every asset must have an owner, service and location. */
 function Readiness({ inventory, base }: { inventory: Inventory; base: string }) {
   const gaps = inventory.assets.map((a) => ({ a, m: missing(a) })).filter((x) => x.m.length)
   const ok = gaps.length === 0 && inventory.services.length > 0

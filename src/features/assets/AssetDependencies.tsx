@@ -18,7 +18,7 @@ function List({ items, inv, empty }: { items: Asset[]; inv: Inventory; empty: st
   )
 }
 
-/** Separador "Dependências": de que precisa este ativo e o que para se ele falhar. */
+/** "Dependencies" tab: what this asset needs and what stops if it fails. */
 export function AssetDependencies({ asset, inventory }: { asset: Asset; inventory: Inventory }) {
   const deps = inventory.assets.filter((a) => asset.dependsOn?.includes(a.id))
   const direct = inventory.assets.filter((a) => a.dependsOn?.includes(asset.id))

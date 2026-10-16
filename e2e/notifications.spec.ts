@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { ORG, shot, start, switchPersona } from './helpers'
 
-test('Notificações e tarefas — atribuir, lembrar, mudar prazo e o Pedro é avisado', async ({ page }) => {
+test('Notifications and tasks — assign, remind, change due date and Pedro is notified', async ({ page }) => {
   await start(page, `${ORG}/ativos?atribuir=1`, 'rui')
   await page.getByRole('dialog').getByRole('button', { name: 'Atribuir' }).click()
   await expect(page.getByText('Atribuído · até qui., 15 out.')).toBeVisible()
@@ -27,7 +27,7 @@ test('Notificações e tarefas — atribuir, lembrar, mudar prazo e o Pedro é a
   await expect(page.getByRole('heading', { name: 'Registar ativos técnicos' })).toBeVisible()
 })
 
-test('Guião da demonstração leva ao ecrã certo com a persona certa', async ({ page }) => {
+test('Demo guide leads to the right screen with the right persona', async ({ page }) => {
   await start(page, `${ORG}/inicio`, 'rui', 'c1')
   await page.keyboard.press('Alt+KeyP')
   await page.getByRole('menuitem', { name: 'Guião da demonstração' }).click()

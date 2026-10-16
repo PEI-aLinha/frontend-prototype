@@ -4,7 +4,7 @@ import { usePortfolio } from '../../api/queries'
 import { dateTime } from '../../config/labels'
 import { Chip, ErrorState, PageHeader, SkeletonRows, StatCard, Tooltip, cn } from '../../ui'
 
-/** Carteira de clientes da consultora. Só a Componentes Águeda está ativa neste protótipo. */
+/** Consultant's client portfolio. Only Componentes Águeda is active in this prototype. */
 export function PortfolioPage() {
   const navigate = useNavigate()
   const portfolio = usePortfolio()

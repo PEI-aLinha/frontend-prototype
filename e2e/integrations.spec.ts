@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { ORG, shot, start, switchPersona } from './helpers'
 
-test('Integrações — Rui pede ao Pedro, Pedro liga, Rui decide as sugestões', async ({ page }) => {
+test('Integrations — Rui asks Pedro, Pedro connects, Rui decides on the suggestions', async ({ page }) => {
   await start(page, `${ORG}/integracoes`, 'rui', 'c2')
   await page.goto(`${ORG}/integracoes?as=rui`)
   const intune = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Microsoft Intune' }) })
@@ -43,7 +43,7 @@ test('Integrações — Rui pede ao Pedro, Pedro liga, Rui decide as sugestões'
   await expect(page.getByText('Computadores das linhas de produção (6)').locator('visible=true').first()).toBeVisible()
 })
 
-test('Integrações — a consultora só vê as evidências', async ({ page }) => {
+test('Integrations — the consultant only sees the evidence', async ({ page }) => {
   await start(page, '/clientes/componentes-agueda/integracoes', 'marta', 'c3')
   await page.goto('/clientes/componentes-agueda/integracoes?as=marta')
   await expect(page.getByText('Autenticação multifator nas contas')).toBeVisible()

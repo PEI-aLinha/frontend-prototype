@@ -11,7 +11,7 @@ interface TaskCardProps {
   action?: ReactNode
 }
 
-/** Cartão de tarefa do analista: chip do tipo + prazo, título Bold 17, meta 13. */
+/** Analyst task card: type chip + due date, Bold 17 title, 13 meta. */
 export function TaskCard({ type, due, title, meta, done, action }: TaskCardProps) {
   return (
     <article className={cn('flex items-center gap-5 rounded-[16px] border border-line-soft px-6 py-5 max-md:flex-col max-md:items-stretch max-md:px-5', done ? 'bg-paper-soft' : 'bg-paper')}>

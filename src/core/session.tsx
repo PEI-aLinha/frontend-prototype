@@ -19,7 +19,7 @@ function initialPersona(): PersonaKey {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (isPersonaKey(stored)) return stored
   } catch {
-    // sem localStorage: começa como Rui.
+    // no localStorage: start as Rui.
   }
   return 'rui'
 }
@@ -37,7 +37,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, next)
     } catch {
-      // ignorado
+      // ignored
     }
     qc.clear()
     setKey(next)
@@ -50,6 +50,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 // eslint-disable-next-line react-refresh/only-export-components
 export function useSession(): SessionValue {
   const ctx = useContext(SessionContext)
-  if (!ctx) throw new Error('useSession fora de SessionProvider')
+  if (!ctx) throw new Error('useSession must be used within SessionProvider')
   return ctx
 }

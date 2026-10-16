@@ -1,4 +1,4 @@
-// Dados de demonstração (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Datas em outubro de 2026.
+// Demo data (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Dates in October 2026.
 import type {
   AppNotification, Asset, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
   Risk, RiskActionLink, RoadmapStatus, Task, User,

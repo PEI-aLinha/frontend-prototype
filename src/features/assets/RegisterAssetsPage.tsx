@@ -12,7 +12,7 @@ import { emptyValues, toInput, valuesFromAsset } from './assetFormModel'
 import { useAssetForm } from './useAssetForm'
 import { useInventory } from './useInventory'
 
-/** 11 — Pedro regista os ativos técnicos da sua tarefa. */
+/** 11 — Pedro registers the technical assets of his task. */
 export function RegisterAssetsPage() {
   const { taskId = '' } = useParams()
   const org = useTenant()

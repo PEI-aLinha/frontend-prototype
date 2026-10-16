@@ -9,7 +9,7 @@ import { createIntegrationsMock } from './integrationsMock'
 import { createAssessmentMock } from './assessmentMock'
 import type { DemoState } from './seed'
 
-/** Quem está a fazer o pedido. Na API real vem do token (Keycloak). */
+/** Who is making the request. In the real API it comes from the token (Keycloak). */
 export type ActorProvider = () => DemoActor
 
 function user(s: Readonly<DemoState>, id: Id): User {
@@ -26,7 +26,7 @@ function deny(): never {
   throw new ApiError('Não tem permissão para esta ação.', 403)
 }
 
-/** Ativos visíveis para o ator: o analista só vê os da sua tarefa (RF06/US27). */
+/** Assets visible to the actor: the analyst only sees those of their task (RF06/US27). */
 function visibleAssets(s: Readonly<DemoState>, org: Id, actor: User): Asset[] {
   const all = s.assets.filter((a) => a.organizationId === org)
   if (actor.role !== 'analista') return all

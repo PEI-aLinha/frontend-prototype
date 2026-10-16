@@ -39,7 +39,7 @@ const SCENARIOS: Array<{ title: string; summary: string; steps: GuideStep[] }> =
   },
 ]
 
-/** Guião passo a passo da demonstração, com atalhos que mudam de persona e de dados. */
+/** Step-by-step demo script, with shortcuts that switch persona and data. */
 export function DemoGuide({ open, onClose, onGo }: { open: boolean; onClose: () => void; onGo: (s: GuideStep) => void }) {
   return (
     <Modal open={open} onOpenChange={(o) => !o && onClose()} width={680} title="Guião da demonstração"

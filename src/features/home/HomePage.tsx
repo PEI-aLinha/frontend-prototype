@@ -7,7 +7,7 @@ import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { Button, Eyebrow, HighlightCard, NextSteps, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
 
-/** Início do Responsável designado (06 / 14), com o cartão "Riscos" depois da validação (cenário 3). */
+/** Designated manager home (06 / 14), with the "Risks" card after validation (scenario 3). */
 export function HomePage() {
   const org = useTenant()
   const can = useCan()

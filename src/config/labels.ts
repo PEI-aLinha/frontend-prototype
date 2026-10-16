@@ -86,7 +86,7 @@ export function dateTime(iso: string): string {
 
 export type DueTone = 'late' | 'soon' | 'ok'
 
-/** Estado do prazo face ao "hoje" da demonstração. */
+/** Due date status relative to the demo's "today". */
 export function dueStatus(due: string, today: string): { label: string; tone: DueTone } {
   const days = Math.round((parse(due).getTime() - parse(today).getTime()) / 86_400_000)
   if (days < 0) return { label: `Atrasada ${-days} ${days === -1 ? 'dia' : 'dias'}`, tone: 'late' }
