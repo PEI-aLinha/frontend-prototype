@@ -1,75 +1,103 @@
-# React + TypeScript + Vite
+# aLinha — protótipo do plugin Riscos e Ativos
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Protótipo de muito alta fidelidade (MS3 · UX) do plugin **Riscos e Ativos** do aLinha, para demonstração aos orientadores e testes de usabilidade. Corre só no browser, com dados simulados; a camada de dados está preparada para ligar à API real (core Kotlin / Spring Modulith).
 
-Currently, two official plugins are available:
+## Correr
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev          # http://localhost:5173
+npm run build        # tsc + build de produção
+npm run lint
+npm test             # Vitest (regra de risco, permissões, roadmap, contraste, API mock)
+npx playwright install chromium
+npm run test:e2e     # Playwright: 3 cenários + acessibilidade (axe), desktop 1440×900 e mobile 390×844
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Os screenshots do Playwright ficam em `e2e/__screenshots__/{desktop,mobile}/`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Trocar de persona
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Botão **Demo · Nome** no canto inferior esquerdo (no mobile, por cima da tab bar), ou **Alt+P**.
+- Ou na URL: `?as=rui`, `?as=pedro`, `?as=marta`.
+- No mesmo menu: **Saltar para** um cenário, **Repor dados de demonstração** e **Simular falha de ligação** (mostra os estados de erro).
+
+| Persona | Papel | Começa em |
+|---|---|---|
+| Rui Santos | Responsável designado | `/org/componentes-agueda/inicio` |
+| Pedro Almeida | Analista | `/org/componentes-agueda/tarefas` |
+| Marta Ferreira | Consultora | `/carteira` |
+
+## Rotas por cenário
+
+Os painéis e modais abrem por parâmetro de URL, por isso todos os estados são partilháveis.
+
+**Cenário 1 — Inventário (Rui → Pedro)** · dados: *Cenário 1 · início*
+| Ecrã | Rota |
+|---|---|
+| 07 Ativos (Rui) | `/org/componentes-agueda/ativos` |
+| 07b Atribuir registo | `/org/componentes-agueda/ativos?atribuir=1` |
+| Adicionar / detalhe de ativo | `…/ativos?novo=1` · `…/ativos?ativo=ast-erp` |
+| Serviços críticos · Exportar Lista de Ativos | `…/ativos?servicos=1` · `…/ativos?exportar=1` |
+| Filtros | `…/ativos?q=nas&crit=alto&type=servidor` |
+| 09 As minhas tarefas (Pedro) | `/org/componentes-agueda/tarefas` |
+| 11 Registar ativos técnicos (Pedro) | `/org/componentes-agueda/tarefas/task-ativos/ativos` |
+
+**Cenário 2 — Registo de riscos (Marta)** · dados: *Cenário 2 · início*
+| Ecrã | Rota |
+|---|---|
+| Carteira de clientes | `/carteira` |
+| Visão geral do cliente | `/clientes/componentes-agueda/visao-geral` |
+| Inventário com "Registar risco" | `/clientes/componentes-agueda/ativos` |
+| Registo de riscos + matriz 3×3 | `/clientes/componentes-agueda/riscos` (filtro da matriz: `?p=2&i=3`) |
+| Novo risco sobre um ativo | `/clientes/componentes-agueda/riscos?novo=1&ativo=ast-servidor` |
+| Roadmap antes/depois + validar | `/clientes/componentes-agueda/roadmap` |
+| Histórico | `/clientes/componentes-agueda/historico` |
+
+**Cenário 3 — Rui depois da validação** · dados: *Cenário 3 · roadmap validado*
+| Ecrã | Rota |
+|---|---|
+| Início com cartão "Riscos" | `/org/componentes-agueda/inicio` |
+| Ativos com o risco mais alto | `/org/componentes-agueda/ativos` |
+| Riscos (só leitura, linguagem simples) | `/org/componentes-agueda/riscos` |
+
+Design system: `/_design`.
+
+## Arquitetura
 
 ```
+src/
+├── api/            contratos (AssetsApi, AssessmentApi, AuditApi, DirectoryApi), hooks TanStack Query, mock
+│   └── mock/       implementação em memória, latência 200–600 ms, localStorage, auditoria em cada escrita
+├── core/           sessão/persona, RBAC (canRole/useCan), tenant, seletor de persona
+├── config/         matriz de risco (D2), flags (D3), etiquetas e datas em pt-PT
+├── features/
+│   ├── assets/     inventário, serviços, tarefas do analista, registo de riscos (plugin Riscos e Ativos)
+│   ├── assessment/ roadmap mínimo e prioritizeRoadmap (plugin Avaliação)
+│   ├── home/  portfolio/  tasks/
+├── ui/             design system (tokens em src/index.css)
+└── app/            router, layouts por persona, guardas, composição entre plugins
+```
+
+- **Trocar para a API real:** escrever `createHttpApi()` que cumpra `src/api/contracts.ts` e usá-la em `src/api/client.ts`. Os componentes só usam `src/api/queries.ts`; o ESLint proíbe importar o mock.
+- **Isolamento entre plugins:** `features/assets` e `features/assessment` só se importam através de `public.ts` (regra `no-restricted-imports`). O roadmap recebe os riscos como sinais `{actionId, level, riskLabel}` em `app/ConsultantRoadmap.tsx`.
+- **Nível de risco:** só `computeRiskLevel()` o calcula; nunca é guardado nem escolhido à mão.
+- **RBAC:** regras em `src/core/rbac.ts`, aplicadas nos ecrãs (`Guard`, `useCan`) e também no mock (o analista só recebe os ativos da sua tarefa; o cliente só recebe riscos depois da validação).
+- **Auditoria:** cada escrita do mock gera uma entrada `audit_log` (quem, quando, o quê, antes/depois), visível no detalhe dos ativos e dos riscos e em *Histórico*.
+
+## Decisões a confirmar
+
+- **D1 — Tipos de ativo.** Acrescentados `armazenamento` e `sistema_producao_ot` (usados nos mockups). **O enum `assets.asset_type` do DBML tem de ser atualizado.**
+- **D2 — Escala de risco.** Matriz 3×3 configurável em `src/config/riskMatrix.ts`: score = p × i, com p, i ∈ {1, 2, 3}; 1–2 baixo, 3–4 médio, 6–9 alto. Passar a 5×5 é só mudar a configuração (há um teste que o demonstra). `risk_level` deixa de ser guardado no DBML.
+- **D3 — Visibilidade dos riscos para o cliente.** O Responsável designado vê o registo em só leitura depois de a consultora validar o roadmap (flag `RISKS_VISIBLE_TO_CLIENT_AFTER_VALIDATION` em `src/config/flags.ts`). O analista nunca vê riscos.
+- **D4 — Localização.** Campo opcional no ativo; não existe no DBML.
+- **Extras ao DBML (a confirmar):**
+  - `risk.treatment` passa de texto livre a enum `mitigar | aceitar | evitar | partilhar`, mais `acceptance_justification`, `residual_probability`, `residual_impact`, `status` e `plain_language` ("O que isto significa para a empresa").
+  - `task.scope` (o que registar) e `task.expected_count` na tarefa de registo de ativos.
+  - Comentários da consultora sobre ativos (`asset_comment`).
+- **Desvio visual:** o texto "✓ Feito" e outros textos a `signal` (#168C80) não passavam AA sobre branco; passaram a `brand`, com o visto em `signal`.
+- **Tokens de risco novos:** `risk-low/medium/high` (+ `-ink`), sóbrios e com contraste AA testado; os níveis têm sempre ícone e texto.
+
+## Fora do âmbito
+
+Backend real, Keycloak/MFA, emails, integração com CNCS/MyCiber, IA nova, plugins pós-MVP. Os ecrãs Avaliação e Equipa mostram "Fora deste protótipo".
