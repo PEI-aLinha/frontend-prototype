@@ -261,3 +261,8 @@ export class ApiError extends Error {
     this.status = status
   }
 }
+
+/** Identidade de quem faz o pedido (na API real vem do token de sessão). */
+export interface DemoActor {
+  userId: Id
+}
