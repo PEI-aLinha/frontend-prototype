@@ -100,11 +100,11 @@ export function RisksPage() {
                 count={(p, i) => all.filter((r) => r.probability === p && r.impact === i).length}
                 selected={cell} onSelect={(c) => update({ p: c ? String(c.probability) : null, i: c ? String(c.impact) : null })} compact />
             </Card>
-            <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
               {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
-                <Card key={l} className="flex items-center justify-between">
+                <Card key={l} className="flex items-center justify-between max-md:px-3.5 max-md:py-3">
                   <div><Eyebrow>Risco {RISK_LEVEL_LABEL[l].toLowerCase()}</Eyebrow><p className="mt-1 text-[18px] font-extrabold">{counts(l)}</p></div>
-                  <RiskLevelBadge level={l} />
+                  <span className="max-md:hidden"><RiskLevelBadge level={l} /></span>
                 </Card>
               ))}
             </div>
