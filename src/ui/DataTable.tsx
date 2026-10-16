@@ -26,14 +26,24 @@ interface DataTableProps<T> {
   initialSorting?: SortingState
   caption: string
   highlightId?: string | null
+  /** Seleção de linhas (ações em massa). */
+  selected?: string[]
+  onSelectedChange?: (ids: string[]) => void
 }
 
 /** Tabela: cartão raio 16, cabeçalho paper-soft com eyebrows 11, linhas 14/20 com separador line-soft. */
-export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, renderCard, footer, empty, initialSorting = [], caption, highlightId }: DataTableProps<T>) {
+const boxCls = 'size-4 cursor-pointer rounded accent-[var(--color-brand)]'
+
+export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, renderCard, footer, empty, initialSorting = [], caption, highlightId, selected, onSelectedChange }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting)
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({ data, columns, state: { sorting }, onSortingChange: setSorting, getRowId, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() })
   const rows = table.getRowModel().rows
+  const selectable = !!onSelectedChange
+  const sel = selected ?? []
+  const allIds = rows.map((r) => r.id)
+  const allOn = allIds.length > 0 && allIds.every((id) => sel.includes(id))
+  const toggle = (id: string) => onSelectedChange?.(sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id])
 
   return (
     <div className="overflow-hidden rounded-[16px] border border-line-soft bg-paper">
@@ -42,6 +52,11 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
         <thead className="bg-paper-soft">
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id} className="border-b border-line-soft">
+              {selectable && (
+                <th scope="col" className="w-11 pl-5">
+                  <input type="checkbox" className={boxCls} aria-label="Selecionar todos" checked={allOn} onChange={() => onSelectedChange?.(allOn ? [] : allIds)} />
+                </th>
+              )}
               {hg.headers.map((h, i) => {
                 const sorted = h.column.getIsSorted()
                 const canSort = h.column.getCanSort()
@@ -51,7 +66,7 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
                     scope="col"
                     style={{ width: h.column.columnDef.meta?.width }}
                     aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-                    className={cn('py-3 text-left font-normal', i === 0 ? 'pl-5' : 'pl-0', i === hg.headers.length - 1 ? 'pr-5' : 'pr-3', h.column.columnDef.meta?.align === 'right' && 'text-right')}
+                    className={cn('py-3 text-left font-normal', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === hg.headers.length - 1 ? 'pr-5' : 'pr-3', h.column.columnDef.meta?.align === 'right' && 'text-right')}
                   >
                     {canSort ? (
                       <button type="button" onClick={h.column.getToggleSortingHandler()} className="eyebrow group inline-flex items-center gap-1 text-[11px] text-muted hover:text-ink">
@@ -75,10 +90,15 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
               onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row.original) } } : undefined}
               tabIndex={onRowClick ? 0 : undefined}
               aria-label={onRowClick && rowLabel ? rowLabel(row.original) : undefined}
-              className={cn('border-b border-line-soft last:border-b-0 transition-colors', onRowClick && 'cursor-pointer hover:bg-paper-soft focus-visible:bg-paper-soft focus-visible:outline-offset-[-2px]', highlightId === row.id && 'bg-signal-soft/50')}
+              className={cn('border-b border-line-soft last:border-b-0 transition-colors', onRowClick && 'cursor-pointer hover:bg-paper-soft focus-visible:bg-paper-soft focus-visible:outline-offset-[-2px]', (highlightId === row.id || sel.includes(row.id)) && 'bg-signal-soft/50')}
             >
+              {selectable && (
+                <td className="w-11 pl-5" onClick={(e) => e.stopPropagation()}>
+                  <input type="checkbox" className={boxCls} aria-label={`Selecionar ${rowLabel?.(row.original).replace(/^Abrir /, '') ?? row.id}`} checked={sel.includes(row.id)} onChange={() => toggle(row.id)} onKeyDown={(e) => e.stopPropagation()} />
+                </td>
+              )}
               {row.getVisibleCells().map((cell, i, all) => (
-                <td key={cell.id} className={cn('py-3.5 align-middle text-[14px]', i === 0 ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
+                <td key={cell.id} className={cn('py-3.5 align-middle text-[14px]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

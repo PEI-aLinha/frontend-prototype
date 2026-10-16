@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router'
-import { Download, Layers, Plus, ShieldPlus } from 'lucide-react'
+import { Download, FileUp, Layers, Plus, ShieldPlus } from 'lucide-react'
 import type { Asset, Task } from '../../api/contracts'
 import { ASSET_TYPE_LABEL, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
@@ -8,7 +8,7 @@ import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
   Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Explainer, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
-  SkeletonRows, StatCard, type ColumnDef,
+  Segmented, SkeletonRows, StatCard, type ColumnDef,
 } from '../../ui'
 import { AssetDrawer } from './AssetDrawer'
 import { AssetFilters } from './AssetFilters'
@@ -16,6 +16,9 @@ import { applyFilters, FILTER_KEYS, readFilters, type AssetFilterState } from '.
 import { AssignTaskModal } from './AssignTaskModal'
 import { ExportModal } from './ExportModal'
 import { ServicesDrawer } from './ServicesDrawer'
+import { ServiceMap } from './ServiceMap'
+import { BulkBar } from './BulkBar'
+import { ImportModal } from './import/ImportModal'
 import { useInventory, type Inventory } from './useInventory'
 
 const LEVEL_SORT = { alto: 3, medio: 2, baixo: 1 } as const
@@ -73,6 +76,7 @@ export function AssetsPage() {
   const { persona } = useSession()
   const [params, setParams] = useSearchParams()
   const inv = useInventory()
+  const [picked, setPicked] = useState<string[]>([])
   const filters = readFilters(params)
 
   const update = (next: Record<string, string | null>) => {
@@ -156,11 +160,17 @@ export function AssetsPage() {
               <div className="flex flex-wrap items-center justify-end gap-1 text-[13px]">
                 <Button variant="ghost" size="sm" icon={<Layers className="size-4" aria-hidden />} onClick={() => update({ servicos: '1' })}>Serviços críticos</Button>
                 {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
+                {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
+                <span className="ml-2 max-md:ml-0 max-md:w-full">
+                  <Segmented ariaLabel="Vista" value={params.get('vista') === 'servicos' ? 'servicos' : 'tabela'} onChange={(v) => update({ vista: v === 'tabela' ? null : v })}
+                    options={[{ value: 'tabela', label: 'Tabela' }, { value: 'servicos', label: 'Por serviço' }]} />
+                </span>
               </div>
             </div>
           )}
 
-          <DataTable
+          {picked.length > 0 && can('edit', 'asset') && <BulkBar ids={picked} inventory={data} onDone={() => setPicked([])} />}
+          {params.get('vista') === 'servicos' ? <ServiceMap assets={visible} inventory={data} onOpen={(a) => update({ ativo: a.id })} /> : <DataTable
             caption="Ativos da organização"
             data={visible}
             columns={columns(data, { risks: inv.seeRisks && !consultant, riskLink: consultant && can('create', 'risk') ? (a) => `/clientes/${org.slug}/riscos?novo=1&ativo=${a.id}` : undefined })}
@@ -172,11 +182,14 @@ export function AssetsPage() {
             empty={data.assets.length === 0
               ? <EmptyState className="m-4" title="Ainda não há ativos registados" action={can('create', 'asset') && <Button onClick={() => update({ novo: '1' })}>Adicionar o primeiro ativo</Button>}>Comece pelos sistemas sem os quais a empresa para: faturação, produção, email.</EmptyState>
               : <p className="px-5 py-8 text-center text-[14px] text-ink-soft">Nenhum ativo corresponde aos filtros.</p>}
-          />
+            selected={picked}
+            onSelectedChange={can('edit', 'asset') && !consultant ? setPicked : undefined}
+          />}
 
           <AssetDrawer key={`new-${params.get('novo')}`} inventory={data} asset={null} mode="new" open={params.get('novo') === '1'} onClose={() => update({ novo: null })} />
           <AssetDrawer key={selected?.id ?? 'none'} inventory={data} asset={selected} mode="view" open={!!selected} onClose={() => update({ ativo: null })} />
           <ServicesDrawer open={params.get('servicos') === '1'} onClose={() => update({ servicos: null })} inventory={data} />
+          {can('create', 'asset') && <ImportModal key={String(params.get('importar'))} open={params.get('importar') === '1'} onClose={() => update({ importar: null })} inventory={data} />}
           <ExportModal open={params.get('exportar') === '1'} onClose={() => update({ exportar: null })} inventory={data} />
           {can('assign', 'asset_task') && <AssignTaskModal key={String(params.get('atribuir'))} open={params.get('atribuir') === '1'} onClose={() => update({ atribuir: null })} analysts={analysts} />}
         </>

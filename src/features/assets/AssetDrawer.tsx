@@ -16,6 +16,7 @@ import { useAssetForm } from './useAssetForm'
 import { computeRiskLevel } from './risk/computeRiskLevel'
 import type { Inventory } from './useInventory'
 import { toHistory } from './history'
+import { AssetDependencies } from './AssetDependencies'
 
 interface Props {
   inventory: Inventory
@@ -54,7 +55,7 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
 
   const formBody = (
     <FormShell id="asset-form" onSubmit={submit}>
-      <AssetFields id="asset" values={form.values} onChange={form.onChange} services={inventory.services} owners={owners} errors={form.errors} />
+      <AssetFields id="asset" values={form.values} onChange={form.onChange} services={inventory.services} owners={owners} errors={form.errors} others={inventory.assets.filter((a) => a.id !== asset?.id).map((a) => ({ id: a.id, name: a.name }))} />
     </FormShell>
   )
 
@@ -71,6 +72,7 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
   const tabs: TabDef[] = [
     { value: 'detalhe', label: 'Detalhe', content: editable ? formBody : <ReadOnlyDetail asset={asset} inventory={inventory} /> },
   ]
+  tabs.push({ value: 'dependencias', label: 'Dependências', count: asset.dependsOn?.length ?? 0, content: <AssetDependencies asset={asset} inventory={inventory} /> })
   if (can('view', 'risk')) tabs.push({ value: 'riscos', label: 'Riscos', count: inventory.risksByAsset.get(asset.id)?.length ?? 0, content: <AssetRisks asset={asset} inventory={inventory} /> })
   if (can('view', 'asset_comment')) tabs.push({ value: 'comentarios', label: 'Comentários', content: <Comments asset={asset} inventory={inventory} /> })
   if (can('view', 'history')) tabs.push({ value: 'historico', label: 'Histórico', content: <AssetHistory asset={asset} inventory={inventory} /> })

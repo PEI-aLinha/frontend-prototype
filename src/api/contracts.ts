@@ -71,6 +71,10 @@ export interface Asset {
   criticality: Level
   /** D4: não existe no DBML. */
   location?: string
+  /** Outros ativos de que este depende para funcionar (ex.: o ERP depende da rede). */
+  dependsOn?: Id[]
+  /** Origem do registo: manual, importação de ficheiro ou integração. */
+  source?: 'manual' | 'importacao' | 'integracao'
   /** Tarefa de registo que originou o ativo (quando registado por um analista). */
   taskId?: Id
   createdBy: Id
@@ -78,7 +82,9 @@ export interface Asset {
   updatedAt: IsoDate
 }
 
-export type AssetInput = Pick<Asset, 'name' | 'type' | 'criticalServiceId' | 'ownerId' | 'criticality' | 'location' | 'taskId'>
+export type AssetInput = Pick<Asset, 'name' | 'type' | 'criticalServiceId' | 'ownerId' | 'criticality' | 'location' | 'taskId' | 'dependsOn' | 'source'>
+
+export type AssetBulkChange = Partial<Pick<Asset, 'criticality' | 'ownerId' | 'criticalServiceId'>>
 
 export type TaskStatus = 'pendente' | 'concluida' | 'cancelada'
 
@@ -174,6 +180,9 @@ export interface AssetsApi {
   getAsset(org: Id, id: Id): Promise<Asset>
   saveAsset(org: Id, input: AssetInput, id?: Id): Promise<Asset>
   deleteAsset(org: Id, id: Id): Promise<void>
+  importAssets(org: Id, inputs: AssetInput[]): Promise<Asset[]>
+  bulkUpdateAssets(org: Id, ids: Id[], change: AssetBulkChange): Promise<void>
+  bulkDeleteAssets(org: Id, ids: Id[]): Promise<void>
   listTasks(org: Id): Promise<Task[]>
   assignTask(org: Id, input: TaskInput): Promise<Task>
   completeTask(org: Id, id: Id): Promise<Task>

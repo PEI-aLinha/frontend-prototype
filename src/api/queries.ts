@@ -1,7 +1,7 @@
 // Hooks TanStack Query por cima dos contratos. Os componentes usam só isto, nunca o mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { AssetInput, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
+import type { AssetBulkChange, AssetInput, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
 
 export const keys = {
   org: (slug: string) => ['org', slug] as const,
@@ -121,4 +121,19 @@ export function useUpdateTask(org: Id) {
 export function useRemindTask(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: (id: Id) => api.assets.remindTask(org, id), onSuccess: () => invalidate('audit') })
+}
+
+export function useImportAssets(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (inputs: AssetInput[]) => api.assets.importAssets(org, inputs), onSuccess: () => invalidate('assets', 'audit') })
+}
+
+export function useBulkUpdateAssets(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: ({ ids, change }: { ids: Id[]; change: AssetBulkChange }) => api.assets.bulkUpdateAssets(org, ids, change), onSuccess: () => invalidate('assets', 'audit') })
+}
+
+export function useBulkDeleteAssets(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (ids: Id[]) => api.assets.bulkDeleteAssets(org, ids), onSuccess: () => invalidate('assets', 'audit', 'risks') })
 }

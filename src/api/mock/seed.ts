@@ -25,7 +25,7 @@ export interface DemoState {
   today: string
 }
 
-export const STATE_VERSION = 2
+export const STATE_VERSION = 3
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -61,19 +61,19 @@ function asset(id: string, name: string, type: Asset['type'], svc: Asset['critic
 }
 
 const ASSETS_RUI: Asset[] = [
-  asset('ast-erp', 'ERP de gestão e faturação', 'aplicacao', 'svc-faturacao', RUI, 'alto', 9, { location: 'Cloud do fornecedor' }),
+  asset('ast-erp', 'ERP de gestão e faturação', 'aplicacao', 'svc-faturacao', RUI, 'alto', 9, { location: 'Cloud do fornecedor', dependsOn: ['ast-email'] }),
   asset('ast-email', 'Email e documentos (cloud)', 'servico_cloud', 'svc-faturacao', RUI, 'medio', 9, { location: 'Microsoft 365' }),
   asset('ast-portateis', 'Portáteis da administração (4)', 'equipamento', null, RUI, 'baixo', 9, { location: 'Escritório' }),
 ]
 
-const pedroAsset = (id: string, name: string, type: Asset['type'], svc: Asset['criticalServiceId'], location: string, time: string) =>
-  asset(id, name, type, svc, PEDRO, 'alto', 15, { location, taskId: ASSET_TASK_ID, createdAt: at(15, time), updatedAt: at(15, time) })
+const pedroAsset = (id: string, name: string, type: Asset['type'], svc: Asset['criticalServiceId'], location: string, time: string, dependsOn: string[] = []) =>
+  asset(id, name, type, svc, PEDRO, 'alto', 15, { location, dependsOn, taskId: ASSET_TASK_ID, createdAt: at(15, time), updatedAt: at(15, time) })
 
 const ASSETS_PEDRO: Asset[] = [
-  pedroAsset('ast-servidor', 'Servidor de produção', 'servidor', 'svc-producao', 'Sala técnica', '09:10'),
-  pedroAsset('ast-nas', 'NAS de cópias de segurança', 'armazenamento', 'svc-producao', 'Sala técnica', '09:18'),
+  pedroAsset('ast-servidor', 'Servidor de produção', 'servidor', 'svc-producao', 'Sala técnica', '09:10', ['ast-rede', 'ast-nas']),
+  pedroAsset('ast-nas', 'NAS de cópias de segurança', 'armazenamento', 'svc-producao', 'Sala técnica', '09:18', ['ast-rede']),
   pedroAsset('ast-rede', 'Rede e firewall', 'rede', 'todos', 'Sala técnica', '09:25'),
-  pedroAsset('ast-plc', 'PLC das linhas de montagem', 'sistema_producao_ot', 'svc-producao', 'Pavilhão 2', '09:41'),
+  pedroAsset('ast-plc', 'PLC das linhas de montagem', 'sistema_producao_ot', 'svc-producao', 'Pavilhão 2', '09:41', ['ast-rede', 'ast-servidor']),
 ]
 
 const QUESTION_TASK: Task = {

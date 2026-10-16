@@ -37,7 +37,7 @@ function clientCanSeeRisks(s: Readonly<DemoState>, org: Id): boolean {
 }
 
 function pickAsset(a: Asset): Record<string, unknown> {
-  return { name: a.name, type: a.type, criticalServiceId: a.criticalServiceId, ownerId: a.ownerId, criticality: a.criticality, location: a.location ?? null }
+  return { name: a.name, type: a.type, criticalServiceId: a.criticalServiceId, ownerId: a.ownerId, criticality: a.criticality, location: a.location ?? null, dependsOn: a.dependsOn ?? [] }
 }
 
 function pickRisk(r: Risk): Record<string, unknown> {
@@ -162,6 +162,49 @@ export function createMockApi(getActor: ActorProvider): Api {
         return saved
       }),
 
+      importAssets: (org, inputs) => simulate(() => {
+        if (actor().role !== 'responsavel') deny()
+        if (inputs.length === 0) throw new ApiError('O ficheiro não tem ativos válidos.', 422)
+        inputs.forEach(validateAsset)
+        let created: Asset[] = []
+        write((s, me) => {
+          const stamp = now()
+          created = inputs.map((input) => ({ ...input, source: 'importacao' as const, id: newId('ast'), organizationId: org, createdBy: me.id, createdAt: stamp, updatedAt: stamp }))
+          const entries = created.map((a) => auditEntry({ organizationId: org, userId: me.id, action: 'import', entityType: 'asset', entityId: a.id, summary: `Importou o ativo "${a.name}" de um ficheiro`, before: null, after: pickAsset(a) }))
+          return { ...s, assets: [...s.assets, ...created], audit: [...s.audit, ...entries] }
+        })
+        return created
+      }),
+
+      bulkUpdateAssets: (org, ids, change) => simulate(() => {
+        if (actor().role !== 'responsavel') deny()
+        write((s, me) => {
+          const stamp = now()
+          const entries: AuditEntry[] = []
+          const assets = s.assets.map((a) => {
+            if (!ids.includes(a.id)) return a
+            const next = { ...a, ...change, updatedAt: stamp }
+            entries.push(auditEntry({ organizationId: org, userId: me.id, action: 'update', entityType: 'asset', entityId: a.id, summary: `Editou o ativo "${a.name}" (alteração em massa)`, before: pickAsset(a), after: pickAsset(next) }))
+            return next
+          })
+          return { ...s, assets, audit: [...s.audit, ...entries] }
+        })
+      }),
+
+      bulkDeleteAssets: (org, ids) => simulate(() => {
+        if (actor().role !== 'responsavel') deny()
+        write((s, me) => {
+          const removed = s.assets.filter((a) => ids.includes(a.id))
+          const entries = removed.map((a) => auditEntry({ organizationId: org, userId: me.id, action: 'delete', entityType: 'asset', entityId: a.id, summary: `Removeu o ativo "${a.name}"`, before: pickAsset(a), after: null }))
+          return {
+            ...s,
+            assets: s.assets.filter((a) => !ids.includes(a.id)).map((a) => ({ ...a, dependsOn: a.dependsOn?.filter((d) => !ids.includes(d)) })),
+            risks: s.risks.map((r) => (r.assetId && ids.includes(r.assetId) ? { ...r, assetId: null } : r)),
+            audit: [...s.audit, ...entries],
+          }
+        })
+      }),
+
       deleteAsset: (org, id) => simulate(() => {
         if (actor().role !== 'responsavel') deny()
         write((s, me) => {
@@ -170,7 +213,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'delete', entityType: 'asset', entityId: id, summary: `Removeu o ativo "${a.name}"`, before: pickAsset(a), after: null })
           return {
             ...s,
-            assets: s.assets.filter((x) => x.id !== id),
+            assets: s.assets.filter((x) => x.id !== id).map((x) => ({ ...x, dependsOn: x.dependsOn?.filter((d) => d !== id) })),
             risks: s.risks.map((r) => (r.assetId === id ? { ...r, assetId: null } : r)),
             audit: [...s.audit, entry],
           }

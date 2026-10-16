@@ -1,8 +1,43 @@
-import { FileSpreadsheet, FileText } from 'lucide-react'
+import { Link } from 'react-router'
+import { CheckCircle2, FileSpreadsheet, FileText, TriangleAlert } from 'lucide-react'
+import type { Asset } from '../../api/contracts'
 import { useTenant } from '../../core/tenant'
 import { Button, Chip, Modal, Note, useToast } from '../../ui'
 import { assetRows, downloadCsv, printList, toCsv } from './exportAssets'
 import type { Inventory } from './useInventory'
+
+function missing(a: Asset): string[] {
+  const out: string[] = []
+  if (!a.ownerId) out.push('responsável')
+  if (!a.criticalServiceId) out.push('serviço crítico')
+  if (!a.location) out.push('localização')
+  return out
+}
+
+/** Verificação antes de comunicar: cada ativo deve ter responsável, serviço e localização. */
+function Readiness({ inventory, base }: { inventory: Inventory; base: string }) {
+  const gaps = inventory.assets.map((a) => ({ a, m: missing(a) })).filter((x) => x.m.length)
+  const ok = gaps.length === 0 && inventory.services.length > 0
+  return (
+    <section aria-label="Verificação da lista" className="flex flex-col gap-2 rounded-[14px] border border-line-soft p-4">
+      <p className="flex items-center gap-2 text-[14px] font-bold">
+        {ok ? <CheckCircle2 className="size-4 text-brand" aria-hidden /> : <TriangleAlert className="size-4 text-risk-medium-ink" aria-hidden />}
+        {ok ? 'A lista está completa' : `${gaps.length} ${gaps.length === 1 ? 'ativo tem' : 'ativos têm'} informação em falta`}
+      </p>
+      <p className="text-[13px] text-ink-soft">O CNCS pede, para cada ativo, o responsável, o serviço que suporta e onde está. Pode exportar na mesma, mas complete antes de comunicar.</p>
+      {gaps.length > 0 && (
+        <ul className="flex max-h-[140px] flex-col gap-1 overflow-y-auto text-[13px]">
+          {gaps.map(({ a, m }) => (
+            <li key={a.id} className="flex items-center justify-between gap-2 rounded-[8px] bg-paper-soft px-2.5 py-1.5">
+              <span><span className="font-semibold">{a.name}</span> <span className="text-muted">· falta {m.join(', ')}</span></span>
+              <Link to={`${base}?ativo=${a.id}`} className="shrink-0 font-bold text-brand hover:underline">Completar</Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
 
 export function ExportModal({ open, onClose, inventory }: { open: boolean; onClose: () => void; inventory: Inventory }) {
   const org = useTenant()
@@ -12,6 +47,7 @@ export function ExportModal({ open, onClose, inventory }: { open: boolean; onClo
     <Modal open={open} onOpenChange={(o) => !o && onClose()} chip={<Chip>Regulamento n.º 756/2026</Chip>} title="Exportar Lista de Ativos"
       description={`${rows.length} ativos de ${inventory.services.length} serviços críticos. Use o ficheiro para preencher a Lista de Ativos a comunicar ao CNCS.`}
       footer={<Button variant="secondary" onClick={onClose}>Fechar</Button>}>
+      <Readiness inventory={inventory} base={typeof window !== 'undefined' ? window.location.pathname : ''} />
       <div className="grid gap-3 sm:grid-cols-2">
         <button type="button" onClick={() => { downloadCsv('lista-de-ativos-componentes-agueda.csv', toCsv(rows)); toast.show('Lista de Ativos exportada (CSV)') }}
           className="flex flex-col items-start gap-2 rounded-[14px] border border-line-soft p-4 text-left transition-colors hover:border-brand hover:bg-brand-soft/40">

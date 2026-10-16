@@ -16,14 +16,15 @@ export interface AssetFormValues {
   service: string
   ownerId: string
   criticality: Level
+  dependsOn: string[]
 }
 
 export function emptyValues(defaults: Partial<AssetFormValues> = {}): AssetFormValues {
-  return { name: '', type: '', location: '', service: NONE, ownerId: '', criticality: 'alto', ...defaults }
+  return { name: '', type: '', location: '', service: NONE, ownerId: '', criticality: 'alto', dependsOn: [], ...defaults }
 }
 
 export function valuesFromAsset(a: Asset): AssetFormValues {
-  return { name: a.name, type: a.type, location: a.location ?? '', service: a.criticalServiceId ?? NONE, ownerId: a.ownerId ?? '', criticality: a.criticality }
+  return { name: a.name, type: a.type, location: a.location ?? '', service: a.criticalServiceId ?? NONE, ownerId: a.ownerId ?? '', criticality: a.criticality, dependsOn: a.dependsOn ?? [] }
 }
 
 export function toInput(v: AssetFormValues, taskId?: string): AssetInput {
@@ -34,6 +35,7 @@ export function toInput(v: AssetFormValues, taskId?: string): AssetInput {
     criticalServiceId: v.service === NONE ? null : v.service,
     ownerId: v.ownerId || null,
     criticality: v.criticality,
+    dependsOn: v.dependsOn,
     taskId,
   }
 }
