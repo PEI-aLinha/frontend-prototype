@@ -36,7 +36,7 @@ export interface AuditEntry {
   actorType: ActorType
   userId: Id | null
   action: string
-  entityType: 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment'
+  entityType: 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration'
   entityId: Id
   summary: string
   before: Record<string, unknown> | null
@@ -91,7 +91,9 @@ export type TaskStatus = 'pendente' | 'concluida' | 'cancelada'
 export interface Task {
   id: Id
   organizationId: Id
-  kind: 'ativos' | 'pergunta'
+  kind: 'ativos' | 'pergunta' | 'integracao'
+  /** Para tarefas de integração: que sistema ligar. */
+  provider?: ProviderId
   title: string
   /** O que registar (ex.: "Servidores, rede e sistemas de produção"). */
   scope?: string
@@ -297,6 +299,7 @@ export interface Api {
   audit: AuditApi
   directory: DirectoryApi
   notifications: NotificationsApi
+  integrations: IntegrationsApi
 }
 
 export class ApiError extends Error {
@@ -310,4 +313,78 @@ export class ApiError extends Error {
 /** Identidade de quem faz o pedido (na API real vem do token de sessão). */
 export interface DemoActor {
   userId: Id
+}
+
+// ---------------- integrações (plugins Provider, RF37 / US37) ----------------
+export type ProviderId = 'microsoft365' | 'intune' | 'firewall' | 'backups' | 'google' | 'aws'
+export type ConnectionStatus = 'disponivel' | 'pedido' | 'ligado' | 'erro'
+
+export interface ProviderInfo {
+  id: ProviderId
+  name: string
+  category: string
+  description: string
+  /** O que a integração lê (sempre só leitura). */
+  reads: string[]
+  /** O que traz para o aLinha. */
+  brings: string[]
+  /** Se não se aplica a esta empresa (ex.: não usa AWS). */
+  applies: boolean
+}
+
+export interface IntegrationConnection {
+  provider: ProviderInfo
+  status: ConnectionStatus
+  connectedBy: Id | null
+  connectedAt: IsoDate | null
+  lastSyncAt: IsoDate | null
+  /** Referência ao segredo no cofre (OpenBao); a credencial nunca chega ao browser. */
+  secretRef: string | null
+  assignedTo: Id | null
+  errorMessage?: string
+}
+
+export type DiscoveryStatus = 'proposto' | 'aceite' | 'associado' | 'ignorado'
+
+export interface DiscoveredAsset {
+  id: Id
+  provider: ProviderId
+  name: string
+  type: AssetType
+  details: string
+  suggestedServiceId: Id | typeof ALL_SERVICES | null
+  suggestedCriticality: Level
+  /** Ativo do inventário que parece ser o mesmo. */
+  possibleMatchId: Id | null
+  status: DiscoveryStatus
+  resolvedAssetId: Id | null
+}
+
+export type EvidenceStrength = 'autodeclarada' | 'documento_verificado' | 'tecnicamente_verificada' | 'continuamente_verificada'
+
+export interface CollectedEvidence {
+  id: Id
+  provider: ProviderId
+  title: string
+  result: string
+  ok: boolean
+  strength: EvidenceStrength
+  remediationActionId: Id | null
+  collectedAt: IsoDate
+}
+
+export type DiscoveryDecision =
+  | { decision: 'aceitar'; criticality: Level; criticalServiceId: Id | typeof ALL_SERVICES | null }
+  | { decision: 'associar'; assetId: Id }
+  | { decision: 'ignorar' }
+
+export interface IntegrationsApi {
+  list(org: Id): Promise<IntegrationConnection[]>
+  connect(org: Id, provider: ProviderId): Promise<IntegrationConnection>
+  sync(org: Id, provider: ProviderId): Promise<IntegrationConnection>
+  disconnect(org: Id, provider: ProviderId): Promise<void>
+  assign(org: Id, provider: ProviderId, userId: Id): Promise<Task>
+  listDiscoveries(org: Id): Promise<DiscoveredAsset[]>
+  decide(org: Id, id: Id, decision: DiscoveryDecision): Promise<DiscoveredAsset>
+  listEvidence(org: Id): Promise<CollectedEvidence[]>
 }

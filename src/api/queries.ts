@@ -1,7 +1,7 @@
 // Hooks TanStack Query por cima dos contratos. Os componentes usam só isto, nunca o mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { AssetBulkChange, AssetInput, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
+import type { AssetBulkChange, AssetInput, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
 
 export const keys = {
   org: (slug: string) => ['org', slug] as const,
@@ -19,6 +19,9 @@ export const keys = {
   audit: (org: Id, entityId?: Id) => ['audit', org, entityId ?? 'all'] as const,
   notifications: () => ['notifications'] as const,
   today: () => ['today'] as const,
+  integrations: (org: Id) => ['integrations', org] as const,
+  discoveries: (org: Id) => ['discoveries', org] as const,
+  evidence: (org: Id) => ['evidence', org] as const,
 }
 
 const enabled = (org: Id | undefined) => ({ enabled: !!org })
@@ -35,6 +38,10 @@ export const useActions = (org?: Id, on = true) => useQuery({ queryKey: keys.act
 export const useRoadmapStatus = (org?: Id) => useQuery({ queryKey: keys.roadmap(org!), queryFn: () => api.assessment.getRoadmapStatus(org!), ...enabled(org) })
 export const usePortfolio = () => useQuery({ queryKey: keys.portfolio(), queryFn: () => api.assessment.listPortfolio() })
 export const useAudit = (org?: Id, entityId?: Id, on = true) => useQuery({ queryKey: keys.audit(org!, entityId), queryFn: () => api.audit.list(org!, entityId ? { entityId } : undefined), enabled: !!org && on })
+
+export const useIntegrations = (org?: Id) => useQuery({ queryKey: keys.integrations(org!), queryFn: () => api.integrations.list(org!), ...enabled(org) })
+export const useDiscoveries = (org?: Id) => useQuery({ queryKey: keys.discoveries(org!), queryFn: () => api.integrations.listDiscoveries(org!), ...enabled(org) })
+export const useEvidence = (org?: Id) => useQuery({ queryKey: keys.evidence(org!), queryFn: () => api.integrations.listEvidence(org!), ...enabled(org) })
 
 function useInvalidate() {
   const qc = useQueryClient()
@@ -141,4 +148,31 @@ export function useBulkDeleteAssets(org: Id) {
 export function useSetRiskStatus(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: ({ id, change }: { id: Id; change: RiskStatusChange }) => api.assets.setRiskStatus(org, id, change), onSuccess: () => invalidate('risks', 'audit') })
+}
+
+const INTEGRATION_KEYS = ['integrations', 'discoveries', 'evidence', 'tasks', 'audit', 'assets'] as const
+
+export function useConnectIntegration(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (p: ProviderId) => api.integrations.connect(org, p), onSuccess: () => invalidate(...INTEGRATION_KEYS) })
+}
+
+export function useSyncIntegration(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (p: ProviderId) => api.integrations.sync(org, p), onSuccess: () => invalidate(...INTEGRATION_KEYS) })
+}
+
+export function useDisconnectIntegration(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (p: ProviderId) => api.integrations.disconnect(org, p), onSuccess: () => invalidate(...INTEGRATION_KEYS) })
+}
+
+export function useAssignIntegration(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: ({ provider, userId }: { provider: ProviderId; userId: Id }) => api.integrations.assign(org, provider, userId), onSuccess: () => invalidate(...INTEGRATION_KEYS) })
+}
+
+export function useDecideDiscovery(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: ({ id, decision }: { id: Id; decision: DiscoveryDecision }) => api.integrations.decide(org, id, decision), onSuccess: () => invalidate(...INTEGRATION_KEYS) })
 }

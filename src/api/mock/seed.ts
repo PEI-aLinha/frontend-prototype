@@ -1,6 +1,6 @@
 // Dados de demonstração (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Datas em outubro de 2026.
 import type {
-  AppNotification, Asset, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
+  AppNotification, Asset, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
   Risk, RiskActionLink, RoadmapStatus, Task, User,
 } from '../contracts'
 
@@ -23,9 +23,12 @@ export interface DemoState {
   audit: AuditEntry[]
   notifications: AppNotification[]
   today: string
+  connections: Partial<Record<ProviderId, Omit<IntegrationConnection, 'provider'>>>
+  discoveries: DiscoveredAsset[]
+  evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 4
+export const STATE_VERSION = 5
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -250,6 +253,9 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
     audit: entries,
     notifications: seedNotifications(snapshot),
     today: snapshot === 'c1' ? '2026-10-13' : '2026-10-16',
+    connections: snapshot === 'c3' ? { microsoft365: { status: 'ligado', connectedBy: PEDRO, connectedAt: at(16, '11:00'), lastSyncAt: at(16, '17:30'), secretRef: 'openbao://alinha/org-ca/microsoft365', assignedTo: PEDRO } } : {},
+    discoveries: snapshot === 'c3' ? [{ id: 'dsc-m365', provider: 'microsoft365', name: 'Microsoft 365 (tenant compagueda.pt)', type: 'servico_cloud', details: '15 utilizadores · Exchange, SharePoint e Teams', suggestedServiceId: 'svc-faturacao', suggestedCriticality: 'medio', possibleMatchId: 'ast-email', status: 'associado', resolvedAssetId: 'ast-email' }] : [],
+    evidence: snapshot === 'c3' ? [{ id: 'evd-mfa', provider: 'microsoft365', title: 'Autenticação multifator nas contas', result: '9 de 15 contas com MFA · 2 administradores sem MFA', ok: false, strength: 'continuamente_verificada', remediationActionId: 'act-mfa', collectedAt: at(16, '17:30') }] : [],
   }
 }
 

@@ -5,6 +5,7 @@ import {
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
 import { shortDayPt } from './dates'
+import { createIntegrationsMock } from './integrationsMock'
 import type { DemoState } from './seed'
 
 /** Quem está a fazer o pedido. Na API real vem do token (Keycloak). */
@@ -65,6 +66,8 @@ export function createMockApi(getActor: ActorProvider): Api {
   const write = (mutate: (s: DemoState, me: User) => DemoState) => setState((s) => mutate(s, user(s, getActor().userId)))
 
   return {
+    integrations: createIntegrationsMock(getActor),
+
     directory: {
       getOrganization: (slug) => simulate(() => {
         const o = getState().organizations.find((x) => x.slug === slug || x.id === slug)

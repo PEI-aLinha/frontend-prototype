@@ -24,12 +24,12 @@ export function TasksPage() {
   const card = (t: (typeof list)[number]) => (
     <TaskCard
       key={t.id}
-      type={t.kind === 'ativos' ? 'Ativos' : 'Pergunta técnica'}
+      type={t.kind === 'ativos' ? 'Ativos' : t.kind === 'integracao' ? 'Integração' : 'Pergunta técnica'}
       due={`Até ${shortDay(t.dueDate)}${today.data ? ` · ${dueStatus(t.dueDate, today.data).label}` : ''}`}
       title={t.title}
       meta={t.kind === 'ativos' ? `${t.context} · ${registered(t.id)} de ${t.expectedCount ?? 4} registados` : t.context}
       done={t.status === 'concluida'}
-      action={<Button onClick={() => navigate(t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : `/org/${org.slug}/tarefas`)}>Registar</Button>}
+      action={<Button onClick={() => navigate(t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : t.kind === 'integracao' ? `/org/${org.slug}/integracoes` : `/org/${org.slug}/tarefas`)}>{t.kind === 'integracao' ? 'Ligar' : 'Registar'}</Button>}
     />
   )
 

@@ -16,6 +16,7 @@ import { RisksPage } from '../features/assets/risk/RisksPage'
 import { PortfolioPage } from '../features/portfolio/PortfolioPage'
 import { ClientOverviewPage } from '../features/portfolio/ClientOverviewPage'
 import { HistoryPage } from '../features/portfolio/HistoryPage'
+import { IntegrationsPage } from '../features/integrations/IntegrationsPage'
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
           { path: 'roadmap', element: <Guard resource="roadmap"><ConsultantRoadmap /></Guard> },
           { path: 'riscos', element: <Guard resource="risk" reason="O registo de riscos fica visível depois de a consultora validar o roadmap."><RisksPage /></Guard> },
           { path: 'avaliacao', element: <OutOfScope eyebrow="Componentes Águeda, Lda." title="Avaliação" /> },
+          { path: 'integracoes', element: <IntegrationsPage /> },
           { path: 'equipa', element: <Guard resource="asset_task" action="assign"><TeamPage /></Guard> },
         ],
       },
@@ -52,6 +54,7 @@ export const router = createBrowserRouter([
           { path: 'roadmap', element: <ConsultantRoadmap /> },
           { path: 'ativos', element: <AssetsPage /> },
           { path: 'riscos', element: <RisksPage /> },
+          { path: 'integracoes', element: <IntegrationsPage /> },
           { path: 'historico', element: <HistoryPage /> },
         ],
       },

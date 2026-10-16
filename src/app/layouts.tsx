@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import {
-  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Map, ShieldAlert, Users,
+  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Map, Plug, ShieldAlert, Users,
 } from 'lucide-react'
 import { useOrganization, useRoadmapStatus } from '../api/queries'
 import { homePath } from '../core/personas'
@@ -36,6 +36,7 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
     items = [
       { to: `${base}/tarefas`, label: 'As minhas tarefas', shortLabel: 'Tarefas', icon: ListChecks },
       { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
+      { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
     ]
   } else {
     const seesRisks = canRole(persona.role, 'view', 'risk', { roadmapValidated: roadmap.data?.validated })
@@ -45,11 +46,12 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
       { to: `${base}/roadmap`, label: 'Resultados e roadmap', shortLabel: 'Resultados', icon: Map },
       { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
       ...(seesRisks ? [{ to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert }] : []),
+      { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
       { to: `${base}/equipa`, label: 'Equipa', icon: Users },
     ]
   }
   return (
-    <AppShell tools={<NotificationBell />} sections={[{ items }]} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
+    <AppShell tools={<NotificationBell />} sections={[{ items }]} tabs={persona.role === 'analista' ? undefined : items.filter((i) => !i.to.endsWith('/integracoes'))} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
       <Outlet />
     </AppShell>
   )
@@ -78,11 +80,12 @@ export function ConsultantLayout() {
           { to: `${base}/roadmap`, label: 'Avaliação e roadmap', shortLabel: 'Roadmap', icon: ClipboardList },
           { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
           { to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert },
+          { to: `${base}/integracoes`, label: 'Evidências automáticas', shortLabel: 'Evidências', icon: Plug },
           { to: `${base}/historico`, label: 'Histórico', icon: History },
         ]
         const sections: NavSection[] = [{ items: [portfolio] }, { heading: o.name.replace(', Lda.', ''), items: client }]
         return (
-          <AppShell tools={<NotificationBell />} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[4]]}>
+          <AppShell tools={<NotificationBell />} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[5]]}>
             <Outlet />
           </AppShell>
         )
