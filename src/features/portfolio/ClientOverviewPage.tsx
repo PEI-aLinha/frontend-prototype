@@ -1,8 +1,9 @@
 import { Link } from 'react-router'
-import { useAssets, useRisks, useRoadmapStatus, useServices } from '../../api/queries'
+import { useAssets, useRiskLinks, useRisks, useRoadmapStatus, useServices } from '../../api/queries'
+import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { dateTime } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { Button, Chip, HighlightCard, PageHeader, StatCard } from '../../ui'
+import { Button, Chip, HighlightCard, NextSteps, PageHeader, StatCard } from '../../ui'
 
 /** Visão geral do cliente (consultora). Ponto de entrada do cenário 2. */
 export function ClientOverviewPage() {
@@ -13,6 +14,10 @@ export function ClientOverviewPage() {
   const risks = useRisks(org.id)
   const base = `/clientes/${org.slug}`
   const validated = roadmap.data?.validated
+  const links = useRiskLinks(org.id)
+  const highRisks = (risks.data ?? []).filter((r) => computeRiskLevel(r.probability, r.impact).level === 'alto')
+  const criticalAssets = (assets.data ?? []).filter((a) => a.criticality === 'alto')
+  const covered = criticalAssets.filter((a) => risks.data?.some((r) => r.assetId === a.id)).length
 
   return (
     <>
@@ -24,6 +29,13 @@ export function ClientOverviewPage() {
       >
         {roadmap.data?.assessmentCompletedAt ? `Avaliação submetida pelo Rui Santos a ${dateTime(roadmap.data.assessmentCompletedAt)} · inventário de ativos completo` : 'A avaliação ainda está em curso.'}
       </HighlightCard>
+      <NextSteps title="Passos para este cliente" steps={[
+        { label: 'Rever o inventário de ativos', hint: 'Confirme que estão lá os sistemas críticos. Pode deixar comentários.', done: true, to: `${base}/ativos`, cta: 'Ver ativos' },
+        { label: 'Registar riscos sobre os ativos críticos', hint: `${covered} de ${criticalAssets.length} ativos de criticidade alta já têm riscos.`, done: highRisks.length > 0, to: `${base}/riscos?novo=1&ativo=ast-servidor`, cta: 'Registar risco' },
+        { label: 'Ligar os riscos altos a ações do roadmap', hint: 'As ações ligadas sobem de prioridade.', done: highRisks.length > 0 && highRisks.every((r) => links.data?.some((l) => l.riskId === r.id)), to: `${base}/riscos`, cta: 'Abrir riscos' },
+        { label: 'Validar o roadmap', hint: 'Depois disto o Rui vê o plano e os riscos em só leitura.', done: !!validated, to: `${base}/roadmap`, cta: 'Rever roadmap' },
+      ]} />
+
       <div className="grid gap-4 md:grid-cols-3">
         <Link to={`${base}/ativos`} className="contents"><StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? '…'} serviços críticos · preenchido pelo Rui e pelo Pedro`} /></Link>
         <Link to={`${base}/riscos`} className="contents"><StatCard label="Riscos" value={risks.data ? `${risks.data.length} registados` : '…'} caption="Registo segundo a ISO/IEC 27005" /></Link>

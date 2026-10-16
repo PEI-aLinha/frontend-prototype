@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, type ReactNode } from 'react'
 import { cn } from './cn'
 
 export interface OptionItem<T extends string> {
@@ -12,7 +12,7 @@ interface OptionGroupProps<T extends string> {
   value: T | null
   onChange: (value: T) => void
   options: OptionItem<T>[]
-  legend: string
+  legend: ReactNode
   columns?: 1 | 2
   error?: string
 }

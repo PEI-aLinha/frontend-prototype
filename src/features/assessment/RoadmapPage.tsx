@@ -6,7 +6,7 @@ import { ACTION_STATUS_LABEL, dateTime, shortDate } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  AIBadge, Button, Chip, ErrorState, Modal, Note, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
+  AIBadge, Button, Chip, ErrorState, Explainer, Modal, Note, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 
@@ -48,6 +48,14 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         </div>
       )}
 
+      <Explainer id="roadmap" title="Como os riscos mudam o roadmap"
+        intro="A IA propôs uma ordem a partir das lacunas da avaliação. O registo de riscos acrescenta o que é mais grave para esta empresa em concreto."
+        steps={[
+          { title: 'Antes dos riscos', text: 'Ordem proposta pela IA, só com base nas lacunas e nas obrigações legais.' },
+          { title: 'Priorizado pelos riscos', text: <>As ações ligadas a <Term k="risco">riscos</Term> altos sobem para o topo; depois as ligadas a médios. Cada uma mostra porque subiu.</> },
+          { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o Rui vê o plano e os riscos.' },
+        ]} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
         <p className="text-[13px] text-ink-soft" aria-live="polite">
@@ -85,7 +93,12 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
     <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
         <span className={cn('grid size-9 place-items-center rounded-[10px] text-[15px] font-extrabold', reason ? 'bg-brand text-white' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
-        {moved > 0 && <span className="mt-2 inline-flex items-center text-[12px] font-bold text-brand" aria-label={`Subiu ${moved} posições`}><ArrowUp className="size-3.5" aria-hidden />{moved}</span>}
+        {moved > 0 && (
+          <span className="mt-0.5 flex flex-col text-[11px] font-bold leading-tight text-brand" aria-label={`Subiu ${moved} posições: era a ${baseRank}.ª`}>
+            <span className="inline-flex items-center"><ArrowUp className="size-3.5" aria-hidden />{moved}</span>
+            <span className="font-semibold text-muted line-through">era #{baseRank}</span>
+          </span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">

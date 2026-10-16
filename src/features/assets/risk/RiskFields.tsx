@@ -4,7 +4,8 @@ import { RISK_MATRIX } from '../../../config/riskMatrix'
 import { ASSET_TYPE_LABEL, TREATMENT_HINT, TREATMENT_LABEL } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
 import { RoadmapActionPicker } from '../../assessment/public'
-import { Field, OptionGroup, RiskLevelBadge, Segmented, Select, TextArea, TextInput, cn } from '../../../ui'
+import { Field, OptionGroup, RiskLevelBadge, Segmented, Select, Term, TextArea, TextInput, cn } from '../../../ui'
+import type { GlossaryKey } from '../../../config/glossary'
 import { computeRiskLevel, describeRule } from './computeRiskLevel'
 import { NO_ASSET, SUGGESTED_ACTIONS, type RiskErrors, type RiskFormValues } from './riskFormModel'
 
@@ -17,13 +18,13 @@ interface Props {
   actions: RemediationAction[]
 }
 
-function ScaleField({ label, kind, value, onChange, error }: { label: string; kind: 'probability' | 'impact'; value: number | null; onChange: (v: number) => void; error?: string }) {
+function ScaleField({ label, kind, value, onChange, error, term }: { label: string; term?: GlossaryKey; kind: 'probability' | 'impact'; value: number | null; onChange: (v: number) => void; error?: string }) {
   const id = useId()
   const steps = RISK_MATRIX[kind]
   const current = steps.find((s) => s.value === value)
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <p id={id} className="text-[13px] font-semibold text-ink-soft">{label}</p>
+      <p id={id} className="text-[13px] font-semibold text-ink-soft">{term ? <Term k={term}>{label}</Term> : label}</p>
       <Segmented labelledBy={id} block invalid={!!error} value={value === null ? null : String(value)} onChange={(v) => onChange(Number(v))} options={steps.map((s) => ({ value: String(s.value), label: s.label }))} />
       <p className={cn('min-h-[38px] text-[13px]', error ? 'font-semibold text-danger' : 'text-muted')} role={error ? 'alert' : undefined}>{error ?? current?.hint ?? 'Escolha um nível. Cada um tem uma explicação curta.'}</p>
     </div>
@@ -37,7 +38,7 @@ export function LiveLevel({ probability, impact, label = 'Nível de risco', comp
   return (
     <div aria-live="polite" className={cn('flex items-center justify-between gap-3 rounded-[14px] border border-dashed border-line px-4', compact ? 'py-2.5' : 'py-3.5')}>
       <div>
-        <p className="eyebrow text-[11px] text-muted">{label} · calculado</p>
+        <p className="eyebrow text-[11px] text-muted">{label} · calculado pelo sistema</p>
         <p className="mt-0.5 text-[14px] font-semibold">{ready ? describeRule(probability, impact) : 'Escolha a probabilidade e o impacto'}</p>
         {result && !compact && <p className="text-[12px] text-muted">Regra: probabilidade × impacto = {probability} × {impact} = {result.score}</p>}
       </div>
@@ -55,10 +56,10 @@ export function RiskFields({ values: v, onChange, errors, assets, users, actions
 
   return (
     <div className="flex flex-col gap-5">
-      <Field label="Ativo afetado" optional hint={v.assetId === NO_ASSET ? 'Sem ativo: o risco é sobre a organização no seu todo.' : undefined}>
+      <Field label={<><Term k="ativo">Ativo</Term> afetado</>} optional hint={v.assetId === NO_ASSET ? 'Sem ativo: o risco é sobre a organização no seu todo.' : undefined}>
         {(p) => <Select id={p.id} value={v.assetId} onChange={(x) => set('assetId', x)} options={[{ value: NO_ASSET, label: 'Sem ativo concreto' }, ...assets.map((a) => ({ value: a.id, label: a.name, hint: ASSET_TYPE_LABEL[a.type] }))]} />}
       </Field>
-      <Field label="Ameaça" error={errors.threat}>
+      <Field label={<Term k="ameaca" />} error={errors.threat} hint="O que pode correr mal, em poucas palavras.">
         {(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={v.threat} onChange={(e) => set('threat', e.target.value)} placeholder="Ex.: Ransomware no servidor de produção" />}
       </Field>
       <Field label="Descrição" optional hint="O que pode acontecer e porquê. Para a equipa técnica.">
@@ -66,8 +67,8 @@ export function RiskFields({ values: v, onChange, errors, assets, users, actions
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <ScaleField label="Probabilidade" kind="probability" value={v.probability} onChange={(x) => set('probability', x)} error={errors.probability} />
-        <ScaleField label="Impacto" kind="impact" value={v.impact} onChange={(x) => set('impact', x)} error={errors.impact} />
+        <ScaleField label="Probabilidade" term="probabilidade" kind="probability" value={v.probability} onChange={(x) => set('probability', x)} error={errors.probability} />
+        <ScaleField label="Impacto" term="impacto" kind="impact" value={v.impact} onChange={(x) => set('impact', x)} error={errors.impact} />
       </div>
       <LiveLevel probability={v.probability} impact={v.impact} />
 
@@ -75,7 +76,7 @@ export function RiskFields({ values: v, onChange, errors, assets, users, actions
         {(p) => <Select id={p.id} aria-describedby={p.describedBy} value={v.ownerId} onChange={(x) => set('ownerId', x)} options={owners.map((u) => ({ value: u.id, label: u.name }))} />}
       </Field>
 
-      <OptionGroup<Treatment> name="treatment" legend="Tratamento (ISO/IEC 27005)" columns={2} value={v.treatment} onChange={(x) => set('treatment', x)}
+      <OptionGroup<Treatment> name="treatment" legend={<><Term k="tratamento">Tratamento</Term> (<Term k="iso27005">ISO/IEC 27005</Term>)</>} columns={2} value={v.treatment} onChange={(x) => set('treatment', x)}
         options={(Object.keys(TREATMENT_LABEL) as Treatment[]).map((t) => ({ value: t, label: TREATMENT_LABEL[t], hint: TREATMENT_HINT[t] }))} />
 
       {v.treatment === 'mitigar' && (
@@ -90,7 +91,7 @@ export function RiskFields({ values: v, onChange, errors, assets, users, actions
       <div className="flex flex-col gap-3 rounded-[14px] bg-paper-soft p-4">
         <label className="flex cursor-pointer items-center gap-2.5 text-[14px] font-semibold">
           <input type="checkbox" checked={v.hasResidual} onChange={(e) => set('hasResidual', e.target.checked)} className="size-4 accent-[var(--color-brand)]" />
-          Indicar o risco residual previsto <span className="font-normal text-muted">(opcional)</span>
+          Indicar o <Term k="riscoResidual">risco residual</Term> previsto <span className="font-normal text-muted">(opcional)</span>
         </label>
         {v.hasResidual && (
           <>

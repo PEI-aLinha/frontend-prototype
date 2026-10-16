@@ -8,7 +8,7 @@ import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, TREATMENT_LABEL } from '../../../c
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
 import {
-  Button, Card, Chip, DataTable, EmptyState, ErrorState, Eyebrow, Note, PageHeader, Person, RiskLevelBadge, RiskMatrix, SkeletonRows,
+  Button, Card, Chip, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows,
   type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
@@ -87,15 +87,33 @@ export function RisksPage() {
         </div>
       )}
       {!editable && <Note>Registo validado pela consultora Marta Ferreira. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
+      {editable ? (
+        <Explainer id="risks-consultant" intro="O registo de riscos segue o método da ISO/IEC 27005 em três passos. O resultado prioriza o roadmap do cliente."
+          steps={[
+            { title: 'Identificar', text: <>Escolha o <Term k="ativo" /> e descreva a <Term k="ameaca">ameaça</Term>: o que pode correr mal.</> },
+            { title: 'Avaliar', text: <>Indique a <Term k="probabilidade">probabilidade</Term> e o <Term k="impacto">impacto</Term>. O <Term k="nivelRisco">nível</Term> é calculado pelo sistema.</> },
+            { title: 'Tratar', text: <>Decida o <Term k="tratamento">tratamento</Term>. Ao mitigar, ligue ações do <Term k="roadmap" />: as ligadas a riscos altos sobem de prioridade.</> },
+          ]} />
+      ) : (
+        <Explainer id="risks-client" title="Como ler esta página" intro="Cada linha é algo que pode correr mal à empresa. A consultora avaliou quão provável é e quão grave seria, e definiu o que fazer."
+          steps={[
+            { title: 'Nível', text: <>Alto, médio ou baixo, calculado por regra: <Term k="probabilidade">probabilidade</Term> × <Term k="impacto">impacto</Term>. Comece pelos altos.</> },
+            { title: 'O que pode acontecer', text: 'Explicado em linguagem simples. Abra a linha para ver o detalhe.' },
+            { title: 'O que está a ser feito', text: <>As ações do <Term k="roadmap" /> que reduzem o risco, com prazo e responsável.</> },
+          ]} />
+      )}
 
       {error ? <ErrorState error={error} onRetry={() => { risks.refetch(); links.refetch(); assets.refetch(); actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
         <>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
             <Card className="rounded-[16px] px-6 py-5">
               <div className="mb-2 flex items-center justify-between">
-                <Eyebrow>Matriz de risco · {RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</Eyebrow>
+                <Eyebrow><Term k="matriz">Matriz de risco</Term> · {RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</Eyebrow>
                 {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
               </div>
+              <p className="mb-3 text-[13px] text-ink-soft">
+                Cada quadrado conta os riscos com essa <Term k="probabilidade">probabilidade</Term> (linhas) e esse <Term k="impacto">impacto</Term> (colunas). Quanto mais acima e à direita, mais grave. Clique num quadrado para filtrar a tabela.
+              </p>
               <RiskMatrix probability={RISK_MATRIX.probability} impact={RISK_MATRIX.impact} levelOf={levelOf}
                 count={(p, i) => all.filter((r) => r.probability === p && r.impact === i).length}
                 selected={cell} onSelect={(c) => update({ p: c ? String(c.probability) : null, i: c ? String(c.impact) : null })} compact />

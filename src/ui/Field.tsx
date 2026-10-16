@@ -5,7 +5,7 @@ import { cn } from './cn'
 import { controlClass } from './controlClass'
 
 interface FieldProps {
-  label: string
+  label: ReactNode
   hint?: ReactNode
   error?: string
   optional?: boolean

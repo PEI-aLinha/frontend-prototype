@@ -3,7 +3,7 @@ import { Check, Minus } from 'lucide-react'
 import { useAssets, useTasks } from '../../api/queries'
 import { shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, ErrorState, Eyebrow, PageHeader, SkeletonRows, TaskCard, cn } from '../../ui'
+import { Button, Card, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, cn } from '../../ui'
 
 const VISIBILITY: Array<[string, boolean]> = [['Só as tarefas que lhe foram atribuídas', true], ['Os ativos que registar', true], ['Resultados, roadmap e riscos', false]]
 
@@ -35,6 +35,12 @@ export function TasksPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title="Olá, Pedro" subtitle={subtitle} />
+      <Explainer id="tasks-analyst" intro="Aqui estão só as tarefas que o Rui Santos lhe pediu. Não vê o resto da informação da empresa."
+        steps={[
+          { title: 'Escolha a tarefa', text: 'As mais urgentes aparecem primeiro, com o prazo a verde.' },
+          { title: 'Faça o pedido', text: 'Responder a uma pergunta técnica ou registar os ativos que conhece.' },
+          { title: 'Conclua', text: 'Ao concluir, o Rui é notificado e a tarefa passa para "Concluídas".' },
+        ]} />
       <div className="flex gap-7 max-lg:flex-col">
         <div className="flex min-w-0 flex-1 flex-col gap-3.5">
           {tasks.isError ? <ErrorState error={tasks.error} onRetry={() => tasks.refetch()} /> : !tasks.data ? <SkeletonRows rows={3} /> : (
