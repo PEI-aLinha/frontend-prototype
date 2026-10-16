@@ -23,7 +23,7 @@ export function TaskCard({ type, due, title, meta, done, action }: TaskCardProps
         <h3 className={cn('text-[17px] font-bold', done && 'text-ink-soft')}>{title}</h3>
         <p className="text-[13px] text-muted">{meta}</p>
       </div>
-      {done ? <span className="text-[14px] font-bold text-signal">✓ Feito</span> : action}
+      {done ? <span className="text-[14px] font-bold text-brand"><span aria-hidden className="text-signal">✓</span> Feito</span> : action}
     </article>
   )
 }

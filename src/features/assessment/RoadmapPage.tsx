@@ -85,7 +85,7 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
     <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
         <span className={cn('grid size-9 place-items-center rounded-[10px] text-[15px] font-extrabold', reason ? 'bg-brand text-white' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
-        {moved > 0 && <span className="mt-2 inline-flex items-center text-[12px] font-bold text-signal" aria-label={`Subiu ${moved} posições`}><ArrowUp className="size-3.5" aria-hidden />{moved}</span>}
+        {moved > 0 && <span className="mt-2 inline-flex items-center text-[12px] font-bold text-brand" aria-label={`Subiu ${moved} posições`}><ArrowUp className="size-3.5" aria-hidden />{moved}</span>}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
