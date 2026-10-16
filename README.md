@@ -28,6 +28,10 @@ Os screenshots do Playwright ficam em `e2e/__screenshots__/{desktop,mobile}/`.
 | Pedro Almeida | Analista | `/org/componentes-agueda/tarefas` |
 | Marta Ferreira | Consultora | `/carteira` |
 
+## Guião da demonstração
+
+No menu de persona (canto inferior, Alt+P) escolha **Guião da demonstração**: três histórias com botões "Ir" que mudam de persona, repõem os dados e abrem o ecrã certo. Cada ecrã tem ainda um painel "Como funciona este ecrã" e termos sublinhados com explicação.
+
 ## Rotas por cenário
 
 Os painéis e modais abrem por parâmetro de URL, por isso todos os estados são partilháveis.
@@ -42,6 +46,11 @@ Os painéis e modais abrem por parâmetro de URL, por isso todos os estados são
 | Filtros | `…/ativos?q=nas&crit=alto&type=servidor` |
 | 09 As minhas tarefas (Pedro) | `/org/componentes-agueda/tarefas` |
 | 11 Registar ativos técnicos (Pedro) | `/org/componentes-agueda/tarefas/task-ativos/ativos` |
+| 10 Pergunta técnica com ajuda da IA (Pedro) | `/org/componentes-agueda/tarefas/task-pergunta-mfa/pergunta` |
+| Avaliação: progresso por secção (Rui) | `/org/componentes-agueda/avaliacao` |
+| Equipa: lembrar, mudar prazo, cancelar | `/org/componentes-agueda/equipa` |
+| Importar de Excel (CSV) · vista por serviço | `…/ativos?importar=1` · `…/ativos?vista=servicos` |
+| Integrações (Rui pede ao Pedro, Pedro liga) | `/org/componentes-agueda/integracoes` |
 
 **Cenário 2 — Registo de riscos (Marta)** · dados: *Cenário 2 · início*
 | Ecrã | Rota |
@@ -53,6 +62,8 @@ Os painéis e modais abrem por parâmetro de URL, por isso todos os estados são
 | Novo risco sobre um ativo | `/clientes/componentes-agueda/riscos?novo=1&ativo=ast-servidor` |
 | Roadmap antes/depois + validar | `/clientes/componentes-agueda/roadmap` |
 | Histórico | `/clientes/componentes-agueda/historico` |
+| Matriz depois das ações · arquivados | `…/riscos?matriz=residual` · `…/riscos?arquivados=1` |
+| Evidências automáticas | `/clientes/componentes-agueda/integracoes` |
 
 **Cenário 3 — Rui depois da validação** · dados: *Cenário 3 · roadmap validado*
 | Ecrã | Rota |
@@ -74,7 +85,9 @@ src/
 ├── features/
 │   ├── assets/     inventário, serviços, tarefas do analista, registo de riscos (plugin Riscos e Ativos)
 │   ├── assessment/ roadmap mínimo e prioritizeRoadmap (plugin Avaliação)
-│   ├── home/  portfolio/  tasks/
+│   ├── assessment/ também o resumo da avaliação (ecrã do Rui)
+│   ├── integrations/ catálogo só de leitura, sugestões de ativos, evidências (RF37)
+│   ├── home/  portfolio/  tasks/  team/
 ├── ui/             design system (tokens em src/index.css)
 └── app/            router, layouts por persona, guardas, composição entre plugins
 ```
@@ -95,9 +108,13 @@ src/
   - `risk.treatment` passa de texto livre a enum `mitigar | aceitar | evitar | partilhar`, mais `acceptance_justification`, `residual_probability`, `residual_impact`, `status` e `plain_language` ("O que isto significa para a empresa").
   - `task.scope` (o que registar) e `task.expected_count` na tarefa de registo de ativos.
   - Comentários da consultora sobre ativos (`asset_comment`).
+  - `asset.depends_on` (dependências entre ativos) e `asset.source` (`manual | importacao | integracao`).
+  - `risk.review_date`, estado `arquivado` com `archived_reason` (nunca se apaga; fica na auditoria) e risco sem ativo (toda a empresa).
+  - `task.kind` += `integracao`; `task.answer` e `task.ai_help` na pergunta técnica; estado `cancelada`.
+  - Notificações (`notification`), ligações de integração (`integration_connection` com referência ao segredo no OpenBao), `discovered_asset` e `collected_evidence`.
 - **Desvio visual:** o texto "✓ Feito" e outros textos a `signal` (#168C80) não passavam AA sobre branco; passaram a `brand`, com o visto em `signal`.
 - **Tokens de risco novos:** `risk-low/medium/high` (+ `-ink`), sóbrios e com contraste AA testado; os níveis têm sempre ícone e texto.
 
 ## Fora do âmbito
 
-Backend real, Keycloak/MFA, emails, integração com CNCS/MyCiber, IA nova, plugins pós-MVP. Os ecrãs Avaliação e Equipa mostram "Fora deste protótipo".
+Backend real, Keycloak/MFA, envio real de emails, integração com CNCS/MyCiber, ligação real a fornecedores (o consentimento é simulado), IA nova (a ajuda da pergunta técnica é texto pré-gerado e rotulado), questionário completo da Avaliação (só o resumo e a pergunta delegada).

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronUp, FlaskConical, RotateCcw, WifiOff } from 'lucide-react'
+import { BookOpen, Check, ChevronUp, FlaskConical, RotateCcw, WifiOff } from 'lucide-react'
 import { isFailureMode, resetDemo, setFailureMode, SNAPSHOTS, type SnapshotId } from '../api/demo'
 import { Avatar, cn, useToast } from '../ui'
 import { homePath, PERSONAS, type PersonaKey } from './personas'
 import { useSession } from './session'
+import { DemoGuide, type GuideStep } from './DemoGuide'
 
 const itemCls = 'flex cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] outline-none data-[highlighted]:bg-paper-soft'
 
@@ -18,6 +19,7 @@ export function PersonaSwitcher() {
   const toast = useToast()
   const [open, setOpen] = useState(false)
   const [failing, setFailing] = useState(isFailureMode)
+  const [guide, setGuide] = useState(false)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -44,6 +46,14 @@ export function PersonaSwitcher() {
     toast.show(`Dados repostos: ${SNAPSHOTS.find((s) => s.id === id)?.label}`)
   }
 
+  const go = (st: GuideStep) => {
+    setGuide(false)
+    if (st.snapshot) { resetDemo(st.snapshot); qc.clear() }
+    setPersona(st.as)
+    // Depois de o modal fechar, para o clique não cair no ecrã de destino.
+    window.setTimeout(() => navigate(`${st.path}${st.path.includes('?') ? '&' : '?'}as=${st.as}`), 0)
+  }
+
   const toggleFailure = () => {
     setFailureMode(!failing)
     setFailing(!failing)
@@ -51,6 +61,8 @@ export function PersonaSwitcher() {
   }
 
   return (
+    <>
+    <DemoGuide open={guide} onClose={() => setGuide(false)} onGo={go} />
     <Menu.Root open={open} onOpenChange={setOpen}>
       <Menu.Trigger
         aria-label={`Demonstração: a ver como ${persona.name}. Mudar de persona (Alt+P)`}
@@ -74,6 +86,11 @@ export function PersonaSwitcher() {
               {p.key === persona.key && <Check className="size-4 text-brand" aria-label="atual" />}
             </Menu.Item>
           ))}
+          <Menu.Separator className="my-1.5 h-px bg-line-soft" />
+          <Menu.Item onSelect={() => setGuide(true)} className={itemCls}>
+            <BookOpen className="size-4 text-brand" aria-hidden />
+            <span className="font-bold text-brand">Guião da demonstração</span>
+          </Menu.Item>
           <Menu.Separator className="my-1.5 h-px bg-line-soft" />
           <Menu.Label className="eyebrow px-2.5 pb-1 pt-1 text-[10.5px] text-muted">Saltar para</Menu.Label>
           {SNAPSHOTS.map((s) => (
@@ -99,5 +116,6 @@ export function PersonaSwitcher() {
         </Menu.Content>
       </Menu.Portal>
     </Menu.Root>
+    </>
   )
 }

@@ -26,3 +26,13 @@ test('Notificações e tarefas — atribuir, lembrar, mudar prazo e o Pedro é a
   await page.getByRole('button', { name: /Nova tarefa: registar ativos/ }).click()
   await expect(page.getByRole('heading', { name: 'Registar ativos técnicos' })).toBeVisible()
 })
+
+test('Guião da demonstração leva ao ecrã certo com a persona certa', async ({ page }) => {
+  await start(page, `${ORG}/inicio`, 'rui', 'c1')
+  await page.keyboard.press('Alt+KeyP')
+  await page.getByRole('menuitem', { name: 'Guião da demonstração' }).click()
+  const guide = page.getByRole('dialog', { name: 'Guião da demonstração' })
+  await guide.getByRole('listitem').filter({ hasText: 'Marta abre a carteira' }).getByRole('button', { name: 'Ir' }).click()
+  await expect(page).toHaveURL(/\/carteira/)
+  await expect(page.getByText('Componentes Águeda').first()).toBeVisible()
+})
