@@ -45,6 +45,21 @@ test('By-service view, dependencies and bulk actions', async ({ page }, info) =>
 
 test('Export shows what is missing before reporting to CNCS', async ({ page }) => {
   await page.getByRole('button', { name: 'Exportar Lista de Ativos' }).first().click()
-  await expect(page.getByText('1 ativo tem informação em falta')).toBeVisible()
+  await expect(page.getByText('1 registo tem informação em falta')).toBeVisible()
   await expect(page.getByText(/falta serviço crítico/)).toBeVisible()
+  await expect(page.getByRole('dialog').getByText('Produção de componentes')).toHaveCount(0)
+})
+
+test('Critical services need an owner, shown in the list', async ({ page }) => {
+  await page.goto(`${ORG}/ativos?servicos=1`)
+  const drawer = page.getByRole('dialog', { name: 'Serviços críticos' })
+  await drawer.getByRole('button', { name: '+ Novo serviço crítico' }).click()
+  await drawer.getByLabel('Nome do serviço').fill('Logística')
+  await drawer.getByRole('button', { name: 'Guardar serviço' }).click()
+  await expect(drawer.getByText('Indique quem responde por este serviço.')).toBeVisible()
+  await drawer.getByLabel('Responsável').click()
+  await page.getByRole('option', { name: 'Rui Santos' }).click()
+  await drawer.getByRole('button', { name: 'Guardar serviço' }).click()
+  await expect(page.getByText('Serviço crítico guardado')).toBeVisible()
+  await expect(drawer.getByText('Rui Santos').first()).toBeVisible()
 })
