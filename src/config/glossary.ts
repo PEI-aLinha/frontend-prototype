@@ -73,6 +73,10 @@ export const GLOSSARY = {
     term: 'Integração',
     short: 'Uma ligação só de leitura a um sistema da empresa (ex.: Microsoft 365). Sugere ativos e recolhe evidências; nunca altera nada nesse sistema.',
   },
+  maturidade: {
+    term: 'Maturidade',
+    short: 'Até que ponto a empresa já tem as medidas de cibersegurança em prática, numa escala de 1 (inicial) a 5 (otimizada).',
+  },
   nis2: {
     term: 'NIS2',
     short: 'Diretiva europeia de cibersegurança, aplicada em Portugal pelo Regime Jurídico da Cibersegurança. Obriga a gerir riscos, registar ativos e notificar incidentes.',

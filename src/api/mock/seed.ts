@@ -28,7 +28,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 5
+export const STATE_VERSION = 6
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -84,6 +84,14 @@ const QUESTION_TASK: Task = {
   title: 'As cópias de segurança dos sistemas críticos são feitas regularmente e a reposição é testada?',
   context: 'Avaliação de maturidade · Continuidade do negócio', assigneeId: PEDRO, assignedBy: RUI,
   dueDate: '2026-10-13', status: 'concluida', createdAt: at(12),
+}
+
+const MFA_QUESTION: Task = {
+  id: 'task-pergunta-mfa', organizationId: ORG_ID, kind: 'pergunta',
+  title: 'As contas de administrador usam autenticação multifator (MFA)?',
+  context: 'Avaliação de maturidade · Controlo de acessos', assigneeId: PEDRO, assignedBy: RUI,
+  dueDate: '2026-10-16', status: 'pendente', createdAt: at(13, '09:10'),
+  aiHelp: 'MFA significa pedir uma segunda prova além da senha, por exemplo um código no telemóvel. Para verificar no Microsoft 365: Centro de administração › Utilizadores › Autenticação multifator. Responda "Em parte" se só algumas contas de administrador a tiverem.',
 }
 
 const ASSET_TASK: Task = {
@@ -190,7 +198,7 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
   const entries = baseAudit()
   const roadmap: RoadmapStatus = { validated: false, validatedAt: null, validatedBy: null, assessmentCompletedAt: c1 ? null : at(14, '10:12') }
   let assets = [...ASSETS_RUI]
-  let tasks: Task[] = [QUESTION_TASK]
+  let tasks: Task[] = [QUESTION_TASK, c1 ? MFA_QUESTION : { ...MFA_QUESTION, status: 'concluida', answer: { choice: 'parcial', note: 'Só o meu e o do Rui. Os outros 2 administradores não têm.' } }]
   let risks: Risk[] = []
   let links: RiskActionLink[] = []
   const comments: AssetComment[] = []

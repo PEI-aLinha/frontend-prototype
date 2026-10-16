@@ -6,6 +6,7 @@ import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
 import { shortDayPt } from './dates'
 import { createIntegrationsMock } from './integrationsMock'
+import { createAssessmentMock } from './assessmentMock'
 import type { DemoState } from './seed'
 
 /** Quem está a fazer o pedido. Na API real vem do token (Keycloak). */
@@ -389,6 +390,8 @@ export function createMockApi(getActor: ActorProvider): Api {
     },
 
     assessment: {
+      ...createAssessmentMock(getActor),
+
       listActions: (org) => simulate(() => {
         if (actor().role === 'analista') deny()
         return getState().actions.filter((a) => a.organizationId === org)

@@ -8,9 +8,10 @@ test('Notificações e tarefas — atribuir, lembrar, mudar prazo e o Pedro é a
 
   await page.goto(`${ORG}/equipa`)
   await expect(page.getByText('Termina em 2 dias').or(page.getByText('Faltam 2 dias'))).toBeVisible()
-  await page.getByRole('button', { name: 'Lembrar' }).click()
+  const row = page.locator('article').filter({ hasText: 'Registar servidores' })
+  await row.getByRole('button', { name: 'Lembrar' }).click()
   await expect(page.getByText('Lembrete enviado a Pedro Almeida')).toBeVisible()
-  await page.getByRole('button', { name: 'Mudar prazo' }).click()
+  await row.getByRole('button', { name: 'Mudar prazo' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Guardar prazo' }).click()
   await expect(page.getByText('Prazo alterado')).toBeVisible()
   await shot(page, 'n-01-equipa')

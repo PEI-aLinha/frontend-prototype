@@ -1,7 +1,7 @@
 // Hooks TanStack Query por cima dos contratos. Os componentes usam só isto, nunca o mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { AssetBulkChange, AssetInput, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
+import type { AssetBulkChange, AssetInput, QuestionAnswer, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
 
 export const keys = {
   org: (slug: string) => ['org', slug] as const,
@@ -19,6 +19,7 @@ export const keys = {
   audit: (org: Id, entityId?: Id) => ['audit', org, entityId ?? 'all'] as const,
   notifications: () => ['notifications'] as const,
   today: () => ['today'] as const,
+  assessment: (org: Id) => ['assessment', org] as const,
   integrations: (org: Id) => ['integrations', org] as const,
   discoveries: (org: Id) => ['discoveries', org] as const,
   evidence: (org: Id) => ['evidence', org] as const,
@@ -42,6 +43,8 @@ export const useAudit = (org?: Id, entityId?: Id, on = true) => useQuery({ query
 export const useIntegrations = (org?: Id) => useQuery({ queryKey: keys.integrations(org!), queryFn: () => api.integrations.list(org!), ...enabled(org) })
 export const useDiscoveries = (org?: Id) => useQuery({ queryKey: keys.discoveries(org!), queryFn: () => api.integrations.listDiscoveries(org!), ...enabled(org) })
 export const useEvidence = (org?: Id) => useQuery({ queryKey: keys.evidence(org!), queryFn: () => api.integrations.listEvidence(org!), ...enabled(org) })
+
+export const useAssessment = (org?: Id) => useQuery({ queryKey: keys.assessment(org!), queryFn: () => api.assessment.getAssessment(org!), ...enabled(org) })
 
 function useInvalidate() {
   const qc = useQueryClient()
@@ -175,4 +178,9 @@ export function useAssignIntegration(org: Id) {
 export function useDecideDiscovery(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: ({ id, decision }: { id: Id; decision: DiscoveryDecision }) => api.integrations.decide(org, id, decision), onSuccess: () => invalidate(...INTEGRATION_KEYS) })
+}
+
+export function useAnswerQuestion(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: ({ taskId, answer }: { taskId: Id; answer: QuestionAnswer }) => api.assessment.answerQuestion(org, taskId, answer), onSuccess: () => invalidate('tasks', 'assessment', 'audit') })
 }

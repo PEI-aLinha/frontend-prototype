@@ -60,6 +60,19 @@ test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, R
   await shot(page, 'c1-11-registar')
   await page.getByRole('button', { name: 'Guardar e concluir' }).click()
   await expect(page.getByText('Tarefa concluída · o Rui foi notificado')).toBeVisible()
+  await expect(page.getByText('Tem 1 tarefa atribuída pelo Rui Santos.')).toBeVisible()
+
+  // Pergunta técnica delegada, com ajuda da IA só informativa
+  await page.getByRole('button', { name: 'Responder' }).click()
+  await expect(page.getByText('Gerado por IA · apenas informativo')).toBeVisible()
+  await page.getByRole('button', { name: 'Enviar resposta' }).click()
+  await expect(page.getByText('Escolha uma resposta.')).toBeVisible()
+  await page.getByText('Em parte', { exact: true }).click()
+  await expect(page.getByRole('radio', { name: /Em parte/ })).toBeChecked()
+  await page.getByLabel(/Comentário/).fill('Só o meu e o do Rui.')
+  await shot(page, 'c1-10-pergunta')
+  await page.getByRole('button', { name: 'Enviar resposta' }).click()
+  await expect(page.getByText('Resposta enviada ao Rui Santos')).toBeVisible()
   await expect(page.getByText('Não tem tarefas pendentes. O Rui Santos foi notificado.')).toBeVisible()
 
   // Pedro só vê os ativos da sua tarefa
@@ -73,6 +86,11 @@ test('Cenário 1 — Rui atribui o registo, Pedro regista os ativos técnicos, R
   await expect(page.getByText('4 registados pelo Pedro Almeida')).toBeVisible()
   await expect(page.getByText('Inventário completo')).toBeVisible()
   await expect(page.getByText('PLC das linhas de montagem').locator('visible=true').first()).toBeVisible()
+
+  await page.goto(`${ORG}/avaliacao`)
+  await expect(page.getByText('1 pergunta delegada ao Pedro Almeida').first()).toBeVisible()
+  await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
+  await shot(page, 'c1-12-avaliacao')
   await shot(page, 'c1-07d-completo')
 })
 

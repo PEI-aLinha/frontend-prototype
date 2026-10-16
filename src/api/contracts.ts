@@ -92,6 +92,10 @@ export interface Task {
   id: Id
   organizationId: Id
   kind: 'ativos' | 'pergunta' | 'integracao'
+  /** Pergunta técnica: resposta do analista. */
+  answer?: QuestionAnswer
+  /** Pergunta técnica: ajuda pré-gerada pela IA (D10), só informativa. */
+  aiHelp?: string
   /** Para tarefas de integração: que sistema ligar. */
   provider?: ProviderId
   title: string
@@ -252,7 +256,28 @@ export interface PortfolioClient {
   updatedAt: IsoDate
 }
 
+export type AnswerChoice = 'sim' | 'parcial' | 'nao' | 'nao_sei'
+export interface QuestionAnswer { choice: AnswerChoice; note?: string }
+
+export interface AssessmentSection {
+  id: Id
+  name: string
+  answered: number
+  total: number
+  /** Perguntas desta secção delegadas a um analista. */
+  delegated: Array<{ taskId: Id; assigneeId: Id; status: Task['status'] }>
+}
+
+export interface AssessmentSummary {
+  status: 'em_curso' | 'submetida' | 'validada'
+  sections: AssessmentSection[]
+  /** Nível de maturidade (1–5), só depois da validação. */
+  maturity: number | null
+}
+
 export interface AssessmentApi {
+  getAssessment(org: Id): Promise<AssessmentSummary>
+  answerQuestion(org: Id, taskId: Id, answer: QuestionAnswer): Promise<Task>
   listActions(org: Id): Promise<RemediationAction[]>
   proposeAction(org: Id, input: ProposeActionInput): Promise<RemediationAction>
   getRoadmapStatus(org: Id): Promise<RoadmapStatus>

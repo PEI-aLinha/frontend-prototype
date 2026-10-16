@@ -2,7 +2,6 @@ import { createBrowserRouter } from 'react-router'
 import { HomeRedirect } from './HomeRedirect'
 import { DesignPage } from './DesignPage'
 import { ClientLayout, ConsultantLayout } from './layouts'
-import { OutOfScope } from './OutOfScope'
 import { Root } from './Root'
 import { Guard } from './Guard'
 import { AssetsPage } from '../features/assets/AssetsPage'
@@ -17,6 +16,8 @@ import { PortfolioPage } from '../features/portfolio/PortfolioPage'
 import { ClientOverviewPage } from '../features/portfolio/ClientOverviewPage'
 import { HistoryPage } from '../features/portfolio/HistoryPage'
 import { IntegrationsPage } from '../features/integrations/IntegrationsPage'
+import { AssessmentPage } from '../features/assessment/AssessmentPage'
+import { QuestionPage } from '../features/tasks/QuestionPage'
 
 export const router = createBrowserRouter([
   {
@@ -32,10 +33,11 @@ export const router = createBrowserRouter([
           { path: 'inicio', element: <Guard resource="roadmap"><HomePage /></Guard> },
           { path: 'ativos', element: <Guard resource="asset"><AssetsPage /></Guard> },
           { path: 'tarefas', element: <AnalystOnly><TasksPage /></AnalystOnly> },
+          { path: 'tarefas/:taskId/pergunta', element: <AnalystOnly><QuestionPage /></AnalystOnly> },
           { path: 'tarefas/:taskId/ativos', element: <AnalystOnly><RegisterAssetsPage /></AnalystOnly> },
           { path: 'roadmap', element: <Guard resource="roadmap"><ConsultantRoadmap /></Guard> },
           { path: 'riscos', element: <Guard resource="risk" reason="O registo de riscos fica visível depois de a consultora validar o roadmap."><RisksPage /></Guard> },
-          { path: 'avaliacao', element: <OutOfScope eyebrow="Componentes Águeda, Lda." title="Avaliação" /> },
+          { path: 'avaliacao', element: <Guard resource="roadmap"><AssessmentPage /></Guard> },
           { path: 'integracoes', element: <IntegrationsPage /> },
           { path: 'equipa', element: <Guard resource="asset_task" action="assign"><TeamPage /></Guard> },
         ],
