@@ -63,3 +63,4 @@ Thumbs.db
 graphify-out
 test-results/
 playwright-report/
+.shot.mjs

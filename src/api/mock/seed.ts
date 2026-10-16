@@ -31,7 +31,7 @@ export const PEDRO = 'u-pedro'
 export const MARTA = 'u-marta'
 export const ASSET_TASK_ID = 'task-ativos'
 
-const at = (day: number, time = '10:00') => `2026-10-${String(day).padStart(2, '0')}T${time}:00.000Z`
+const at = (day: number, time = '10:00') => `2026-10-${String(day).padStart(2, '0')}T${time}:00`
 
 const USERS: User[] = [
   { id: RUI, name: 'Rui Santos', initials: 'RS', role: 'responsavel', title: 'Responsável designado', email: 'rui.santos@compagueda.pt' },
