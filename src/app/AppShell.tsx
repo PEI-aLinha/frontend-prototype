@@ -70,7 +70,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
       </aside>
 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line-soft bg-paper/95 px-5 backdrop-blur md:hidden">
-        <Logo className="!text-[24px]" />
+        <Logo className="h-7" />
         <div className="flex items-center gap-1">{tools}<Avatar initials={user.initials} size={28} label={user.name} /></div>
       </header>
 
