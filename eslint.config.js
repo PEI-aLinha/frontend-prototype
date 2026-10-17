@@ -20,7 +20,7 @@ const isolation = (other) => ({
 })
 
 export default defineConfig([
-  globalIgnores(['dist', 'test-results', 'playwright-report']),
+  globalIgnores(['dist', 'coverage', 'test-results', 'playwright-report']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
