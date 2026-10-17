@@ -39,7 +39,7 @@ export function RisksPage() {
       if (v === null) p.delete(k)
       else p.set(k, v)
     }
-    setParams(p, { replace: true })
+    setParams(p, { replace: true, preventScrollReset: true })
   }
 
   const cellP = Number(params.get('p')) || null

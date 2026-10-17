@@ -89,7 +89,7 @@ export function AssetsPage() {
       if (v === null || v === '' || v === 'all') p.delete(k)
       else p.set(k, v)
     }
-    setParams(p, { replace: true })
+    setParams(p, { replace: true, preventScrollReset: true })
   }
 
   const data = inv.data
