@@ -35,5 +35,6 @@ export default defineConfig([
   },
   { files: ['src/features/assets/**'], rules: isolation('assessment') },
   { files: ['src/features/assessment/**'], rules: isolation('assets') },
+  { files: ['src/features/organization/**'], rules: isolation('(assets|assessment)') },
   { files: ['src/ui/**', 'src/features/home/**', 'src/features/tasks/**', 'src/features/portfolio/**'], rules: isolation('__none__') },
 ])

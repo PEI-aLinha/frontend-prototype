@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useQueryClient } from '@tanstack/react-query'
-import { BookOpen, Check, ChevronUp, FlaskConical, RotateCcw, WifiOff } from 'lucide-react'
+import { BookOpen, Check, ChevronUp, FlaskConical, RotateCcw, UserPlus, WifiOff } from 'lucide-react'
 import { isFailureMode, resetDemo, setFailureMode, SNAPSHOTS, type SnapshotId } from '../api/demo'
 import { Avatar, cn, useToast } from '../ui'
 import { homePath, PERSONAS, type PersonaKey } from './personas'
@@ -90,6 +90,13 @@ export function PersonaSwitcher() {
           <Menu.Item onSelect={() => setGuide(true)} className={itemCls}>
             <BookOpen className="size-4 text-brand" aria-hidden />
             <span className="font-bold text-brand">Guião da demonstração</span>
+          </Menu.Item>
+          <Menu.Item onSelect={() => navigate('/registo/conta')} className={itemCls}>
+            <UserPlus className="size-4 text-ink-soft" aria-hidden />
+            <span className="min-w-0">
+              <span className="block font-semibold">Adesão: criar conta</span>
+              <span className="block truncate text-[12px] text-muted">Registo de uma nova organização</span>
+            </span>
           </Menu.Item>
           <Menu.Separator className="my-1.5 h-px bg-line-soft" />
           <Menu.Label className="eyebrow px-2.5 pb-1 pt-1 text-[10.5px] text-muted">Saltar para</Menu.Label>

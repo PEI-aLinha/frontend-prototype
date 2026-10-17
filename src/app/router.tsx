@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, Navigate } from 'react-router'
 import { HomeRedirect } from './HomeRedirect'
 import { DesignPage } from './DesignPage'
 import { ClientLayout, ConsultantLayout } from './layouts'
@@ -18,6 +18,7 @@ import { HistoryPage } from '../features/portfolio/HistoryPage'
 import { IntegrationsPage } from '../features/integrations/IntegrationsPage'
 import { AssessmentPage } from '../features/assessment/AssessmentPage'
 import { QuestionPage } from '../features/tasks/QuestionPage'
+import { CreateAccountPage, NextStepPlaceholder, OnboardingLayout } from '../features/organization/public'
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +26,16 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: '_design', element: <DesignPage /> },
+      {
+        path: 'registo',
+        element: <OnboardingLayout />,
+        children: [
+          { index: true, element: <Navigate to="conta" replace /> },
+          { path: 'conta', element: <CreateAccountPage /> },
+          { path: 'seguranca', element: <NextStepPlaceholder step="Passo 2 de 3 · Segurança" title="Proteger a conta" /> },
+          { path: 'organizacao', element: <NextStepPlaceholder step="Passo 3 de 3 · Organização" title="Registar a organização" /> },
+        ],
+      },
       {
         path: 'org/:org',
         element: <ClientLayout />,
