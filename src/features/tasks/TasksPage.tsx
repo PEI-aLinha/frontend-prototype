@@ -34,7 +34,7 @@ export function TasksPage() {
     const late = due?.tone === 'late'
     let action
     if (t.kind === 'evidencia') {
-      action = <Tooltip content="A submissão de evidências fica fora deste protótipo."><span tabIndex={0}><Button disabled>Submeter</Button></span></Tooltip>
+      action = <Tooltip content="A submissão de evidências fica fora deste protótipo."><Button aria-disabled className="aria-disabled:cursor-not-allowed aria-disabled:bg-silver">Submeter</Button></Tooltip>
     } else if (t.kind === 'tarefa') {
       action = t.status === 'pendente' && <Button variant="secondary" loading={complete.isPending && complete.variables === t.id} onClick={() => complete.mutate(t.id, { onSuccess: () => toast.show('Tarefa concluída. O Responsável designado foi avisado.'), onError: (e) => toast.show(e.message, 'error') })}>Marcar como feita</Button>
     } else {

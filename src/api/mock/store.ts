@@ -69,10 +69,14 @@ export function setFailureMode(on: boolean): void {
   }
 }
 
+function randomUnit(): number {
+  return crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32
+}
+
 /** Simulated latency (200–600 ms). In tests (navigator.webdriver) uses the minimum. */
 export async function simulate<T>(work: () => T): Promise<T> {
   const fast = typeof navigator !== 'undefined' && navigator.webdriver
-  const delay = fast ? 120 : MIN_LATENCY + Math.random() * (MAX_LATENCY - MIN_LATENCY)
+  const delay = fast ? 120 : MIN_LATENCY + randomUnit() * (MAX_LATENCY - MIN_LATENCY)
   await new Promise((r) => setTimeout(r, delay))
   if (isFailureMode()) throw new ApiError('Não foi possível ligar ao servidor. Tente de novo dentro de momentos.', 503)
   return work()

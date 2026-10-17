@@ -6,6 +6,7 @@ import { PasswordInput } from './PasswordInput'
 import { PasswordChecklist } from './PasswordChecklist'
 import { passwordIsValid } from './password'
 import { useRegistration } from './registration'
+import { isValidEmail } from '../../../config/email'
 
 interface Form {
   name: string
@@ -29,7 +30,7 @@ function validate(f: Form): Errors {
   else if (name.split(/\s+/).length < 2) e.name = 'Indique o nome e o apelido, como aparecem nos documentos da empresa.'
   const email = f.email.trim()
   if (!email) e.email = 'Indique o seu email.'
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Este email não parece válido. Exemplo: nome@empresa.pt'
+  else if (!isValidEmail(email)) e.email = 'Este email não parece válido. Exemplo: nome@empresa.pt'
   if (!f.password) e.password = 'Escolha uma palavra-passe.'
   else if (!passwordIsValid(f.password)) e.password = 'A palavra-passe ainda não cumpre as regras indicadas.'
   if (!f.confirm) e.confirm = 'Repita a palavra-passe.'

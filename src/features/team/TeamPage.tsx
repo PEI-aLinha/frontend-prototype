@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { BellRing, CalendarClock, ClipboardPlus, ExternalLink, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
 import type { Task, TeamMember } from '../../api/contracts'
 import { useCancelInvite, useInviteAnalyst, useMembers, useRemindTask, useRemoveMember, useResendInvite, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
+import { isValidEmail } from '../../config/email'
 import { dueStatus, longDay, ROLE_LABEL, shortDate, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { AssignWorkModal } from '../organization/public'
@@ -196,11 +197,11 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   const [submitted, setSubmitted] = useState(false)
   const errors = {
     name: submitted && !name.trim() ? 'Indique o nome do analista.' : undefined,
-    email: !submitted ? undefined : !email.trim() ? 'Indique o email do analista.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? 'Este email não parece válido. Exemplo: nome@empresa.pt' : undefined,
+    email: !submitted ? undefined : !email.trim() ? 'Indique o email do analista.' : !isValidEmail(email.trim()) ? 'Este email não parece válido. Exemplo: nome@empresa.pt' : undefined,
   }
   const submit = () => {
     setSubmitted(true)
-    if (!name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return
+    if (!name.trim() || !isValidEmail(email.trim())) return
     invite.mutate({ name: name.trim(), email: email.trim() }, {
       onSuccess: (m) => { toast.show(`Convite enviado para ${m.email}`); onClose() },
     })

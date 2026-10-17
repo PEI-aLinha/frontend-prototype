@@ -46,7 +46,7 @@ export function OrganizationSettingsPage() {
 
   const openDocument = () => {
     const url = official && documentUrl(org.id, official.document.name)
-    if (url) window.open(url, '_blank')
+    if (url) window.open(url, '_blank', 'noopener,noreferrer')
     else setPreviewing(true)
   }
 

@@ -3,15 +3,24 @@ import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
 import { shortDayPt } from './dates'
 import { ORG_ID, PEDRO, RUI, type ConsultantRecord, type DemoState } from './seed'
+import { isValidEmail } from '../../config/email'
 
-const LEGAL_FORM = /,?\s*(lda\.?|s\.?\s?a\.?|unipessoal|sociedade anónima)\s*$/i
+const LEGAL_FORM = /(?:^|[\s,])(?:lda\.?|s\.?\s?a\.?|unipessoal|sociedade anónima)$/i
+
+/** "Componentes Águeda, Lda." → "Componentes Águeda" (string ops instead of a backtracking-prone regex). */
+function stripLegalForm(name: string): string {
+  const trimmed = name.trim()
+  const match = LEGAL_FORM.exec(trimmed)
+  if (!match) return trimmed
+  const base = trimmed.slice(0, match.index).trimEnd()
+  return base.endsWith(',') ? base.slice(0, -1) : base
+}
 
 /** "Componentes Águeda, Lda." → "componentes-agueda" */
 export function slugify(name: string): string {
-  return name
-    .replace(LEGAL_FORM, '')
+  return stripLegalForm(name)
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(?:^-)|(?:-$)/g, '')
 }
 
 /** Active clients of a consultant: the organizations in the portfolio assigned to them, plus those outside the prototype. */
@@ -21,7 +30,9 @@ export function activeClients(s: Readonly<DemoState>, c: ConsultantRecord): numb
 
 /** RF04: the new organization goes to the consultant with the fewest active clients (first one on a tie). */
 export function pickConsultant(s: Readonly<DemoState>): ConsultantRecord {
-  return s.consultants.reduce((best, c) => (activeClients(s, c) < activeClients(s, best) ? c : best))
+  const [first, ...rest] = s.consultants
+  if (!first) throw new ApiError('Não há consultores disponíveis.', 503)
+  return rest.reduce((best, c) => (activeClients(s, c) < activeClients(s, best) ? c : best), first)
 }
 
 function initials(name: string): string {
@@ -139,7 +150,7 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const { me } = manager(org)
       const name = input.name.trim()
       const email = input.email.trim().toLowerCase()
-      if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new ApiError('Indique o nome e um email válido.', 422)
+      if (!name || !isValidEmail(email)) throw new ApiError('Indique o nome e um email válido.', 422)
       const existing = getState().members.find((m) => m.organizationId === org && m.email.toLowerCase() === email)
       if (existing) throw new ApiError(existing.status === 'ativo' ? 'Esta pessoa já faz parte da equipa.' : 'Já existe um convite pendente para este email. Pode reenviá-lo na lista.', 409)
       const member: TeamMember = { id: newId('mbr'), organizationId: org, userId: null, name, email, role: 'analista', status: 'convite_pendente', invitedAt: now(), invitedBy: me.id, joinedAt: null }

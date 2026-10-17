@@ -1,5 +1,6 @@
 import type { RegistrationInput } from '../../../api/contracts'
 import { sectorById } from '../sectors'
+import { isValidEmail } from '../../../config/email'
 
 export interface OrganizationForm {
   name: string
@@ -57,7 +58,6 @@ export function isValidNif(value: string): boolean {
 }
 
 const PHONE = /^[29]\d{8}$/
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function validateOrganization(f: OrganizationForm): OrganizationErrors {
   const e: OrganizationErrors = {}
@@ -93,7 +93,7 @@ export function validateOrganization(f: OrganizationForm): OrganizationErrors {
   if (!f.phone.trim()) e.phone = 'Indique o telefone da empresa.'
   else if (!PHONE.test(digits(f.phone))) e.phone = 'O telefone tem 9 dígitos e começa por 2 ou 9.'
   if (!f.email.trim()) e.email = 'Indique o email geral da empresa.'
-  else if (!EMAIL.test(f.email.trim())) e.email = 'Este email não parece válido. Exemplo: geral@empresa.pt'
+  else if (!isValidEmail(f.email.trim())) e.email = 'Este email não parece válido. Exemplo: geral@empresa.pt'
 
   if (!f.contactName.trim()) e.contactName = 'Indique quem é o ponto de contacto permanente.'
   if (!f.contactPhone.trim()) e.contactPhone = 'Indique um telefone disponível a qualquer hora.'
