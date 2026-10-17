@@ -1,18 +1,37 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { BellRing, CalendarClock, Mail, UserPlus, XCircle } from 'lucide-react'
-import type { Task } from '../../api/contracts'
-import { useRemindTask, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
-import { dueStatus, longDay, ROLE_LABEL, shortDay } from '../../config/labels'
+import { BellRing, CalendarClock, UserPlus, XCircle } from 'lucide-react'
+import type { Task, TeamMember } from '../../api/contracts'
+import { useMembers, useRemindTask, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
+import { dueStatus, longDay, ROLE_LABEL, shortDate, shortDay } from '../../config/labels'
+import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import {
-  Avatar, Button, Card, Chip, ErrorState, Explainer, Eyebrow, Field, Modal, PageHeader, Select, SkeletonRows, TextInput, cn, useToast,
+  Avatar, Button, Chip, ErrorState, Explainer, Eyebrow, Field, Modal, PageHeader, Select, SkeletonRows, TextInput, cn, useToast,
 } from '../../ui'
 
-const ROLE_HINT: Record<string, string> = {
-  responsavel: 'Vê tudo da empresa, atribui tarefas e aceita as decisões.',
-  analista: 'Só vê as tarefas que lhe forem atribuídas e o que registar.',
-  consultor: 'Valida resultados, roadmap e riscos. Pertence à aLinha.',
+const initialsOf = (name: string) => {
+  const p = name.trim().split(/\s+/)
+  return (p[0][0] + (p.length > 1 ? p.at(-1)![0] : '')).toUpperCase()
+}
+
+/** One member or pending invitation (US12): name, email, role and status. */
+function MemberRow({ m, isMe }: { m: TeamMember; isMe: boolean }) {
+  const pending = m.status === 'convite_pendente'
+  return (
+    <li className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-4 border-b border-line-soft px-5 py-3.5 last:border-b-0 max-md:grid-cols-1 max-md:gap-1.5">
+      <span className="flex min-w-0 items-center gap-3">
+        <Avatar initials={initialsOf(m.name)} size={36} tone={pending ? 'soft' : 'dark'} />
+        <span className={cn('truncate font-bold', pending && 'text-ink-soft')}>{m.name}{isMe && <span className="font-normal text-muted"> (você)</span>}</span>
+      </span>
+      <span className="truncate text-[14px] text-ink-soft">{m.email}</span>
+      <span><Chip tone={m.role === 'responsavel' ? 'dark' : 'outline'}>{ROLE_LABEL[m.role]}</Chip></span>
+      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {pending ? <Chip tone="neutral">Convite pendente</Chip> : <Chip tone="signal">Ativo</Chip>}
+        {pending && m.invitedAt && <span className="text-[12px] text-muted">enviado a {shortDate(m.invitedAt)}</span>}
+      </span>
+    </li>
+  )
 }
 
 const TONE_CLASS = { late: 'bg-risk-high text-risk-high-ink', soon: 'bg-risk-medium text-risk-medium-ink', ok: 'bg-signal-soft text-brand' }
@@ -20,7 +39,9 @@ const TONE_CLASS = { late: 'bg-risk-high text-risk-high-ink', soon: 'bg-risk-med
 /** Team: who has access and the tasks the designated manager assigned (RF06, US14). */
 export function TeamPage() {
   const org = useTenant()
+  const { persona } = useSession()
   const users = useUsers(org.id)
+  const members = useMembers(org.id)
   const tasks = useTasks(org.id)
   const today = useToday()
   const [invite, setInvite] = useState(false)
@@ -42,28 +63,14 @@ export function TeamPage() {
         ]} />
 
       <section aria-labelledby="members" className="flex flex-col gap-3">
-        <h2 id="members" className="text-[18px] font-extrabold">Pessoas</h2>
-        {!users.data ? <SkeletonRows rows={3} /> : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {users.data.map((u) => (
-              <Card key={u.id} className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <Avatar initials={u.initials} size={40} tone={u.role === 'consultor' ? 'dark' : 'soft'} />
-                  <div className="min-w-0"><p className="truncate font-bold">{u.name}</p><p className="truncate text-[12px] text-muted">{u.email}</p></div>
-                </div>
-                <div><Chip tone={u.role === 'responsavel' ? 'dark' : u.role === 'analista' ? 'signal' : 'outline'}>{ROLE_LABEL[u.role]}</Chip></div>
-                <p className="text-[13px] text-ink-soft">{ROLE_HINT[u.role]}</p>
-              </Card>
-            ))}
-            <Card soft className="flex flex-col gap-3 border-dashed">
-              <div className="flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-full border border-dashed border-line text-muted"><Mail className="size-4" aria-hidden /></span>
-                <div className="min-w-0"><p className="truncate font-bold">ana.costa@compagueda.pt</p><p className="text-[12px] text-muted">Convite enviado a 12 out.</p></div>
-              </div>
-              <div><Chip tone="neutral">Convite pendente</Chip></div>
-              <p className="text-[13px] text-ink-soft">Ainda não aceitou. O convite expira em 7 dias.</p>
-            </Card>
-          </div>
+        <h2 id="members" className="text-[18px] font-extrabold">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
+        {members.isError ? <ErrorState error={members.error} onRetry={() => members.refetch()} /> : !members.data ? <SkeletonRows rows={3} /> : (
+          <ul className="overflow-hidden rounded-[16px] border border-line-soft bg-paper" aria-label="Membros da organização">
+            <li aria-hidden className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
+              {['Nome', 'Email', 'Papel', 'Estado'].map((h) => <span key={h} className="eyebrow text-[11px] text-muted">{h}</span>)}
+            </li>
+            {members.data.map((m) => <MemberRow key={m.id} m={m} isMe={m.userId === persona.userId} />)}
+          </ul>
         )}
       </section>
 

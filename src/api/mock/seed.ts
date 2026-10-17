@@ -1,6 +1,6 @@
 // Demo data (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Dates in October 2026.
 import type {
-  AppNotification, Asset, Consultant, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
+  AppNotification, Asset, Consultant, TeamMember, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
   Risk, RiskActionLink, RoadmapStatus, Task, User,
 } from '../contracts'
 
@@ -15,6 +15,7 @@ export interface ConsultantRecord extends Consultant {
 export interface DemoState {
   version: number
   consultants: ConsultantRecord[]
+  members: TeamMember[]
   snapshot: SnapshotId
   users: User[]
   organizations: Organization[]
@@ -35,7 +36,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 9
+export const STATE_VERSION = 10
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -54,6 +55,12 @@ const USERS: User[] = [
 const CONSULTANTS: ConsultantRecord[] = [
   { id: MARTA, name: 'Marta Ferreira', initials: 'MF', heading: 'A sua consultora', email: 'marta.ferreira@alinha.pt', phone: '913456210', otherActiveClients: 0 },
   { id: 'u-joao', name: 'João Pereira', initials: 'JP', heading: 'O seu consultor', email: 'joao.pereira@alinha.pt', phone: '913456211', otherActiveClients: 14 },
+]
+
+const MEMBERS: TeamMember[] = [
+  { id: 'mbr-rui', organizationId: ORG_ID, userId: RUI, name: 'Rui Santos', email: 'rui.santos@compagueda.pt', role: 'responsavel', status: 'ativo', invitedAt: null, invitedBy: null, joinedAt: '2026-10-09T09:20:00' },
+  { id: 'mbr-pedro', organizationId: ORG_ID, userId: PEDRO, name: 'Pedro Almeida', email: 'pedro.almeida@tiagueda.pt', role: 'analista', status: 'ativo', invitedAt: '2026-10-09T10:30:00', invitedBy: RUI, joinedAt: '2026-10-09T18:05:00' },
+  { id: 'mbr-ana', organizationId: ORG_ID, userId: null, name: 'Ana Costa', email: 'ana.costa@compagueda.pt', role: 'analista', status: 'convite_pendente', invitedAt: '2026-10-12T11:00:00', invitedBy: RUI, joinedAt: null },
 ]
 
 const ORG: Organization = {
@@ -224,7 +231,7 @@ function baseAudit(): AuditEntry[] {
 /** "Adesão": the company is not registered yet; only Marta and her other clients exist. */
 function emptySnapshot(): DemoState {
   return {
-    version: STATE_VERSION, consultants: CONSULTANTS, snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
+    version: STATE_VERSION, consultants: CONSULTANTS, members: [], snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
     risks: [], links: [], comments: [], actions: [], roadmap: {}, portfolio: portfolio('c0'), audit: [], notifications: [], today: '2026-10-09',
     connections: {}, discoveries: [], evidence: [],
   }
@@ -286,6 +293,7 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
   return {
     version: STATE_VERSION,
     consultants: CONSULTANTS,
+    members: MEMBERS,
     snapshot,
     users: USERS,
     organizations: [ORG],

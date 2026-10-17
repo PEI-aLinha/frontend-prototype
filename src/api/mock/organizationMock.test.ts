@@ -127,3 +127,21 @@ describe('automatic consultant assignment (US01)', () => {
     expect(pickConsultant(busy).name).toBe('João Pereira')
   })
 })
+
+describe('team members (US12)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetDemo('c1')
+    who = RUI
+  })
+
+  it('lists the designated manager first, then active analysts, then pending invitations', async () => {
+    const members = await api.organization.listMembers(ORG_ID)
+    expect(members.map((m) => [m.name, m.status])).toEqual([['Rui Santos', 'ativo'], ['Pedro Almeida', 'ativo'], ['Ana Costa', 'convite_pendente']])
+  })
+
+  it('does not show the team to analysts', async () => {
+    who = PEDRO
+    await expect(api.organization.listMembers(ORG_ID)).rejects.toMatchObject({ status: 403 })
+  })
+})

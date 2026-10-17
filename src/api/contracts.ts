@@ -18,6 +18,23 @@ export interface User {
   email: string
 }
 
+export type MemberStatus = 'ativo' | 'convite_pendente'
+
+/** A person with access to an organization, or invited to it (US12, RF05). */
+export interface TeamMember {
+  id: Id
+  organizationId: Id
+  /** Set once the invitation is accepted. */
+  userId: Id | null
+  name: string
+  email: string
+  role: Exclude<Role, 'consultor'>
+  status: MemberStatus
+  invitedAt: IsoDate | null
+  invitedBy: Id | null
+  joinedAt: IsoDate | null
+}
+
 /** aLinha consultant as seen by the client (RF04, RF34: emergency contact). */
 export interface Consultant {
   id: Id
@@ -369,6 +386,8 @@ export interface OrganizationApi {
   registerQualification(org: Id, input: QualificationInput): Promise<Organization>
   /** The consultant assigned to the organization, or null while none is assigned. */
   getConsultant(org: Id): Promise<Consultant | null>
+  /** Members and pending invitations of the organization (US12). */
+  listMembers(org: Id): Promise<TeamMember[]>
 }
 
 // ---------------- core: audit, directory ----------------

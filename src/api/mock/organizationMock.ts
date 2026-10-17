@@ -1,4 +1,4 @@
-import { ApiError, type DemoActor, type Organization, type OrganizationApi, type User } from '../contracts'
+import { ApiError, type DemoActor, type Organization, type OrganizationApi, type TeamMember, type User } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
 import { ORG_ID, RUI, type ConsultantRecord, type DemoState } from './seed'
@@ -68,6 +68,7 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
 
       setState((st) => notify({
         ...st,
+        members: [...st.members, { id: newId('mbr'), organizationId: orgId, userId, name: user.name, email, role: 'responsavel', status: 'ativo', invitedAt: null, invitedBy: null, joinedAt: at }],
         portfolio: [{
           organization, sector: '', employees: profile.employees, stage: 'Registo concluído', stageTone: 'neutral',
           nextStep: 'Dar as boas-vindas e acompanhar o âmbito regulatório', updatedAt: at, isNew: true,
@@ -94,6 +95,17 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const entry = auditEntry({ organizationId: org, userId: me.id, action: current.scope ? 'update' : 'create', entityType: 'organization', entityId: org, summary: current.scope ? 'Atualizou as respostas sobre dados pessoais e IA' : 'Respondeu às perguntas sobre dados pessoais e IA', before: current.scope ? { ...current.scope } : null, after: { ...input } })
       setState((st) => ({ ...st, organizations: st.organizations.map((o) => (o.id === org ? updated : o)), audit: [...st.audit, entry] }))
       return updated
+    }),
+
+    listMembers: (org) => simulate(() => {
+      const s = getState()
+      const me = s.users.find((u) => u.id === getActor().userId)
+      const o = s.organizations.find((x) => x.id === org)
+      if (!o) throw new ApiError('Organização não encontrada', 404)
+      // The designated manager manages the team; the consultant of the organization can see it.
+      if (me?.role === 'analista' || (me?.role === 'consultor' && o.consultantId !== me.id) || !me) throw new ApiError('Não tem permissão para ver a equipa.', 403)
+      const order = (m: TeamMember) => (m.role === 'responsavel' ? 0 : m.status === 'ativo' ? 1 : 2)
+      return s.members.filter((m) => m.organizationId === org).sort((a, b) => order(a) - order(b))
     }),
 
     getConsultant: (org) => simulate(() => {
