@@ -70,35 +70,37 @@ export function CreateAccountPage() {
 
       <Card className="px-7 py-7 max-md:px-5">
         <form noValidate onSubmit={submit} className="flex flex-col gap-5">
-          <Field label="Nome completo" error={errors.name}>
-            {(p) => <TextInput ref={(el) => { refs.current.name = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ex.: Rui Santos" />}
-          </Field>
-          <Field label="Email profissional" hint="É para aqui que enviamos os avisos de prazos e incidentes." error={errors.email}>
-            {(p) => <TextInput ref={(el) => { refs.current.email = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} type="email" autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="nome@empresa.pt" />}
-          </Field>
-          <Field label="Palavra-passe" error={errors.password}>
-            {(p) => (
-              <div className="flex flex-col gap-2">
-                <PasswordInput ref={(el) => { refs.current.password = el }} id={p.id} aria-describedby={[p.describedBy, 'password-rules'].filter(Boolean).join(' ')} invalid={p.invalid} autoComplete="new-password" value={form.password} onChange={(e) => set('password', e.target.value)} />
-                <ul id="password-rules" className="flex flex-wrap gap-x-5 gap-y-1.5">
-                  {PASSWORD_RULES.map((r) => {
-                    const ok = r.test(form.password)
-                    return (
-                      <li key={r.label} className="flex items-center gap-2 text-[13px]">
-                        <span className={cn('grid size-5 place-items-center rounded-full', ok ? 'bg-signal-soft text-brand' : 'bg-paper-deep text-ink-soft')}>
-                          {ok ? <Check className="size-3" strokeWidth={3} aria-label="Cumpre" /> : <Minus className="size-3" strokeWidth={3} aria-label="Ainda não cumpre" />}
-                        </span>
-                        <span className={ok ? 'text-ink' : 'text-ink-soft'}>{r.label}</span>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            )}
-          </Field>
-          <Field label="Repetir a palavra-passe" error={errors.confirm}>
-            {(p) => <PasswordInput ref={(el) => { refs.current.confirm = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="new-password" value={form.confirm} onChange={(e) => set('confirm', e.target.value)} />}
-          </Field>
+          <div className="grid items-start gap-5 md:grid-cols-2">
+            <Field label="Nome completo" error={errors.name}>
+              {(p) => <TextInput ref={(el) => { refs.current.name = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ex.: Rui Santos" />}
+            </Field>
+            <Field label="Email profissional" hint="É para aqui que enviamos os avisos de prazos e incidentes." error={errors.email}>
+              {(p) => <TextInput ref={(el) => { refs.current.email = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} type="email" autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="nome@empresa.pt" />}
+            </Field>
+            <Field label="Palavra-passe" error={errors.password}>
+              {(p) => (
+                <div className="flex flex-col gap-2">
+                  <PasswordInput ref={(el) => { refs.current.password = el }} id={p.id} aria-describedby={[p.describedBy, 'password-rules'].filter(Boolean).join(' ')} invalid={p.invalid} autoComplete="new-password" value={form.password} onChange={(e) => set('password', e.target.value)} />
+                  <ul id="password-rules" className="flex flex-wrap gap-x-5 gap-y-1.5">
+                    {PASSWORD_RULES.map((r) => {
+                      const ok = r.test(form.password)
+                      return (
+                        <li key={r.label} className="flex items-center gap-2 text-[13px]">
+                          <span className={cn('grid size-5 place-items-center rounded-full', ok ? 'bg-signal-soft text-brand' : 'bg-paper-deep text-ink-soft')}>
+                            {ok ? <Check className="size-3" strokeWidth={3} aria-label="Cumpre" /> : <Minus className="size-3" strokeWidth={3} aria-label="Ainda não cumpre" />}
+                          </span>
+                          <span className={ok ? 'text-ink' : 'text-ink-soft'}>{r.label}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              )}
+            </Field>
+            <Field label="Repetir a palavra-passe" error={errors.confirm}>
+              {(p) => <PasswordInput ref={(el) => { refs.current.confirm = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="new-password" value={form.confirm} onChange={(e) => set('confirm', e.target.value)} />}
+            </Field>
+          </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="flex cursor-pointer items-start gap-3 text-[14px] text-ink">

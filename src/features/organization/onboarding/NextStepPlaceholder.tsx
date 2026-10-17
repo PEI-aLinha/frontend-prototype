@@ -15,7 +15,7 @@ export function NextStepPlaceholder({ step, title }: { step: string; title: stri
       </header>
       <Card soft className="flex flex-col items-start gap-4">
         <p className="text-[14px] text-ink-soft">Este passo ainda está a ser construído.</p>
-        <Button variant="secondary" onClick={() => navigate('/registo/conta')}>Voltar ao passo anterior</Button>
+        <Button variant="secondary" onClick={() => navigate('/registo/seguranca')}>Voltar ao passo anterior</Button>
       </Card>
     </>
   )

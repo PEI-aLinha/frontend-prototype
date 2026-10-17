@@ -16,7 +16,7 @@ export function OnboardingLayout() {
   return (
     <RegistrationProvider>
       <div className="min-h-dvh bg-paper-soft px-5 pb-28 pt-10 max-md:pt-6">
-        <div className="mx-auto flex max-w-[560px] flex-col gap-7">
+        <div className="mx-auto flex max-w-[760px] flex-col gap-7">
           <Logo />
           <ol aria-label="Passos do registo" className="flex items-center gap-2">
             {ONBOARDING_STEPS.map((s, i) => {

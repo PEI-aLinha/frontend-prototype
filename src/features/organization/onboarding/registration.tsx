@@ -9,13 +9,16 @@ export interface AccountDraft {
 interface RegistrationValue {
   account: AccountDraft | null
   setAccount: (account: AccountDraft) => void
+  mfaVerified: boolean
+  setMfaVerified: (verified: boolean) => void
 }
 
 const RegistrationContext = createContext<RegistrationValue | null>(null)
 
 export function RegistrationProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<AccountDraft | null>(null)
-  const value = useMemo(() => ({ account, setAccount }), [account])
+  const [mfaVerified, setMfaVerified] = useState(false)
+  const value = useMemo(() => ({ account, setAccount, mfaVerified, setMfaVerified }), [account, mfaVerified])
   return <RegistrationContext.Provider value={value}>{children}</RegistrationContext.Provider>
 }
 

@@ -2,3 +2,4 @@
 export { OnboardingLayout } from './onboarding/OnboardingLayout'
 export { CreateAccountPage } from './onboarding/CreateAccountPage'
 export { NextStepPlaceholder } from './onboarding/NextStepPlaceholder'
+export { MfaSetupPage } from './onboarding/MfaSetupPage'
