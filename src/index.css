@@ -1,111 +1,96 @@
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@import 'tailwindcss';
+@import '@fontsource/nunito-sans/400.css';
+@import '@fontsource/nunito-sans/600.css';
+@import '@fontsource/nunito-sans/700.css';
+@import '@fontsource/nunito-sans/800.css';
+@import '@fontsource/ibm-plex-mono/500.css';
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+/* Tokens from docs/design-spec.md (same names as the Figma color/* variables). */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-paper: #ffffff;
+  --color-paper-soft: #f7f7f8;
+  --color-paper-deep: #e5e7e9;
+  --color-ink: #202124;
+  --color-ink-soft: #555a5f;
+  --color-muted: #646a6f;
+  --color-brand: #0b4f4a;
+  --color-brand-deep: #063632;
+  --color-brand-soft: #d2e4e1;
+  --color-signal: #168c80;
+  --color-signal-soft: #cdedea;
+  --color-silver: #747b82;
+  --color-silver-soft: #d9dde0;
+  --color-line: #b8bdc1;
+  --color-line-soft: #d9dde0;
+  --color-line-strong: #202124;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Risk levels: new, sober tokens, AA against their text. */
+  --color-risk-low: #e3ebe9;
+  --color-risk-low-ink: #2f514b;
+  --color-risk-medium: #f3e7c9;
+  --color-risk-medium-ink: #66460b;
+  --color-risk-high: #f3dbd5;
+  --color-risk-high-ink: #7a2617;
+  --color-danger: #9b2c1c;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  --font-sans: 'Nunito Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius-chip: 999px;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-fade-in: fade-in 180ms var(--ease-out-expo);
+  --animate-slide-in: slide-in 260ms var(--ease-out-expo);
+  --animate-slide-up: slide-up 260ms var(--ease-out-expo);
+  --animate-pop-in: pop-in 200ms var(--ease-out-expo);
+
+  @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes slide-in { from { transform: translateX(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+  @keyframes slide-up { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+  @keyframes pop-in { from { transform: translateY(8px) scale(0.98); opacity: 0 } to { transform: none; opacity: 1 } }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
   }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
   }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
 }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
+@utility eyebrow {
+  font-family: var(--font-mono);
   font-weight: 500;
-  color: var(--text-h);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+@utility title-tight {
+  letter-spacing: -0.015em;
+  line-height: 1.18;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }

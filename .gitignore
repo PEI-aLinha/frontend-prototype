@@ -61,3 +61,10 @@ Thumbs.db
 # Claude Code / graphify
 .claude/settings.local.json
 graphify-out
+test-results/
+playwright-report/
+.shot.mjs
+e2e/__screenshots__/
+
+# local-only design docs
+docs/
