@@ -35,6 +35,16 @@ export interface TeamMember {
   joinedAt: IsoDate | null
 }
 
+/** What the invited person sees when opening the invitation link. */
+export interface InviteDetails {
+  memberId: Id
+  name: string
+  email: string
+  organizationName: string
+  invitedByName: string
+  invitedAt: IsoDate
+}
+
 /** aLinha consultant as seen by the client (RF04, RF34: emergency contact). */
 export interface Consultant {
   id: Id
@@ -394,6 +404,10 @@ export interface OrganizationApi {
   cancelInvite(org: Id, memberId: Id): Promise<void>
   /** Removes an active analyst: access ends and their pending tasks are cancelled. */
   removeMember(org: Id, memberId: Id): Promise<void>
+  /** Public: the invitation behind a link (the token is the invitation id in the prototype). */
+  getInvite(token: Id): Promise<InviteDetails>
+  /** Public: creates the analyst's account (password and MFA are handled by Keycloak) and activates the membership. */
+  acceptInvite(token: Id): Promise<{ user: User; organizationSlug: string }>
 }
 
 // ---------------- core: audit, directory ----------------

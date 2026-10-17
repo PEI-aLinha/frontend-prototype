@@ -6,7 +6,7 @@ interface ExplainerProps {
   /** Key to remember whether the person dismissed the explanation (per browser). */
   id: string
   title?: string
-  intro: ReactNode
+  intro?: ReactNode
   steps: Array<{ title: string; text: ReactNode }>
   footer?: ReactNode
 }
@@ -43,7 +43,7 @@ export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps
       </button>
       {!collapsed && (
         <div className="flex flex-col gap-4 px-5 pb-5">
-          <p className="max-w-[760px] text-[14px] text-ink-soft">{intro}</p>
+          {intro && <p className="max-w-[760px] text-[14px] text-ink-soft">{intro}</p>}
           <ol className="grid gap-3 md:grid-cols-3">
             {steps.map((s, i) => (
               <li key={s.title} className="flex gap-3 rounded-[12px] bg-paper p-3.5">

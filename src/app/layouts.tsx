@@ -41,8 +41,9 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
   let items: NavItem[]
   if (persona.role === 'analista') {
     items = [
-      { to: `${base}/tarefas`, label: 'As minhas tarefas', shortLabel: 'Tarefas', icon: ListChecks },
-      { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
+      // The analyst registers assets inside a task (/tarefas/:id/ativos): that page belongs to "Ativos".
+      { to: `${base}/tarefas`, label: 'As minhas tarefas', shortLabel: 'Tarefas', icon: ListChecks, isActive: (p) => p.startsWith(`${base}/tarefas`) && !p.endsWith('/ativos') },
+      { to: `${base}/ativos`, label: 'Ativos', icon: Boxes, isActive: (p) => p.startsWith(`${base}/ativos`) || (p.startsWith(`${base}/tarefas/`) && p.endsWith('/ativos')) },
       { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
     ]
   } else {

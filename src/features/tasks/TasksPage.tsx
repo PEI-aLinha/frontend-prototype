@@ -1,15 +1,17 @@
 import { useNavigate } from 'react-router'
-import { Check, Minus } from 'lucide-react'
+import { Check, Inbox, Minus } from 'lucide-react'
 import { useAssets, useTasks, useToday } from '../../api/queries'
 import { dueStatus, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, cn } from '../../ui'
+import { Button, Card, EmptyState, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, cn } from '../../ui'
+import { useSession } from '../../core/session'
 
-const VISIBILITY: Array<[string, boolean]> = [['Só as tarefas que lhe foram atribuídas', true], ['Os ativos que registar', true], ['Resultados, roadmap e riscos', false]]
+const VISIBILITY: Array<[string, boolean]> = [['Só as tarefas que lhe foram atribuídas', true], ['Os ativos que registar', true]]
 
 /** 09 / 09b / 09c — As minhas tarefas (analista). */
 export function TasksPage() {
   const org = useTenant()
+  const { persona } = useSession()
   const navigate = useNavigate()
   const tasks = useTasks(org.id)
   const today = useToday()
@@ -19,7 +21,7 @@ export function TasksPage() {
   const open = list.filter((t) => t.status === 'pendente')
   const done = list.filter((t) => t.status === 'concluida')
   const registered = (taskId: string) => (assets.data ?? []).filter((a) => a.taskId === taskId).length
-  const subtitle = !tasks.data ? ' ' : open.length === 0 ? 'Não tem tarefas pendentes. O Rui Santos foi notificado.' : `Tem ${open.length} ${open.length === 1 ? 'tarefa atribuída' : 'tarefas atribuídas'} pelo Rui Santos.`
+  const subtitle = !tasks.data ? ' ' : list.length === 0 ? 'Boas-vindas ao aLinha.' : open.length === 0 ? 'Não tem tarefas pendentes. O Rui Santos foi notificado.' : `Tem ${open.length} ${open.length === 1 ? 'tarefa atribuída' : 'tarefas atribuídas'} pelo Rui Santos.`
 
   const card = (t: (typeof list)[number]) => (
     <TaskCard
@@ -35,8 +37,8 @@ export function TasksPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title="Olá, Pedro" subtitle={subtitle} />
-      <Explainer id="tasks-analyst" intro="Aqui estão só as tarefas que o Rui Santos lhe pediu. Não vê o resto da informação da empresa."
+      <PageHeader eyebrow={org.name} title={`Olá, ${persona.firstName}`} subtitle={subtitle} />
+      <Explainer id="tasks-analyst"
         steps={[
           { title: 'Escolha a tarefa', text: 'As mais urgentes aparecem primeiro, com o prazo a verde.' },
           { title: 'Faça o pedido', text: 'Responder a uma pergunta técnica ou registar os ativos que conhece.' },
@@ -46,6 +48,11 @@ export function TasksPage() {
         <div className="flex min-w-0 flex-1 flex-col gap-3.5">
           {tasks.isError ? <ErrorState error={tasks.error} onRetry={() => tasks.refetch()} /> : !tasks.data ? <SkeletonRows rows={3} /> : (
             <>
+              {list.length === 0 && (
+                <EmptyState icon={<Inbox className="size-5" aria-hidden />} title="Ainda não tem tarefas">
+                  Quando o Responsável designado lhe atribuir uma pergunta técnica, uma evidência ou outra tarefa, aparece aqui com o prazo. Também recebe um email.
+                </EmptyState>
+              )}
               {open.length > 0 && <h2 className="text-[16px] font-bold">Para esta semana</h2>}
               {open.map(card)}
               {done.length > 0 && <h2 className={cn('text-[16px] font-bold', open.length > 0 && 'mt-3')}>Concluídas</h2>}

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { BellRing, CalendarClock, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
+import { BellRing, CalendarClock, ExternalLink, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
 import type { Task, TeamMember } from '../../api/contracts'
 import { useCancelInvite, useInviteAnalyst, useMembers, useRemindTask, useRemoveMember, useResendInvite, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
 import { dueStatus, longDay, ROLE_LABEL, shortDate, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import {
-  Avatar, Button, Chip, ErrorState, Explainer, Eyebrow, Field, Modal, PageHeader, Select, SkeletonRows, TextInput, cn, useToast,
+  Avatar, Button, Chip, ErrorState, Explainer, Eyebrow, Field, Modal, PageHeader, Select, SkeletonRows, TextInput, Tooltip, cn, useToast,
 } from '../../ui'
 
 const initialsOf = (name: string) => {
@@ -39,6 +39,11 @@ function MemberRow({ m, isMe, onConfirm }: { m: TeamMember; isMe: boolean; onCon
             onClick={() => resend.mutate(m.id, { onSuccess: () => toast.show(`Convite reenviado para ${m.email}`), onError: (e) => toast.show(e.message, 'error') })}>Reenviar</Button>
         )}
         {pending && <Button variant="ghost" size="sm" icon={<XCircle className="size-4" aria-hidden />} onClick={onConfirm}>Cancelar convite</Button>}
+        {pending && (
+          <Tooltip content="Só no protótipo: abre o link que o analista recebe por email.">
+            <Link to={`/convite/${m.id}`} className="inline-flex items-center gap-1.5 rounded-[9px] px-3.5 py-2 text-[13px] font-bold text-brand hover:bg-paper-soft"><ExternalLink className="size-4" aria-hidden />Abrir convite</Link>
+          </Tooltip>
+        )}
         {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<UserMinus className="size-4" aria-hidden />} onClick={onConfirm}>Remover</Button>}
       </span>
     </li>

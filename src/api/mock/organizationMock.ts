@@ -1,7 +1,7 @@
-import { ApiError, type DemoActor, type Organization, type OrganizationApi, type TeamMember, type User } from '../contracts'
+import { ApiError, type DemoActor, type InviteDetails, type Organization, type OrganizationApi, type TeamMember, type User } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
-import { ORG_ID, RUI, type ConsultantRecord, type DemoState } from './seed'
+import { ORG_ID, PEDRO, RUI, type ConsultantRecord, type DemoState } from './seed'
 
 const LEGAL_FORM = /,?\s*(lda\.?|s\.?\s?a\.?|unipessoal|sociedade anónima)\s*$/i
 
@@ -43,6 +43,17 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
     const m = getState().members.find((x) => x.id === memberId && x.organizationId === org)
     if (!m || m.status !== 'convite_pendente') throw new ApiError('Este convite já não está pendente.', 404)
     return m
+  }
+
+  function openInvite(token: string): InviteDetails {
+    const s = getState()
+    const m = s.members.find((x) => x.id === token)
+    if (!m || m.status !== 'convite_pendente' || !m.invitedAt) throw new ApiError('Este convite já foi usado ou foi cancelado. Peça um novo ao Responsável designado.', 410)
+    const days = (Date.parse(s.today) - Date.parse(m.invitedAt.slice(0, 10))) / 86_400_000
+    if (days > 7) throw new ApiError('Este convite expirou. Peça ao Responsável designado para o reenviar.', 410)
+    const org = s.organizations.find((o) => o.id === m.organizationId)
+    const inviter = s.users.find((u) => u.id === m.invitedBy)
+    return { memberId: m.id, name: m.name, email: m.email, organizationName: org?.name ?? '', invitedByName: inviter?.name ?? 'O Responsável designado', invitedAt: m.invitedAt }
   }
 
   return {
@@ -165,6 +176,28 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
         tasks: st.tasks.map((t) => (t.organizationId === org && t.assigneeId === m.userId && t.status === 'pendente' ? { ...t, status: 'cancelada' } : t)),
         audit: [...st.audit, entry],
       }))
+    }),
+
+    getInvite: (token) => simulate(() => openInvite(token)),
+
+    acceptInvite: (token) => simulate(() => {
+      const inv = openInvite(token)
+      const s = getState()
+      const m = s.members.find((x) => x.id === token)!
+      const org = s.organizations.find((o) => o.id === m.organizationId)!
+      // The demo persona "Pedro Almeida" is the analyst invited by Rui; anyone else gets a new account.
+      const existing = s.users.find((u) => u.email.toLowerCase() === m.email.toLowerCase())
+      const userId = existing?.id ?? (m.email === 'pedro.almeida@tiagueda.pt' && !s.users.some((u) => u.id === PEDRO) ? PEDRO : newId('u'))
+      const user: User = existing ?? { id: userId, name: m.name, initials: initials(m.name), role: 'analista', title: 'Analista', email: m.email }
+      const at = now()
+      const entry = auditEntry({ organizationId: org.id, userId, action: 'accept', entityType: 'member', entityId: m.id, summary: `${m.name} aceitou o convite e entrou na equipa como analista`, before: null, after: { email: m.email } })
+      setState((st) => notify({
+        ...st,
+        users: existing ? st.users : [...st.users, user],
+        members: st.members.map((x) => (x.id === m.id ? { ...x, userId, status: 'ativo', joinedAt: at } : x)),
+        audit: [...st.audit, entry],
+      }, ...(m.invitedBy ? [{ organizationId: org.id, userId: m.invitedBy, kind: 'tarefa' as const, title: `${inv.name} aceitou o convite`, body: 'Já pode atribuir-lhe perguntas técnicas, evidências ou tarefas.', link: `/org/${org.slug}/equipa` }] : [])))
+      return { user, organizationSlug: org.slug }
     }),
 
     getConsultant: (org) => simulate(() => {

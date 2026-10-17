@@ -74,6 +74,12 @@ export function useRemoveMember(org: Id) {
   return useMutation({ mutationFn: (memberId: Id) => api.organization.removeMember(org, memberId), onSuccess: () => invalidate('members', 'tasks', 'audit') })
 }
 
+export const useInvite = (token: Id) => useQuery({ queryKey: ['invite', token], queryFn: () => api.organization.getInvite(token), retry: false })
+
+export function useAcceptInvite() {
+  return useMutation({ mutationFn: (token: Id) => api.organization.acceptInvite(token) })
+}
+
 export function useCheckEmail() {
   return useMutation({ mutationFn: (email: string) => api.organization.isEmailAvailable(email) })
 }

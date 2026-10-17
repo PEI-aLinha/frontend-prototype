@@ -167,3 +167,22 @@ describe('team members (US12)', () => {
     await expect(api.organization.listMembers(ORG_ID)).rejects.toMatchObject({ status: 403 })
   })
 })
+
+describe('accepting an invitation (US12)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetDemo('c1')
+    who = RUI
+  })
+
+  it('shows the invitation, creates the analyst account and activates the membership', async () => {
+    expect(await api.organization.getInvite('mbr-ana')).toMatchObject({ name: 'Ana Costa', organizationName: 'Componentes Águeda, Lda.', invitedByName: 'Rui Santos' })
+    const { user, organizationSlug } = await api.organization.acceptInvite('mbr-ana')
+    expect(user).toMatchObject({ role: 'analista', email: 'ana.costa@compagueda.pt' })
+    expect(organizationSlug).toBe('componentes-agueda')
+    expect(getState().members.find((m) => m.id === 'mbr-ana')).toMatchObject({ status: 'ativo', userId: user.id })
+    who = user.id
+    expect(await api.assets.listTasks(ORG_ID)).toEqual([])
+    await expect(api.organization.getInvite('mbr-ana')).rejects.toMatchObject({ status: 410 })
+  })
+})

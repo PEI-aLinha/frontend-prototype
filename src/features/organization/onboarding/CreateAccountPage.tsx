@@ -1,9 +1,10 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
-import { Check, Minus } from 'lucide-react'
 import { useCheckEmail } from '../../../api/queries'
-import { Button, Card, Eyebrow, Field, Note, TextInput, cn } from '../../../ui'
+import { Button, Card, Eyebrow, Field, Note, TextInput } from '../../../ui'
 import { PasswordInput } from './PasswordInput'
+import { PasswordChecklist } from './PasswordChecklist'
+import { passwordIsValid } from './password'
 import { useRegistration } from './registration'
 
 interface Form {
@@ -20,10 +21,6 @@ const EMPTY: Form = { name: '', email: '', password: '', confirm: '', terms: fal
 const EXAMPLE: Form = { name: 'Rui Santos', email: 'rui.santos@compagueda.pt', password: 'Aguedasegura2026', confirm: 'Aguedasegura2026', terms: true }
 const FIELD_ORDER: Array<keyof Form> = ['name', 'email', 'password', 'confirm', 'terms']
 
-const PASSWORD_RULES = [
-  { label: 'Pelo menos 12 caracteres', test: (p: string) => p.length >= 12 },
-  { label: 'Letras e números', test: (p: string) => /[a-zA-Z]/.test(p) && /\d/.test(p) },
-]
 
 function validate(f: Form): Errors {
   const e: Errors = {}
@@ -34,7 +31,7 @@ function validate(f: Form): Errors {
   if (!email) e.email = 'Indique o seu email.'
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = 'Este email não parece válido. Exemplo: nome@empresa.pt'
   if (!f.password) e.password = 'Escolha uma palavra-passe.'
-  else if (!PASSWORD_RULES.every((r) => r.test(f.password))) e.password = 'A palavra-passe ainda não cumpre as regras indicadas.'
+  else if (!passwordIsValid(f.password)) e.password = 'A palavra-passe ainda não cumpre as regras indicadas.'
   if (!f.confirm) e.confirm = 'Repita a palavra-passe.'
   else if (f.confirm !== f.password) e.confirm = 'As duas palavras-passe não são iguais.'
   if (!f.terms) e.terms = 'Para continuar, aceite os termos de utilização e a política de privacidade.'
@@ -92,19 +89,7 @@ export function CreateAccountPage() {
               {(p) => (
                 <div className="flex flex-col gap-2">
                   <PasswordInput ref={(el) => { refs.current.password = el }} id={p.id} aria-describedby={[p.describedBy, 'password-rules'].filter(Boolean).join(' ')} invalid={p.invalid} autoComplete="new-password" value={form.password} onChange={(e) => set('password', e.target.value)} />
-                  <ul id="password-rules" className="flex flex-wrap gap-x-5 gap-y-1.5">
-                    {PASSWORD_RULES.map((r) => {
-                      const ok = r.test(form.password)
-                      return (
-                        <li key={r.label} className="flex items-center gap-2 text-[13px]">
-                          <span className={cn('grid size-5 place-items-center rounded-full', ok ? 'bg-signal-soft text-brand' : 'bg-paper-deep text-ink-soft')}>
-                            {ok ? <Check className="size-3" strokeWidth={3} aria-label="Cumpre" /> : <Minus className="size-3" strokeWidth={3} aria-label="Ainda não cumpre" />}
-                          </span>
-                          <span className={ok ? 'text-ink' : 'text-ink-soft'}>{r.label}</span>
-                        </li>
-                      )
-                    })}
-                  </ul>
+                  <PasswordChecklist id="password-rules" password={form.password} />
                 </div>
               )}
             </Field>
