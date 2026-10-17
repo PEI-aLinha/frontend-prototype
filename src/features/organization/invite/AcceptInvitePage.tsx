@@ -9,9 +9,7 @@ import { MfaSetup } from '../onboarding/MfaSetup'
 import { PasswordChecklist } from '../onboarding/PasswordChecklist'
 import { PasswordInput } from '../onboarding/PasswordInput'
 import { Stepper } from '../onboarding/Stepper'
-import { passwordIsValid } from '../onboarding/password'
-
-const EXAMPLE_PASSWORD = 'Tecnicoagueda2026'
+import { examplePassword, passwordIsValid } from '../onboarding/password'
 
 /** US12 — the invited analyst opens the link, creates a password, sets up MFA and enters the platform. */
 export function AcceptInvitePage() {
@@ -92,7 +90,7 @@ export function AcceptInvitePage() {
               </form>
             </Card>
             <div className="flex flex-col items-center gap-2 text-center">
-              <Button variant="link" size="sm" onClick={() => { setPassword(EXAMPLE_PASSWORD); setConfirm(EXAMPLE_PASSWORD); setTerms(true); setSubmitted(false) }}>Preencher com o exemplo</Button>
+              <Button variant="link" size="sm" onClick={() => { const example = examplePassword(); setPassword(example); setConfirm(example); setTerms(true); setSubmitted(false) }}>Preencher com o exemplo</Button>
               <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
             </div>
           </>

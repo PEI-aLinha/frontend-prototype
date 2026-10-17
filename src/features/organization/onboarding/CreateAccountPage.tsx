@@ -4,7 +4,7 @@ import { useCheckEmail } from '../../../api/queries'
 import { Button, Card, Eyebrow, Field, Note, TextInput } from '../../../ui'
 import { PasswordInput } from './PasswordInput'
 import { PasswordChecklist } from './PasswordChecklist'
-import { passwordIsValid } from './password'
+import { examplePassword, passwordIsValid } from './password'
 import { useRegistration } from './registration'
 import { isValidEmail } from '../../../config/email'
 
@@ -19,7 +19,7 @@ interface Form {
 type Errors = Partial<Record<keyof Form, string>>
 
 const EMPTY: Form = { name: '', email: '', password: '', confirm: '', terms: false }
-const EXAMPLE: Form = { name: 'Rui Santos', email: 'rui.santos@compagueda.pt', password: 'Aguedasegura2026', confirm: 'Aguedasegura2026', terms: true }
+const EXAMPLE: Omit<Form, 'password' | 'confirm'> = { name: 'Rui Santos', email: 'rui.santos@compagueda.pt', terms: true }
 const FIELD_ORDER: Array<keyof Form> = ['name', 'email', 'password', 'confirm', 'terms']
 
 
@@ -117,7 +117,7 @@ export function CreateAccountPage() {
       )}
 
       <div className="flex flex-col items-center gap-2 text-center">
-        <Button variant="link" size="sm" onClick={() => { setForm(EXAMPLE); setSubmitted(false) }}>Preencher com o exemplo do Rui Santos</Button>
+        <Button variant="link" size="sm" onClick={() => { const example = examplePassword(); setForm({ ...EXAMPLE, password: example, confirm: example }); setSubmitted(false) }}>Preencher com o exemplo do Rui Santos</Button>
         <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
       </div>
     </>
