@@ -3,9 +3,9 @@ import { FileText, FileUp } from 'lucide-react'
 import type { OfficialQualification, QualificationInput } from '../../../api/contracts'
 import { useRegisterQualification } from '../../../api/queries'
 import { useTenant } from '../../../core/tenant'
-import { Button, Chip, Field, Modal, OptionGroup, TextInput, cn, useToast, type OptionItem } from '../../../ui'
+import { Button, Chip, Field, Modal, OptionGroup, cn, useToast, type OptionItem } from '../../../ui'
 import { NIS2_LABEL, type Nis2Class } from '../framing/nis2Framing'
-import { openPicker } from '../datePicker'
+import { DateInput } from '../DateInput'
 import { keepDocument } from './documentStore'
 
 type Classification = QualificationInput['classification']
@@ -64,8 +64,7 @@ export function QualificationModal({ suggested, today, current, onClose }: { sug
 
       <Field label="Data do Ato de Qualificação" error={errors.date} className="max-w-[260px]">
         {(p) => (
-          <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} type="date" max={today} value={date} onChange={(e) => setDate(e.target.value)}
-            className="cursor-pointer" onClick={(e) => openPicker(e.currentTarget)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPicker(e.currentTarget) } }} />
+          <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} max={today} value={date} onChange={(e) => setDate(e.target.value)} />
         )}
       </Field>
 

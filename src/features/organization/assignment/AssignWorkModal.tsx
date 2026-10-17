@@ -2,8 +2,8 @@ import { useState } from 'react'
 import type { TeamMember, WorkAssignmentInput } from '../../../api/contracts'
 import { useAssignWork, useToday } from '../../../api/queries'
 import { useTenant } from '../../../core/tenant'
-import { Button, Chip, Field, Modal, OptionGroup, Select, TextArea, TextInput, useToast, type OptionItem } from '../../../ui'
-import { openPicker } from '../datePicker'
+import { Button, Chip, Field, Modal, OptionGroup, Select, TextArea, useToast, type OptionItem } from '../../../ui'
+import { DateInput } from '../DateInput'
 import { ASSET_TASK, EVIDENCE, TECHNICAL_QUESTIONS } from './catalog'
 
 type Kind = 'pergunta' | 'evidencia' | 'tarefa'
@@ -80,7 +80,7 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
       )}
 
       <Field label="Prazo" optional hint="Sem prazo, a tarefa fica sem data limite." error={errors.due} className="max-w-[260px]">
-        {(p) => <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} type="date" min={today.data} value={due} onChange={(e) => setDue(e.target.value)} className="cursor-pointer" onClick={(e) => openPicker(e.currentTarget)} />}
+        {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}
       </Field>
 
       {assign.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{assign.error.message}</p>}

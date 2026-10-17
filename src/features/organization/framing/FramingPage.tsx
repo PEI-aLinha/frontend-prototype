@@ -1,7 +1,8 @@
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { ArrowLeft } from 'lucide-react'
 import { useTenant } from '../../../core/tenant'
 import { shortDate } from '../../../config/labels'
-import { Card, EmptyState, Eyebrow, Note, PageHeader, cn } from '../../../ui'
+import { Button, Card, EmptyState, Eyebrow, Note, PageHeader, cn } from '../../../ui'
 import { Nis2Badge } from './Nis2Badge'
 import { NIS2_LABEL, NIS2_MEANING, nis2Status, suggestNis2 } from './nis2Framing'
 
@@ -21,6 +22,7 @@ function Bullets({ items }: { items: string[] }) {
 /** US11 — NIS2 framing: the suggestion from the registration data, replaced by the official CNCS qualification once registered. */
 export function FramingPage() {
   const org = useTenant()
+  const navigate = useNavigate()
   const status = nis2Status(org)
   if (!org.profile || !status) return <EmptyState title="Faltam os dados do registo">Sem os dados da organização não é possível sugerir o enquadramento.</EmptyState>
 
@@ -61,6 +63,10 @@ export function FramingPage() {
         <h2 className="text-[18px] font-extrabold">O que isto significa</h2>
         <Bullets items={NIS2_MEANING[status.classification]} />
       </Card>
+
+      <div>
+        <Button variant="secondary" icon={<ArrowLeft className="size-4" aria-hidden />} onClick={() => navigate(`/org/${org.slug}/ambito`)}>Voltar ao âmbito regulatório</Button>
+      </div>
     </>
   )
 }
