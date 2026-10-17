@@ -1,7 +1,7 @@
 import type { Role } from '../api/contracts'
 import { FLAGS } from '../config/flags'
 
-export type Resource = 'asset' | 'critical_service' | 'asset_task' | 'asset_comment' | 'risk' | 'roadmap' | 'history' | 'portfolio' | 'asset_export'
+export type Resource = 'scope' | 'asset' | 'critical_service' | 'asset_task' | 'asset_comment' | 'risk' | 'roadmap' | 'history' | 'portfolio' | 'asset_export'
 export type Action = 'view' | 'create' | 'edit' | 'delete' | 'assign' | 'comment' | 'validate' | 'link'
 
 export interface RbacContext {
@@ -16,6 +16,7 @@ const clientSeesRisks = (ctx: RbacContext) => FLAGS.RISKS_VISIBLE_TO_CLIENT_AFTE
 // RNF08: role-based permissions. The analyst only sees the assets of their task (filtered in the data provider).
 const MATRIX: Record<Role, Matrix> = {
   responsavel: {
+    scope: { view: true, edit: true },
     asset: { view: true, create: true, edit: true, delete: true },
     critical_service: { view: true, create: true, edit: true, delete: true },
     asset_task: { view: true, assign: true },
@@ -31,6 +32,7 @@ const MATRIX: Record<Role, Matrix> = {
     asset_task: { view: true },
   },
   consultor: {
+    scope: { view: true },
     asset: { view: true },
     critical_service: { view: true },
     asset_comment: { view: true, comment: true },

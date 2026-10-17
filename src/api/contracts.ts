@@ -34,6 +34,21 @@ export interface OrganizationProfile {
   permanentContact: { name: string; phone: string }
 }
 
+/** How the company uses AI systems (AI Act): chatbots, recruitment software, everyday assistants. */
+export type AiUse = 'chatbot' | 'recrutamento' | 'assistente' | 'outro'
+
+/** Answers to the regulatory scope questions (US34, RF03). */
+export interface ScopeAnswers {
+  employeeData: 'sim' | 'nao'
+  customerData: 'sim' | 'nao' | 'so_empresas'
+  usesAi: 'sim' | 'nao' | 'nao_sei'
+  aiUses: AiUse[]
+  answeredBy: Id
+  answeredAt: IsoDate
+}
+
+export type ScopeInput = Omit<ScopeAnswers, 'answeredBy' | 'answeredAt'>
+
 export interface Organization {
   id: Id
   slug: string
@@ -46,6 +61,8 @@ export interface Organization {
   profile?: OrganizationProfile
   registeredBy?: Id
   registeredAt?: IsoDate
+  /** Undefined until the designated manager answers the scope questions. */
+  scope?: ScopeAnswers
 }
 
 export type ActorType = 'user' | 'system' | 'ai'
@@ -316,6 +333,8 @@ export interface OrganizationApi {
   isEmailAvailable(email: string): Promise<boolean>
   /** Creates the designated manager's account and the organization, associated with each other (US10). */
   register(input: RegistrationInput): Promise<Organization>
+  /** Saves the answers about personal data and AI (US34). Designated manager only. */
+  saveScope(org: Id, input: ScopeInput): Promise<Organization>
 }
 
 // ---------------- core: audit, directory ----------------

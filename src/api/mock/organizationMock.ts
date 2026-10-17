@@ -1,4 +1,4 @@
-import { ApiError, type Organization, type OrganizationApi, type User } from '../contracts'
+import { ApiError, type DemoActor, type Organization, type OrganizationApi, type User } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { ORG_ID, RUI } from './seed'
 
@@ -18,7 +18,7 @@ function initials(name: string): string {
 }
 
 /** Organization plugin (US10). In the real API the account is created in Keycloak and the request is anonymous. */
-export function createOrganizationMock(): OrganizationApi {
+export function createOrganizationMock(getActor: () => DemoActor): OrganizationApi {
   return {
     isEmailAvailable: (email) => simulate(() => !getState().users.some((u) => u.email.toLowerCase() === email.trim().toLowerCase())),
 
@@ -61,6 +61,19 @@ export function createOrganizationMock(): OrganizationApi {
         audit: [...st.audit, entry],
       }))
       return organization
+    }),
+
+    saveScope: (org, input) => simulate(() => {
+      const s = getState()
+      const me = s.users.find((u) => u.id === getActor().userId)
+      const current = s.organizations.find((o) => o.id === org)
+      if (!current) throw new ApiError('Organização não encontrada', 404)
+      if (me?.role !== 'responsavel') throw new ApiError('Só o Responsável designado pode responder a estas perguntas.', 403)
+      const scope = { ...input, aiUses: input.usesAi === 'sim' ? input.aiUses : [], answeredBy: me.id, answeredAt: now() }
+      const updated: Organization = { ...current, scope }
+      const entry = auditEntry({ organizationId: org, userId: me.id, action: current.scope ? 'update' : 'create', entityType: 'organization', entityId: org, summary: current.scope ? 'Atualizou as respostas sobre dados pessoais e IA' : 'Respondeu às perguntas sobre dados pessoais e IA', before: current.scope ? { ...current.scope } : null, after: { ...input } })
+      setState((st) => ({ ...st, organizations: st.organizations.map((o) => (o.id === org ? updated : o)), audit: [...st.audit, entry] }))
+      return updated
     }),
   }
 }

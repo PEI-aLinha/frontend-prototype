@@ -28,7 +28,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 7
+export const STATE_VERSION = 8
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -66,6 +66,8 @@ const ORG: Organization = {
   },
   registeredBy: RUI,
   registeredAt: '2026-10-09T09:20:00',
+  // Scenario 1 of the report: personal data of employees and customers, no AI systems.
+  scope: { employeeData: 'sim', customerData: 'sim', usesAi: 'nao', aiUses: [], answeredBy: RUI, answeredAt: '2026-10-09T09:31:00' },
 }
 
 const SERVICES: CriticalService[] = [

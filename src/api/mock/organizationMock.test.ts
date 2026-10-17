@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { RegistrationInput } from '../contracts'
 import { createMockApi } from './mockApi'
 import { getState, resetDemo } from './store'
-import { ORG_ID, RUI } from './seed'
+import { ORG_ID, PEDRO, RUI } from './seed'
 import { slugify } from './organizationMock'
 
-const api = createMockApi(() => ({ userId: RUI }))
+let who = RUI
+const api = createMockApi(() => ({ userId: who }))
 
 const input: RegistrationInput = {
   account: { name: 'Rui Santos', email: 'rui.santos@compagueda.pt' },
@@ -41,5 +42,23 @@ describe('organization registration (US10)', () => {
   it('builds the URL slug without the legal form', () => {
     expect(slugify('Componentes Águeda, Lda.')).toBe('componentes-agueda')
     expect(slugify('LogiCentro Armazéns, S.A.')).toBe('logicentro-armazens')
+  })
+})
+
+describe('regulatory scope answers (US34)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetDemo('c1')
+    who = RUI
+  })
+
+  it('saves the answers and drops AI uses when the company does not use AI', async () => {
+    const org = await api.organization.saveScope(ORG_ID, { employeeData: 'sim', customerData: 'so_empresas', usesAi: 'nao', aiUses: ['chatbot'] })
+    expect(org.scope).toMatchObject({ customerData: 'so_empresas', usesAi: 'nao', aiUses: [], answeredBy: RUI })
+  })
+
+  it('only lets the designated manager answer', async () => {
+    who = PEDRO
+    await expect(api.organization.saveScope(ORG_ID, { employeeData: 'sim', customerData: 'sim', usesAi: 'nao', aiUses: [] })).rejects.toMatchObject({ status: 403 })
   })
 })

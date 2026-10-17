@@ -68,7 +68,7 @@ export function createMockApi(getActor: ActorProvider): Api {
   const write = (mutate: (s: DemoState, me: User) => DemoState) => setState((s) => mutate(s, user(s, getActor().userId)))
 
   return {
-    organization: createOrganizationMock(),
+    organization: createOrganizationMock(getActor),
     integrations: createIntegrationsMock(getActor),
 
     directory: {
