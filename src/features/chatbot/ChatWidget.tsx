@@ -1,36 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
-import { Clock, Maximize2, Minimize2, Minus, Plus, Send, Sparkles, X } from 'lucide-react'
+import { Maximize2, Minimize2, Minus, Sparkles } from 'lucide-react'
+import { ChatCompact } from './ChatCompact'
+import { ChatExpanded } from './ChatExpanded'
+import type { BotReply, BotReplyObject, ChatMessage, Conversation, Suggestion } from './ChatTypes'
 
-type ChatSource = { label: string; title: string; to: string; cta?: string }
-type ChatMessage = {
-  id: number
-  role: 'user' | 'bot' | 'notice'
-  text: string
-  source?: ChatSource
-  error?: boolean
-}
-type BotReplyObject = { text: string; source?: ChatSource; notice?: string }
-type BotReply = string | BotReplyObject
-
-type Suggestion = {
-  label: string
-  /** Resumo curto mostrado no separador da conversa. Se omitido, deriva-se da 1.ª pergunta. */
-  topic?: string
-  /** Se definido, aparece um aviso na conversa depois da resposta do bot. */
-  notice?: string
-}
-
-type Conversation = {
-  id: number
-  messages: ChatMessage[]
-  draft: string
-  typing: boolean
-  unread: boolean
-  awaitingReview: boolean
-  /** Resumo do tema, mostrado no separador / barra lateral. */
-  topic?: string
-}
+export type { BotReply, ChatMessage, Suggestion } from './ChatTypes'
 
 type PersistMode = 'session' | 'local' | false
 
@@ -52,6 +26,10 @@ type ChatWidgetProps = {
   /** Chave de armazenamento. Inclua o tenant/utilizador, ex.: `alinha-chat:${org.id}`. */
   storageKey?: string
 }
+
+/* ------------------------------------------------------------------ */
+/* Dados de exemplo e persistência (mock) — substituir pelo backend.   */
+/* ------------------------------------------------------------------ */
 
 const DEFAULT_KEY = 'alinha-chat'
 const MAX_SAVED_MESSAGES = 200
@@ -85,7 +63,14 @@ const deriveTopic = (text: string) => {
   return s.length > 34 ? `${s.slice(0, 33).trimEnd()}…` : s
 }
 
-/* ---------- Persistência ---------- */
+const freshConversation = (id: number, messageId: number): Conversation => ({
+  id,
+  messages: [{ id: messageId, role: 'bot', text: GREETING }],
+  draft: '',
+  typing: false,
+  unread: false,
+  awaitingReview: false,
+})
 
 type Saved = { v: 1; conversations: Conversation[]; activeId: number; open: boolean; expanded: boolean }
 
@@ -139,18 +124,14 @@ export function clearChatHistory(storageKey: string = DEFAULT_KEY) {
   }
 }
 
-const freshConversation = (id: number, messageId: number): Conversation => ({
-  id,
-  messages: [{ id: messageId, role: 'bot', text: GREETING }],
-  draft: '',
-  typing: false,
-  unread: false,
-  awaitingReview: false,
-})
+/* ------------------------------------------------------------------ */
 
 /**
- * Chatbot flutuante: botão (fechado) <-> painel (aberto) <-> painel expandido (conversas à esquerda).
+ * Chatbot flutuante: botão (fechado) <-> painel normal <-> painel expandido (conversas à esquerda).
  * Montar UMA vez num layout que não é desmontado entre páginas (por cima do <Outlet />).
+ *
+ * Ficheiros: ChatCompact (versão normal), ChatExpanded (versão expandida),
+ * ChatThread (mensagens + campo de escrita, partilhado), chatTypes (tipos).
  */
 export function ChatWidget({
   onSend,
@@ -176,10 +157,6 @@ export function ChatWidget({
   const [conversations, setConversations] = useState<Conversation[]>(boot.conversations)
   const [activeId, setActiveId] = useState<number>(boot.activeId)
 
-  const listRef = useRef<HTMLDivElement>(null)
-  const tabsRef = useRef<HTMLDivElement>(null)
-  const sideRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
   // Refs para os callbacks assíncronos verem sempre o estado atual
   const openRef = useRef(open)
   const activeRef = useRef(activeId)
@@ -195,22 +172,9 @@ export function ChatWidget({
     writeSaved(persist, storageKey, { v: 1, conversations, activeId, open, expanded })
   }, [persist, storageKey, conversations, activeId, open, expanded])
 
-  useEffect(() => {
-    const el = listRef.current
-    if (el) el.scrollTop = el.scrollHeight
-  }, [active.messages, active.typing, open, activeId, expanded])
-
-  // Mantém a conversa ativa visível quando há muitas
-  useEffect(() => {
-    const opts = { inline: 'nearest', block: 'nearest' } as const
-    tabsRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView(opts)
-    sideRef.current?.querySelector('[aria-selected="true"]')?.scrollIntoView(opts)
-  }, [activeId, conversations.length, open, expanded])
-
-  // Ao abrir ou trocar de conversa: foco no input, limpa o "não lida" e Esc minimiza
+  // Ao abrir ou trocar de conversa: limpa o "não lida"; Esc minimiza
   useEffect(() => {
     if (!open) return
-    inputRef.current?.focus()
     setConversations((prev) => prev.map((c) => (c.id === activeId && c.unread ? { ...c, unread: false } : c)))
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('keydown', onKey)
@@ -308,133 +272,24 @@ export function ChatWidget({
   }
 
   const panelSize = expanded
-    ? 'h-[min(924px,calc(100vh-48px))] w-[min(1480px,calc(100vw-48px))]'
+    ? 'h-[min(924px,calc(100vh-48px))] w-[min(1280px,calc(100vw-48px))]'
     : 'h-[640px] max-h-[calc(100vh-48px)] w-[400px] max-w-[calc(100vw-48px)]'
 
   const headerBtn =
     'flex size-11 items-center justify-center rounded-[10px] text-white/80 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white'
 
-  /** Separadores horizontais (painel normal; no expandido só em ecrãs pequenos). */
-  const tabs = (
-    <div ref={tabsRef} role="tablist" aria-label="Conversas" className="flex items-center gap-1.5 overflow-x-auto border-b border-brand-soft bg-paper px-3 py-2">
-      {conversations.map((c) => {
-        const selected = c.id === activeId
-        const label = c.topic ?? 'Nova conversa'
-        return (
-          <div
-            key={c.id}
-            className={`flex flex-none items-center rounded-full border ${selected ? 'border-brand bg-brand text-white' : 'border-brand-soft bg-white text-brand'}`}
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              title={label}
-              onClick={() => setActiveId(c.id)}
-              className={`flex min-h-10 max-w-[170px] min-w-0 items-center gap-1.5 rounded-full pl-3.5 text-[13px] font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${conversations.length > 1 ? 'pr-1.5' : 'pr-3.5'}`}
-            >
-              <span className="truncate">{label}</span>
-              {c.awaitingReview && (
-                <>
-                  <Clock className="size-3.5 flex-none" aria-hidden />
-                  <span className="sr-only">à espera de aprovação</span>
-                </>
-              )}
-              {c.unread && !selected && (
-                <>
-                  <span className="size-2 flex-none rounded-full bg-red-500" aria-hidden />
-                  <span className="sr-only">novas mensagens</span>
-                </>
-              )}
-            </button>
-            {conversations.length > 1 && (
-              <button
-                type="button"
-                onClick={() => closeConversation(c.id)}
-                aria-label={`Fechar conversa ${label}`}
-                className="mr-1 flex size-9 flex-none items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-brand"
-              >
-                <X className="size-3.5" aria-hidden />
-              </button>
-            )}
-          </div>
-        )
-      })}
-      {canAdd && (
-        <button
-          type="button"
-          onClick={addConversation}
-          aria-label="Nova conversa"
-          className="flex size-10 flex-none items-center justify-center rounded-full border border-dashed border-brand-soft bg-white text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand"
-        >
-          <Plus className="size-4" aria-hidden />
-        </button>
-      )}
-    </div>
-  )
-
-  /** Barra lateral com as conversas (só no painel expandido, ecrãs médios ou maiores). */
-  const sidebar = (
-    <aside className="hidden w-[260px] flex-none flex-col gap-3 border-r border-brand-soft bg-paper p-3 md:flex">
-      <button
-        type="button"
-        onClick={addConversation}
-        disabled={!canAdd}
-        className="flex min-h-11 items-center gap-2 rounded-[12px] border border-brand-soft bg-white px-3.5 text-[14px] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <Plus className="size-4" aria-hidden />
-        Nova conversa
-      </button>
-      <div ref={sideRef} role="tablist" aria-orientation="vertical" aria-label="Conversas" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-        {conversations.map((c) => {
-          const selected = c.id === activeId
-          const label = c.topic ?? 'Nova conversa'
-          return (
-            <div
-              key={c.id}
-              className={`group flex flex-none items-center rounded-[10px] border ${selected ? 'border-brand-soft bg-white text-brand' : 'border-transparent text-ink-soft hover:bg-paper-soft'}`}
-            >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                title={label}
-                onClick={() => setActiveId(c.id)}
-                className={`flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] pl-3 pr-1 text-left text-[13px] focus-visible:outline-2 focus-visible:outline-brand ${selected ? 'font-bold' : 'font-semibold'}`}
-              >
-                <span className="truncate">{label}</span>
-                {c.awaitingReview && (
-                  <>
-                    <Clock className="size-3.5 flex-none" aria-hidden />
-                    <span className="sr-only">à espera de aprovação</span>
-                  </>
-                )}
-                {c.unread && !selected && (
-                  <>
-                    <span className="size-2 flex-none rounded-full bg-red-500" aria-hidden />
-                    <span className="sr-only">novas mensagens</span>
-                  </>
-                )}
-              </button>
-              {conversations.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => closeConversation(c.id)}
-                  aria-label={`Fechar conversa ${label}`}
-                  className="mr-1 flex size-9 flex-none items-center justify-center rounded-full opacity-0 hover:bg-black/10 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-brand group-focus-within:opacity-100 group-hover:opacity-100"
-                >
-                  <X className="size-3.5" aria-hidden />
-                </button>
-              )}
-            </div>
-          )
-        })}
-      </div>
-      {!canAdd && (
-        <p className="px-1 text-[11px] text-muted">Máximo de {maxConversations} conversas. Feche uma para abrir outra.</p>
-      )}
-    </aside>
-  )
+  const bodyProps = {
+    conversations,
+    activeId,
+    canAdd,
+    onSelect: setActiveId,
+    onAdd: addConversation,
+    onClose: closeConversation,
+    conversation: active,
+    suggestions,
+    onSend: send,
+    onDraftChange: (text: string) => patch(active.id, (c) => ({ ...c, draft: text })),
+  }
 
   return (
     <section
@@ -464,102 +319,11 @@ export function ChatWidget({
         </button>
       </header>
 
-      {expanded ? <div className="md:hidden">{tabs}</div> : tabs}
-
-      <div className="flex min-h-0 flex-1">
-        {expanded && sidebar}
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div
-            ref={listRef}
-            role="tabpanel"
-            aria-live="polite"
-            className={`min-h-0 flex-1 overflow-y-auto bg-paper-soft ${expanded ? 'p-6 md:px-8' : 'p-[18px]'}`}
-          >
-            <div className="mx-auto flex w-full max-w-[760px] flex-col gap-3.5">
-              {active.messages.map((m) =>
-                m.role === 'notice' ? (
-                  <div key={m.id} role="status" className="flex items-start gap-2.5 rounded-[12px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-amber-900">
-                    <Clock className="mt-0.5 size-4 flex-none" aria-hidden />
-                    <div className="flex flex-col gap-1">
-                      <span className="font-mono text-[10px] uppercase tracking-[0.1em]">Em revisão</span>
-                      <p className="text-[13px] leading-normal">{m.text}</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div key={m.id} className="flex flex-col gap-2">
-                    <div
-                      className={
-                        m.role === 'user'
-                          ? 'max-w-[85%] self-end whitespace-pre-wrap break-words rounded-[16px_16px_4px_16px] bg-brand px-3.5 py-2.5 text-[14px] leading-normal text-white'
-                          : `max-w-[85%] self-start whitespace-pre-wrap break-words rounded-[16px_16px_16px_4px] border px-3.5 py-2.5 text-[14px] leading-normal ${
-                              m.error ? 'border-red-200 bg-red-50 text-red-800' : 'border-brand-soft bg-white'
-                            }`
-                      }
-                    >
-                      {m.text}
-                    </div>
-                    {m.source && (
-                      <Link to={m.source.to} className="flex max-w-[85%] flex-col gap-1.5 self-start rounded-[12px] border border-brand-soft bg-paper px-3.5 py-3 text-brand no-underline hover:underline">
-                        <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">{m.source.label}</span>
-                        <strong className="text-[14px] font-extrabold">{m.source.title}</strong>
-                        <span className="text-[13px] font-bold">{m.source.cta ?? 'Abrir →'}</span>
-                      </Link>
-                    )}
-                  </div>
-                ),
-              )}
-
-              {active.typing && (
-                <div role="status" aria-label="A escrever" className="flex gap-1.5 self-start rounded-[16px_16px_16px_4px] border border-brand-soft bg-white px-4 py-3.5">
-                  {[0, 150, 300].map((d) => (
-                    <span key={d} style={{ animationDelay: `${d}ms` }} className="size-[7px] animate-bounce rounded-full bg-muted" />
-                  ))}
-                </div>
-              )}
-
-              {active.messages.length <= 1 && !active.typing && (
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {suggestions.map((s) => (
-                    <button key={s.label} type="button" onClick={() => send(s.label, s)} className="min-h-11 rounded-[22px] border border-brand-soft bg-white px-3.5 py-2 text-left text-[13px] font-bold text-brand hover:bg-paper">
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <footer className={`border-t border-brand-soft bg-white ${expanded ? 'px-6 pb-3 pt-4' : 'px-3.5 pb-2.5 pt-3'}`}>
-            <div className="mx-auto flex w-full max-w-[760px] flex-col gap-2">
-              <form
-                noValidate
-                className="flex items-center gap-2"
-                onSubmit={(e) => { e.preventDefault(); send(active.draft) }}
-              >
-                <input
-                  ref={inputRef}
-                  value={active.draft}
-                  onChange={(e) => patch(active.id, (c) => ({ ...c, draft: e.target.value }))}
-                  placeholder="Pergunte sobre riscos, ativos ou roadmap…"
-                  aria-label="Escreva a sua pergunta"
-                  maxLength={1000}
-                  className="h-[46px] min-w-0 flex-1 rounded-[12px] border border-brand-soft px-3.5 text-[14px] focus-visible:outline-2 focus-visible:outline-brand"
-                />
-                <button
-                  type="submit"
-                  disabled={!active.draft.trim() || active.typing}
-                  aria-label="Enviar mensagem"
-                  className="flex size-[46px] flex-none items-center justify-center rounded-[12px] bg-brand text-white disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Send className="size-[18px]" aria-hidden />
-                </button>
-              </form>
-              <p className="text-center text-[11px] text-muted">As respostas de IA podem conter erros. Confirme com a consultora.</p>
-            </div>
-          </footer>
-        </div>
-      </div>
+      {expanded ? (
+        <ChatExpanded {...bodyProps} maxConversations={maxConversations} />
+      ) : (
+        <ChatCompact {...bodyProps} />
+      )}
     </section>
   )
 }

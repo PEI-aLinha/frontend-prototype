@@ -1,0 +1,100 @@
+import { Plus, X } from 'lucide-react'
+import { ChatThread } from './ChatThread'
+import {
+  ConversationBadges,
+  ConversationTabs,
+  useScrollActiveIntoView,
+  type ChatBodyProps,
+  type ConversationNavProps,
+} from './ChatCompact'
+
+/** Barra lateral com as conversas (ecrãs médios ou maiores). */
+function ConversationSidebar({
+  conversations,
+  activeId,
+  canAdd,
+  maxConversations,
+  onSelect,
+  onAdd,
+  onClose,
+}: ConversationNavProps & { maxConversations: number }) {
+  const ref = useScrollActiveIntoView(activeId, conversations.length)
+  return (
+    <aside className="hidden w-[260px] flex-none flex-col gap-3 border-r border-brand-soft bg-paper p-3 md:flex">
+      <button
+        type="button"
+        onClick={onAdd}
+        disabled={!canAdd}
+        className="flex min-h-11 items-center gap-2 rounded-[12px] border border-brand-soft bg-white px-3.5 text-[14px] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Plus className="size-4" aria-hidden />
+        Nova conversa
+      </button>
+      <div ref={ref} role="tablist" aria-orientation="vertical" aria-label="Conversas" className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+        {conversations.map((c) => {
+          const selected = c.id === activeId
+          const label = c.topic ?? 'Nova conversa'
+          return (
+            <div
+              key={c.id}
+              className={`group flex flex-none items-center rounded-[10px] border ${selected ? 'border-brand-soft bg-white text-brand' : 'border-transparent text-ink-soft hover:bg-paper-soft'}`}
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                title={label}
+                onClick={() => onSelect(c.id)}
+                className={`flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] pl-3 pr-1 text-left text-[13px] focus-visible:outline-2 focus-visible:outline-brand ${selected ? 'font-bold' : 'font-semibold'}`}
+              >
+                <span className="truncate">{label}</span>
+                <ConversationBadges conversation={c} selected={selected} />
+              </button>
+              {conversations.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => onClose(c.id)}
+                  aria-label={`Fechar conversa ${label}`}
+                  className="mr-1 flex size-9 flex-none items-center justify-center rounded-full opacity-0 hover:bg-black/10 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-brand group-focus-within:opacity-100 group-hover:opacity-100"
+                >
+                  <X className="size-3.5" aria-hidden />
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {!canAdd && (
+        <p className="px-1 text-[11px] text-muted">Máximo de {maxConversations} conversas. Feche uma para abrir outra.</p>
+      )}
+    </aside>
+  )
+}
+
+/** Versão expandida: conversas na barra lateral à esquerda (em ecrãs pequenos volta aos separadores). */
+export function ChatExpanded({
+  conversation,
+  suggestions,
+  onSend,
+  onDraftChange,
+  maxConversations,
+  ...nav
+}: ChatBodyProps & { maxConversations: number }) {
+  return (
+    <>
+      <div className="md:hidden">
+        <ConversationTabs {...nav} />
+      </div>
+      <div className="flex min-h-0 flex-1">
+        <ConversationSidebar {...nav} maxConversations={maxConversations} />
+        <ChatThread
+          conversation={conversation}
+          expanded
+          suggestions={suggestions}
+          onSend={onSend}
+          onDraftChange={onDraftChange}
+        />
+      </div>
+    </>
+  )
+}
