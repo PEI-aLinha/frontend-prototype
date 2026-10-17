@@ -267,10 +267,14 @@ export function createMockApi(getActor: ActorProvider): Api {
           if (me.role === 'analista' && t.assigneeId !== me.id) deny()
           task = { ...t, status: 'concluida' }
           const count = s.assets.filter((a) => a.taskId === id).length
-          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'complete', entityType: 'task', entityId: id, summary: `Concluiu a tarefa de registo de ativos (${count} registados)`, before: { status: t.status }, after: { status: 'concluida' } })
-          return notify({ ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }, {
+          const isAssets = t.kind === 'ativos'
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'complete', entityType: 'task', entityId: id, summary: isAssets ? `Concluiu a tarefa de registo de ativos (${count} registados)` : `Concluiu a tarefa "${t.title}"`, before: { status: t.status }, after: { status: 'concluida' } })
+          return notify({ ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }, isAssets ? {
             organizationId: org, userId: t.assignedBy, kind: 'tarefa_concluida', title: `${me.name.split(' ')[0]} concluiu o registo de ativos`,
             body: `${count} ativos técnicos registados. Veja-os no inventário.`, link: '/org/componentes-agueda/ativos',
+          } : {
+            organizationId: org, userId: t.assignedBy, kind: 'tarefa_concluida', title: `${me.name.split(' ')[0]} concluiu uma tarefa`,
+            body: t.title, link: '/org/componentes-agueda/equipa',
           })
         })
         return task

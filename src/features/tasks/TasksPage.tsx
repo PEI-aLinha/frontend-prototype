@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router'
 import { Check, Inbox, Minus } from 'lucide-react'
-import { useAssets, useTasks, useToday } from '../../api/queries'
+import type { Task } from '../../api/contracts'
+import { useAssets, useCompleteTask, useTasks, useToday } from '../../api/queries'
 import { dueStatus, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, EmptyState, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, cn } from '../../ui'
+import { Button, Card, Chip, EmptyState, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, Tooltip, cn, useToast } from '../../ui'
 import { useSession } from '../../core/session'
+
+const KIND_LABEL: Record<Task['kind'], string> = { ativos: 'Ativos', pergunta: 'Pergunta técnica', evidencia: 'Evidência', tarefa: 'Tarefa', integracao: 'Integração' }
 
 const VISIBILITY: Array<[string, boolean]> = [['Só as tarefas que lhe foram atribuídas', true], ['Os ativos que registar', true]]
 
@@ -16,24 +19,41 @@ export function TasksPage() {
   const tasks = useTasks(org.id)
   const today = useToday()
   const assets = useAssets(org.id)
+  const complete = useCompleteTask(org.id)
+  const toast = useToast()
 
   const list = (tasks.data ?? []).filter((t) => t.status !== 'cancelada')
-  const open = list.filter((t) => t.status === 'pendente')
+  // Earliest deadline first; tasks without a deadline at the end.
+  const open = list.filter((t) => t.status === 'pendente').sort((a, b) => (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999'))
   const done = list.filter((t) => t.status === 'concluida')
   const registered = (taskId: string) => (assets.data ?? []).filter((a) => a.taskId === taskId).length
   const subtitle = !tasks.data ? ' ' : list.length === 0 ? 'Boas-vindas ao aLinha.' : open.length === 0 ? 'Não tem tarefas pendentes. O Rui Santos foi notificado.' : `Tem ${open.length} ${open.length === 1 ? 'tarefa atribuída' : 'tarefas atribuídas'} pelo Rui Santos.`
 
-  const card = (t: (typeof list)[number]) => (
-    <TaskCard
-      key={t.id}
-      type={t.kind === 'ativos' ? 'Ativos' : t.kind === 'integracao' ? 'Integração' : 'Pergunta técnica'}
-      due={t.dueDate ? `Até ${shortDay(t.dueDate)}${today.data ? ` · ${dueStatus(t.dueDate, today.data).label}` : ''}` : 'Sem prazo'}
-      title={t.title}
-      meta={t.kind === 'ativos' ? `${t.context} · ${registered(t.id)} de ${t.expectedCount ?? 4} registados` : t.context}
-      done={t.status === 'concluida'}
-      action={<Button onClick={() => navigate(t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : t.kind === 'integracao' ? `/org/${org.slug}/integracoes` : `/org/${org.slug}/tarefas/${t.id}/pergunta`)}>{t.kind === 'integracao' ? 'Ligar' : t.kind === 'pergunta' ? (t.status === 'concluida' ? 'Ver resposta' : 'Responder') : 'Registar'}</Button>}
-    />
-  )
+  const card = (t: (typeof list)[number]) => {
+    const due = t.dueDate && today.data ? dueStatus(t.dueDate, today.data) : null
+    const late = due?.tone === 'late'
+    let action
+    if (t.kind === 'evidencia') {
+      action = <Tooltip content="A submissão de evidências fica fora deste protótipo."><span tabIndex={0}><Button disabled>Submeter</Button></span></Tooltip>
+    } else if (t.kind === 'tarefa') {
+      action = t.status === 'pendente' && <Button variant="secondary" loading={complete.isPending && complete.variables === t.id} onClick={() => complete.mutate(t.id, { onSuccess: () => toast.show('Tarefa concluída. O Responsável designado foi avisado.'), onError: (e) => toast.show(e.message, 'error') })}>Marcar como feita</Button>
+    } else {
+      action = <Button onClick={() => navigate(t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : t.kind === 'integracao' ? `/org/${org.slug}/integracoes` : `/org/${org.slug}/tarefas/${t.id}/pergunta`)}>{t.kind === 'integracao' ? 'Ligar' : t.kind === 'pergunta' ? (t.status === 'concluida' ? 'Ver resposta' : 'Responder') : 'Registar'}</Button>
+    }
+    return (
+      <TaskCard
+        key={t.id}
+        type={KIND_LABEL[t.kind]}
+        state={late ? <Chip className="bg-risk-high text-risk-high-ink">Atrasada</Chip> : <Chip tone="outline">Por fazer</Chip>}
+        late={late}
+        due={t.dueDate ? `Até ${shortDay(t.dueDate)}${due && !late ? ` · ${due.label}` : ''}` : 'Sem prazo'}
+        title={t.title}
+        meta={t.kind === 'ativos' ? `${t.context} · ${registered(t.id)} de ${t.expectedCount ?? 4} registados` : t.context}
+        done={t.status === 'concluida'}
+        action={action}
+      />
+    )
+  }
 
   return (
     <>
@@ -53,7 +73,7 @@ export function TasksPage() {
                   Quando o Responsável designado lhe atribuir uma pergunta técnica, uma evidência ou outra tarefa, aparece aqui com o prazo. Também recebe um email.
                 </EmptyState>
               )}
-              {open.length > 0 && <h2 className="text-[16px] font-bold">Para esta semana</h2>}
+              {open.length > 0 && <h2 className="text-[16px] font-bold">Por fazer</h2>}
               {open.map(card)}
               {done.length > 0 && <h2 className={cn('text-[16px] font-bold', open.length > 0 && 'mt-3')}>Concluídas</h2>}
               {done.map(card)}

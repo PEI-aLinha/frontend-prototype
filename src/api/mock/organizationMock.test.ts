@@ -205,6 +205,14 @@ describe('assigning work to analysts (US14)', () => {
     expect((await api.notifications.list())[0].title).toBe('Nova tarefa de Rui Santos')
   })
 
+  it('lets the analyst complete a task and tells the designated manager', async () => {
+    const t = await api.organization.assignWork(ORG_ID, { ...evidence, kind: 'tarefa', title: 'Verificar o antivírus dos portáteis', context: 'Tarefa' })
+    who = PEDRO
+    expect(await api.assets.completeTask(ORG_ID, t.id)).toMatchObject({ status: 'concluida' })
+    who = RUI
+    expect((await api.notifications.list())[0]).toMatchObject({ title: 'Pedro concluiu uma tarefa', body: 'Verificar o antivírus dos portáteis' })
+  })
+
   it('refuses duplicates, past deadlines and people who are not active analysts', async () => {
     await api.organization.assignWork(ORG_ID, evidence)
     await expect(api.organization.assignWork(ORG_ID, evidence)).rejects.toMatchObject({ status: 409 })

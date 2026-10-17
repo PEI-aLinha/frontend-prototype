@@ -48,7 +48,7 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
     if (Object.keys(validate()).length > 0) return
     const chosen = items.find((i) => i.id === item)
     const input: WorkAssignmentInput = item === OTHER
-      ? { assigneeId: assignee, kind: 'tarefa', title: other.trim(), context: 'Tarefa', dueDate: due || null }
+      ? { assigneeId: assignee, kind: 'tarefa', title: other.trim(), context: 'Pedido do Responsável designado', dueDate: due || null }
       : { assigneeId: assignee, kind: chosen === ASSET_TASK ? 'ativos' : kind!, title: chosen!.title, context: chosen!.context, dueDate: due || null }
     assign.mutate(input, {
       onSuccess: () => {
