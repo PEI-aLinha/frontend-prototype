@@ -1,7 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { Check, Minus } from 'lucide-react'
-import { Button, Card, Eyebrow, Field, TextInput, cn } from '../../../ui'
+import { useCheckEmail } from '../../../api/queries'
+import { Button, Card, Eyebrow, Field, Note, TextInput, cn } from '../../../ui'
 import { PasswordInput } from './PasswordInput'
 import { useRegistration } from './registration'
 
@@ -46,9 +47,13 @@ export function CreateAccountPage() {
   const { account, setAccount } = useRegistration()
   const [form, setForm] = useState<Form>(() => (account ? { ...EMPTY, ...account } : EMPTY))
   const [submitted, setSubmitted] = useState(false)
+  const [takenEmail, setTakenEmail] = useState<string | null>(null)
+  const checkEmail = useCheckEmail()
   const refs = useRef<Partial<Record<keyof Form, HTMLInputElement | null>>>({})
 
   const errors = submitted ? validate(form) : {}
+  const emailTaken = takenEmail !== null && takenEmail === form.email.trim().toLowerCase()
+  if (emailTaken && !errors.email) errors.email = 'Já existe uma conta com este email. Use outro email.'
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm((f) => ({ ...f, [key]: value }))
 
   const submit = (e: FormEvent) => {
@@ -57,8 +62,14 @@ export function CreateAccountPage() {
     const found = validate(form)
     const first = FIELD_ORDER.find((k) => found[k])
     if (first) { refs.current[first]?.focus(); return }
-    setAccount({ name: form.name.trim(), email: form.email.trim().toLowerCase() })
-    navigate('/registo/seguranca')
+    const email = form.email.trim().toLowerCase()
+    checkEmail.mutate(email, {
+      onSuccess: (available) => {
+        if (!available) { setTakenEmail(email); refs.current.email?.focus(); return }
+        setAccount({ name: form.name.trim(), email })
+        navigate('/registo/seguranca')
+      },
+    })
   }
 
   return (
@@ -110,9 +121,14 @@ export function CreateAccountPage() {
             {errors.terms && <p id="terms-error" role="alert" className="text-[13px] font-semibold text-danger">{errors.terms}</p>}
           </div>
 
-          <Button type="submit" block>Criar conta e continuar</Button>
+          {checkEmail.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{checkEmail.error.message}</p>}
+          <Button type="submit" block loading={checkEmail.isPending}>Criar conta e continuar</Button>
         </form>
       </Card>
+
+      {emailTaken && (
+        <Note>Na demonstração, a conta do Rui Santos já existe. Para ver o registo desde o início, abra o menu Demo (Alt+P) e escolha «Adesão · empresa por registar».</Note>
+      )}
 
       <div className="flex flex-col items-center gap-2 text-center">
         <Button variant="link" size="sm" onClick={() => { setForm(EXAMPLE); setSubmitted(false) }}>Preencher com o exemplo do Rui Santos</Button>

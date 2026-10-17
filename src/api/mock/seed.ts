@@ -4,7 +4,7 @@ import type {
   Risk, RiskActionLink, RoadmapStatus, Task, User,
 } from '../contracts'
 
-export type SnapshotId = 'c1' | 'c2' | 'c3'
+export type SnapshotId = 'c0' | 'c1' | 'c2' | 'c3'
 
 export interface DemoState {
   version: number
@@ -28,7 +28,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 6
+export const STATE_VERSION = 7
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -52,6 +52,20 @@ const ORG: Organization = {
   classification: 'Entidade importante (sugestão indicativa)',
   frameworks: ['NIS2 / RJC', 'RGPD'],
   consultantId: MARTA,
+  profile: {
+    nif: '509180027',
+    cae: '29320',
+    sector: 'industria',
+    subsector: 'automoveis',
+    services: 'Fabrico de componentes metálicos e plásticos para a indústria automóvel, para fabricantes em Portugal e no resto da Europa.',
+    employees: 120,
+    turnover: 18_500_000,
+    address: { street: 'Rua da Zona Industrial do Casarão, 45', postalCode: '3750-750', city: 'Águeda' },
+    contacts: { phone: '234600120', email: 'geral@compagueda.pt' },
+    permanentContact: { name: 'Rui Santos', phone: '912345678' },
+  },
+  registeredBy: RUI,
+  registeredAt: '2026-10-09T09:20:00',
 }
 
 const SERVICES: CriticalService[] = [
@@ -175,7 +189,7 @@ function portfolio(snapshot: SnapshotId): PortfolioClient[] {
     organization: { id: `org-${i}`, slug: `cliente-${i}`, name, description: sector, classification: '', frameworks: ['NIS2 / RJC', 'RGPD'], consultantId: MARTA },
     sector, employees, stage, stageTone, nextStep, updatedAt: at(Math.max(1, 15 - i), '17:00'),
   }))
-  return [ca, ...others]
+  return snapshot === 'c0' ? others : [ca, ...others]
 }
 
 let auditSeq = 0
@@ -192,7 +206,17 @@ function baseAudit(): AuditEntry[] {
   ]
 }
 
+/** "Adesão": the company is not registered yet; only Marta and her other clients exist. */
+function emptySnapshot(): DemoState {
+  return {
+    version: STATE_VERSION, snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
+    risks: [], links: [], comments: [], actions: [], roadmap: {}, portfolio: portfolio('c0'), audit: [], notifications: [], today: '2026-10-09',
+    connections: {}, discoveries: [], evidence: [],
+  }
+}
+
 export function buildSnapshot(snapshot: SnapshotId): DemoState {
+  if (snapshot === 'c0') return emptySnapshot()
   auditSeq = 0
   const c1 = snapshot === 'c1'
   const entries = baseAudit()
@@ -289,6 +313,7 @@ function seedNotifications(snapshot: SnapshotId): AppNotification[] {
 }
 
 export const SNAPSHOTS: Array<{ id: SnapshotId; label: string; hint: string }> = [
+  { id: 'c0', label: 'Adesão · empresa por registar', hint: 'Rui cria a conta e regista a Componentes Águeda' },
   { id: 'c1', label: 'Cenário 1 · início', hint: 'Rui com 3 ativos; registo técnico por atribuir' },
   { id: 'c2', label: 'Cenário 2 · início', hint: 'Inventário completo; Marta a registar riscos' },
   { id: 'c3', label: 'Cenário 3 · roadmap validado', hint: 'Rui vê os riscos em só leitura' },

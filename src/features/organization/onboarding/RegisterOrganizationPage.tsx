@@ -1,9 +1,11 @@
 import { useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Navigate, useNavigate } from 'react-router'
-import { Info } from 'lucide-react'
-import { Button, Card, Eyebrow, Field, Select, TextArea, TextInput, Tooltip, useToast } from '../../../ui'
+import { Info, Save } from 'lucide-react'
+import { useRegisterOrganization } from '../../../api/queries'
+import { useSession } from '../../../core/session'
+import { Button, Card, Eyebrow, Field, Note, Select, TextArea, TextInput, Tooltip, useToast } from '../../../ui'
 import { SECTORS, sectorById } from '../sectors'
-import { EMPTY_ORGANIZATION, EXAMPLE_ORGANIZATION, validateOrganization, type OrganizationForm } from './organizationForm'
+import { EMPTY_ORGANIZATION, EXAMPLE_ORGANIZATION, toOrganizationInput, validateOrganization, type OrganizationForm } from './organizationForm'
 import { useRegistration } from './registration'
 
 /** Label text with an (i) that shows the explanation on hover or keyboard focus. */
@@ -36,11 +38,14 @@ const row = 'grid items-start gap-5 md:grid-cols-2'
 export function RegisterOrganizationPage() {
   const navigate = useNavigate()
   const toast = useToast()
-  const { account, mfaVerified, organization, setOrganization } = useRegistration()
+  const { setPersona } = useSession()
+  const { account, mfaVerified, organization, setOrganization, restored, registered, finish } = useRegistration()
+  const register = useRegisterOrganization()
   const [form, setForm] = useState<OrganizationForm>(organization ?? EMPTY_ORGANIZATION)
   const [submitted, setSubmitted] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
+  if (registered) return <Navigate to="/registo/concluido" replace />
   if (!account) return <Navigate to="/registo/conta" replace />
   if (!mfaVerified) return <Navigate to="/registo/seguranca" replace />
 
@@ -57,7 +62,19 @@ export function RegisterOrganizationPage() {
       return
     }
     setOrganization(form)
-    toast.show('Dados da organização preenchidos corretamente')
+    register.mutate({ account, organization: toOrganizationInput(form) }, {
+      onSuccess: (org) => {
+        finish(org)
+        // The designated manager who just registered is the "Rui Santos" demo persona.
+        setPersona('rui')
+        navigate('/registo/concluido')
+      },
+    })
+  }
+
+  const saveForLater = () => {
+    setOrganization(form)
+    toast.show('Guardado. Pode fechar a página e continuar mais tarde a partir daqui.')
   }
 
   const text = (key: keyof OrganizationForm, extra: Partial<Parameters<typeof TextInput>[0]> = {}) => (p: { id: string; describedBy?: string; invalid: boolean }) => (
@@ -71,6 +88,8 @@ export function RegisterOrganizationPage() {
         <h1 className="text-[30px] font-extrabold title-tight">Registe a sua organização</h1>
         <p className="text-[16px] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
       </header>
+
+      {restored && organization && <Note>Retomámos o registo que deixou a meio. Confirme os dados e termine quando quiser.</Note>}
 
       <Card className="px-7 py-7 max-md:px-5">
         <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-6">
@@ -136,7 +155,16 @@ export function RegisterOrganizationPage() {
             <Button variant="link" size="sm" className="w-fit" onClick={() => setForm((f) => ({ ...f, contactName: account.name }))}>Sou eu ({account.name})</Button>
           </Section>
 
-          <Button type="submit" block>Registar organização</Button>
+          {register.isError && (
+            <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">
+              <span>{register.error.message}</span>
+              {/email/i.test(register.error.message) && <Button variant="link" size="sm" onClick={() => navigate('/registo/conta')}>Voltar ao primeiro passo</Button>}
+            </div>
+          )}
+          <div className="flex gap-3 max-sm:flex-col-reverse">
+            <Button variant="secondary" icon={<Save className="size-4" aria-hidden />} onClick={saveForLater} disabled={register.isPending}>Guardar e continuar mais tarde</Button>
+            <Button type="submit" className="flex-1" loading={register.isPending}>Registar organização</Button>
+          </div>
         </form>
       </Card>
 

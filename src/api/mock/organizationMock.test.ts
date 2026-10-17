@@ -1,0 +1,45 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import type { RegistrationInput } from '../contracts'
+import { createMockApi } from './mockApi'
+import { getState, resetDemo } from './store'
+import { ORG_ID, RUI } from './seed'
+import { slugify } from './organizationMock'
+
+const api = createMockApi(() => ({ userId: RUI }))
+
+const input: RegistrationInput = {
+  account: { name: 'Rui Santos', email: 'rui.santos@compagueda.pt' },
+  organization: {
+    name: 'Componentes Águeda, Lda.', nif: '509180027', cae: '29320', sector: 'industria', subsector: 'automoveis',
+    services: 'Fabrico de componentes para a indústria automóvel', employees: 120, turnover: 18_500_000,
+    address: { street: 'Rua da Zona Industrial do Casarão, 45', postalCode: '3750-750', city: 'Águeda' },
+    contacts: { phone: '234600120', email: 'geral@compagueda.pt' },
+    permanentContact: { name: 'Rui Santos', phone: '912345678' },
+  },
+}
+
+describe('organization registration (US10)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetDemo('c0')
+  })
+
+  it('registers the organization and associates it with the new account', async () => {
+    const org = await api.organization.register(input)
+    expect(org).toMatchObject({ id: ORG_ID, slug: 'componentes-agueda', registeredBy: RUI, consultantId: null })
+    expect(getState().users.find((u) => u.id === RUI)).toMatchObject({ role: 'responsavel', email: 'rui.santos@compagueda.pt' })
+    expect(getState().audit.at(-1)).toMatchObject({ entityType: 'organization', userId: RUI })
+    expect(await api.directory.getOrganization('componentes-agueda')).toMatchObject({ profile: { nif: '509180027' } })
+  })
+
+  it('refuses a NIF or an email that is already registered', async () => {
+    await api.organization.register(input)
+    await expect(api.organization.register({ ...input, account: { ...input.account, email: 'outro@compagueda.pt' } })).rejects.toMatchObject({ status: 409 })
+    await expect(api.organization.register({ ...input, organization: { ...input.organization, nif: '123456789' } })).rejects.toMatchObject({ status: 409 })
+  })
+
+  it('builds the URL slug without the legal form', () => {
+    expect(slugify('Componentes Águeda, Lda.')).toBe('componentes-agueda')
+    expect(slugify('LogiCentro Armazéns, S.A.')).toBe('logicentro-armazens')
+  })
+})

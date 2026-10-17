@@ -6,6 +6,7 @@ import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
 import { shortDayPt } from './dates'
 import { createIntegrationsMock } from './integrationsMock'
+import { createOrganizationMock } from './organizationMock'
 import { createAssessmentMock } from './assessmentMock'
 import type { DemoState } from './seed'
 
@@ -67,6 +68,7 @@ export function createMockApi(getActor: ActorProvider): Api {
   const write = (mutate: (s: DemoState, me: User) => DemoState) => setState((s) => mutate(s, user(s, getActor().userId)))
 
   return {
+    organization: createOrganizationMock(),
     integrations: createIntegrationsMock(getActor),
 
     directory: {

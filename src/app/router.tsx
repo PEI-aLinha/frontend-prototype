@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router'
+import { createBrowserRouter } from 'react-router'
 import { HomeRedirect } from './HomeRedirect'
 import { DesignPage } from './DesignPage'
 import { ClientLayout, ConsultantLayout } from './layouts'
@@ -18,7 +18,7 @@ import { HistoryPage } from '../features/portfolio/HistoryPage'
 import { IntegrationsPage } from '../features/integrations/IntegrationsPage'
 import { AssessmentPage } from '../features/assessment/AssessmentPage'
 import { QuestionPage } from '../features/tasks/QuestionPage'
-import { CreateAccountPage, MfaSetupPage, OnboardingLayout, RegisterOrganizationPage } from '../features/organization/public'
+import { CreateAccountPage, MfaSetupPage, OnboardingLayout, RegisterOrganizationPage, RegistrationDonePage, ResumeRegistration } from '../features/organization/public'
 
 export const router = createBrowserRouter([
   {
@@ -30,10 +30,11 @@ export const router = createBrowserRouter([
         path: 'registo',
         element: <OnboardingLayout />,
         children: [
-          { index: true, element: <Navigate to="conta" replace /> },
+          { index: true, element: <ResumeRegistration /> },
           { path: 'conta', element: <CreateAccountPage /> },
           { path: 'seguranca', element: <MfaSetupPage /> },
           { path: 'organizacao', element: <RegisterOrganizationPage /> },
+          { path: 'concluido', element: <RegistrationDonePage /> },
         ],
       },
       {

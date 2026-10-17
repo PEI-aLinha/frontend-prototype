@@ -18,6 +18,22 @@ export interface User {
   email: string
 }
 
+/** Data needed for the framing under the Regime Jurídico da Cibersegurança (RF01). */
+export interface OrganizationProfile {
+  nif: string
+  cae: string
+  sector: string
+  subsector: string | null
+  services: string
+  employees: number
+  /** Annual turnover in euros. */
+  turnover: number
+  address: { street: string; postalCode: string; city: string }
+  contacts: { phone: string; email: string }
+  /** Permanent point of contact communicated to the CNCS. */
+  permanentContact: { name: string; phone: string }
+}
+
 export interface Organization {
   id: Id
   slug: string
@@ -25,7 +41,11 @@ export interface Organization {
   description: string
   classification: string
   frameworks: string[]
-  consultantId: Id
+  /** Null until a consultant is assigned. */
+  consultantId: Id | null
+  profile?: OrganizationProfile
+  registeredBy?: Id
+  registeredAt?: IsoDate
 }
 
 export type ActorType = 'user' | 'system' | 'ai'
@@ -36,7 +56,7 @@ export interface AuditEntry {
   actorType: ActorType
   userId: Id | null
   action: string
-  entityType: 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration'
+  entityType: 'organization' | 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration'
   entityId: Id
   summary: string
   before: Record<string, unknown> | null
@@ -285,6 +305,19 @@ export interface AssessmentApi {
   listPortfolio(): Promise<PortfolioClient[]>
 }
 
+// ---------------- organization (Organization plugin) ----------------
+export interface RegistrationInput {
+  account: { name: string; email: string }
+  organization: { name: string } & OrganizationProfile
+}
+
+export interface OrganizationApi {
+  /** False when an account already uses this email (checked before the account is created). */
+  isEmailAvailable(email: string): Promise<boolean>
+  /** Creates the designated manager's account and the organization, associated with each other (US10). */
+  register(input: RegistrationInput): Promise<Organization>
+}
+
 // ---------------- core: audit, directory ----------------
 export interface AuditApi {
   list(org: Id, filter?: { entityId?: Id; entityType?: AuditEntry['entityType'] }): Promise<AuditEntry[]>
@@ -319,6 +352,7 @@ export interface NotificationsApi {
 }
 
 export interface Api {
+  organization: OrganizationApi
   assets: AssetsApi
   assessment: AssessmentApi
   audit: AuditApi

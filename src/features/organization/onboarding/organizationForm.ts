@@ -1,3 +1,4 @@
+import type { RegistrationInput } from '../../../api/contracts'
 import { sectorById } from '../sectors'
 
 export interface OrganizationForm {
@@ -98,4 +99,21 @@ export function validateOrganization(f: OrganizationForm): OrganizationErrors {
   if (!f.contactPhone.trim()) e.contactPhone = 'Indique um telefone disponível a qualquer hora.'
   else if (!PHONE.test(digits(f.contactPhone))) e.contactPhone = 'O telefone tem 9 dígitos e começa por 2 ou 9.'
   return e
+}
+
+/** Form → contract (numbers without separators, phones and NIF as digits only). */
+export function toOrganizationInput(f: OrganizationForm): RegistrationInput['organization'] {
+  return {
+    name: f.name.trim(),
+    nif: digits(f.nif),
+    cae: digits(f.cae),
+    sector: f.sector,
+    subsector: f.subsector || null,
+    services: f.services.trim(),
+    employees: Number(digits(f.employees)),
+    turnover: Number(digits(f.turnover)),
+    address: { street: f.address.trim(), postalCode: f.postalCode.trim(), city: f.city.trim() },
+    contacts: { phone: digits(f.phone), email: f.email.trim().toLowerCase() },
+    permanentContact: { name: f.contactName.trim(), phone: digits(f.contactPhone) },
+  }
 }

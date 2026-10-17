@@ -22,6 +22,8 @@ export function HomePage() {
   const inventoryDone = assetTask?.status === 'concluida'
   const validated = roadmap.data?.validated
   const submitted = !!roadmap.data?.assessmentCompletedAt
+  // Just registered (US10): nothing answered, assigned or registered yet.
+  const fresh = !submitted && tasks.data?.length === 0 && assets.data?.length === 0
 
   const levels = (risks.data ?? []).map((r) => ({ level: computeRiskLevel(r.probability, r.impact).level, status: r.status }))
   const top: Level | null = levels.some((l) => l.level === 'alto') ? 'alto' : levels.some((l) => l.level === 'medio') ? 'medio' : levels.length ? 'baixo' : null
@@ -29,7 +31,8 @@ export function HomePage() {
   const topTreating = levels.filter((l) => l.level === top).every((l) => l.status === 'em_tratamento' || l.status === 'aceite')
 
   const base = `/org/${org.slug}`
-  const subtitle = validated ? 'A Marta Ferreira validou os resultados e o roadmap.' : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : 'O questionário fica guardado. Pode continuar quando quiser.'
+  // Assessment not submitted yet: invite to start or to finish it. Once submitted, only the status remains.
+  const subtitle = validated ? 'A Marta Ferreira validou os resultados e o roadmap.' : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : fresh ? 'Pode começar pela avaliação quando quiser.' : 'Pode terminar a avaliação quando quiser.'
 
   return (
     <>
@@ -41,11 +44,11 @@ export function HomePage() {
 
       <HighlightCard
         eyebrow="Avaliação de maturidade · NIS2 + RGPD"
-        title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : '8 de 18 perguntas respondidas'}
-        action={<Button variant="inverse" disabled title="Fora deste protótipo">{validated ? 'Ver roadmap →' : 'Continuar avaliação →'}</Button>}
+        title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : fresh ? 'Avaliação por começar' : '8 de 18 perguntas respondidas'}
+        action={<Button variant="inverse" disabled title="Fora deste protótipo">{validated ? 'Ver roadmap →' : fresh ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>}
       >
-        <ProgressBar value={submitted ? 18 : 8} max={18} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
-        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} pela Marta Ferreira` : submitted ? 'Submetida qua., 14 out. às 10:12 · a Marta Ferreira está a rever' : '1 pergunta atribuída a Pedro Almeida · guardado às 17:44'}
+        <ProgressBar value={submitted ? 18 : fresh ? 0 : 8} max={18} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
+        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} pela Marta Ferreira` : submitted ? 'Submetida qua., 14 out. às 10:12 · a Marta Ferreira está a rever' : fresh ? 'Ainda sem respostas · o progresso fica guardado' : '1 pergunta atribuída a Pedro Almeida · guardado às 17:44'}
       </HighlightCard>
 
       <NextSteps steps={[
