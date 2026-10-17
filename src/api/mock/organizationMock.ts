@@ -1,5 +1,6 @@
 import { ApiError, type DemoActor, type Organization, type OrganizationApi, type User } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
+import { notify } from './notify'
 import { ORG_ID, RUI, type ConsultantRecord, type DemoState } from './seed'
 
 const LEGAL_FORM = /,?\s*(lda\.?|s\.?\s?a\.?|unipessoal|sociedade anónima)\s*$/i
@@ -49,7 +50,6 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const { name, ...profile } = input.organization
       const at = now()
       const consultant = pickConsultant(s)
-      const load = activeClients(s, consultant)
       const user: User = { id: userId, name: input.account.name.trim(), initials: initials(input.account.name), role: 'responsavel', title: 'Responsável designado', email }
       const organization: Organization = {
         id: orgId,
@@ -66,12 +66,19 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       }
       const entry = auditEntry({ organizationId: orgId, userId, action: 'create', entityType: 'organization', entityId: orgId, summary: `Registou a organização "${organization.name}" e ficou como Responsável designado`, before: null, after: { nif, sector: profile.sector } })
 
-      setState((st) => ({
+      setState((st) => notify({
         ...st,
+        portfolio: [{
+          organization, sector: '', employees: profile.employees, stage: 'Registo concluído', stageTone: 'neutral',
+          nextStep: 'Dar as boas-vindas e acompanhar o âmbito regulatório', updatedAt: at, isNew: true,
+        }, ...st.portfolio],
         users: [...st.users, user],
         organizations: [...st.organizations, organization],
         roadmap: { ...st.roadmap, [orgId]: { validated: false, validatedAt: null, validatedBy: null, assessmentCompletedAt: null } },
-        audit: [...st.audit, entry, auditEntry({ organizationId: orgId, userId: null, actorType: 'system', action: 'assign', entityType: 'organization', entityId: orgId, summary: `Atribuiu a organização a ${consultant.name}, a consultora com menos clientes ativos (${load})`, before: null, after: { consultantId: consultant.id } })],
+        audit: [...st.audit, entry, auditEntry({ organizationId: orgId, userId: null, actorType: 'system', action: 'assign', entityType: 'organization', entityId: orgId, summary: `Atribuiu a organização a ${consultant.name}`, before: null, after: { consultantId: consultant.id } })],
+      }, {
+        organizationId: orgId, userId: consultant.id, kind: 'avaliacao', title: `Novo cliente: ${organization.name}`,
+        body: `Concluiu o registo. ${profile.employees} trabalhadores.`, link: `/clientes/${slug}/visao-geral`,
       }))
       return organization
     }),

@@ -75,6 +75,8 @@ export function createMockApi(getActor: ActorProvider): Api {
       getOrganization: (slug) => simulate(() => {
         const o = getState().organizations.find((x) => x.slug === slug || x.id === slug)
         if (!o) throw new ApiError('Organização não encontrada', 404)
+        const me = getState().users.find((u) => u.id === getActor().userId)
+        if (me?.role === 'consultor' && o.consultantId !== me.id) throw new ApiError('Esta organização não está atribuída a si.', 403)
         return o
       }),
       listUsers: (org) => simulate(() => {
@@ -437,8 +439,10 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       listPortfolio: () => simulate(() => {
-        if (actor().role !== 'consultor') deny()
-        return getState().portfolio
+        const me = actor()
+        if (me.role !== 'consultor') deny()
+        // Each consultant only sees the organizations assigned to them.
+        return getState().portfolio.filter((p) => p.organization.consultantId === me.id)
       }),
     },
   }

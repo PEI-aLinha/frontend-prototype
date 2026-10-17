@@ -319,6 +319,8 @@ export interface PortfolioClient {
   stageTone: 'signal' | 'neutral' | 'dark'
   nextStep: string
   updatedAt: IsoDate
+  /** Assigned automatically after a new registration (US01). */
+  isNew?: boolean
 }
 
 export type AnswerChoice = 'sim' | 'parcial' | 'nao' | 'nao_sei'

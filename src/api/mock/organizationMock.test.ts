@@ -101,6 +101,26 @@ describe('automatic consultant assignment (US01)', () => {
     expect(await api.organization.getConsultant(org.id)).toMatchObject({ name: 'Marta Ferreira', email: 'marta.ferreira@alinha.pt' })
   })
 
+  it('puts the new organization in the consultant portfolio as a new client and notifies her', async () => {
+    await api.organization.register(input)
+    who = MARTA
+    const [first] = await api.assessment.listPortfolio()
+    expect(first).toMatchObject({ isNew: true, stage: 'Registo concluído', organization: { slug: 'componentes-agueda' } })
+    expect((await api.notifications.list())[0].title).toBe('Novo cliente: Componentes Águeda, Lda.')
+  })
+
+  it('hides organizations assigned to another consultant', async () => {
+    const s = getState()
+    resetDemo('c0')
+    // Make João the least busy: the new organization goes to him.
+    const { setState } = await import('./store')
+    setState((st) => ({ ...st, consultants: s.consultants.map((c) => (c.id === MARTA ? { ...c, otherActiveClients: 10 } : c)) }))
+    await api.organization.register(input)
+    who = MARTA
+    expect((await api.assessment.listPortfolio()).some((p) => p.isNew)).toBe(false)
+    await expect(api.directory.getOrganization('componentes-agueda')).rejects.toMatchObject({ status: 403 })
+  })
+
   it('picks the other consultant when Marta has more clients', () => {
     const s = getState()
     const busy = { ...s, consultants: s.consultants.map((c) => (c.id === MARTA ? { ...c, otherActiveClients: 10 } : c)) }
