@@ -35,6 +35,15 @@ export interface TeamMember {
   joinedAt: IsoDate | null
 }
 
+export interface WorkAssignmentInput {
+  assigneeId: Id
+  kind: 'pergunta' | 'evidencia' | 'ativos' | 'tarefa'
+  title: string
+  /** Where it comes from, e.g. "Avaliação de maturidade · Continuidade do negócio". */
+  context: string
+  dueDate: IsoDate | null
+}
+
 /** What the invited person sees when opening the invitation link. */
 export interface InviteDetails {
   memberId: Id
@@ -183,7 +192,7 @@ export type TaskStatus = 'pendente' | 'concluida' | 'cancelada'
 export interface Task {
   id: Id
   organizationId: Id
-  kind: 'ativos' | 'pergunta' | 'integracao'
+  kind: 'ativos' | 'pergunta' | 'integracao' | 'evidencia' | 'tarefa'
   /** Technical question: the analyst's answer. */
   answer?: QuestionAnswer
   /** Technical question: AI-pregenerated help (D10), informational only. */
@@ -196,7 +205,8 @@ export interface Task {
   context: string
   assigneeId: Id
   assignedBy: Id
-  dueDate: IsoDate
+  /** Optional since US14: null means no deadline. */
+  dueDate: IsoDate | null
   status: TaskStatus
   expectedCount?: number
   createdAt: IsoDate
@@ -402,6 +412,8 @@ export interface OrganizationApi {
   inviteAnalyst(org: Id, input: { name: string; email: string }): Promise<TeamMember>
   resendInvite(org: Id, memberId: Id): Promise<TeamMember>
   cancelInvite(org: Id, memberId: Id): Promise<void>
+  /** Assigns a technical question, an evidence or a task to an active analyst (US14, RF06). Designated manager only. */
+  assignWork(org: Id, input: WorkAssignmentInput): Promise<Task>
   /** Removes an active analyst: access ends and their pending tasks are cancelled. */
   removeMember(org: Id, memberId: Id): Promise<void>
   /** Public: the invitation behind a link (the token is the invitation id in the prototype). */

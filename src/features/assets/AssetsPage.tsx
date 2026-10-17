@@ -132,7 +132,7 @@ export function AssetsPage() {
         ? `Registo atribuído ao ${analystName}. ${byAnalyst.length ? `${byAnalyst.length} de ${task?.expectedCount ?? 4} já registados.` : 'Aparece aqui quando ele os registar.'}`
         : 'Ainda não registados. O Pedro conhece estes sistemas: atribua-lhe o registo.'}
       action={state === 'assigned' && task
-        ? <Chip>Atribuído · até {shortDay(task.dueDate)}</Chip>
+        ? <Chip>Atribuído{task.dueDate ? ` · até ${shortDay(task.dueDate)}` : ''}</Chip>
         : <Button variant="secondary" onClick={() => update({ atribuir: '1' })}>Atribuir ao Pedro</Button>}
     />
   )

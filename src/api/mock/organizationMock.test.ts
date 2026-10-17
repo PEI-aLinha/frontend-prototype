@@ -186,3 +186,29 @@ describe('accepting an invitation (US12)', () => {
     await expect(api.organization.getInvite('mbr-ana')).rejects.toMatchObject({ status: 410 })
   })
 })
+
+describe('assigning work to analysts (US14)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetDemo('c1')
+    who = RUI
+  })
+  const evidence = { assigneeId: PEDRO, kind: 'evidencia' as const, title: 'Configuração do MFA nas contas de administrador', context: 'Evidência · Controlo de acessos', dueDate: null }
+
+  it('creates a pending task for the analyst, with or without a deadline, and notifies them', async () => {
+    const t = await api.organization.assignWork(ORG_ID, evidence)
+    expect(t).toMatchObject({ kind: 'evidencia', status: 'pendente', dueDate: null, assigneeId: PEDRO, assignedBy: RUI })
+    const withDue = await api.organization.assignWork(ORG_ID, { ...evidence, kind: 'ativos', title: 'Registar os ativos técnicos', context: 'Inventário de ativos', dueDate: '2026-10-20' })
+    expect(withDue).toMatchObject({ kind: 'ativos', dueDate: '2026-10-20', expectedCount: 4 })
+    who = PEDRO
+    expect((await api.assets.listTasks(ORG_ID)).map((x) => x.id)).toEqual(expect.arrayContaining([t.id, withDue.id]))
+    expect((await api.notifications.list())[0].title).toBe('Nova tarefa de Rui Santos')
+  })
+
+  it('refuses duplicates, past deadlines and people who are not active analysts', async () => {
+    await api.organization.assignWork(ORG_ID, evidence)
+    await expect(api.organization.assignWork(ORG_ID, evidence)).rejects.toMatchObject({ status: 409 })
+    await expect(api.organization.assignWork(ORG_ID, { ...evidence, title: 'Outra', dueDate: '2026-01-01' })).rejects.toMatchObject({ status: 422 })
+    await expect(api.organization.assignWork(ORG_ID, { ...evidence, assigneeId: RUI })).rejects.toMatchObject({ status: 422 })
+  })
+})

@@ -5,6 +5,7 @@ import { useRegisterQualification } from '../../../api/queries'
 import { useTenant } from '../../../core/tenant'
 import { Button, Chip, Field, Modal, OptionGroup, TextInput, cn, useToast, type OptionItem } from '../../../ui'
 import { NIS2_LABEL, type Nis2Class } from '../framing/nis2Framing'
+import { openPicker } from '../datePicker'
 import { keepDocument } from './documentStore'
 
 type Classification = QualificationInput['classification']
@@ -16,15 +17,6 @@ const OPTIONS: OptionItem<Classification>[] = [
   { value: 'essencial', label: NIS2_LABEL.essencial },
   { value: 'importante', label: NIS2_LABEL.importante },
 ]
-
-/** Opens the browser's calendar when the field is clicked, not only on the small icon. */
-function openPicker(input: HTMLInputElement) {
-  try {
-    input.showPicker?.()
-  } catch {
-    // Some browsers only allow it in certain contexts: the field still accepts typing.
-  }
-}
 
 const kb = (bytes: number) => `${Math.max(1, Math.round(bytes / 1000)).toLocaleString('pt-PT')} KB`
 

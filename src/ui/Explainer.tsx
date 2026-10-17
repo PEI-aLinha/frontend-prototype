@@ -3,7 +3,7 @@ import { ChevronDown, Lightbulb } from 'lucide-react'
 import { cn } from './cn'
 
 interface ExplainerProps {
-  /** Key to remember whether the person dismissed the explanation (per browser). */
+  /** Identifies the explanation of each screen. */
   id: string
   title?: string
   intro?: ReactNode
@@ -11,26 +11,10 @@ interface ExplainerProps {
   footer?: ReactNode
 }
 
-function readCollapsed(id: string): boolean {
-  try {
-    return localStorage.getItem(`alinha-explainer-${id}`) === 'closed'
-  } catch {
-    return false
-  }
-}
-
-/** "How this screen works": short step-by-step explanation that can be collapsed. */
-export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps, footer }: ExplainerProps) {
-  const [collapsed, setCollapsed] = useState(() => readCollapsed(id))
-  const toggle = () => {
-    const next = !collapsed
-    setCollapsed(next)
-    try {
-      localStorage.setItem(`alinha-explainer-${id}`, next ? 'closed' : 'open')
-    } catch {
-      // no persistence: lasts only for this session
-    }
-  }
+/** "How this screen works": short step-by-step explanation, always collapsed until the person opens it. */
+export function Explainer({ title = 'Como funciona este ecrã', intro, steps, footer }: ExplainerProps) {
+  const [collapsed, setCollapsed] = useState(true)
+  const toggle = () => setCollapsed((c) => !c)
   return (
     <section aria-label={title} className="rounded-[16px] border border-line-soft bg-paper-soft">
       <button type="button" onClick={toggle} aria-expanded={!collapsed} className="flex w-full items-center gap-3 px-5 py-3.5 text-left">

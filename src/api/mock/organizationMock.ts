@@ -1,6 +1,7 @@
-import { ApiError, type DemoActor, type InviteDetails, type Organization, type OrganizationApi, type TeamMember, type User } from '../contracts'
+import { ApiError, type DemoActor, type InviteDetails, type Organization, type OrganizationApi, type Task, type TeamMember, type User } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
+import { shortDayPt } from './dates'
 import { ORG_ID, PEDRO, RUI, type ConsultantRecord, type DemoState } from './seed'
 
 const LEGAL_FORM = /,?\s*(lda\.?|s\.?\s?a\.?|unipessoal|sociedade anónima)\s*$/i
@@ -161,6 +162,33 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const m = pendingInvite(org, memberId)
       const entry = auditEntry({ organizationId: org, userId: me.id, action: 'cancel', entityType: 'member', entityId: m.id, summary: `Cancelou o convite a ${m.name}`, before: { email: m.email }, after: null })
       setState((st) => ({ ...st, members: st.members.filter((x) => x.id !== m.id), audit: [...st.audit, entry] }))
+    }),
+
+    assignWork: (org, input) => simulate(() => {
+      const { me } = manager(org)
+      const s = getState()
+      const o = s.organizations.find((x) => x.id === org)!
+      const member = s.members.find((m) => m.organizationId === org && m.userId === input.assigneeId && m.status === 'ativo' && m.role === 'analista')
+      if (!member) throw new ApiError('Escolha um analista ativo da equipa.', 422)
+      const title = input.title.trim()
+      if (title.length < 3) throw new ApiError('Diga ao analista o que tem de fazer.', 422)
+      if (input.dueDate && input.dueDate < s.today) throw new ApiError('O prazo não pode ser no passado.', 422)
+      if (s.tasks.some((t) => t.organizationId === org && t.assigneeId === member.userId && t.status === 'pendente' && t.title === title)) {
+        throw new ApiError(`${member.name} já tem esta tarefa por fazer.`, 409)
+      }
+      const task: Task = {
+        id: newId('task'), organizationId: org, kind: input.kind, title, context: input.context, assigneeId: member.userId!, assignedBy: me.id,
+        dueDate: input.dueDate, status: 'pendente', createdAt: now(),
+        ...(input.kind === 'ativos' ? { scope: 'Servidores, rede e sistemas de produção', expectedCount: 4 } : {}),
+      }
+      const KIND = { pergunta: 'a pergunta técnica', evidencia: 'a evidência', ativos: 'o registo dos ativos técnicos', tarefa: 'a tarefa' } as const
+      const entry = auditEntry({ organizationId: org, userId: me.id, action: 'assign', entityType: 'task', entityId: task.id, summary: `Atribuiu a ${member.name} ${KIND[input.kind]} "${title}"`, before: null, after: { assigneeId: member.userId, dueDate: input.dueDate } })
+      const link = input.kind === 'ativos' ? `/org/${o.slug}/tarefas/${task.id}/ativos` : `/org/${o.slug}/tarefas`
+      setState((st) => notify({ ...st, tasks: [...st.tasks, task], audit: [...st.audit, entry] }, {
+        organizationId: org, userId: member.userId!, kind: 'tarefa', title: `Nova tarefa de ${me.name}`,
+        body: `${title}${input.dueDate ? ` · até ${shortDayPt(input.dueDate)}` : ' · sem prazo'}`, link,
+      }))
+      return task
     }),
 
     removeMember: (org, memberId) => simulate(() => {

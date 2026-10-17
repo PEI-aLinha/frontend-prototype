@@ -1,7 +1,7 @@
 // TanStack Query hooks on top of the contracts. Components use only these, never the mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { AssetBulkChange, AssetInput, QuestionAnswer, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, QualificationInput, RegistrationInput, RiskInput, ScopeInput, TaskInput } from './contracts'
+import type { AssetBulkChange, AssetInput, QuestionAnswer, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, QualificationInput, RegistrationInput, RiskInput, ScopeInput, TaskInput, WorkAssignmentInput } from './contracts'
 
 export const keys = {
   org: (slug: string) => ['org', slug] as const,
@@ -67,6 +67,11 @@ export function useResendInvite(org: Id) {
 export function useCancelInvite(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: (memberId: Id) => api.organization.cancelInvite(org, memberId), onSuccess: () => invalidate('members', 'audit') })
+}
+
+export function useAssignWork(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (input: WorkAssignmentInput) => api.organization.assignWork(org, input), onSuccess: () => invalidate('tasks', 'audit') })
 }
 
 export function useRemoveMember(org: Id) {

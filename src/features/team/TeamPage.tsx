@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { BellRing, CalendarClock, ExternalLink, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
+import { BellRing, CalendarClock, ClipboardPlus, ExternalLink, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
 import type { Task, TeamMember } from '../../api/contracts'
 import { useCancelInvite, useInviteAnalyst, useMembers, useRemindTask, useRemoveMember, useResendInvite, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
 import { dueStatus, longDay, ROLE_LABEL, shortDate, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
+import { AssignWorkModal } from '../organization/public'
 import { useTenant } from '../../core/tenant'
 import {
   Avatar, Button, Chip, ErrorState, Explainer, Eyebrow, Field, Modal, PageHeader, Select, SkeletonRows, TextInput, Tooltip, cn, useToast,
@@ -16,7 +17,7 @@ const initialsOf = (name: string) => {
 }
 
 /** One member or pending invitation (US12): name, email, role and status. */
-function MemberRow({ m, isMe, onConfirm }: { m: TeamMember; isMe: boolean; onConfirm: () => void }) {
+function MemberRow({ m, isMe, onConfirm, onAssign }: { m: TeamMember; isMe: boolean; onConfirm: () => void; onAssign: () => void }) {
   const org = useTenant()
   const toast = useToast()
   const resend = useResendInvite(org.id)
@@ -44,11 +45,14 @@ function MemberRow({ m, isMe, onConfirm }: { m: TeamMember; isMe: boolean; onCon
             <Link to={`/convite/${m.id}`} className="inline-flex items-center gap-1.5 rounded-[9px] px-3.5 py-2 text-[13px] font-bold text-brand hover:bg-paper-soft"><ExternalLink className="size-4" aria-hidden />Abrir convite</Link>
           </Tooltip>
         )}
+        {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<ClipboardPlus className="size-4" aria-hidden />} onClick={onAssign}>Atribuir</Button>}
         {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<UserMinus className="size-4" aria-hidden />} onClick={onConfirm}>Remover</Button>}
       </span>
     </li>
   )
 }
+
+const KIND_LABEL: Record<Task['kind'], string> = { ativos: 'Ativos', pergunta: 'Pergunta técnica', evidencia: 'Evidência', tarefa: 'Tarefa', integracao: 'Integração' }
 
 const TONE_CLASS = { late: 'bg-risk-high text-risk-high-ink', soon: 'bg-risk-medium text-risk-medium-ink', ok: 'bg-signal-soft text-brand' }
 
@@ -62,6 +66,8 @@ export function TeamPage() {
   const today = useToday()
   const [invite, setInvite] = useState(false)
   const [confirming, setConfirming] = useState<TeamMember | null>(null)
+  const [assigning, setAssigning] = useState<{ to?: string } | null>(null)
+  const analysts = (members.data ?? []).filter((m) => m.role === 'analista' && m.status === 'ativo')
   const [editing, setEditing] = useState<Task | null>(null)
 
   if (users.isError || tasks.isError) return <ErrorState error={users.error ?? tasks.error} onRetry={() => { users.refetch(); tasks.refetch() }} />
@@ -71,11 +77,11 @@ export function TeamPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title="Equipa" subtitle="Quem trabalha consigo no aLinha e o que pediu a cada pessoa." actions={<Button variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} onClick={() => setInvite(true)}>Convidar analista</Button>} />
-      <Explainer id="team" intro="Cada pessoa vê só o que precisa. Pode pedir trabalho técnico a um analista sem lhe dar acesso ao resto da empresa."
+      <PageHeader eyebrow={org.name} title="Equipa" subtitle="Quem trabalha consigo no aLinha e o que pediu a cada pessoa." actions={<><Button variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} onClick={() => setInvite(true)}>Convidar analista</Button><Button icon={<ClipboardPlus className="size-4" aria-hidden />} disabled={analysts.length === 0} title={analysts.length === 0 ? 'Convide primeiro um analista' : undefined} onClick={() => setAssigning({})}>Atribuir tarefa</Button></>} />
+      <Explainer id="team"
         steps={[
           { title: 'Convide', text: 'O analista recebe um email, cria a conta e ativa a autenticação em dois passos.' },
-          { title: 'Atribua tarefas', text: 'Perguntas técnicas da avaliação ou o registo de ativos, sempre com prazo.' },
+          { title: 'Atribua tarefas', text: 'Perguntas técnicas, evidências ou o registo de ativos, com ou sem prazo.' },
           { title: 'Acompanhe', text: 'Aqui vê o estado de cada tarefa, pode enviar um lembrete ou mudar o prazo.' },
         ]} />
 
@@ -86,7 +92,7 @@ export function TeamPage() {
             <li aria-hidden className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
               {['Nome', 'Email', 'Papel', 'Estado', ''].map((h, i) => <span key={i} className="eyebrow text-[11px] text-muted">{h}</span>)}
             </li>
-            {members.data.map((m) => <MemberRow key={m.id} m={m} isMe={m.userId === persona.userId} onConfirm={() => setConfirming(m)} />)}
+            {members.data.map((m) => <MemberRow key={m.id} m={m} isMe={m.userId === persona.userId} onConfirm={() => setConfirming(m)} onAssign={() => setAssigning({ to: m.userId! })} />)}
           </ul>
         )}
       </section>
@@ -112,6 +118,7 @@ export function TeamPage() {
 
       {invite && <InviteModal onClose={() => setInvite(false)} />}
       {confirming && <ConfirmMemberModal m={confirming} onClose={() => setConfirming(null)} />}
+      {assigning && <AssignWorkModal analysts={analysts} assigneeId={assigning.to} onClose={() => setAssigning(null)} />}
       {editing && today.data && <DueModal task={editing} today={today.data} onClose={() => setEditing(null)} />}
     </>
   )
@@ -122,16 +129,16 @@ function TaskRow({ task, today, assignee, onEdit }: { task: Task; today: string;
   const toast = useToast()
   const remind = useRemindTask(org.id)
   const update = useUpdateTask(org.id)
-  const due = dueStatus(task.dueDate, today)
+  const due = task.dueDate ? dueStatus(task.dueDate, today) : null
   return (
     <article className="flex flex-wrap items-center gap-4 rounded-[16px] border border-line-soft bg-paper px-5 py-4">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <Chip>{task.kind === 'ativos' ? 'Ativos' : 'Pergunta técnica'}</Chip>
-          <span className={cn('rounded-full px-2.5 py-1 text-[12px] font-bold', TONE_CLASS[due.tone])}>{due.label}</span>
+          <Chip>{KIND_LABEL[task.kind]}</Chip>
+          {due ? <span className={cn('rounded-full px-2.5 py-1 text-[12px] font-bold', TONE_CLASS[due.tone])}>{due.label}</span> : <Chip tone="neutral">Sem prazo</Chip>}
         </div>
         <h3 className="mt-2 text-[16px] font-bold">{task.title}</h3>
-        <p className="text-[13px] text-muted">Para {assignee} · até {shortDay(task.dueDate)}</p>
+        <p className="text-[13px] text-muted">Para {assignee} · {task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" size="sm" icon={<BellRing className="size-4" aria-hidden />} loading={remind.isPending} onClick={() => remind.mutate(task.id, { onSuccess: () => toast.show(`Lembrete enviado a ${assignee}`), onError: (e) => toast.show(e.message, 'error') })}>Lembrar</Button>

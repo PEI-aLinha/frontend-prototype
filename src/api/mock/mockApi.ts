@@ -253,7 +253,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'assign', entityType: 'task', entityId: task.id, summary: `Atribuiu ao ${assignee.name} o registo de ${input.title.toLowerCase()}`, before: null, after: { assigneeId: assignee.id, dueDate: input.dueDate } })
           return notify({ ...s, tasks, audit: [...s.audit, entry] }, {
             organizationId: org, userId: assignee.id, kind: 'tarefa', title: 'Nova tarefa: registar ativos',
-            body: `${me.name} pediu-lhe: ${input.title} · até ${shortDayPt(input.dueDate)}`, link: `/org/componentes-agueda/tarefas/${task.id}/ativos`,
+            body: `${me.name} pediu-lhe: ${input.title}${input.dueDate ? ` · até ${shortDayPt(input.dueDate)}` : ''}`, link: `/org/componentes-agueda/tarefas/${task.id}/ativos`,
           })
         })
         return task
@@ -300,7 +300,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           const t = s.tasks.find((x) => x.id === id)
           if (!t || t.status !== 'pendente') throw new ApiError('Só pode lembrar tarefas pendentes.', 409)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'remind', entityType: 'task', entityId: id, summary: `Enviou um lembrete da tarefa "${t.title}"`, before: null, after: null })
-          return notify({ ...s, audit: [...s.audit, entry] }, { organizationId: org, userId: t.assigneeId, kind: 'lembrete', title: `Lembrete de ${me.name.split(' ')[0]}`, body: `${t.title} · até ${shortDayPt(t.dueDate)}`, link: t.kind === 'ativos' ? `/org/componentes-agueda/tarefas/${t.id}/ativos` : '/org/componentes-agueda/tarefas' })
+          return notify({ ...s, audit: [...s.audit, entry] }, { organizationId: org, userId: t.assigneeId, kind: 'lembrete', title: `Lembrete de ${me.name.split(' ')[0]}`, body: `${t.title}${t.dueDate ? ` · até ${shortDayPt(t.dueDate)}` : ''}`, link: t.kind === 'ativos' ? `/org/componentes-agueda/tarefas/${t.id}/ativos` : '/org/componentes-agueda/tarefas' })
         })
       }),
 
