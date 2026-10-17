@@ -98,7 +98,7 @@ export function ScopeQuestionsPage() {
     save.mutate(draft as ScopeInput, {
       onSuccess: () => {
         toast.show('Respostas guardadas')
-        navigate(`/org/${org.slug}/inicio`)
+        navigate(`/org/${org.slug}/ambito`)
       },
     })
   }

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import {
-  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Map, Plug, ShieldAlert, Users,
+  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Map, Plug, Scale, ShieldAlert, Users,
 } from 'lucide-react'
 import { useOrganization, useRoadmapStatus } from '../api/queries'
 import { homePath } from '../core/personas'
@@ -42,6 +42,7 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
     const seesRisks = canRole(persona.role, 'view', 'risk', { roadmapValidated: roadmap.data?.validated })
     items = [
       { to: `${base}/inicio`, label: 'Início', icon: Home },
+      { to: `${base}/ambito`, label: 'Âmbito regulatório', shortLabel: 'Leis', icon: Scale },
       { to: `${base}/avaliacao`, label: 'Avaliação', icon: ClipboardCheck },
       { to: `${base}/roadmap`, label: 'Resultados e roadmap', shortLabel: 'Resultados', icon: Map },
       { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },

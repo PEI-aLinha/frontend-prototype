@@ -43,7 +43,7 @@ export function RegistrationDonePage() {
         </dl>
       </Card>
 
-      <Button block onClick={() => navigate(`/org/${registered.slug}/inicio`)}>Entrar no aLinha</Button>
+      <Button block onClick={() => navigate(`/org/${registered.slug}/ambito/perguntas`)}>Continuar</Button>
     </>
   )
 }

@@ -4,7 +4,7 @@ import { dateTime, RISK_LEVEL_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
-import { Button, Eyebrow, HighlightCard, NextSteps, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
+import { Button, Eyebrow, HighlightCard, NextSteps, Note, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
 
 /** Designated manager home (06 / 14), with the "Risks" card after validation (scenario 3). */
@@ -41,6 +41,13 @@ export function HomePage() {
         <h1 className="text-[30px] font-extrabold title-tight">Olá, Rui</h1>
         <p className="text-[16px] text-ink-soft">{subtitle}</p>
       </header>
+
+      {!org.scope && (
+        <Note>
+          Responda a três perguntas para saber que leis se aplicam à empresa.{' '}
+          <Link to={`${base}/ambito/perguntas`} className="underline underline-offset-2">Responder agora</Link>
+        </Note>
+      )}
 
       <HighlightCard
         eyebrow="Avaliação de maturidade · NIS2 + RGPD"

@@ -18,7 +18,7 @@ import { HistoryPage } from '../features/portfolio/HistoryPage'
 import { IntegrationsPage } from '../features/integrations/IntegrationsPage'
 import { AssessmentPage } from '../features/assessment/AssessmentPage'
 import { QuestionPage } from '../features/tasks/QuestionPage'
-import { CreateAccountPage, MfaSetupPage, OnboardingLayout, RegisterOrganizationPage, RegistrationDonePage, ResumeRegistration, ScopeQuestionsPage } from '../features/organization/public'
+import { CreateAccountPage, MfaSetupPage, OnboardingLayout, RegisterOrganizationPage, RegistrationDonePage, ResumeRegistration, ScopeQuestionsPage, ScopeResultPage } from '../features/organization/public'
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +43,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <HomeRedirect /> },
           { path: 'inicio', element: <Guard resource="roadmap"><HomePage /></Guard> },
+          { path: 'ambito', element: <Guard resource="scope"><ScopeResultPage /></Guard> },
           { path: 'ambito/perguntas', element: <Guard resource="scope" action="edit"><ScopeQuestionsPage /></Guard> },
           { path: 'ativos', element: <Guard resource="asset"><AssetsPage /></Guard> },
           { path: 'tarefas', element: <AnalystOnly><TasksPage /></AnalystOnly> },
