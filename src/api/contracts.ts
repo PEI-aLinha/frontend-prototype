@@ -118,7 +118,7 @@ export interface AuditEntry {
   actorType: ActorType
   userId: Id | null
   action: string
-  entityType: 'organization' | 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration'
+  entityType: 'organization' | 'member' | 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration'
   entityId: Id
   summary: string
   before: Record<string, unknown> | null
@@ -388,6 +388,12 @@ export interface OrganizationApi {
   getConsultant(org: Id): Promise<Consultant | null>
   /** Members and pending invitations of the organization (US12). */
   listMembers(org: Id): Promise<TeamMember[]>
+  /** Invites an analyst by email (RF05). Designated manager only. */
+  inviteAnalyst(org: Id, input: { name: string; email: string }): Promise<TeamMember>
+  resendInvite(org: Id, memberId: Id): Promise<TeamMember>
+  cancelInvite(org: Id, memberId: Id): Promise<void>
+  /** Removes an active analyst: access ends and their pending tasks are cancelled. */
+  removeMember(org: Id, memberId: Id): Promise<void>
 }
 
 // ---------------- core: audit, directory ----------------

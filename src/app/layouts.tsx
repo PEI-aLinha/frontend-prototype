@@ -1,21 +1,28 @@
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import {
-  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Map, Plug, Scale, Settings, ShieldAlert, Users,
+  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Lock, Map, Plug, Scale, Settings, ShieldAlert, Users,
 } from 'lucide-react'
 import { useOrganization, useRoadmapStatus } from '../api/queries'
 import { homePath } from '../core/personas'
 import { canRole } from '../core/rbac'
 import { useSession } from '../core/session'
 import { TenantProvider } from '../core/tenant'
-import { ErrorState, SkeletonRows } from '../ui'
+import { ApiError } from '../api/contracts'
+import { EmptyState, ErrorState, SkeletonRows } from '../ui'
 import { AppShell, type NavItem, type NavSection } from './AppShell'
 import { NotificationBell } from './NotificationBell'
 
 function OrgGate({ slug, children }: { slug: string; children: (org: NonNullable<ReturnType<typeof useOrganization>['data']>) => ReactNode }) {
   const org = useOrganization(slug)
   if (org.isPending) return <div className="p-14"><SkeletonRows /></div>
-  if (org.isError) return <div className="p-14"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
+  if (org.isError) {
+    // No access (e.g. an analyst removed from the team): explain instead of offering a retry.
+    if (org.error instanceof ApiError && org.error.status === 403) {
+      return <div className="p-14 max-md:p-6"><EmptyState icon={<Lock className="size-5" aria-hidden />} title="Sem acesso a esta organização">{org.error.message}</EmptyState></div>
+    }
+    return <div className="p-14"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
+  }
   return <TenantProvider org={org.data}>{children(org.data)}</TenantProvider>
 }
 

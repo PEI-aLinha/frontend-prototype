@@ -30,6 +30,21 @@ function initials(name: string): string {
 
 /** Organization plugin (US10). In the real API the account is created in Keycloak and the request is anonymous. */
 export function createOrganizationMock(getActor: () => DemoActor): OrganizationApi {
+  /** Only the designated manager of the organization manages its team. */
+  function manager(org: string) {
+    const s = getState()
+    if (!s.organizations.some((o) => o.id === org)) throw new ApiError('Organização não encontrada', 404)
+    const me = s.users.find((u) => u.id === getActor().userId)
+    if (me?.role !== 'responsavel') throw new ApiError('Só o Responsável designado pode gerir a equipa.', 403)
+    return { me }
+  }
+  
+  function pendingInvite(org: string, memberId: string): TeamMember {
+    const m = getState().members.find((x) => x.id === memberId && x.organizationId === org)
+    if (!m || m.status !== 'convite_pendente') throw new ApiError('Este convite já não está pendente.', 404)
+    return m
+  }
+
   return {
     isEmailAvailable: (email) => simulate(() => !getState().users.some((u) => u.email.toLowerCase() === email.trim().toLowerCase())),
 
@@ -106,6 +121,50 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       if (me?.role === 'analista' || (me?.role === 'consultor' && o.consultantId !== me.id) || !me) throw new ApiError('Não tem permissão para ver a equipa.', 403)
       const order = (m: TeamMember) => (m.role === 'responsavel' ? 0 : m.status === 'ativo' ? 1 : 2)
       return s.members.filter((m) => m.organizationId === org).sort((a, b) => order(a) - order(b))
+    }),
+
+    inviteAnalyst: (org, input) => simulate(() => {
+      const { me } = manager(org)
+      const name = input.name.trim()
+      const email = input.email.trim().toLowerCase()
+      if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new ApiError('Indique o nome e um email válido.', 422)
+      const existing = getState().members.find((m) => m.organizationId === org && m.email.toLowerCase() === email)
+      if (existing) throw new ApiError(existing.status === 'ativo' ? 'Esta pessoa já faz parte da equipa.' : 'Já existe um convite pendente para este email. Pode reenviá-lo na lista.', 409)
+      const member: TeamMember = { id: newId('mbr'), organizationId: org, userId: null, name, email, role: 'analista', status: 'convite_pendente', invitedAt: now(), invitedBy: me.id, joinedAt: null }
+      const entry = auditEntry({ organizationId: org, userId: me.id, action: 'invite', entityType: 'member', entityId: member.id, summary: `Convidou ${name} (${email}) como analista`, before: null, after: { email } })
+      setState((st) => ({ ...st, members: [...st.members, member], audit: [...st.audit, entry] }))
+      return member
+    }),
+
+    resendInvite: (org, memberId) => simulate(() => {
+      const { me } = manager(org)
+      const m = pendingInvite(org, memberId)
+      const updated = { ...m, invitedAt: now() }
+      const entry = auditEntry({ organizationId: org, userId: me.id, action: 'resend', entityType: 'member', entityId: m.id, summary: `Reenviou o convite a ${m.name}`, before: null, after: null })
+      setState((st) => ({ ...st, members: st.members.map((x) => (x.id === m.id ? updated : x)), audit: [...st.audit, entry] }))
+      return updated
+    }),
+
+    cancelInvite: (org, memberId) => simulate(() => {
+      const { me } = manager(org)
+      const m = pendingInvite(org, memberId)
+      const entry = auditEntry({ organizationId: org, userId: me.id, action: 'cancel', entityType: 'member', entityId: m.id, summary: `Cancelou o convite a ${m.name}`, before: { email: m.email }, after: null })
+      setState((st) => ({ ...st, members: st.members.filter((x) => x.id !== m.id), audit: [...st.audit, entry] }))
+    }),
+
+    removeMember: (org, memberId) => simulate(() => {
+      const { me } = manager(org)
+      const m = getState().members.find((x) => x.id === memberId && x.organizationId === org)
+      if (!m || m.status !== 'ativo') throw new ApiError('Membro não encontrado.', 404)
+      if (m.role !== 'analista') throw new ApiError('Só é possível remover analistas.', 422)
+      const cancelled = getState().tasks.filter((t) => t.organizationId === org && t.assigneeId === m.userId && t.status === 'pendente').length
+      const entry = auditEntry({ organizationId: org, userId: me.id, action: 'remove', entityType: 'member', entityId: m.id, summary: `Removeu ${m.name} da equipa${cancelled ? ` (${cancelled} ${cancelled === 1 ? 'tarefa cancelada' : 'tarefas canceladas'})` : ''}`, before: { email: m.email }, after: null })
+      setState((st) => ({
+        ...st,
+        members: st.members.filter((x) => x.id !== m.id),
+        tasks: st.tasks.map((t) => (t.organizationId === org && t.assigneeId === m.userId && t.status === 'pendente' ? { ...t, status: 'cancelada' } : t)),
+        audit: [...st.audit, entry],
+      }))
     }),
 
     getConsultant: (org) => simulate(() => {

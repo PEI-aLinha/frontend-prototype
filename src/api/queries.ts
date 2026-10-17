@@ -54,6 +54,26 @@ function useInvalidate() {
 export const useMembers = (org?: Id) => useQuery({ queryKey: ['members', org], queryFn: () => api.organization.listMembers(org!), ...enabled(org) })
 export const useConsultant = (org?: Id) => useQuery({ queryKey: ['consultant', org], queryFn: () => api.organization.getConsultant(org!), ...enabled(org) })
 
+export function useInviteAnalyst(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (input: { name: string; email: string }) => api.organization.inviteAnalyst(org, input), onSuccess: () => invalidate('members', 'audit') })
+}
+
+export function useResendInvite(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (memberId: Id) => api.organization.resendInvite(org, memberId), onSuccess: () => invalidate('members', 'audit') })
+}
+
+export function useCancelInvite(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (memberId: Id) => api.organization.cancelInvite(org, memberId), onSuccess: () => invalidate('members', 'audit') })
+}
+
+export function useRemoveMember(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (memberId: Id) => api.organization.removeMember(org, memberId), onSuccess: () => invalidate('members', 'tasks', 'audit') })
+}
+
 export function useCheckEmail() {
   return useMutation({ mutationFn: (email: string) => api.organization.isEmailAvailable(email) })
 }

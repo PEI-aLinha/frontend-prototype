@@ -140,6 +140,28 @@ describe('team members (US12)', () => {
     expect(members.map((m) => [m.name, m.status])).toEqual([['Rui Santos', 'ativo'], ['Pedro Almeida', 'ativo'], ['Ana Costa', 'convite_pendente']])
   })
 
+  it('invites, resends and cancels an invitation', async () => {
+    const m = await api.organization.inviteAnalyst(ORG_ID, { name: 'Joana Reis', email: 'Joana.Reis@compagueda.pt' })
+    expect(m).toMatchObject({ status: 'convite_pendente', email: 'joana.reis@compagueda.pt', role: 'analista' })
+    await expect(api.organization.inviteAnalyst(ORG_ID, { name: 'Joana', email: 'joana.reis@compagueda.pt' })).rejects.toMatchObject({ status: 409 })
+    await api.organization.resendInvite(ORG_ID, m.id)
+    await api.organization.cancelInvite(ORG_ID, m.id)
+    expect((await api.organization.listMembers(ORG_ID)).some((x) => x.id === m.id)).toBe(false)
+  })
+
+  it('removes an analyst: their pending tasks are cancelled and access ends', async () => {
+    await api.organization.removeMember(ORG_ID, 'mbr-pedro')
+    expect(getState().tasks.filter((t) => t.assigneeId === PEDRO && t.status === 'pendente')).toHaveLength(0)
+    who = PEDRO
+    await expect(api.directory.getOrganization('componentes-agueda')).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('never removes the designated manager, who is the only one managing the team', async () => {
+    await expect(api.organization.removeMember(ORG_ID, 'mbr-rui')).rejects.toMatchObject({ status: 422 })
+    who = PEDRO
+    await expect(api.organization.inviteAnalyst(ORG_ID, { name: 'X', email: 'x@y.pt' })).rejects.toMatchObject({ status: 403 })
+  })
+
   it('does not show the team to analysts', async () => {
     who = PEDRO
     await expect(api.organization.listMembers(ORG_ID)).rejects.toMatchObject({ status: 403 })

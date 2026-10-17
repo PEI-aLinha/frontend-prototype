@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { BellRing, CalendarClock, UserPlus, XCircle } from 'lucide-react'
+import { BellRing, CalendarClock, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
 import type { Task, TeamMember } from '../../api/contracts'
-import { useMembers, useRemindTask, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
+import { useCancelInvite, useInviteAnalyst, useMembers, useRemindTask, useRemoveMember, useResendInvite, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
 import { dueStatus, longDay, ROLE_LABEL, shortDate, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
@@ -16,10 +16,13 @@ const initialsOf = (name: string) => {
 }
 
 /** One member or pending invitation (US12): name, email, role and status. */
-function MemberRow({ m, isMe }: { m: TeamMember; isMe: boolean }) {
+function MemberRow({ m, isMe, onConfirm }: { m: TeamMember; isMe: boolean; onConfirm: () => void }) {
+  const org = useTenant()
+  const toast = useToast()
+  const resend = useResendInvite(org.id)
   const pending = m.status === 'convite_pendente'
   return (
-    <li className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-4 border-b border-line-soft px-5 py-3.5 last:border-b-0 max-md:grid-cols-1 max-md:gap-1.5">
+    <li className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-4 border-b border-line-soft px-5 py-3.5 last:border-b-0 max-md:grid-cols-1 max-md:gap-1.5">
       <span className="flex min-w-0 items-center gap-3">
         <Avatar initials={initialsOf(m.name)} size={36} tone={pending ? 'soft' : 'dark'} />
         <span className={cn('truncate font-bold', pending && 'text-ink-soft')}>{m.name}{isMe && <span className="font-normal text-muted"> (você)</span>}</span>
@@ -29,6 +32,14 @@ function MemberRow({ m, isMe }: { m: TeamMember; isMe: boolean }) {
       <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
         {pending ? <Chip tone="neutral">Convite pendente</Chip> : <Chip tone="signal">Ativo</Chip>}
         {pending && m.invitedAt && <span className="text-[12px] text-muted">enviado a {shortDate(m.invitedAt)}</span>}
+      </span>
+      <span className="flex flex-wrap justify-end gap-1 max-md:justify-start">
+        {pending && (
+          <Button variant="ghost" size="sm" icon={<Send className="size-4" aria-hidden />} loading={resend.isPending}
+            onClick={() => resend.mutate(m.id, { onSuccess: () => toast.show(`Convite reenviado para ${m.email}`), onError: (e) => toast.show(e.message, 'error') })}>Reenviar</Button>
+        )}
+        {pending && <Button variant="ghost" size="sm" icon={<XCircle className="size-4" aria-hidden />} onClick={onConfirm}>Cancelar convite</Button>}
+        {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<UserMinus className="size-4" aria-hidden />} onClick={onConfirm}>Remover</Button>}
       </span>
     </li>
   )
@@ -45,6 +56,7 @@ export function TeamPage() {
   const tasks = useTasks(org.id)
   const today = useToday()
   const [invite, setInvite] = useState(false)
+  const [confirming, setConfirming] = useState<TeamMember | null>(null)
   const [editing, setEditing] = useState<Task | null>(null)
 
   if (users.isError || tasks.isError) return <ErrorState error={users.error ?? tasks.error} onRetry={() => { users.refetch(); tasks.refetch() }} />
@@ -66,10 +78,10 @@ export function TeamPage() {
         <h2 id="members" className="text-[18px] font-extrabold">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
         {members.isError ? <ErrorState error={members.error} onRetry={() => members.refetch()} /> : !members.data ? <SkeletonRows rows={3} /> : (
           <ul className="overflow-hidden rounded-[16px] border border-line-soft bg-paper" aria-label="Membros da organização">
-            <li aria-hidden className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
-              {['Nome', 'Email', 'Papel', 'Estado'].map((h) => <span key={h} className="eyebrow text-[11px] text-muted">{h}</span>)}
+            <li aria-hidden className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
+              {['Nome', 'Email', 'Papel', 'Estado', ''].map((h, i) => <span key={i} className="eyebrow text-[11px] text-muted">{h}</span>)}
             </li>
-            {members.data.map((m) => <MemberRow key={m.id} m={m} isMe={m.userId === persona.userId} />)}
+            {members.data.map((m) => <MemberRow key={m.id} m={m} isMe={m.userId === persona.userId} onConfirm={() => setConfirming(m)} />)}
           </ul>
         )}
       </section>
@@ -94,6 +106,7 @@ export function TeamPage() {
       </section>
 
       {invite && <InviteModal onClose={() => setInvite(false)} />}
+      {confirming && <ConfirmMemberModal m={confirming} onClose={() => setConfirming(null)} />}
       {editing && today.data && <DueModal task={editing} today={today.data} onClose={() => setEditing(null)} />}
     </>
   )
@@ -140,19 +153,55 @@ function DueModal({ task, today, onClose }: { task: Task; today: string; onClose
 }
 
 function InviteModal({ onClose }: { onClose: () => void }) {
+  const org = useTenant()
   const toast = useToast()
+  const invite = useInviteAnalyst(org.id)
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [error, setError] = useState<string>()
+  const [submitted, setSubmitted] = useState(false)
+  const errors = {
+    name: submitted && !name.trim() ? 'Indique o nome do analista.' : undefined,
+    email: !submitted ? undefined : !email.trim() ? 'Indique o email do analista.' : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? 'Este email não parece válido. Exemplo: nome@empresa.pt' : undefined,
+  }
   const submit = () => {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Indique um email válido.'); return }
-    toast.show(`Convite enviado para ${email.trim()} (simulado)`)
-    onClose()
+    setSubmitted(true)
+    if (!name.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return
+    invite.mutate({ name: name.trim(), email: email.trim() }, {
+      onSuccess: (m) => { toast.show(`Convite enviado para ${m.email}`); onClose() },
+    })
   }
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} chip={<Chip>Equipa</Chip>} title="Convidar analista" description="O analista só vê as tarefas que lhe atribuir. Pode ser um técnico externo."
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit}>Enviar convite</Button></>}>
-      <Field label="Email" error={error}>{(p) => <TextInput id={p.id} type="email" invalid={p.invalid} aria-describedby={p.describedBy} value={email} onChange={(e) => { setEmail(e.target.value); setError(undefined) }} placeholder="nome@empresa.pt" autoFocus />}</Field>
-      <p className="text-[13px] text-muted">Neste protótipo o convite não é enviado. No produto, o email leva a um registo com autenticação em dois passos.</p>
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit} loading={invite.isPending}>Enviar convite</Button></>}>
+      <Field label="Nome" error={errors.name}>{(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Pedro Almeida" autoFocus />}</Field>
+      <Field label="Email" error={errors.email}>{(p) => <TextInput id={p.id} type="email" invalid={p.invalid} aria-describedby={p.describedBy} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nome@empresa.pt" />}</Field>
+      {invite.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{invite.error.message}</p>}
+      <p className="text-[13px] text-muted">O convite é válido durante 7 dias. Neste protótipo, o email não é enviado.</p>
+    </Modal>
+  )
+}
+
+/** Confirmation before cancelling an invitation or removing an analyst. */
+function ConfirmMemberModal({ m, onClose }: { m: TeamMember; onClose: () => void }) {
+  const org = useTenant()
+  const toast = useToast()
+  const tasks = useTasks(org.id)
+  const cancel = useCancelInvite(org.id)
+  const remove = useRemoveMember(org.id)
+  const pending = m.status === 'convite_pendente'
+  const open = (tasks.data ?? []).filter((t) => t.assigneeId === m.userId && t.status === 'pendente').length
+  const action = pending ? cancel : remove
+  const confirm = () => action.mutate(m.id, {
+    onSuccess: () => { toast.show(pending ? `Convite a ${m.name} cancelado` : `${m.name} foi removido da equipa`); onClose() },
+  })
+  return (
+    <Modal open onOpenChange={(o) => !o && onClose()} chip={<Chip tone="neutral">Equipa</Chip>}
+      title={pending ? 'Cancelar o convite?' : `Remover ${m.name}?`}
+      description={pending
+        ? `O link enviado para ${m.email} deixa de funcionar. Pode voltar a convidar mais tarde.`
+        : `${m.name} deixa de ter acesso à organização.${open ? ` ${open === 1 ? 'A tarefa por fazer fica cancelada' : `As ${open} tarefas por fazer ficam canceladas`}.` : ''} O que já registou fica guardado.`}
+      footer={<><Button variant="secondary" onClick={onClose}>Voltar</Button><Button variant="danger" onClick={confirm} loading={action.isPending}>{pending ? 'Cancelar convite' : 'Remover da equipa'}</Button></>}>
+      {action.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{action.error.message}</p>}
     </Modal>
   )
 }

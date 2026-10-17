@@ -77,6 +77,9 @@ export function createMockApi(getActor: ActorProvider): Api {
         if (!o) throw new ApiError('Organização não encontrada', 404)
         const me = getState().users.find((u) => u.id === getActor().userId)
         if (me?.role === 'consultor' && o.consultantId !== me.id) throw new ApiError('Esta organização não está atribuída a si.', 403)
+        if (me?.role === 'analista' && !getState().members.some((m) => m.organizationId === o.id && m.userId === me.id && m.status === 'ativo')) {
+          throw new ApiError('Já não tem acesso a esta organização. Fale com o Responsável designado.', 403)
+        }
         return o
       }),
       listUsers: (org) => simulate(() => {
