@@ -14,8 +14,9 @@ export function RiskStatusActions({ risk, onDone }: { risk: Risk; onDone: () => 
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string>()
 
+  // mutateAsync, not mutate: an archived risk leaves the list and the drawer unmounts, which drops mutate's callbacks.
   const run = (change: Parameters<typeof set.mutate>[0]['change'], msg: string) =>
-    set.mutate({ id: risk.id, change }, { onSuccess: () => { toast.show(msg); onDone() }, onError: (e) => toast.show(e.message, 'error') })
+    set.mutateAsync({ id: risk.id, change }).then(() => { toast.show(msg); onDone() }, (e: Error) => toast.show(e.message, 'error'))
 
   if (risk.status === 'tratado' || risk.status === 'arquivado') {
     return (

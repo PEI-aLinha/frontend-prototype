@@ -14,8 +14,9 @@ function Suggestion({ d, assets, services, providerName, canDecide }: Omit<Props
   const [criticality, setCriticality] = useState<Level>(d.suggestedCriticality)
   const [service, setService] = useState<string>(d.suggestedServiceId ?? 'nenhum')
   const match = assets.find((a) => a.id === d.possibleMatchId)
+  // mutateAsync, not mutate: a decided suggestion leaves the pending list and unmounts, which drops mutate's callbacks.
   const run = (decision: Parameters<typeof decide.mutate>[0]['decision'], msg: string) =>
-    decide.mutate({ id: d.id, decision }, { onSuccess: () => toast.show(msg), onError: (e) => toast.show(e.message, 'error') })
+    decide.mutateAsync({ id: d.id, decision }).then(() => toast.show(msg), (e: Error) => toast.show(e.message, 'error'))
 
   return (
     <li>
