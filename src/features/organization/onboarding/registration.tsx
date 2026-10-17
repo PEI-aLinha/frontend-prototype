@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import type { OrganizationForm } from './organizationForm'
 
 /** Account data kept between onboarding steps. The password never leaves the form. */
 export interface AccountDraft {
@@ -11,6 +12,8 @@ interface RegistrationValue {
   setAccount: (account: AccountDraft) => void
   mfaVerified: boolean
   setMfaVerified: (verified: boolean) => void
+  organization: OrganizationForm | null
+  setOrganization: (organization: OrganizationForm) => void
 }
 
 const RegistrationContext = createContext<RegistrationValue | null>(null)
@@ -18,7 +21,11 @@ const RegistrationContext = createContext<RegistrationValue | null>(null)
 export function RegistrationProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<AccountDraft | null>(null)
   const [mfaVerified, setMfaVerified] = useState(false)
-  const value = useMemo(() => ({ account, setAccount, mfaVerified, setMfaVerified }), [account, mfaVerified])
+  const [organization, setOrganization] = useState<OrganizationForm | null>(null)
+  const value = useMemo(
+    () => ({ account, setAccount, mfaVerified, setMfaVerified, organization, setOrganization }),
+    [account, mfaVerified, organization],
+  )
   return <RegistrationContext.Provider value={value}>{children}</RegistrationContext.Provider>
 }
 
