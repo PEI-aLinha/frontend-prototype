@@ -65,3 +65,6 @@ test-results/
 playwright-report/
 .shot.mjs
 e2e/__screenshots__/
+
+# local-only design docs
+docs/
