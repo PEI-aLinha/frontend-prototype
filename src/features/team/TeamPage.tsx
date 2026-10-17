@@ -132,12 +132,20 @@ function DueModal({ task, today, onClose }: { task: Task; today: string; onClose
   )
 }
 
+function isValidEmail(value: string): boolean {
+  if (/\s/.test(value)) return false
+  const parts = value.split('@')
+  if (parts.length !== 2 || !parts[0]) return false
+  const domain = parts[1].split('.')
+  return domain.length >= 2 && domain.every(Boolean)
+}
+
 function InviteModal({ onClose }: { onClose: () => void }) {
   const toast = useToast()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string>()
   const submit = () => {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('Indique um email válido.'); return }
+    if (!isValidEmail(email.trim())) { setError('Indique um email válido.'); return }
     toast.show(`Convite enviado para ${email.trim()} (simulado)`)
     onClose()
   }

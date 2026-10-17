@@ -42,7 +42,7 @@ export function PortfolioPage() {
                 {active ? (
                   <button type="button" className="block w-full" onClick={() => navigate(`/clientes/${c.organization.slug}/visao-geral`)} aria-label={`Abrir ${c.organization.name}`}>{row}</button>
                 ) : (
-                  <Tooltip content="Fora deste protótipo"><div tabIndex={0} aria-disabled>{row}</div></Tooltip>
+                  <Tooltip content="Fora deste protótipo"><button type="button" className="block w-full cursor-default" aria-disabled>{row}</button></Tooltip>
                 )}
               </li>
             )
