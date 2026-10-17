@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import {
-  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Map, Plug, Scale, ShieldAlert, Users,
+  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Map, Plug, Scale, Settings, ShieldAlert, Users,
 } from 'lucide-react'
 import { useOrganization, useRoadmapStatus } from '../api/queries'
 import { homePath } from '../core/personas'
@@ -49,6 +49,7 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
       ...(seesRisks ? [{ to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert }] : []),
       { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
       { to: `${base}/equipa`, label: 'Equipa', icon: Users },
+      { to: `${base}/definicoes`, label: 'Definições', icon: Settings },
     ]
   }
   return (

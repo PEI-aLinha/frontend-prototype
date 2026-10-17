@@ -62,3 +62,25 @@ describe('regulatory scope answers (US34)', () => {
     await expect(api.organization.saveScope(ORG_ID, { employeeData: 'sim', customerData: 'sim', usesAi: 'nao', aiUses: [] })).rejects.toMatchObject({ status: 403 })
   })
 })
+
+describe('official NIS2 qualification (US11)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetDemo('c1')
+    who = RUI
+  })
+  const doc = { name: 'Ato-de-Qualificacao-CNCS.pdf', size: 248_000 }
+
+  it('registers the classification, date and document', async () => {
+    const org = await api.organization.registerQualification(ORG_ID, { classification: 'importante', date: '2026-10-12', document: doc })
+    expect(org.officialQualification).toMatchObject({ classification: 'importante', date: '2026-10-12', registeredBy: RUI })
+    expect(getState().audit.at(-1)?.summary).toContain('Entidade importante')
+  })
+
+  it('refuses a future date, a non-PDF file and other roles', async () => {
+    await expect(api.organization.registerQualification(ORG_ID, { classification: 'importante', date: '2027-01-01', document: doc })).rejects.toMatchObject({ status: 422 })
+    await expect(api.organization.registerQualification(ORG_ID, { classification: 'importante', date: '2026-10-12', document: { name: 'ato.docx', size: 1 } })).rejects.toMatchObject({ status: 422 })
+    who = PEDRO
+    await expect(api.organization.registerQualification(ORG_ID, { classification: 'importante', date: '2026-10-12', document: doc })).rejects.toMatchObject({ status: 403 })
+  })
+})

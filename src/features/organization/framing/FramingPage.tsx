@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { Info } from 'lucide-react'
 import { useTenant } from '../../../core/tenant'
 import { Card, Chip, EmptyState, Eyebrow, Note, PageHeader, cn } from '../../../ui'
@@ -40,7 +41,7 @@ export function FramingPage() {
       </section>
 
       <Note>
-        Isto é uma sugestão. A qualificação oficial é atribuída pelo CNCS depois de a empresa se registar na plataforma MyCiber. Quando a receber, pode registá-la nas definições da organização.
+        Isto é uma sugestão. A qualificação oficial é atribuída pelo CNCS depois de a empresa se registar na plataforma MyCiber. Quando a receber, pode registá-la nas <Link to={`/org/${org.slug}/definicoes`} className="underline underline-offset-2">definições da organização</Link>.
       </Note>
 
       <Card className="flex flex-col gap-3 px-6 py-6">

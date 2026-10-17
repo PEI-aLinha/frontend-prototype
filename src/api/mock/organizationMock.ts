@@ -75,5 +75,21 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       setState((st) => ({ ...st, organizations: st.organizations.map((o) => (o.id === org ? updated : o)), audit: [...st.audit, entry] }))
       return updated
     }),
+
+    registerQualification: (org, input) => simulate(() => {
+      const s = getState()
+      const me = s.users.find((u) => u.id === getActor().userId)
+      const current = s.organizations.find((o) => o.id === org)
+      if (!current) throw new ApiError('Organização não encontrada', 404)
+      if (me?.role !== 'responsavel') throw new ApiError('Só o Responsável designado pode registar a qualificação oficial.', 403)
+      if (!/\.pdf$/i.test(input.document.name)) throw new ApiError('O Ato de Qualificação tem de ser um ficheiro PDF.', 422)
+      if (input.date > s.today) throw new ApiError('A data do Ato de Qualificação não pode ser no futuro.', 422)
+      const officialQualification = { ...input, registeredBy: me.id, registeredAt: now() }
+      const updated: Organization = { ...current, officialQualification }
+      const label = input.classification === 'essencial' ? 'Entidade essencial' : 'Entidade importante'
+      const entry = auditEntry({ organizationId: org, userId: me.id, action: current.officialQualification ? 'update' : 'create', entityType: 'organization', entityId: org, summary: `Registou a qualificação oficial do CNCS: ${label}`, before: current.officialQualification ? { classification: current.officialQualification.classification } : null, after: { classification: input.classification, date: input.date, document: input.document.name } })
+      setState((st) => ({ ...st, organizations: st.organizations.map((o) => (o.id === org ? updated : o)), audit: [...st.audit, entry] }))
+      return updated
+    }),
   }
 }

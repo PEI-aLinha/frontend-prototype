@@ -49,6 +49,19 @@ export interface ScopeAnswers {
 
 export type ScopeInput = Omit<ScopeAnswers, 'answeredBy' | 'answeredAt'>
 
+/** Official NIS2 qualification from the CNCS "Ato de Qualificação" (US11, RF02). Replaces the suggestion. */
+export interface OfficialQualification {
+  classification: 'essencial' | 'importante'
+  /** Date of the Ato de Qualificação. */
+  date: IsoDate
+  /** Simulated attachment: only the file name and size are kept in the prototype. */
+  document: { name: string; size: number }
+  registeredBy: Id
+  registeredAt: IsoDate
+}
+
+export type QualificationInput = Pick<OfficialQualification, 'classification' | 'date' | 'document'>
+
 export interface Organization {
   id: Id
   slug: string
@@ -63,6 +76,7 @@ export interface Organization {
   registeredAt?: IsoDate
   /** Undefined until the designated manager answers the scope questions. */
   scope?: ScopeAnswers
+  officialQualification?: OfficialQualification
 }
 
 export type ActorType = 'user' | 'system' | 'ai'
@@ -335,6 +349,8 @@ export interface OrganizationApi {
   register(input: RegistrationInput): Promise<Organization>
   /** Saves the answers about personal data and AI (US34). Designated manager only. */
   saveScope(org: Id, input: ScopeInput): Promise<Organization>
+  /** Registers the official qualification given by the CNCS (US11). Designated manager only. */
+  registerQualification(org: Id, input: QualificationInput): Promise<Organization>
 }
 
 // ---------------- core: audit, directory ----------------
