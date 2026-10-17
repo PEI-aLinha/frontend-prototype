@@ -1,6 +1,6 @@
 import { ApiError, type DemoActor, type Organization, type OrganizationApi, type User } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
-import { ORG_ID, RUI } from './seed'
+import { ORG_ID, RUI, type ConsultantRecord, type DemoState } from './seed'
 
 const LEGAL_FORM = /,?\s*(lda\.?|s\.?\s?a\.?|unipessoal|sociedade anónima)\s*$/i
 
@@ -10,6 +10,16 @@ export function slugify(name: string): string {
     .replace(LEGAL_FORM, '')
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+/** Active clients of a consultant: the organizations in the portfolio assigned to them, plus those outside the prototype. */
+export function activeClients(s: Readonly<DemoState>, c: ConsultantRecord): number {
+  return s.portfolio.filter((p) => p.organization.consultantId === c.id).length + c.otherActiveClients
+}
+
+/** RF04: the new organization goes to the consultant with the fewest active clients (first one on a tie). */
+export function pickConsultant(s: Readonly<DemoState>): ConsultantRecord {
+  return s.consultants.reduce((best, c) => (activeClients(s, c) < activeClients(s, best) ? c : best))
 }
 
 function initials(name: string): string {
@@ -38,6 +48,8 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
 
       const { name, ...profile } = input.organization
       const at = now()
+      const consultant = pickConsultant(s)
+      const load = activeClients(s, consultant)
       const user: User = { id: userId, name: input.account.name.trim(), initials: initials(input.account.name), role: 'responsavel', title: 'Responsável designado', email }
       const organization: Organization = {
         id: orgId,
@@ -46,7 +58,8 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
         description: `${profile.services.trim()} · ${profile.employees} trabalhadores`,
         classification: '',
         frameworks: [],
-        consultantId: null,
+        consultantId: consultant.id,
+        consultantAssignedAt: at,
         profile: { ...profile, nif },
         registeredBy: userId,
         registeredAt: at,
@@ -58,7 +71,7 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
         users: [...st.users, user],
         organizations: [...st.organizations, organization],
         roadmap: { ...st.roadmap, [orgId]: { validated: false, validatedAt: null, validatedBy: null, assessmentCompletedAt: null } },
-        audit: [...st.audit, entry],
+        audit: [...st.audit, entry, auditEntry({ organizationId: orgId, userId: null, actorType: 'system', action: 'assign', entityType: 'organization', entityId: orgId, summary: `Atribuiu a organização a ${consultant.name}, a consultora com menos clientes ativos (${load})`, before: null, after: { consultantId: consultant.id } })],
       }))
       return organization
     }),
@@ -74,6 +87,17 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const entry = auditEntry({ organizationId: org, userId: me.id, action: current.scope ? 'update' : 'create', entityType: 'organization', entityId: org, summary: current.scope ? 'Atualizou as respostas sobre dados pessoais e IA' : 'Respondeu às perguntas sobre dados pessoais e IA', before: current.scope ? { ...current.scope } : null, after: { ...input } })
       setState((st) => ({ ...st, organizations: st.organizations.map((o) => (o.id === org ? updated : o)), audit: [...st.audit, entry] }))
       return updated
+    }),
+
+    getConsultant: (org) => simulate(() => {
+      const s = getState()
+      const o = s.organizations.find((x) => x.id === org)
+      if (!o) throw new ApiError('Organização não encontrada', 404)
+      const c = s.consultants.find((x) => x.id === o.consultantId)
+      if (!c) return null
+      const { otherActiveClients: _ignored, ...consultant } = c
+      void _ignored
+      return consultant
     }),
 
     registerQualification: (org, input) => simulate(() => {

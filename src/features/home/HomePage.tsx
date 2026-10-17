@@ -6,7 +6,7 @@ import { useCan } from '../../core/useCan'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { Button, Eyebrow, HighlightCard, NextSteps, Note, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
-import { nis2Status } from '../organization/public'
+import { ConsultantCard, nis2Status } from '../organization/public'
 
 /** Designated manager home (06 / 14), with the "Risks" card after validation (scenario 3). */
 export function HomePage() {
@@ -84,7 +84,7 @@ export function HomePage() {
         <Link to={`${base}/ativos`} className="contents">
           <StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? 2} serviços críticos · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />
         </Link>
-        <StatCard label="Consultora" value="Marta Ferreira" caption={validated ? 'Acompanha as ações de risco alto' : 'Valida os resultados quando terminar'} />
+        <ConsultantCard orgId={org.id} />
       </div>
     </>
   )

@@ -51,6 +51,8 @@ function useInvalidate() {
   return (...prefixes: string[]) => Promise.all([...prefixes, 'notifications'].map((p) => qc.invalidateQueries({ queryKey: [p] })))
 }
 
+export const useConsultant = (org?: Id) => useQuery({ queryKey: ['consultant', org], queryFn: () => api.organization.getConsultant(org!), ...enabled(org) })
+
 export function useCheckEmail() {
   return useMutation({ mutationFn: (email: string) => api.organization.isEmailAvailable(email) })
 }

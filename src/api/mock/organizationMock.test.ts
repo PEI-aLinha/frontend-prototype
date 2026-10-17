@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { RegistrationInput } from '../contracts'
 import { createMockApi } from './mockApi'
 import { getState, resetDemo } from './store'
-import { ORG_ID, PEDRO, RUI } from './seed'
-import { slugify } from './organizationMock'
+import { MARTA, ORG_ID, PEDRO, RUI } from './seed'
+import { activeClients, pickConsultant, slugify } from './organizationMock'
 
 let who = RUI
 const api = createMockApi(() => ({ userId: who }))
@@ -27,9 +27,9 @@ describe('organization registration (US10)', () => {
 
   it('registers the organization and associates it with the new account', async () => {
     const org = await api.organization.register(input)
-    expect(org).toMatchObject({ id: ORG_ID, slug: 'componentes-agueda', registeredBy: RUI, consultantId: null })
+    expect(org).toMatchObject({ id: ORG_ID, slug: 'componentes-agueda', registeredBy: RUI })
     expect(getState().users.find((u) => u.id === RUI)).toMatchObject({ role: 'responsavel', email: 'rui.santos@compagueda.pt' })
-    expect(getState().audit.at(-1)).toMatchObject({ entityType: 'organization', userId: RUI })
+    expect(getState().audit.at(-2)).toMatchObject({ entityType: 'organization', userId: RUI })
     expect(await api.directory.getOrganization('componentes-agueda')).toMatchObject({ profile: { nif: '509180027' } })
   })
 
@@ -82,5 +82,28 @@ describe('official NIS2 qualification (US11)', () => {
     await expect(api.organization.registerQualification(ORG_ID, { classification: 'importante', date: '2026-10-12', document: { name: 'ato.docx', size: 1 } })).rejects.toMatchObject({ status: 422 })
     who = PEDRO
     await expect(api.organization.registerQualification(ORG_ID, { classification: 'importante', date: '2026-10-12', document: doc })).rejects.toMatchObject({ status: 403 })
+  })
+})
+
+describe('automatic consultant assignment (US01)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    resetDemo('c0')
+    who = RUI
+  })
+
+  it('assigns the new organization to the consultant with fewest active clients', async () => {
+    const s = getState()
+    expect(s.consultants.map((c) => activeClients(s, c))).toEqual([11, 14])
+    const org = await api.organization.register(input)
+    expect(org.consultantId).toBe(MARTA)
+    expect(getState().audit.at(-1)).toMatchObject({ actorType: 'system', action: 'assign' })
+    expect(await api.organization.getConsultant(org.id)).toMatchObject({ name: 'Marta Ferreira', email: 'marta.ferreira@alinha.pt' })
+  })
+
+  it('picks the other consultant when Marta has more clients', () => {
+    const s = getState()
+    const busy = { ...s, consultants: s.consultants.map((c) => (c.id === MARTA ? { ...c, otherActiveClients: 10 } : c)) }
+    expect(pickConsultant(busy).name).toBe('João Pereira')
   })
 })

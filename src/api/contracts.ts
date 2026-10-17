@@ -18,6 +18,18 @@ export interface User {
   email: string
 }
 
+/** aLinha consultant as seen by the client (RF04, RF34: emergency contact). */
+export interface Consultant {
+  id: Id
+  name: string
+  initials: string
+  /** As each consultant chose to be presented, e.g. "A sua consultora". */
+  heading: string
+  email: string
+  /** Emergency contact, also used when the platform is unavailable. */
+  phone: string
+}
+
 /** Data needed for the framing under the Regime Jurídico da Cibersegurança (RF01). */
 export interface OrganizationProfile {
   nif: string
@@ -71,6 +83,8 @@ export interface Organization {
   frameworks: string[]
   /** Null until a consultant is assigned. */
   consultantId: Id | null
+  /** Set by the automatic assignment (RF04). */
+  consultantAssignedAt?: IsoDate
   profile?: OrganizationProfile
   registeredBy?: Id
   registeredAt?: IsoDate
@@ -351,6 +365,8 @@ export interface OrganizationApi {
   saveScope(org: Id, input: ScopeInput): Promise<Organization>
   /** Registers the official qualification given by the CNCS (US11). Designated manager only. */
   registerQualification(org: Id, input: QualificationInput): Promise<Organization>
+  /** The consultant assigned to the organization, or null while none is assigned. */
+  getConsultant(org: Id): Promise<Consultant | null>
 }
 
 // ---------------- core: audit, directory ----------------

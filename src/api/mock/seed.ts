@@ -1,13 +1,20 @@
 // Demo data (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Dates in October 2026.
 import type {
-  AppNotification, Asset, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
+  AppNotification, Asset, Consultant, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
   Risk, RiskActionLink, RoadmapStatus, Task, User,
 } from '../contracts'
 
 export type SnapshotId = 'c0' | 'c1' | 'c2' | 'c3'
 
+/** aLinha consultants. Marta's active clients are her portfolio; the others only have a count. */
+export interface ConsultantRecord extends Consultant {
+  /** Active clients outside the prototype (Marta's are counted from the portfolio). */
+  otherActiveClients: number
+}
+
 export interface DemoState {
   version: number
+  consultants: ConsultantRecord[]
   snapshot: SnapshotId
   users: User[]
   organizations: Organization[]
@@ -28,7 +35,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 8
+export const STATE_VERSION = 9
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -44,6 +51,11 @@ const USERS: User[] = [
   { id: MARTA, name: 'Marta Ferreira', initials: 'MF', role: 'consultor', title: 'Consultora aLinha', email: 'marta.ferreira@alinha.pt' },
 ]
 
+const CONSULTANTS: ConsultantRecord[] = [
+  { id: MARTA, name: 'Marta Ferreira', initials: 'MF', heading: 'A sua consultora', email: 'marta.ferreira@alinha.pt', phone: '913456210', otherActiveClients: 0 },
+  { id: 'u-joao', name: 'João Pereira', initials: 'JP', heading: 'O seu consultor', email: 'joao.pereira@alinha.pt', phone: '913456211', otherActiveClients: 14 },
+]
+
 const ORG: Organization = {
   id: ORG_ID,
   slug: ORG_SLUG,
@@ -52,6 +64,7 @@ const ORG: Organization = {
   classification: 'Entidade importante (sugestão indicativa)',
   frameworks: ['NIS2 / RJC', 'RGPD'],
   consultantId: MARTA,
+  consultantAssignedAt: '2026-10-09T09:20:00',
   profile: {
     nif: '509180027',
     cae: '29320',
@@ -211,7 +224,7 @@ function baseAudit(): AuditEntry[] {
 /** "Adesão": the company is not registered yet; only Marta and her other clients exist. */
 function emptySnapshot(): DemoState {
   return {
-    version: STATE_VERSION, snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
+    version: STATE_VERSION, consultants: CONSULTANTS, snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
     risks: [], links: [], comments: [], actions: [], roadmap: {}, portfolio: portfolio('c0'), audit: [], notifications: [], today: '2026-10-09',
     connections: {}, discoveries: [], evidence: [],
   }
@@ -272,6 +285,7 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
 
   return {
     version: STATE_VERSION,
+    consultants: CONSULTANTS,
     snapshot,
     users: USERS,
     organizations: [ORG],

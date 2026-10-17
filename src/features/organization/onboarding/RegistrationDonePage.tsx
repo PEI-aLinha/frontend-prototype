@@ -1,6 +1,7 @@
 import { Navigate, useNavigate } from 'react-router'
 import { CheckCircle2 } from 'lucide-react'
 import { Button, Card, Eyebrow } from '../../../ui'
+import { ConsultantCard } from '../consultant/ConsultantCard'
 import { sectorById } from '../sectors'
 import { useRegistration } from './registration'
 
@@ -42,6 +43,8 @@ export function RegistrationDonePage() {
           ))}
         </dl>
       </Card>
+
+      <ConsultantCard orgId={registered.id} className="px-7 py-6 max-md:px-5" />
 
       <Button block onClick={() => navigate(`/org/${registered.slug}/ambito/perguntas`)}>Continuar</Button>
     </>
