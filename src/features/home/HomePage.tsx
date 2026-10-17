@@ -6,6 +6,7 @@ import { useCan } from '../../core/useCan'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { Button, Eyebrow, HighlightCard, NextSteps, Note, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
+import { NIS2_LABEL, suggestNis2 } from '../organization/public'
 
 /** Designated manager home (06 / 14), with the "Risks" card after validation (scenario 3). */
 export function HomePage() {
@@ -75,7 +76,9 @@ export function HomePage() {
             <p className="mt-1.5 text-[13px] text-ink-soft">{levels.length} riscos registados pela consultora</p>
           </Link>
         ) : (
-          <StatCard label="Enquadramento" value="Entidade importante" caption="Sugestão indicativa · aguarda o CNCS" />
+          <Link to={`${base}/enquadramento`} className="contents">
+            <StatCard label="Enquadramento" value={org.profile ? NIS2_LABEL[suggestNis2(org.profile).classification] : '—'} caption="Sugestão indicativa · aguarda o CNCS" />
+          </Link>
         )}
         <Link to={`${base}/ativos`} className="contents">
           <StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? 2} serviços críticos · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />

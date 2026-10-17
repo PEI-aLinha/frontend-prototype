@@ -1,5 +1,5 @@
-import { Navigate, useNavigate } from 'react-router'
-import { Check, CircleHelp, Minus, Pencil } from 'lucide-react'
+import { Link, Navigate, useNavigate } from 'react-router'
+import { ArrowRight, Check, CircleHelp, Minus, Pencil } from 'lucide-react'
 import { useCan } from '../../../core/useCan'
 import { useTenant } from '../../../core/tenant'
 import { Button, Card, Chip, EmptyState, PageHeader, cn } from '../../../ui'
@@ -11,7 +11,7 @@ const STATUS: Record<Applicability, { label: string; tone: 'dark' | 'neutral' | 
   por_confirmar: { label: 'Por confirmar', tone: 'outline', icon: CircleHelp },
 }
 
-function FrameworkCard({ r }: { r: FrameworkResult }) {
+function FrameworkCard({ r, framingLink }: { r: FrameworkResult; framingLink?: string }) {
   const st = STATUS[r.applicability]
   const Icon = st.icon
   const applies = r.applicability === 'aplica'
@@ -38,6 +38,12 @@ function FrameworkCard({ r }: { r: FrameworkResult }) {
           </ul>
         </div>
       )}
+      {framingLink && (
+        <Link to={framingLink} className="group mt-auto flex flex-col gap-0.5 rounded-[12px] bg-brand-soft px-4 py-3 text-brand transition-colors hover:bg-signal-soft">
+          <span className="text-[12px] font-semibold">Enquadramento sugerido · indicativo</span>
+          <span className="inline-flex items-center gap-1.5 text-[14px] font-bold group-hover:underline">Ver o enquadramento NIS2 <ArrowRight className="size-4" aria-hidden /></span>
+        </Link>
+      )}
     </Card>
   )
 }
@@ -63,7 +69,9 @@ export function ScopeResultPage() {
       <PageHeader eyebrow={org.name} title="Que leis se aplicam à empresa" subtitle={subtitle}
         actions={canEdit && <Button variant="secondary" icon={<Pencil className="size-4" aria-hidden />} onClick={() => navigate('perguntas')}>Mudar respostas</Button>} />
       <div className="grid gap-4 lg:grid-cols-3">
-        {results.map((r) => <FrameworkCard key={r.id} r={r} />)}
+        {results.map((r) => (
+          <FrameworkCard key={r.id} r={r} framingLink={r.id === 'nis2' ? `/org/${org.slug}/enquadramento` : undefined} />
+        ))}
       </div>
     </>
   )

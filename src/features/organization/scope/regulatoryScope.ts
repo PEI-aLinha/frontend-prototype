@@ -1,4 +1,5 @@
 import type { AiUse, Organization } from '../../../api/contracts'
+import { companySize } from '../framing/nis2Framing'
 import { sectorById } from '../sectors'
 
 export type FrameworkId = 'nis2' | 'rgpd' | 'aiact'
@@ -15,9 +16,6 @@ export interface FrameworkResult {
   implications: string[]
 }
 
-/** Medium company or larger (EU Recommendation 2003/361): 50+ workers or turnover above 10 M€. */
-export const isMediumOrLarger = (employees: number, turnover: number) => employees >= 50 || turnover > 10_000_000
-
 const AI_IMPLICATIONS: Record<AiUse, string> = {
   chatbot: 'Avisar quem fala com o chatbot de que está a falar com uma máquina.',
   recrutamento: 'O software de recrutamento é de alto risco: uma pessoa tem de rever as decisões e os candidatos têm de ser informados (até 2 de dezembro de 2027).',
@@ -33,7 +31,7 @@ function nis2(org: Organization): FrameworkResult {
   if (!sector || sector.annex === null) {
     return { ...base, applicability: 'nao_aplica', reason: 'O setor de atividade não está entre os setores abrangidos pela lei.', implications: [] }
   }
-  if (!isMediumOrLarger(p.employees, p.turnover)) {
+  if (companySize(p.employees, p.turnover) === 'pequena') {
     return { ...base, applicability: 'nao_aplica', reason: 'A empresa é pequena: tem menos de 50 trabalhadores e um volume de negócios até 10 milhões de euros.', implications: [] }
   }
   return {
