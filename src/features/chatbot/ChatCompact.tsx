@@ -41,10 +41,14 @@ export function ConversationBadges({ conversation: c, selected }: { conversation
 }
 
 /** Mantém o item ativo visível quando a lista tem scroll. */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useScrollActiveIntoView(activeId: number, count: number) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
+    const selected = ref.current?.querySelector('[aria-selected="true"]')
+    if (selected instanceof HTMLElement && typeof selected.scrollIntoView === 'function') {
+      selected.scrollIntoView({ inline: 'nearest', block: 'nearest' })
+    }
   }, [activeId, count])
   return ref
 }

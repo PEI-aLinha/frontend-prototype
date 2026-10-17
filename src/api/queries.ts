@@ -1,7 +1,7 @@
 // TanStack Query hooks on top of the contracts. Components use only these, never the mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { AssetBulkChange, AssetInput, QuestionAnswer, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
+import type { AssetBulkChange, AssetInput, ChatConversation, ChatMessageInput, QuestionAnswer, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
 
 export const keys = {
   org: (slug: string) => ['org', slug] as const,
@@ -23,6 +23,7 @@ export const keys = {
   integrations: (org: Id) => ['integrations', org] as const,
   discoveries: (org: Id) => ['discoveries', org] as const,
   evidence: (org: Id) => ['evidence', org] as const,
+  chat: (scopeKey: string) => ['chat', scopeKey] as const,
 }
 
 const enabled = (org: Id | undefined) => ({ enabled: !!org })
@@ -43,6 +44,31 @@ export const useAudit = (org?: Id, entityId?: Id, on = true) => useQuery({ query
 export const useIntegrations = (org?: Id) => useQuery({ queryKey: keys.integrations(org!), queryFn: () => api.integrations.list(org!), ...enabled(org) })
 export const useDiscoveries = (org?: Id) => useQuery({ queryKey: keys.discoveries(org!), queryFn: () => api.integrations.listDiscoveries(org!), ...enabled(org) })
 export const useEvidence = (org?: Id) => useQuery({ queryKey: keys.evidence(org!), queryFn: () => api.integrations.listEvidence(org!), ...enabled(org) })
+
+export const useChatHistory = (scopeKey: string) => useQuery({ queryKey: keys.chat(scopeKey), queryFn: () => api.chat.list(scopeKey) })
+
+export const useSendChatMessage = () => useMutation({
+  mutationFn: ({ organizationId, messages }: { organizationId?: Id; messages: ChatMessageInput[] }) => api.chat.send(organizationId, messages),
+})
+
+export function useSaveChatConversation(scopeKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (conversation: ChatConversation) => api.chat.save(scopeKey, conversation),
+    onSuccess: (conversation) => qc.setQueryData<ChatConversation[]>(keys.chat(scopeKey), (current = []) => {
+      const exists = current.some((item) => item.id === conversation.id)
+      return exists ? current.map((item) => item.id === conversation.id ? conversation : item) : [...current, conversation]
+    }),
+  })
+}
+
+export function useDeleteChatConversation(scopeKey: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (conversationId: Id) => api.chat.delete(scopeKey, conversationId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.chat(scopeKey) }),
+  })
+}
 
 export const useAssessment = (org?: Id) => useQuery({ queryKey: keys.assessment(org!), queryFn: () => api.assessment.getAssessment(org!), ...enabled(org) })
 

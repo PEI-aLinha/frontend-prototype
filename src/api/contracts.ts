@@ -325,6 +325,7 @@ export interface Api {
   directory: DirectoryApi
   notifications: NotificationsApi
   integrations: IntegrationsApi
+  chat: ChatApi
 }
 
 export class ApiError extends Error {
@@ -412,4 +413,53 @@ export interface IntegrationsApi {
   listDiscoveries(org: Id): Promise<DiscoveredAsset[]>
   decide(org: Id, id: Id, decision: DiscoveryDecision): Promise<DiscoveredAsset>
   listEvidence(org: Id): Promise<CollectedEvidence[]>
+}
+//nao percebi bem se isto esta correto cuidado
+export interface ChatMessageInput {
+  role: 'user' | 'bot'
+  text: string
+}
+
+export type ChatMessageRole = 'user' | 'bot' | 'notice'
+
+export interface ChatStoredMessage {
+  id: Id
+  role: ChatMessageRole
+  text: string
+  source?: { label: string; title: string; to: string; cta?: string }
+  error?: boolean
+  createdAt: IsoDate
+}
+
+export interface ChatConversation {
+  id: Id
+  scopeKey: string
+  userId: Id
+  messages: ChatStoredMessage[]
+  topic?: string
+  awaitingReview: boolean
+  createdAt: IsoDate
+  updatedAt: IsoDate
+}
+
+export interface ChatReply {
+  text: string
+  source?: {
+    label: string
+    title: string
+    to: string
+    cta?: string
+  }
+  notice?: string
+}
+
+export interface ChatApi {
+  list(scopeKey: string): Promise<ChatConversation[]>
+  save(scopeKey: string, conversation: ChatConversation): Promise<ChatConversation>
+  delete(scopeKey: string, conversationId: Id): Promise<void>
+  clear(scopeKey: string): Promise<void>
+  send(
+    organizationId: Id | undefined,
+    messages: ChatMessageInput[],
+  ): Promise<ChatReply>
 }

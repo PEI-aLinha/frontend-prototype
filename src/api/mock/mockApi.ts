@@ -7,6 +7,7 @@ import { notify } from './notify'
 import { shortDayPt } from './dates'
 import { createIntegrationsMock } from './integrationsMock'
 import { createAssessmentMock } from './assessmentMock'
+import { createChatMock } from './chatMock'
 import type { DemoState } from './seed'
 
 /** Who is making the request. In the real API it comes from the token (Keycloak). */
@@ -67,6 +68,7 @@ export function createMockApi(getActor: ActorProvider): Api {
   const write = (mutate: (s: DemoState, me: User) => DemoState) => setState((s) => mutate(s, user(s, getActor().userId)))
 
   return {
+    chat: createChatMock(getActor),
     integrations: createIntegrationsMock(getActor),
 
     directory: {

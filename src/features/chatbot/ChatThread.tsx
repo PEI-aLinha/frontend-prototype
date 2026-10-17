@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 import { Clock, Send } from 'lucide-react'
 import type { Conversation, Suggestion } from './ChatTypes'
+import { Button, TextInput } from '../../ui'
 
 type ChatThreadProps = {
   /** Conversa ativa. */
@@ -97,23 +98,24 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
             className="flex items-center gap-2"
             onSubmit={(e) => { e.preventDefault(); onSend(active.draft) }}
           >
-            <input
+            <TextInput
               ref={inputRef}
               value={active.draft}
               onChange={(e) => onDraftChange(e.target.value)}
               placeholder="Pergunte sobre riscos, ativos ou roadmap…"
               aria-label="Escreva a sua pergunta"
               maxLength={1000}
-              className="h-[46px] min-w-0 flex-1 rounded-[12px] border border-brand-soft px-3.5 text-[14px] focus-visible:outline-2 focus-visible:outline-brand"
+              className="h-[46px] min-w-0 flex-1 rounded-[12px] border-brand-soft px-3.5 text-[14px] focus-visible:outline-2 focus-visible:outline-brand"
             />
-            <button
+            <Button
               type="submit"
               disabled={!active.draft.trim() || active.typing}
               aria-label="Enviar mensagem"
-              className="flex size-[46px] flex-none items-center justify-center rounded-[12px] bg-brand text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="size-[46px] flex-none !rounded-[12px] !p-0 disabled:cursor-not-allowed disabled:opacity-40"
+              icon={<Send className="size-[18px]" aria-hidden />}
             >
-              <Send className="size-[18px]" aria-hidden />
-            </button>
+              <span className="sr-only">Enviar</span>
+            </Button>
           </form>
           <p className="text-center text-[11px] text-muted">As respostas de IA podem conter erros. Confirme com a consultora.</p>
         </div>

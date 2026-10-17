@@ -1,6 +1,6 @@
 // Demo data (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Dates in October 2026.
 import type {
-  AppNotification, Asset, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
+  AppNotification, Asset, ChatConversation, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
   Risk, RiskActionLink, RoadmapStatus, Task, User,
 } from '../contracts'
 
@@ -22,13 +22,14 @@ export interface DemoState {
   portfolio: PortfolioClient[]
   audit: AuditEntry[]
   notifications: AppNotification[]
+  chat: ChatConversation[]
   today: string
   connections: Partial<Record<ProviderId, Omit<IntegrationConnection, 'provider'>>>
   discoveries: DiscoveredAsset[]
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 6
+export const STATE_VERSION = 7
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -260,6 +261,7 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
     portfolio: portfolio(snapshot),
     audit: entries,
     notifications: seedNotifications(snapshot),
+    chat: [],
     today: snapshot === 'c1' ? '2026-10-13' : '2026-10-16',
     connections: snapshot === 'c3' ? { microsoft365: { status: 'ligado', connectedBy: PEDRO, connectedAt: at(16, '11:00'), lastSyncAt: at(16, '17:30'), secretRef: 'openbao://alinha/org-ca/microsoft365', assignedTo: PEDRO } } : {},
     discoveries: snapshot === 'c3' ? [{ id: 'dsc-m365', provider: 'microsoft365', name: 'Microsoft 365 (tenant compagueda.pt)', type: 'servico_cloud', details: '15 utilizadores · Exchange, SharePoint e Teams', suggestedServiceId: 'svc-faturacao', suggestedCriticality: 'medio', possibleMatchId: 'ast-email', status: 'associado', resolvedAssetId: 'ast-email' }] : [],
