@@ -17,13 +17,30 @@ const initialsOf = (name: string) => {
 }
 
 /** One member or pending invitation (US12): name, email, role and status. */
-function MemberRow({ m, isMe, onConfirm, onAssign }: { m: TeamMember; isMe: boolean; onConfirm: () => void; onAssign: () => void }) {
+interface TaskCount { open: number; late: number; done: number }
+
+/** Tasks of one analyst (US14): to do, of which late, and done. */
+function TaskCountCell({ c }: { c?: TaskCount }) {
+  if (!c) return <span className="text-[14px] text-muted max-md:hidden">—</span>
+  if (c.open === 0 && c.done === 0) return <span className="text-[14px] text-ink-soft">Sem tarefas</span>
+  return (
+    <span className="flex flex-col text-[14px] leading-snug">
+      <span className="font-bold text-ink">{c.open === 0 ? 'Nada por fazer' : `${c.open} por fazer`}</span>
+      <span className="text-[12px] text-muted">
+        {c.late > 0 && <span className="font-bold text-risk-high-ink">{c.late} {c.late === 1 ? 'atrasada' : 'atrasadas'} · </span>}
+        {c.done} {c.done === 1 ? 'concluída' : 'concluídas'}
+      </span>
+    </span>
+  )
+}
+
+function MemberRow({ m, isMe, tasks, onConfirm, onAssign }: { m: TeamMember; isMe: boolean; tasks?: TaskCount; onConfirm: () => void; onAssign: () => void }) {
   const org = useTenant()
   const toast = useToast()
   const resend = useResendInvite(org.id)
   const pending = m.status === 'convite_pendente'
   return (
-    <li className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-4 border-b border-line-soft px-5 py-3.5 last:border-b-0 max-md:grid-cols-1 max-md:gap-1.5">
+    <li className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] items-center gap-4 border-b border-line-soft px-5 py-3.5 last:border-b-0 max-md:grid-cols-1 max-md:gap-1.5">
       <span className="flex min-w-0 items-center gap-3">
         <Avatar initials={initialsOf(m.name)} size={36} tone={pending ? 'soft' : 'dark'} />
         <span className={cn('truncate font-bold', pending && 'text-ink-soft')}>{m.name}{isMe && <span className="font-normal text-muted"> (você)</span>}</span>
@@ -34,6 +51,7 @@ function MemberRow({ m, isMe, onConfirm, onAssign }: { m: TeamMember; isMe: bool
         {pending ? <Chip tone="neutral">Convite pendente</Chip> : <Chip tone="signal">Ativo</Chip>}
         {pending && m.invitedAt && <span className="text-[12px] text-muted">enviado a {shortDate(m.invitedAt)}</span>}
       </span>
+      <TaskCountCell c={tasks} />
       <span className="flex flex-wrap justify-end gap-1 max-md:justify-start">
         {pending && (
           <Button variant="ghost" size="sm" icon={<Send className="size-4" aria-hidden />} loading={resend.isPending}
@@ -68,6 +86,11 @@ export function TeamPage() {
   const [confirming, setConfirming] = useState<TeamMember | null>(null)
   const [assigning, setAssigning] = useState<{ to?: string } | null>(null)
   const analysts = (members.data ?? []).filter((m) => m.role === 'analista' && m.status === 'ativo')
+  const countFor = (userId: string): TaskCount => {
+    const mine = (tasks.data ?? []).filter((t) => t.assigneeId === userId)
+    const open = mine.filter((t) => t.status === 'pendente')
+    return { open: open.length, late: open.filter((t) => t.dueDate && today.data && t.dueDate < today.data).length, done: mine.filter((t) => t.status === 'concluida').length }
+  }
   const [editing, setEditing] = useState<Task | null>(null)
 
   if (users.isError || tasks.isError) return <ErrorState error={users.error ?? tasks.error} onRetry={() => { users.refetch(); tasks.refetch() }} />
@@ -89,10 +112,10 @@ export function TeamPage() {
         <h2 id="members" className="text-[18px] font-extrabold">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
         {members.isError ? <ErrorState error={members.error} onRetry={() => members.refetch()} /> : !members.data ? <SkeletonRows rows={3} /> : (
           <ul className="overflow-hidden rounded-[16px] border border-line-soft bg-paper" aria-label="Membros da organização">
-            <li aria-hidden className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.2fr)] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
-              {['Nome', 'Email', 'Papel', 'Estado', ''].map((h, i) => <span key={i} className="eyebrow text-[11px] text-muted">{h}</span>)}
+            <li aria-hidden className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
+              {['Nome', 'Email', 'Papel', 'Estado', 'Tarefas', ''].map((h, i) => <span key={i} className="eyebrow text-[11px] text-muted">{h}</span>)}
             </li>
-            {members.data.map((m) => <MemberRow key={m.id} m={m} isMe={m.userId === persona.userId} onConfirm={() => setConfirming(m)} onAssign={() => setAssigning({ to: m.userId! })} />)}
+            {members.data.map((m) => <MemberRow key={m.id} m={m} isMe={m.userId === persona.userId} tasks={m.role === 'analista' && m.status === 'ativo' ? countFor(m.userId!) : undefined} onConfirm={() => setConfirming(m)} onAssign={() => setAssigning({ to: m.userId! })} />)}
           </ul>
         )}
       </section>
