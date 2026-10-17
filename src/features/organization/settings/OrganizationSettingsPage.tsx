@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { BadgeCheck, Eye, FileText, Info, Pencil } from 'lucide-react'
+import { BadgeCheck, Eye, FileText, Pencil } from 'lucide-react'
 import { useToday } from '../../../api/queries'
 import { shortDate } from '../../../config/labels'
 import { useCan } from '../../../core/useCan'
 import { useTenant } from '../../../core/tenant'
-import { Button, Card, Chip, PageHeader } from '../../../ui'
+import { Button, Card, PageHeader } from '../../../ui'
+import { Nis2Badge } from '../framing/Nis2Badge'
 import { NIS2_LABEL, suggestNis2 } from '../framing/nis2Framing'
 import { sectorById } from '../sectors'
 import { DocumentPreviewModal } from './DocumentPreviewModal'
@@ -65,7 +66,7 @@ export function OrganizationSettingsPage() {
         </div>
         {official ? (
           <DataList rows={[
-            ['Classificação oficial', NIS2_LABEL[official.classification]],
+            ['Classificação oficial', <span className="flex flex-wrap items-center gap-2"><span className="font-bold">{NIS2_LABEL[official.classification]}</span><Nis2Badge official /></span>],
             ['Data do Ato de Qualificação', shortDate(official.date)],
             ['Documento', (
               <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -78,7 +79,7 @@ export function OrganizationSettingsPage() {
           <>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-[15px] font-bold">{suggested ? NIS2_LABEL[suggested] : '—'}</span>
-              <Chip tone="outline" icon={<Info className="size-3.5" aria-hidden />}>Indicativo</Chip>
+              <Nis2Badge official={false} />
             </div>
             <p className="text-[14px] text-ink-soft">
               {suggested === 'nao_abrangida'

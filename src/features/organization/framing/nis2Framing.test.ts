@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { OrganizationProfile } from '../../../api/contracts'
-import { companySize, suggestNis2 } from './nis2Framing'
+import type { Organization, OrganizationProfile } from '../../../api/contracts'
+import { companySize, nis2Status, suggestNis2 } from './nis2Framing'
 
 const base: OrganizationProfile = {
   nif: '509180027', cae: '29320', sector: 'industria', subsector: 'automoveis', services: 'Componentes', employees: 120, turnover: 18_500_000,
@@ -24,5 +24,16 @@ describe('suggestNis2', () => {
   it('classifies size by workers or turnover', () => {
     expect(companySize(40, 12_000_000)).toBe('media')
     expect(companySize(40, 60_000_000)).toBe('grande')
+  })
+})
+
+describe('nis2Status', () => {
+  const org: Organization = { id: 'o', slug: 'o', name: 'O', description: '', classification: '', frameworks: [], consultantId: null, profile: base }
+  it('shows the suggestion until the official qualification is registered', () => {
+    expect(nis2Status(org)).toMatchObject({ classification: 'importante', official: false })
+  })
+  it('lets the official qualification replace the suggestion', () => {
+    const official = { classification: 'essencial' as const, date: '2026-10-12', document: { name: 'ato.pdf', size: 1 }, registeredBy: 'u-rui', registeredAt: '2026-10-12T10:00:00' }
+    expect(nis2Status({ ...org, officialQualification: official })).toMatchObject({ classification: 'essencial', label: 'Entidade essencial', official: true, suggested: 'importante' })
   })
 })

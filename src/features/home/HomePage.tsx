@@ -1,12 +1,12 @@
 import { Link } from 'react-router'
 import { useAssets, useRisks, useRoadmapStatus, useServices, useTasks } from '../../api/queries'
-import { dateTime, RISK_LEVEL_LABEL } from '../../config/labels'
+import { dateTime, RISK_LEVEL_LABEL, shortDate } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { Button, Eyebrow, HighlightCard, NextSteps, Note, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
-import { NIS2_LABEL, suggestNis2 } from '../organization/public'
+import { nis2Status } from '../organization/public'
 
 /** Designated manager home (06 / 14), with the "Risks" card after validation (scenario 3). */
 export function HomePage() {
@@ -32,6 +32,7 @@ export function HomePage() {
   const topTreating = levels.filter((l) => l.level === top).every((l) => l.status === 'em_tratamento' || l.status === 'aceite')
 
   const base = `/org/${org.slug}`
+  const nis2 = nis2Status(org)
   // Assessment not submitted yet: invite to start or to finish it. Once submitted, only the status remains.
   const subtitle = validated ? 'A Marta Ferreira validou os resultados e o roadmap.' : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : fresh ? 'Pode começar pela avaliação quando quiser.' : 'Pode terminar a avaliação quando quiser.'
 
@@ -77,7 +78,7 @@ export function HomePage() {
           </Link>
         ) : (
           <Link to={`${base}/enquadramento`} className="contents">
-            <StatCard label="Enquadramento" value={org.profile ? NIS2_LABEL[suggestNis2(org.profile).classification] : '—'} caption="Sugestão indicativa · aguarda o CNCS" />
+            <StatCard label="Enquadramento" value={nis2?.label ?? '—'} caption={nis2?.official ? `Oficial · CNCS · Ato de ${shortDate(nis2.date!)}` : 'Sugestão indicativa · aguarda o CNCS'} />
           </Link>
         )}
         <Link to={`${base}/ativos`} className="contents">

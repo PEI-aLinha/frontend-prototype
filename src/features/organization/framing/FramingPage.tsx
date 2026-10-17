@@ -1,8 +1,9 @@
 import { Link } from 'react-router'
-import { Info } from 'lucide-react'
 import { useTenant } from '../../../core/tenant'
-import { Card, Chip, EmptyState, Eyebrow, Note, PageHeader, cn } from '../../../ui'
-import { NIS2_LABEL, NIS2_MEANING, suggestNis2 } from './nis2Framing'
+import { shortDate } from '../../../config/labels'
+import { Card, EmptyState, Eyebrow, Note, PageHeader, cn } from '../../../ui'
+import { Nis2Badge } from './Nis2Badge'
+import { NIS2_LABEL, NIS2_MEANING, nis2Status, suggestNis2 } from './nis2Framing'
 
 function Bullets({ items }: { items: string[] }) {
   return (
@@ -17,13 +18,16 @@ function Bullets({ items }: { items: string[] }) {
   )
 }
 
-/** US11 — NIS2 framing suggested from the registration data (RF02). */
+/** US11 — NIS2 framing: the suggestion from the registration data, replaced by the official CNCS qualification once registered. */
 export function FramingPage() {
   const org = useTenant()
-  if (!org.profile) return <EmptyState title="Faltam os dados do registo">Sem os dados da organização não é possível sugerir o enquadramento.</EmptyState>
+  const status = nis2Status(org)
+  if (!org.profile || !status) return <EmptyState title="Faltam os dados do registo">Sem os dados da organização não é possível sugerir o enquadramento.</EmptyState>
 
   const f = suggestNis2(org.profile)
-  const covered = f.classification !== 'nao_abrangida'
+  const covered = status.classification !== 'nao_abrangida'
+  const reasons = status.official ? [`Atribuída pelo CNCS no Ato de Qualificação de ${shortDate(status.date!)}.`] : f.reasons
+  const settings = <Link to={`/org/${org.slug}/definicoes`} className="underline underline-offset-2">definições da organização</Link>
 
   return (
     <>
@@ -31,22 +35,31 @@ export function FramingPage() {
 
       <section className={cn('flex flex-col gap-5 rounded-[20px] px-8 py-[30px] max-md:px-6', covered ? 'bg-brand-deep text-white' : 'border border-line-soft bg-paper-soft')}>
         <div className="flex flex-wrap items-center gap-3">
-          <Eyebrow className={covered ? 'text-signal-soft' : undefined}>Enquadramento sugerido</Eyebrow>
-          <Chip tone={covered ? 'signal' : 'outline'} icon={<Info className="size-3.5" aria-hidden />}>Indicativo</Chip>
+          <Eyebrow className={covered ? 'text-signal-soft' : undefined}>{status.official ? 'Qualificação oficial' : 'Enquadramento sugerido'}</Eyebrow>
+          <Nis2Badge official={status.official} onDark={covered} />
         </div>
-        <h2 className="text-[34px] font-extrabold title-tight max-md:text-[28px]">{NIS2_LABEL[f.classification]}</h2>
+        <h2 className="text-[34px] font-extrabold title-tight max-md:text-[28px]">{status.label}</h2>
         <ul className={cn('flex flex-col gap-1.5 text-[14px] font-semibold', covered ? 'text-brand-soft' : 'text-ink-soft')}>
-          {f.reasons.map((r) => <li key={r}>{r}</li>)}
+          {reasons.map((r) => <li key={r}>{r}</li>)}
         </ul>
       </section>
 
-      <Note>
-        Isto é uma sugestão. A qualificação oficial é atribuída pelo CNCS depois de a empresa se registar na plataforma MyCiber. Quando a receber, pode registá-la nas <Link to={`/org/${org.slug}/definicoes`} className="underline underline-offset-2">definições da organização</Link>.
-      </Note>
+      {status.official ? (
+        <Note>
+          {status.suggested && status.suggested !== status.classification
+            ? <>A sugestão do aLinha era {NIS2_LABEL[status.suggested]}. A partir de agora conta a qualificação do CNCS. </>
+            : <>A qualificação do CNCS confirma a sugestão do aLinha. </>}
+          Pode consultar o Ato de Qualificação nas {settings}.
+        </Note>
+      ) : (
+        <Note>
+          Isto é uma sugestão. A qualificação oficial é atribuída pelo CNCS depois de a empresa se registar na plataforma MyCiber. Quando a receber, pode registá-la nas {settings}.
+        </Note>
+      )}
 
       <Card className="flex flex-col gap-3 px-6 py-6">
         <h2 className="text-[18px] font-extrabold">O que isto significa</h2>
-        <Bullets items={NIS2_MEANING[f.classification]} />
+        <Bullets items={NIS2_MEANING[status.classification]} />
       </Card>
     </>
   )

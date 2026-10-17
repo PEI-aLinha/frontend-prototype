@@ -3,11 +3,13 @@ import { useAssets, useRiskLinks, useRisks, useRoadmapStatus, useServices } from
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { dateTime } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
+import { nis2Status } from '../organization/public'
 import { Button, Chip, HighlightCard, NextSteps, PageHeader, StatCard } from '../../ui'
 
 /** Client overview (consultant). Entry point for scenario 2. */
 export function ClientOverviewPage() {
   const org = useTenant()
+  const nis2 = nis2Status(org)
   const roadmap = useRoadmapStatus(org.id)
   const assets = useAssets(org.id)
   const services = useServices(org.id)
@@ -21,7 +23,7 @@ export function ClientOverviewPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Carteira de clientes" title={org.name} subtitle={`${org.description} · ${org.classification}`} actions={<div className="flex gap-2">{org.frameworks.map((f) => <Chip key={f} tone="neutral">{f}</Chip>)}</div>} />
+      <PageHeader eyebrow="Carteira de clientes" title={org.name} subtitle={`${org.description} · ${nis2 ? `${nis2.label} (${nis2.official ? 'oficial · CNCS' : 'sugestão indicativa'})` : org.classification}`} actions={<div className="flex gap-2">{org.frameworks.map((f) => <Chip key={f} tone="neutral">{f}</Chip>)}</div>} />
       <HighlightCard
         eyebrow={validated ? 'Roadmap validado' : 'Avaliação concluída'}
         title={validated ? 'Acompanhe as ações de risco alto' : 'Registe os riscos e valide o roadmap'}

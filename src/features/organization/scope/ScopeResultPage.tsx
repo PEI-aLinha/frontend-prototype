@@ -3,6 +3,7 @@ import { ArrowRight, Check, CircleHelp, Minus, Pencil } from 'lucide-react'
 import { useCan } from '../../../core/useCan'
 import { useTenant } from '../../../core/tenant'
 import { Button, Card, Chip, EmptyState, PageHeader, cn } from '../../../ui'
+import { nis2Status } from '../framing/nis2Framing'
 import { computeScope, type Applicability, type FrameworkResult } from './regulatoryScope'
 
 const STATUS: Record<Applicability, { label: string; tone: 'dark' | 'neutral' | 'outline'; icon: typeof Check }> = {
@@ -11,7 +12,7 @@ const STATUS: Record<Applicability, { label: string; tone: 'dark' | 'neutral' | 
   por_confirmar: { label: 'Por confirmar', tone: 'outline', icon: CircleHelp },
 }
 
-function FrameworkCard({ r, framingLink }: { r: FrameworkResult; framingLink?: string }) {
+function FrameworkCard({ r, framingLink, official }: { r: FrameworkResult; framingLink?: string; official?: boolean }) {
   const st = STATUS[r.applicability]
   const Icon = st.icon
   const applies = r.applicability === 'aplica'
@@ -40,7 +41,7 @@ function FrameworkCard({ r, framingLink }: { r: FrameworkResult; framingLink?: s
       )}
       {framingLink && (
         <Link to={framingLink} className="group mt-auto flex flex-col gap-0.5 rounded-[12px] bg-brand-soft px-4 py-3 text-brand transition-colors hover:bg-signal-soft">
-          <span className="text-[12px] font-semibold">Enquadramento sugerido · indicativo</span>
+          <span className="text-[12px] font-semibold">{official ? 'Enquadramento oficial · CNCS' : 'Enquadramento sugerido · indicativo'}</span>
           <span className="inline-flex items-center gap-1.5 text-[14px] font-bold group-hover:underline">Ver o enquadramento NIS2 <ArrowRight className="size-4" aria-hidden /></span>
         </Link>
       )}
@@ -70,7 +71,7 @@ export function ScopeResultPage() {
         actions={canEdit && <Button variant="secondary" icon={<Pencil className="size-4" aria-hidden />} onClick={() => navigate('perguntas')}>Mudar respostas</Button>} />
       <div className="grid gap-4 lg:grid-cols-3">
         {results.map((r) => (
-          <FrameworkCard key={r.id} r={r} framingLink={r.id === 'nis2' ? `/org/${org.slug}/enquadramento` : undefined} />
+          <FrameworkCard key={r.id} r={r} framingLink={r.id === 'nis2' ? `/org/${org.slug}/enquadramento` : undefined} official={nis2Status(org)?.official} />
         ))}
       </div>
     </>

@@ -1,4 +1,4 @@
-import type { OrganizationProfile } from '../../../api/contracts'
+import type { Organization, OrganizationProfile } from '../../../api/contracts'
 import { sectorById } from '../sectors'
 
 export type Nis2Class = 'essencial' | 'importante' | 'nao_abrangida'
@@ -60,4 +60,24 @@ export function suggestNis2(p: OrganizationProfile): Nis2Framing {
   reasons.unshift(`O setor "${sector.label}" está no Anexo ${sector.annex === 1 ? 'I (setores de importância crítica)' : 'II (outros setores críticos)'} da lei.`)
   if (size === 'pequena') return { classification: 'nao_abrangida', size, reasons }
   return { classification: sector.annex === 1 && size === 'grande' ? 'essencial' : 'importante', size, reasons }
+}
+
+export interface Nis2Status {
+  classification: Nis2Class
+  label: string
+  /** True when it comes from the CNCS Ato de Qualificação; false for the platform's suggestion. */
+  official: boolean
+  /** Date of the Ato de Qualificação, when official. */
+  date?: string
+  /** The platform's suggestion, kept for reference after the official one is registered. */
+  suggested: Nis2Class | null
+}
+
+/** The framing to show everywhere: the official qualification replaces the suggestion (US11). */
+export function nis2Status(org: Organization): Nis2Status | null {
+  const suggested = org.profile ? suggestNis2(org.profile).classification : null
+  const q = org.officialQualification
+  if (q) return { classification: q.classification, label: NIS2_LABEL[q.classification], official: true, date: q.date, suggested }
+  if (!suggested) return null
+  return { classification: suggested, label: NIS2_LABEL[suggested], official: false, suggested }
 }
