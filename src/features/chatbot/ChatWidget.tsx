@@ -3,6 +3,7 @@ import { Maximize2, Minimize2, Minus, Sparkles } from 'lucide-react'
 import { ChatCompact } from './ChatCompact'
 import { ChatExpanded } from './ChatExpanded'
 import { newChatId } from './ChatTypes'
+import { OPEN_CHAT_EVENT, type OpenChatOptions } from './ChatControl'
 import type { BotReply, BotReplyObject, ChatMessage, Conversation, Suggestion } from './ChatTypes'
 import { Button, ErrorState, SkeletonRows, useToast } from '../../ui'
 
@@ -222,6 +223,17 @@ export function ChatWidget({
     return () => document.removeEventListener('keydown', onKey)
   }, [open, activeId])
 
+  // Abrir a partir de fora (ex.: botão na barra lateral), opcionalmente já em ecrã inteiro
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      const wanted = (e as CustomEvent<OpenChatOptions>).detail?.expanded
+      setOpen(true)
+      if (wanted !== undefined) setExpanded(wanted)
+    }
+    window.addEventListener(OPEN_CHAT_EVENT, onOpen)
+    return () => window.removeEventListener(OPEN_CHAT_EVENT, onOpen)
+  }, [])
+
   // Rede de segurança: nunca ficar sem conversas
   useEffect(() => {
     if (conversations.length === 0) {
@@ -358,9 +370,9 @@ export function ChatWidget({
     )
   }
 
-  const panelSize = expanded
-    ? 'h-[min(924px,calc(100vh-48px))] w-[min(1280px,calc(100vw-48px))]'
-    : 'h-[640px] max-h-[calc(100vh-48px)] w-[400px] max-w-[calc(100vw-48px)]'
+  const panelBox = expanded
+    ? 'fixed inset-0 z-[90] h-dvh w-dvw'
+    : 'fixed bottom-6 right-6 z-[90] h-[640px] max-h-[calc(100vh-48px)] w-[400px] max-w-[calc(100vw-48px)] rounded-[20px] border border-brand-soft shadow-[0_24px_60px_rgba(2,40,35,0.22)] max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] max-sm:max-w-none'
 
   const headerBtn =
     'flex size-11 items-center justify-center rounded-[10px] text-white/80 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white'
@@ -397,7 +409,7 @@ export function ChatWidget({
 
   if (loading || error) {
     return (
-      <section role="dialog" aria-label={title} aria-modal="false" className={`fixed bottom-6 right-6 z-[90] flex flex-col overflow-hidden rounded-[20px] border border-brand-soft bg-white shadow-[0_24px_60px_rgba(2,40,35,0.22)] max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] ${panelSize}`}>
+      <section role="dialog" aria-label={title} aria-modal="false" className={`flex flex-col overflow-hidden bg-white ${panelBox}`}>
         <header className="flex items-center gap-3 bg-brand py-4 pl-[18px] pr-3 text-white">
           <Sparkles className="size-[18px]" aria-hidden />
           <strong className="flex-1 text-[15px] font-extrabold">{title}</strong>
@@ -414,7 +426,7 @@ export function ChatWidget({
     <section
       role="dialog"
       aria-label={title}
-      className={`fixed bottom-6 right-6 z-[90] flex flex-col overflow-hidden rounded-[20px] border border-brand-soft bg-white shadow-[0_24px_60px_rgba(2,40,35,0.22)] transition-[width,height] duration-200 max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] max-sm:max-w-none ${panelSize}`}
+      className={`flex flex-col overflow-hidden bg-white ${panelBox}`}
     >
       <header className="flex items-center gap-3 bg-brand py-4 pl-[18px] pr-3 text-white">
         <span className="flex size-9 flex-none items-center justify-center rounded-full bg-white/20" aria-hidden>
