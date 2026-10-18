@@ -60,7 +60,7 @@ test('Scenario 1 — Rui assigns registration, Pedro registers the technical ass
   await shot(page, 'c1-11-registar')
   await page.getByRole('button', { name: 'Guardar e concluir' }).click()
   await expect(page.getByText('Tarefa concluída · o Rui foi notificado')).toBeVisible()
-  await expect(page.getByText('Tem 1 tarefa atribuída pelo Rui Santos.')).toBeVisible()
+  await expect(page.getByText('Tem 1 tarefa atribuída por Rui Santos.')).toBeVisible()
 
   // Delegated technical question, with informational-only AI help
   await page.getByRole('button', { name: 'Responder' }).click()
@@ -73,7 +73,7 @@ test('Scenario 1 — Rui assigns registration, Pedro registers the technical ass
   await shot(page, 'c1-10-pergunta')
   await page.getByRole('button', { name: 'Enviar resposta' }).click()
   await expect(page.getByText('Resposta enviada ao Rui Santos')).toBeVisible()
-  await expect(page.getByText('Não tem tarefas pendentes. O Rui Santos foi notificado.')).toBeVisible()
+  await expect(page.getByText('Não tem tarefas pendentes. Avisámos Rui Santos.')).toBeVisible()
 
   // Pedro only sees the assets of his task
   await page.goto(`${ORG}/tarefas/task-ativos/ativos`)
