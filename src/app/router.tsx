@@ -18,6 +18,7 @@ import { HistoryPage } from '../features/portfolio/HistoryPage'
 import { IntegrationsPage } from '../features/integrations/IntegrationsPage'
 import { AssessmentPage } from '../features/assessment/AssessmentPage'
 import { QuestionPage } from '../features/tasks/QuestionPage'
+import { CreateAccountPage, MfaSetupPage, OnboardingLayout, RegisterOrganizationPage, RegistrationDonePage, ResumeRegistration, ScopeQuestionsPage, ScopeResultPage, FramingPage, OrganizationSettingsPage, AcceptInvitePage } from '../features/organization/public'
 
 export const router = createBrowserRouter([
   {
@@ -25,12 +26,28 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: '_design', element: <DesignPage /> },
+      { path: 'convite/:token', element: <AcceptInvitePage /> },
+      {
+        path: 'registo',
+        element: <OnboardingLayout />,
+        children: [
+          { index: true, element: <ResumeRegistration /> },
+          { path: 'conta', element: <CreateAccountPage /> },
+          { path: 'seguranca', element: <MfaSetupPage /> },
+          { path: 'organizacao', element: <RegisterOrganizationPage /> },
+          { path: 'concluido', element: <RegistrationDonePage /> },
+        ],
+      },
       {
         path: 'org/:org',
         element: <ClientLayout />,
         children: [
           { index: true, element: <HomeRedirect /> },
           { path: 'inicio', element: <Guard resource="roadmap"><HomePage /></Guard> },
+          { path: 'ambito', element: <Guard resource="scope"><ScopeResultPage /></Guard> },
+          { path: 'definicoes', element: <Guard resource="framing"><OrganizationSettingsPage /></Guard> },
+          { path: 'enquadramento', element: <Guard resource="framing"><FramingPage /></Guard> },
+          { path: 'ambito/perguntas', element: <Guard resource="scope" action="edit"><ScopeQuestionsPage /></Guard> },
           { path: 'ativos', element: <Guard resource="asset"><AssetsPage /></Guard> },
           { path: 'tarefas', element: <AnalystOnly><TasksPage /></AnalystOnly> },
           { path: 'tarefas/:taskId/pergunta', element: <AnalystOnly><QuestionPage /></AnalystOnly> },

@@ -18,6 +18,98 @@ export interface User {
   email: string
 }
 
+export type MemberStatus = 'ativo' | 'convite_pendente'
+
+/** A person with access to an organization, or invited to it (US12, RF05). */
+export interface TeamMember {
+  id: Id
+  organizationId: Id
+  /** Set once the invitation is accepted. */
+  userId: Id | null
+  name: string
+  email: string
+  role: Exclude<Role, 'consultor'>
+  status: MemberStatus
+  invitedAt: IsoDate | null
+  invitedBy: Id | null
+  joinedAt: IsoDate | null
+}
+
+export interface WorkAssignmentInput {
+  assigneeId: Id
+  kind: 'pergunta' | 'evidencia' | 'ativos' | 'tarefa'
+  title: string
+  /** Where it comes from, e.g. "Avaliação de maturidade · Continuidade do negócio". */
+  context: string
+  dueDate: IsoDate | null
+}
+
+/** What the invited person sees when opening the invitation link. */
+export interface InviteDetails {
+  memberId: Id
+  name: string
+  email: string
+  organizationName: string
+  invitedByName: string
+  invitedAt: IsoDate
+}
+
+/** aLinha consultant as seen by the client (RF04, RF34: emergency contact). */
+export interface Consultant {
+  id: Id
+  name: string
+  initials: string
+  /** As each consultant chose to be presented, e.g. "A sua consultora". */
+  heading: string
+  email: string
+  /** Emergency contact, also used when the platform is unavailable. */
+  phone: string
+}
+
+/** Data needed for the framing under the Regime Jurídico da Cibersegurança (RF01). */
+export interface OrganizationProfile {
+  nif: string
+  cae: string
+  sector: string
+  subsector: string | null
+  services: string
+  employees: number
+  /** Annual turnover in euros. */
+  turnover: number
+  address: { street: string; postalCode: string; city: string }
+  contacts: { phone: string; email: string }
+  /** Permanent point of contact communicated to the CNCS. */
+  permanentContact: { name: string; phone: string }
+}
+
+/** How the company uses AI systems (AI Act): chatbots, recruitment software, everyday assistants. */
+export type AiUse = 'chatbot' | 'recrutamento' | 'assistente' | 'outro'
+
+/** Answers to the regulatory scope questions (US34, RF03). */
+export interface ScopeAnswers {
+  employeeData: 'sim' | 'nao'
+  customerData: 'sim' | 'nao' | 'so_empresas'
+  usesAi: 'sim' | 'nao' | 'nao_sei'
+  aiUses: AiUse[]
+  answeredBy: Id
+  answeredAt: IsoDate
+}
+
+export type ScopeInput = Omit<ScopeAnswers, 'answeredBy' | 'answeredAt'>
+
+/** Official NIS2 qualification from the CNCS "Ato de Qualificação" (US11, RF02). Replaces the suggestion. */
+export interface OfficialQualification {
+  classification: 'essencial' | 'importante'
+  /** Date of the Ato de Qualificação. */
+  date: IsoDate
+  /** Simulated attachment: only the file name and size are kept in the prototype. */
+  document: { name: string; size: number }
+  registeredBy: Id
+  registeredAt: IsoDate
+}
+
+export type QualificationInput = Pick<OfficialQualification, 'classification' | 'date' | 'document'>
+
 export interface Organization {
   id: Id
   slug: string
@@ -25,7 +117,16 @@ export interface Organization {
   description: string
   classification: string
   frameworks: string[]
-  consultantId: Id
+  /** Null until a consultant is assigned. */
+  consultantId: Id | null
+  /** Set by the automatic assignment (RF04). */
+  consultantAssignedAt?: IsoDate
+  profile?: OrganizationProfile
+  registeredBy?: Id
+  registeredAt?: IsoDate
+  /** Undefined until the designated manager answers the scope questions. */
+  scope?: ScopeAnswers
+  officialQualification?: OfficialQualification
 }
 
 export type ActorType = 'user' | 'system' | 'ai'
@@ -36,7 +137,7 @@ export interface AuditEntry {
   actorType: ActorType
   userId: Id | null
   action: string
-  entityType: 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration'
+  entityType: 'organization' | 'member' | 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration'
   entityId: Id
   summary: string
   before: Record<string, unknown> | null
@@ -91,7 +192,7 @@ export type TaskStatus = 'pendente' | 'concluida' | 'cancelada'
 export interface Task {
   id: Id
   organizationId: Id
-  kind: 'ativos' | 'pergunta' | 'integracao'
+  kind: 'ativos' | 'pergunta' | 'integracao' | 'evidencia' | 'tarefa'
   /** Technical question: the analyst's answer. */
   answer?: QuestionAnswer
   /** Technical question: AI-pregenerated help (D10), informational only. */
@@ -104,7 +205,8 @@ export interface Task {
   context: string
   assigneeId: Id
   assignedBy: Id
-  dueDate: IsoDate
+  /** Optional since US14: null means no deadline. */
+  dueDate: IsoDate | null
   status: TaskStatus
   expectedCount?: number
   createdAt: IsoDate
@@ -254,6 +356,8 @@ export interface PortfolioClient {
   stageTone: 'signal' | 'neutral' | 'dark'
   nextStep: string
   updatedAt: IsoDate
+  /** Assigned automatically after a new registration (US01). */
+  isNew?: boolean
 }
 
 export type AnswerChoice = 'sim' | 'parcial' | 'nao' | 'nao_sei'
@@ -283,6 +387,39 @@ export interface AssessmentApi {
   getRoadmapStatus(org: Id): Promise<RoadmapStatus>
   validateRoadmap(org: Id): Promise<RoadmapStatus>
   listPortfolio(): Promise<PortfolioClient[]>
+}
+
+// ---------------- organization (Organization plugin) ----------------
+export interface RegistrationInput {
+  account: { name: string; email: string }
+  organization: { name: string } & OrganizationProfile
+}
+
+export interface OrganizationApi {
+  /** False when an account already uses this email (checked before the account is created). */
+  isEmailAvailable(email: string): Promise<boolean>
+  /** Creates the designated manager's account and the organization, associated with each other (US10). */
+  register(input: RegistrationInput): Promise<Organization>
+  /** Saves the answers about personal data and AI (US34). Designated manager only. */
+  saveScope(org: Id, input: ScopeInput): Promise<Organization>
+  /** Registers the official qualification given by the CNCS (US11). Designated manager only. */
+  registerQualification(org: Id, input: QualificationInput): Promise<Organization>
+  /** The consultant assigned to the organization, or null while none is assigned. */
+  getConsultant(org: Id): Promise<Consultant | null>
+  /** Members and pending invitations of the organization (US12). */
+  listMembers(org: Id): Promise<TeamMember[]>
+  /** Invites an analyst by email (RF05). Designated manager only. */
+  inviteAnalyst(org: Id, input: { name: string; email: string }): Promise<TeamMember>
+  resendInvite(org: Id, memberId: Id): Promise<TeamMember>
+  cancelInvite(org: Id, memberId: Id): Promise<void>
+  /** Assigns a technical question, an evidence or a task to an active analyst (US14, RF06). Designated manager only. */
+  assignWork(org: Id, input: WorkAssignmentInput): Promise<Task>
+  /** Removes an active analyst: access ends and their pending tasks are cancelled. */
+  removeMember(org: Id, memberId: Id): Promise<void>
+  /** Public: the invitation behind a link (the token is the invitation id in the prototype). */
+  getInvite(token: Id): Promise<InviteDetails>
+  /** Public: creates the analyst's account (password and MFA are handled by Keycloak) and activates the membership. */
+  acceptInvite(token: Id): Promise<{ user: User; organizationSlug: string }>
 }
 
 // ---------------- core: audit, directory ----------------
@@ -319,6 +456,7 @@ export interface NotificationsApi {
 }
 
 export interface Api {
+  organization: OrganizationApi
   assets: AssetsApi
   assessment: AssessmentApi
   audit: AuditApi

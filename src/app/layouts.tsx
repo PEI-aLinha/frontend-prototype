@@ -1,21 +1,28 @@
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import {
-  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Map, Plug, ShieldAlert, Users,
+  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Lock, Map, Plug, Scale, Settings, ShieldAlert, Users,
 } from 'lucide-react'
 import { useOrganization, useRoadmapStatus } from '../api/queries'
 import { homePath } from '../core/personas'
 import { canRole } from '../core/rbac'
 import { useSession } from '../core/session'
 import { TenantProvider } from '../core/tenant'
-import { ErrorState, SkeletonRows } from '../ui'
+import { ApiError } from '../api/contracts'
+import { EmptyState, ErrorState, SkeletonRows } from '../ui'
 import { AppShell, type NavItem, type NavSection } from './AppShell'
 import { NotificationBell } from './NotificationBell'
 
 function OrgGate({ slug, children }: { slug: string; children: (org: NonNullable<ReturnType<typeof useOrganization>['data']>) => ReactNode }) {
   const org = useOrganization(slug)
   if (org.isPending) return <div className="p-14"><SkeletonRows /></div>
-  if (org.isError) return <div className="p-14"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
+  if (org.isError) {
+    // No access (e.g. an analyst removed from the team): explain instead of offering a retry.
+    if (org.error instanceof ApiError && org.error.status === 403) {
+      return <div className="p-14 max-md:p-6"><EmptyState icon={<Lock className="size-5" aria-hidden />} title="Sem acesso a esta organização">{org.error.message}</EmptyState></div>
+    }
+    return <div className="p-14"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
+  }
   return <TenantProvider org={org.data}>{children(org.data)}</TenantProvider>
 }
 
@@ -34,20 +41,23 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
   let items: NavItem[]
   if (persona.role === 'analista') {
     items = [
-      { to: `${base}/tarefas`, label: 'As minhas tarefas', shortLabel: 'Tarefas', icon: ListChecks },
-      { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
+      // The analyst registers assets inside a task (/tarefas/:id/ativos): that page belongs to "Ativos".
+      { to: `${base}/tarefas`, label: 'As minhas tarefas', shortLabel: 'Tarefas', icon: ListChecks, isActive: (p) => p.startsWith(`${base}/tarefas`) && !p.endsWith('/ativos') },
+      { to: `${base}/ativos`, label: 'Ativos', icon: Boxes, isActive: (p) => p.startsWith(`${base}/ativos`) || (p.startsWith(`${base}/tarefas/`) && p.endsWith('/ativos')) },
       { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
     ]
   } else {
     const seesRisks = canRole(persona.role, 'view', 'risk', { roadmapValidated: roadmap.data?.validated })
     items = [
       { to: `${base}/inicio`, label: 'Início', icon: Home },
+      { to: `${base}/ambito`, label: 'Âmbito regulatório', shortLabel: 'Leis', icon: Scale },
       { to: `${base}/avaliacao`, label: 'Avaliação', icon: ClipboardCheck },
       { to: `${base}/roadmap`, label: 'Resultados e roadmap', shortLabel: 'Resultados', icon: Map },
       { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
       ...(seesRisks ? [{ to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert }] : []),
       { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
       { to: `${base}/equipa`, label: 'Equipa', icon: Users },
+      { to: `${base}/definicoes`, label: 'Definições', icon: Settings },
     ]
   }
   return (

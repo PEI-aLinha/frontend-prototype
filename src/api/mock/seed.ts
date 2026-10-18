@@ -1,13 +1,21 @@
 // Demo data (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Dates in October 2026.
 import type {
-  AppNotification, Asset, ChatConversation, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
+  AppNotification, Asset, ChatConversation, Consultant, TeamMember, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
   Risk, RiskActionLink, RoadmapStatus, Task, User,
 } from '../contracts'
 
-export type SnapshotId = 'c1' | 'c2' | 'c3'
+export type SnapshotId = 'c0' | 'c1' | 'c2' | 'c3'
+
+/** aLinha consultants. Marta's active clients are her portfolio; the others only have a count. */
+export interface ConsultantRecord extends Consultant {
+  /** Active clients outside the prototype (Marta's are counted from the portfolio). */
+  otherActiveClients: number
+}
 
 export interface DemoState {
   version: number
+  consultants: ConsultantRecord[]
+  members: TeamMember[]
   snapshot: SnapshotId
   users: User[]
   organizations: Organization[]
@@ -29,7 +37,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 7
+export const STATE_VERSION = 11
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -45,6 +53,17 @@ const USERS: User[] = [
   { id: MARTA, name: 'Marta Ferreira', initials: 'MF', role: 'consultor', title: 'Consultora aLinha', email: 'marta.ferreira@alinha.pt' },
 ]
 
+const CONSULTANTS: ConsultantRecord[] = [
+  { id: MARTA, name: 'Marta Ferreira', initials: 'MF', heading: 'A sua consultora', email: 'marta.ferreira@alinha.pt', phone: '913456210', otherActiveClients: 0 },
+  { id: 'u-joao', name: 'João Pereira', initials: 'JP', heading: 'O seu consultor', email: 'joao.pereira@alinha.pt', phone: '913456211', otherActiveClients: 14 },
+]
+
+const MEMBERS: TeamMember[] = [
+  { id: 'mbr-rui', organizationId: ORG_ID, userId: RUI, name: 'Rui Santos', email: 'rui.santos@compagueda.pt', role: 'responsavel', status: 'ativo', invitedAt: null, invitedBy: null, joinedAt: '2026-10-09T09:20:00' },
+  { id: 'mbr-pedro', organizationId: ORG_ID, userId: PEDRO, name: 'Pedro Almeida', email: 'pedro.almeida@tiagueda.pt', role: 'analista', status: 'ativo', invitedAt: '2026-10-09T10:30:00', invitedBy: RUI, joinedAt: '2026-10-09T18:05:00' },
+  { id: 'mbr-ana', organizationId: ORG_ID, userId: null, name: 'Ana Costa', email: 'ana.costa@compagueda.pt', role: 'analista', status: 'convite_pendente', invitedAt: '2026-10-12T11:00:00', invitedBy: RUI, joinedAt: null },
+]
+
 const ORG: Organization = {
   id: ORG_ID,
   slug: ORG_SLUG,
@@ -53,6 +72,23 @@ const ORG: Organization = {
   classification: 'Entidade importante (sugestão indicativa)',
   frameworks: ['NIS2 / RJC', 'RGPD'],
   consultantId: MARTA,
+  consultantAssignedAt: '2026-10-09T09:20:00',
+  profile: {
+    nif: '509180027',
+    cae: '29320',
+    sector: 'industria',
+    subsector: 'automoveis',
+    services: 'Fabrico de componentes metálicos e plásticos para a indústria automóvel, para fabricantes em Portugal e no resto da Europa.',
+    employees: 120,
+    turnover: 18_500_000,
+    address: { street: 'Rua da Zona Industrial do Casarão, 45', postalCode: '3750-750', city: 'Águeda' },
+    contacts: { phone: '234600120', email: 'geral@compagueda.pt' },
+    permanentContact: { name: 'Rui Santos', phone: '912345678' },
+  },
+  registeredBy: RUI,
+  registeredAt: '2026-10-09T09:20:00',
+  // Scenario 1 of the report: personal data of employees and customers, no AI systems.
+  scope: { employeeData: 'sim', customerData: 'sim', usesAi: 'nao', aiUses: [], answeredBy: RUI, answeredAt: '2026-10-09T09:31:00' },
 }
 
 const SERVICES: CriticalService[] = [
@@ -176,7 +212,7 @@ function portfolio(snapshot: SnapshotId): PortfolioClient[] {
     organization: { id: `org-${i}`, slug: `cliente-${i}`, name, description: sector, classification: '', frameworks: ['NIS2 / RJC', 'RGPD'], consultantId: MARTA },
     sector, employees, stage, stageTone, nextStep, updatedAt: at(Math.max(1, 15 - i), '17:00'),
   }))
-  return [ca, ...others]
+  return snapshot === 'c0' ? others : [ca, ...others]
 }
 
 let auditSeq = 0
@@ -193,7 +229,17 @@ function baseAudit(): AuditEntry[] {
   ]
 }
 
+/** "Adesão": the company is not registered yet; only Marta and her other clients exist. */
+function emptySnapshot(): DemoState {
+  return {
+    version: STATE_VERSION, consultants: CONSULTANTS, members: [], snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
+    risks: [], links: [], comments: [], actions: [], roadmap: {}, portfolio: portfolio('c0'), audit: [], notifications: [], today: '2026-10-09',
+    connections: {}, discoveries: [], evidence: [],
+  }
+}
+
 export function buildSnapshot(snapshot: SnapshotId): DemoState {
+  if (snapshot === 'c0') return emptySnapshot()
   auditSeq = 0
   const c1 = snapshot === 'c1'
   const entries = baseAudit()
@@ -247,6 +293,8 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
 
   return {
     version: STATE_VERSION,
+    consultants: CONSULTANTS,
+    members: MEMBERS,
     snapshot,
     users: USERS,
     organizations: [ORG],
@@ -291,6 +339,7 @@ function seedNotifications(snapshot: SnapshotId): AppNotification[] {
 }
 
 export const SNAPSHOTS: Array<{ id: SnapshotId; label: string; hint: string }> = [
+  { id: 'c0', label: 'Adesão · empresa por registar', hint: 'Rui cria a conta e regista a Componentes Águeda' },
   { id: 'c1', label: 'Cenário 1 · início', hint: 'Rui com 3 ativos; registo técnico por atribuir' },
   { id: 'c2', label: 'Cenário 2 · início', hint: 'Inventário completo; Marta a registar riscos' },
   { id: 'c3', label: 'Cenário 3 · roadmap validado', hint: 'Rui vê os riscos em só leitura' },

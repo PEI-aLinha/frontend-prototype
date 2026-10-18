@@ -44,7 +44,7 @@ export function QuestionPage() {
   return (
     <>
       <Link to={`/org/${org.slug}/tarefas`} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden />As minhas tarefas</Link>
-      <PageHeader eyebrow={task.context} title="Pergunta técnica" subtitle={`Pedida por ${from} · até ${shortDay(task.dueDate)}`} />
+      <PageHeader eyebrow={task.context} title="Pergunta técnica" subtitle={`Pedida por ${from} · ${task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}`} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="flex flex-col gap-5 px-7 py-6 max-md:px-5">
           <p className="text-[20px] font-extrabold leading-snug">{task.title}</p>

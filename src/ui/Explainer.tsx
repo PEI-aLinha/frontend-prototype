@@ -3,34 +3,18 @@ import { ChevronDown, Lightbulb } from 'lucide-react'
 import { cn } from './cn'
 
 interface ExplainerProps {
-  /** Key to remember whether the person dismissed the explanation (per browser). */
+  /** Identifies the explanation of each screen. */
   id: string
   title?: string
-  intro: ReactNode
+  intro?: ReactNode
   steps: Array<{ title: string; text: ReactNode }>
   footer?: ReactNode
 }
 
-function readCollapsed(id: string): boolean {
-  try {
-    return localStorage.getItem(`alinha-explainer-${id}`) === 'closed'
-  } catch {
-    return false
-  }
-}
-
-/** "How this screen works": short step-by-step explanation that can be collapsed. */
-export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps, footer }: ExplainerProps) {
-  const [collapsed, setCollapsed] = useState(() => readCollapsed(id))
-  const toggle = () => {
-    const next = !collapsed
-    setCollapsed(next)
-    try {
-      localStorage.setItem(`alinha-explainer-${id}`, next ? 'closed' : 'open')
-    } catch {
-      // no persistence: lasts only for this session
-    }
-  }
+/** "How this screen works": short step-by-step explanation, always collapsed until the person opens it. */
+export function Explainer({ title = 'Como funciona este ecrã', intro, steps, footer }: ExplainerProps) {
+  const [collapsed, setCollapsed] = useState(true)
+  const toggle = () => setCollapsed((c) => !c)
   return (
     <section aria-label={title} className="rounded-[16px] border border-line-soft bg-paper-soft">
       <button type="button" onClick={toggle} aria-expanded={!collapsed} className="flex w-full items-center gap-3 px-5 py-3.5 text-left">
@@ -43,7 +27,7 @@ export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps
       </button>
       {!collapsed && (
         <div className="flex flex-col gap-4 px-5 pb-5">
-          <p className="max-w-[760px] text-[14px] text-ink-soft">{intro}</p>
+          {intro && <p className="max-w-[760px] text-[14px] text-ink-soft">{intro}</p>}
           <ol className="grid gap-3 md:grid-cols-3">
             {steps.map((s, i) => (
               <li key={s.title} className="flex gap-3 rounded-[12px] bg-paper p-3.5">
