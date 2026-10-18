@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { useAssets, useRisks, useRoadmapStatus, useServices, useTasks } from '../../api/queries'
+import { useAssets, useConsultant, useRisks, useRoadmapStatus, useServices, useTasks } from '../../api/queries'
 import { dateTime, RISK_LEVEL_LABEL, shortDate } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
@@ -18,6 +18,8 @@ export function HomePage() {
   const roadmap = useRoadmapStatus(org.id)
   const seeRisks = can('view', 'risk')
   const risks = useRisks(org.id, seeRisks)
+  // RF04: the consultant is picked at registration, so it is not always Marta.
+  const consultant = useConsultant(org.id).data?.name ?? 'A equipa aLinha'
 
   const assetTask = tasks.data?.find((t) => t.kind === 'ativos')
   const inventoryDone = assetTask?.status === 'concluida'
@@ -34,7 +36,7 @@ export function HomePage() {
   const base = `/org/${org.slug}`
   const nis2 = nis2Status(org)
   // Assessment not submitted yet: invite to start or to finish it. Once submitted, only the status remains.
-  const subtitle = validated ? 'A Marta Ferreira validou os resultados e o roadmap.' : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : fresh ? 'Pode começar pela avaliação quando quiser.' : 'Pode terminar a avaliação quando quiser.'
+  const subtitle = validated ? `${consultant} validou os resultados e o roadmap.` : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : fresh ? 'Pode começar pela avaliação quando quiser.' : 'Pode terminar a avaliação quando quiser.'
 
   return (
     <>
@@ -57,7 +59,7 @@ export function HomePage() {
         action={<Button variant="inverse" disabled title="Fora deste protótipo">{validated ? 'Ver roadmap →' : fresh ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>}
       >
         <ProgressBar value={submitted ? 18 : fresh ? 0 : 8} max={18} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
-        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} pela Marta Ferreira` : submitted ? 'Submetida qua., 14 out. às 10:12 · a Marta Ferreira está a rever' : fresh ? 'Ainda sem respostas · o progresso fica guardado' : '1 pergunta atribuída a Pedro Almeida · guardado às 17:44'}
+        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} por ${consultant}` : submitted ? `Submetida qua., 14 out. às 10:12 · ${consultant} está a rever` : fresh ? 'Ainda sem respostas · o progresso fica guardado' : '1 pergunta atribuída a Pedro Almeida · guardado às 17:44'}
       </HighlightCard>
 
       <NextSteps steps={[

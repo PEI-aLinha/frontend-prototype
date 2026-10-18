@@ -220,3 +220,30 @@ describe('assigning work to analysts (US14)', () => {
     await expect(api.organization.assignWork(ORG_ID, { ...evidence, assigneeId: RUI })).rejects.toMatchObject({ status: 422 })
   })
 })
+
+describe('tenant isolation (RNF03)', () => {
+  const other: RegistrationInput = {
+    account: { name: 'Sofia Matos', email: 'sofia.matos@outra.pt' },
+    organization: { ...input.organization, name: 'Outra Empresa, S.A.', nif: '501964843' },
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    resetDemo('c1')
+    who = RUI
+  })
+
+  it('keeps the designated manager of one organization out of another one', async () => {
+    const org = await api.organization.register(other)
+    const scope = { employeeData: 'sim', customerData: 'sim', usesAi: 'nao', aiUses: [] } as const
+    await expect(api.organization.saveScope(org.id, scope)).rejects.toMatchObject({ status: 403 })
+    await expect(api.organization.listMembers(org.id)).rejects.toMatchObject({ status: 403 })
+    await expect(api.organization.inviteAnalyst(org.id, { name: 'Intruso', email: 'intruso@compagueda.pt' })).rejects.toMatchObject({ status: 403 })
+    await expect(api.organization.getConsultant(org.id)).rejects.toMatchObject({ status: 403 })
+    await expect(api.directory.getOrganization(org.slug)).rejects.toMatchObject({ status: 403 })
+
+    who = org.registeredBy!
+    await expect(api.organization.saveScope(org.id, scope)).resolves.toMatchObject({ id: org.id })
+    await expect(api.directory.getOrganization(org.slug)).resolves.toMatchObject({ id: org.id })
+  })
+})

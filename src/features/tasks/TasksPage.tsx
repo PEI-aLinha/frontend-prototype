@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router'
 import { Check, Inbox, Minus } from 'lucide-react'
 import type { Task } from '../../api/contracts'
-import { useAssets, useCompleteTask, useTasks, useToday } from '../../api/queries'
+import { useAssets, useCompleteTask, useTasks, useToday, useUsers } from '../../api/queries'
 import { dueStatus, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { Button, Card, Chip, EmptyState, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, Tooltip, cn, useToast } from '../../ui'
@@ -9,7 +9,7 @@ import { useSession } from '../../core/session'
 
 const KIND_LABEL: Record<Task['kind'], string> = { ativos: 'Ativos', pergunta: 'Pergunta técnica', evidencia: 'Evidência', tarefa: 'Tarefa', integracao: 'Integração' }
 
-const VISIBILITY: Array<[string, boolean]> = [['Só as tarefas que lhe foram atribuídas', true], ['Os ativos que registar', true]]
+const VISIBILITY: Array<[string, boolean]> = [['Só as tarefas que lhe foram atribuídas', true], ['Os ativos que registar', true], ['Resultados, roadmap e riscos', false]]
 
 /** 09 / 09b / 09c — As minhas tarefas (analista). */
 export function TasksPage() {
@@ -20,6 +20,7 @@ export function TasksPage() {
   const today = useToday()
   const assets = useAssets(org.id)
   const complete = useCompleteTask(org.id)
+  const users = useUsers(org.id)
   const toast = useToast()
 
   const list = (tasks.data ?? []).filter((t) => t.status !== 'cancelada')
@@ -27,7 +28,10 @@ export function TasksPage() {
   const open = list.filter((t) => t.status === 'pendente').sort((a, b) => (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999'))
   const done = list.filter((t) => t.status === 'concluida')
   const registered = (taskId: string) => (assets.data ?? []).filter((a) => a.taskId === taskId).length
-  const subtitle = !tasks.data ? ' ' : list.length === 0 ? 'Boas-vindas ao aLinha.' : open.length === 0 ? 'Não tem tarefas pendentes. O Rui Santos foi notificado.' : `Tem ${open.length} ${open.length === 1 ? 'tarefa atribuída' : 'tarefas atribuídas'} pelo Rui Santos.`
+  // Who assigned the tasks: their name when it is a single person, otherwise the role.
+  const assigners = [...new Set(list.map((t) => t.assignedBy))]
+  const assigner = (assigners.length === 1 && users.data?.find((u) => u.id === assigners[0])?.name) || 'o Responsável designado'
+  const subtitle = !tasks.data ? ' ' : list.length === 0 ? 'Boas-vindas ao aLinha.' : open.length === 0 ? `Não tem tarefas pendentes. Avisámos ${assigner}.` : `Tem ${open.length} ${open.length === 1 ? 'tarefa atribuída' : 'tarefas atribuídas'} por ${assigner}.`
 
   const card = (t: (typeof list)[number]) => {
     const due = t.dueDate && today.data ? dueStatus(t.dueDate, today.data) : null
@@ -62,7 +66,7 @@ export function TasksPage() {
         steps={[
           { title: 'Escolha a tarefa', text: 'As mais urgentes aparecem primeiro, com o prazo a verde.' },
           { title: 'Faça o pedido', text: 'Responder a uma pergunta técnica ou registar os ativos que conhece.' },
-          { title: 'Conclua', text: 'Ao concluir, o Rui é notificado e a tarefa passa para "Concluídas".' },
+          { title: 'Conclua', text: 'Ao concluir, o Responsável designado é notificado e a tarefa passa para "Concluídas".' },
         ]} />
       <div className="flex gap-7 max-lg:flex-col">
         <div className="flex min-w-0 flex-1 flex-col gap-3.5">

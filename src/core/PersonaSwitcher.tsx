@@ -43,7 +43,9 @@ export function PersonaSwitcher() {
     clearRegistrationDraft()
     qc.clear()
     if (id === 'c0') {
-      // No account exists yet: the persona becomes Rui only when the registration ends.
+      // No account exists yet: drop any identity from the previous run (e.g. an accepted invite), keeping the
+      // current persona so its layout does not redirect before reaching the registration.
+      setPersona(persona.key)
       navigate('/registo/conta')
     } else {
       const target: PersonaKey = id === 'c2' ? 'marta' : 'rui'

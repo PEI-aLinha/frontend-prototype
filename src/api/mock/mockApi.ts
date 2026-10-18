@@ -23,6 +23,17 @@ function requireOrg(s: Readonly<DemoState>, org: Id): void {
   if (!s.organizations.some((o) => o.id === org)) throw new ApiError('Organização não encontrada', 404)
 }
 
+/** The designated manager of the organization (its active member with that role). */
+function designatedManager(s: Readonly<DemoState>, org: Id): User | undefined {
+  const m = s.members.find((x) => x.organizationId === org && x.role === 'responsavel' && x.status === 'ativo')
+  return s.users.find((u) => u.id === m?.userId)
+}
+
+/** Base path of the organization's client area, e.g. "/org/componentes-agueda". */
+function orgPath(s: Readonly<DemoState>, org: Id): string {
+  return `/org/${s.organizations.find((o) => o.id === org)?.slug ?? org}`
+}
+
 function deny(): never {
   throw new ApiError('Não tem permissão para esta ação.', 403)
 }
@@ -77,8 +88,8 @@ export function createMockApi(getActor: ActorProvider): Api {
         if (!o) throw new ApiError('Organização não encontrada', 404)
         const me = getState().users.find((u) => u.id === getActor().userId)
         if (me?.role === 'consultor' && o.consultantId !== me.id) throw new ApiError('Esta organização não está atribuída a si.', 403)
-        if (me?.role === 'analista' && !getState().members.some((m) => m.organizationId === o.id && m.userId === me.id && m.status === 'ativo')) {
-          throw new ApiError('Já não tem acesso a esta organização. Fale com o Responsável designado.', 403)
+        if (me?.role !== 'consultor' && !getState().members.some((m) => m.organizationId === o.id && m.userId === me?.id && m.status === 'ativo')) {
+          throw new ApiError(me?.role === 'analista' ? 'Já não tem acesso a esta organização. Fale com o Responsável designado.' : 'Não tem acesso a esta organização.', 403)
         }
         return o
       }),
@@ -253,7 +264,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'assign', entityType: 'task', entityId: task.id, summary: `Atribuiu ao ${assignee.name} o registo de ${input.title.toLowerCase()}`, before: null, after: { assigneeId: assignee.id, dueDate: input.dueDate } })
           return notify({ ...s, tasks, audit: [...s.audit, entry] }, {
             organizationId: org, userId: assignee.id, kind: 'tarefa', title: 'Nova tarefa: registar ativos',
-            body: `${me.name} pediu-lhe: ${input.title}${input.dueDate ? ` · até ${shortDayPt(input.dueDate)}` : ''}`, link: `/org/componentes-agueda/tarefas/${task.id}/ativos`,
+            body: `${me.name} pediu-lhe: ${input.title}${input.dueDate ? ` · até ${shortDayPt(input.dueDate)}` : ''}`, link: `${orgPath(s, org)}/tarefas/${task.id}/ativos`,
           })
         })
         return task
@@ -271,10 +282,10 @@ export function createMockApi(getActor: ActorProvider): Api {
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'complete', entityType: 'task', entityId: id, summary: isAssets ? `Concluiu a tarefa de registo de ativos (${count} registados)` : `Concluiu a tarefa "${t.title}"`, before: { status: t.status }, after: { status: 'concluida' } })
           return notify({ ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }, isAssets ? {
             organizationId: org, userId: t.assignedBy, kind: 'tarefa_concluida', title: `${me.name.split(' ')[0]} concluiu o registo de ativos`,
-            body: `${count} ativos técnicos registados. Veja-os no inventário.`, link: '/org/componentes-agueda/ativos',
+            body: `${count} ativos técnicos registados. Veja-os no inventário.`, link: `${orgPath(s, org)}/ativos`,
           } : {
             organizationId: org, userId: t.assignedBy, kind: 'tarefa_concluida', title: `${me.name.split(' ')[0]} concluiu uma tarefa`,
-            body: t.title, link: '/org/componentes-agueda/equipa',
+            body: t.title, link: `${orgPath(s, org)}/equipa`,
           })
         })
         return task
@@ -293,7 +304,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           const summary = change.status === 'cancelada' ? `Cancelou a tarefa "${t.title}"` : `Mudou o prazo da tarefa "${t.title}" para ${shortDayPt(change.dueDate!)}`
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'update', entityType: 'task', entityId: id, summary, before: { dueDate: t.dueDate, status: t.status }, after: { dueDate: task.dueDate, status: task.status } })
           const next = { ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }
-          return assignee ? notify(next, { organizationId: org, userId: assignee.id, kind: 'tarefa', title: change.status === 'cancelada' ? 'Tarefa cancelada' : 'Prazo alterado', body: change.status === 'cancelada' ? `${me.name} cancelou: ${t.title}.` : `${t.title} · novo prazo ${shortDayPt(change.dueDate!)}`, link: '/org/componentes-agueda/tarefas' }) : next
+          return assignee ? notify(next, { organizationId: org, userId: assignee.id, kind: 'tarefa', title: change.status === 'cancelada' ? 'Tarefa cancelada' : 'Prazo alterado', body: change.status === 'cancelada' ? `${me.name} cancelou: ${t.title}.` : `${t.title} · novo prazo ${shortDayPt(change.dueDate!)}`, link: `${orgPath(s, org)}/tarefas` }) : next
         })
         return task
       }),
@@ -304,7 +315,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           const t = s.tasks.find((x) => x.id === id)
           if (!t || t.status !== 'pendente') throw new ApiError('Só pode lembrar tarefas pendentes.', 409)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'remind', entityType: 'task', entityId: id, summary: `Enviou um lembrete da tarefa "${t.title}"`, before: null, after: null })
-          return notify({ ...s, audit: [...s.audit, entry] }, { organizationId: org, userId: t.assigneeId, kind: 'lembrete', title: `Lembrete de ${me.name.split(' ')[0]}`, body: `${t.title}${t.dueDate ? ` · até ${shortDayPt(t.dueDate)}` : ''}`, link: t.kind === 'ativos' ? `/org/componentes-agueda/tarefas/${t.id}/ativos` : '/org/componentes-agueda/tarefas' })
+          return notify({ ...s, audit: [...s.audit, entry] }, { organizationId: org, userId: t.assigneeId, kind: 'lembrete', title: `Lembrete de ${me.name.split(' ')[0]}`, body: `${t.title}${t.dueDate ? ` · até ${shortDayPt(t.dueDate)}` : ''}`, link: t.kind === 'ativos' ? `${orgPath(s, org)}/tarefas/${t.id}/ativos` : `${orgPath(s, org)}/tarefas` })
         })
       }),
 
@@ -392,9 +403,9 @@ export function createMockApi(getActor: ActorProvider): Api {
         write((s, me) => {
           const a = s.assets.find((x) => x.id === assetId)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'comment', entityType: 'comment', entityId: assetId, summary: `Comentou o ativo "${a?.name ?? assetId}"`, before: null, after: { body: comment.body } })
-          const owner = s.users.find((u) => u.role === 'responsavel')
+          const owner = designatedManager(s, org)
           const next = { ...s, comments: [...s.comments, comment], audit: [...s.audit, entry] }
-          return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'comentario', title: `${me.name.split(' ')[0]} comentou um ativo`, body: `"${a?.name}": ${comment.body}`, link: `/org/componentes-agueda/ativos?ativo=${assetId}` }) : next
+          return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'comentario', title: `${me.name.split(' ')[0]} comentou um ativo`, body: `"${a?.name}": ${comment.body}`, link: `${orgPath(s, org)}/ativos?ativo=${assetId}` }) : next
         })
         return comment
       }),
@@ -438,9 +449,9 @@ export function createMockApi(getActor: ActorProvider): Api {
           status = { ...s.roadmap[org], validated: true, validatedAt: now(), validatedBy: me.id }
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'validate', entityType: 'roadmap', entityId: org, summary: 'Validou o roadmap', before: { validated: false }, after: { validated: true } })
           const portfolio = s.portfolio.map((p) => (p.organization.id === org ? { ...p, stage: 'Roadmap validado', stageTone: 'neutral' as const, nextStep: 'Acompanhar ações de risco alto' } : p))
-          const owner = s.users.find((u) => u.role === 'responsavel')
+          const owner = designatedManager(s, org)
           const next = { ...s, roadmap: { ...s.roadmap, [org]: status }, portfolio, audit: [...s.audit, entry] }
-          return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'roadmap', title: 'Roadmap e riscos validados', body: `${me.name} validou o plano de ação. Já pode ver os riscos da empresa.`, link: '/org/componentes-agueda/riscos' }) : next
+          return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'roadmap', title: 'Roadmap e riscos validados', body: `${me.name} validou o plano de ação. Já pode ver os riscos da empresa.`, link: `${orgPath(s, org)}/riscos` }) : next
         })
         return status
       }),

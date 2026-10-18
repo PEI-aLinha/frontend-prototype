@@ -3,9 +3,8 @@ import { FileText, FileUp } from 'lucide-react'
 import type { OfficialQualification, QualificationInput } from '../../../api/contracts'
 import { useRegisterQualification } from '../../../api/queries'
 import { useTenant } from '../../../core/tenant'
-import { Button, Chip, Field, Modal, OptionGroup, cn, useToast, type OptionItem } from '../../../ui'
+import { Button, Chip, DateInput, Field, Modal, OptionGroup, cn, useToast, type OptionItem } from '../../../ui'
 import { NIS2_LABEL, type Nis2Class } from '../framing/nis2Framing'
-import { DateInput } from '../DateInput'
 import { keepDocument } from './documentStore'
 
 type Classification = QualificationInput['classification']

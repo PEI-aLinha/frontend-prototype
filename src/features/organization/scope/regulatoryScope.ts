@@ -84,3 +84,12 @@ function aiAct(org: Organization): FrameworkResult {
 export function computeScope(org: Organization): FrameworkResult[] {
   return [nis2(org), rgpd(org), aiAct(org)]
 }
+
+const CHIP: Record<FrameworkId, string> = { nis2: 'NIS2 / RJC', rgpd: 'RGPD', aiact: 'AI Act' }
+
+/** Short names of the laws that apply, for chips. Before the scope questions are answered, only NIS2 is known. */
+export function applicableFrameworks(org: Organization): string[] | null {
+  if (!org.profile) return null
+  const results = org.scope ? computeScope(org) : [nis2(org)]
+  return results.filter((r) => r.applicability === 'aplica').map((r) => CHIP[r.id])
+}

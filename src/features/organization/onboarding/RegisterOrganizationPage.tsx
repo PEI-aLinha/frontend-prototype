@@ -38,7 +38,7 @@ const row = 'grid items-start gap-5 md:grid-cols-2'
 export function RegisterOrganizationPage() {
   const navigate = useNavigate()
   const toast = useToast()
-  const { setPersona } = useSession()
+  const { signInAs } = useSession()
   const { account, mfaVerified, organization, setOrganization, restored, registered, finish } = useRegistration()
   const register = useRegisterOrganization()
   const [form, setForm] = useState<OrganizationForm>(organization ?? EMPTY_ORGANIZATION)
@@ -65,8 +65,10 @@ export function RegisterOrganizationPage() {
     register.mutate({ account, organization: toOrganizationInput(form) }, {
       onSuccess: (org) => {
         finish(org)
-        // The designated manager who just registered is the "Rui Santos" demo persona.
-        setPersona('rui')
+        // The person who just registered becomes the session, in the designated manager role (persona "Rui" slot).
+        const name = account!.name.trim()
+        const parts = name.split(/\s+/)
+        signInAs('rui', { userId: org.registeredBy!, name, firstName: parts[0], initials: (parts[0][0] + (parts.length > 1 ? parts.at(-1)![0] : '')).toUpperCase() })
         navigate('/registo/concluido')
       },
     })

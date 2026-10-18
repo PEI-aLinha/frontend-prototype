@@ -42,15 +42,21 @@ function initials(name: string): string {
 
 /** Organization plugin (US10). In the real API the account is created in Keycloak and the request is anonymous. */
 export function createOrganizationMock(getActor: () => DemoActor): OrganizationApi {
-  /** Only the designated manager of the organization manages its team. */
-  function manager(org: string) {
+  /** RNF03: the actor must be an active member of this organization, with the given role. */
+  function requireMember(org: string, role: User['role'], message: string) {
     const s = getState()
-    if (!s.organizations.some((o) => o.id === org)) throw new ApiError('Organização não encontrada', 404)
+    const organization = s.organizations.find((o) => o.id === org)
+    if (!organization) throw new ApiError('Organização não encontrada', 404)
     const me = s.users.find((u) => u.id === getActor().userId)
-    if (me?.role !== 'responsavel') throw new ApiError('Só o Responsável designado pode gerir a equipa.', 403)
-    return { me }
+    const member = me && s.members.some((m) => m.organizationId === org && m.userId === me.id && m.status === 'ativo' && m.role === role)
+    if (!me || me.role !== role || !member) throw new ApiError(message, 403)
+    return { me, organization }
   }
-  
+
+  /** Only the designated manager of the organization manages its team. */
+  const manager = (org: string) => requireMember(org, 'responsavel', 'Só o Responsável designado pode gerir a equipa.')
+
+
   function pendingInvite(org: string, memberId: string): TeamMember {
     const m = getState().members.find((x) => x.id === memberId && x.organizationId === org)
     if (!m || m.status !== 'convite_pendente') throw new ApiError('Este convite já não está pendente.', 404)
@@ -123,11 +129,7 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
     }),
 
     saveScope: (org, input) => simulate(() => {
-      const s = getState()
-      const me = s.users.find((u) => u.id === getActor().userId)
-      const current = s.organizations.find((o) => o.id === org)
-      if (!current) throw new ApiError('Organização não encontrada', 404)
-      if (me?.role !== 'responsavel') throw new ApiError('Só o Responsável designado pode responder a estas perguntas.', 403)
+      const { me, organization: current } = requireMember(org, 'responsavel', 'Só o Responsável designado pode responder a estas perguntas.')
       const scope = { ...input, aiUses: input.usesAi === 'sim' ? input.aiUses : [], answeredBy: me.id, answeredAt: now() }
       const updated: Organization = { ...current, scope }
       const entry = auditEntry({ organizationId: org, userId: me.id, action: current.scope ? 'update' : 'create', entityType: 'organization', entityId: org, summary: current.scope ? 'Atualizou as respostas sobre dados pessoais e IA' : 'Respondeu às perguntas sobre dados pessoais e IA', before: current.scope ? { ...current.scope } : null, after: { ...input } })
@@ -141,7 +143,9 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const o = s.organizations.find((x) => x.id === org)
       if (!o) throw new ApiError('Organização não encontrada', 404)
       // The designated manager manages the team; the consultant of the organization can see it.
-      if (me?.role === 'analista' || (me?.role === 'consultor' && o.consultantId !== me.id) || !me) throw new ApiError('Não tem permissão para ver a equipa.', 403)
+      const isManager = me?.role === 'responsavel' && s.members.some((m) => m.organizationId === org && m.userId === me.id && m.status === 'ativo')
+      const isConsultant = me?.role === 'consultor' && o.consultantId === me.id
+      if (!isManager && !isConsultant) throw new ApiError('Não tem permissão para ver a equipa.', 403)
       const order = (m: TeamMember) => (m.role === 'responsavel' ? 0 : m.status === 'ativo' ? 1 : 2)
       return s.members.filter((m) => m.organizationId === org).sort((a, b) => order(a) - order(b))
     }),
@@ -184,7 +188,9 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const title = input.title.trim()
       if (title.length < 3) throw new ApiError('Diga ao analista o que tem de fazer.', 422)
       if (input.dueDate && input.dueDate < s.today) throw new ApiError('O prazo não pode ser no passado.', 422)
-      if (s.tasks.some((t) => t.organizationId === org && t.assigneeId === member.userId && t.status === 'pendente' && t.title === title)) {
+      // One pending asset-registration task per analyst (also created from the inventory), any other task by its title.
+      const same = (t: Task) => (input.kind === 'ativos' ? t.kind === 'ativos' : t.title === title)
+      if (s.tasks.some((t) => t.organizationId === org && t.assigneeId === member.userId && t.status === 'pendente' && same(t))) {
         throw new ApiError(`${member.name} já tem esta tarefa por fazer.`, 409)
       }
       const task: Task = {
@@ -243,6 +249,9 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const s = getState()
       const o = s.organizations.find((x) => x.id === org)
       if (!o) throw new ApiError('Organização não encontrada', 404)
+      const meId = getActor().userId
+      const insider = o.consultantId === meId || s.members.some((m) => m.organizationId === org && m.userId === meId && m.status === 'ativo')
+      if (!insider) throw new ApiError('Não tem acesso a esta organização.', 403)
       const c = s.consultants.find((x) => x.id === o.consultantId)
       if (!c) return null
       const { otherActiveClients: _ignored, ...consultant } = c
@@ -252,10 +261,7 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
 
     registerQualification: (org, input) => simulate(() => {
       const s = getState()
-      const me = s.users.find((u) => u.id === getActor().userId)
-      const current = s.organizations.find((o) => o.id === org)
-      if (!current) throw new ApiError('Organização não encontrada', 404)
-      if (me?.role !== 'responsavel') throw new ApiError('Só o Responsável designado pode registar a qualificação oficial.', 403)
+      const { me, organization: current } = requireMember(org, 'responsavel', 'Só o Responsável designado pode registar a qualificação oficial.')
       if (!/\.pdf$/i.test(input.document.name)) throw new ApiError('O Ato de Qualificação tem de ser um ficheiro PDF.', 422)
       if (input.date > s.today) throw new ApiError('A data do Ato de Qualificação não pode ser no futuro.', 422)
       const officialQualification = { ...input, registeredBy: me.id, registeredAt: now() }

@@ -1,6 +1,7 @@
 import { forwardRef, useImperativeHandle, useRef, type InputHTMLAttributes } from 'react'
 import { CalendarDays } from 'lucide-react'
-import { TextInput, cn } from '../../ui'
+import { TextInput } from './Field'
+import { cn } from './cn'
 
 type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & { invalid?: boolean }
 
