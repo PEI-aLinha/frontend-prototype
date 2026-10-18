@@ -19,6 +19,8 @@ export type ChatBodyProps = ConversationNavProps & {
   onSend: (text: string, from?: Suggestion) => void
   onDraftChange: (text: string) => void
   canReview?: boolean
+  /** A conversa ativa é de um cliente e a consultora está a rever/ajudar. */
+  reviewing?: boolean
   onReview?: () => void
 }
 
@@ -107,7 +109,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
 }
 
 /** Versão normal (painel pequeno): separadores no topo e conversa por baixo. */
-export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, canReview, onReview, ...nav }: ChatBodyProps) {
+export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, canReview, reviewing, onReview, ...nav }: ChatBodyProps) {
   return (
     <>
       <ConversationTabs {...nav} />
@@ -119,9 +121,10 @@ export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, 
           onSend={onSend}
           onDraftChange={onDraftChange}
           canReview={canReview}
+          reviewing={reviewing}
           onReview={onReview}
         />
       </div>
     </>
   )
-}
+}   

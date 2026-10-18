@@ -35,8 +35,14 @@ export type Conversation = {
   createdAt?: string
   /** `updatedAt` da versão do servidor que esta conversa reflete (para saber quando voltar a sincronizar). */
   serverUpdatedAt?: string
+  /**
+   * Dono da conversa no servidor (ChatConversation.userId).
+   * Se for diferente do utilizador atual (senderId), é uma conversa de cliente que a consultora está a rever.
+   * Conversas novas e ainda não guardadas não têm ownerId: são sempre "próprias".
+   */
+  ownerId?: string
 }
 
 /** IDs únicos entre utilizadores e sessões (os contadores locais colidiam). */
 export const newChatId = (prefix: string) =>
-  `${prefix}-${crypto.randomUUID()}`;
+  `${prefix}-${crypto.randomUUID()}`

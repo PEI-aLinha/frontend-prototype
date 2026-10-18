@@ -28,9 +28,10 @@ type ChatWidgetProps = {
   onSaveConversation?: (conversation: Conversation) => Promise<void> | void
   onDeleteConversation?: (conversationId: string) => Promise<void> | void
   reviewOnReply?: (text: string) => boolean
+  /** O utilizador pode rever conversas de outros (consultora). */
   canReview?: boolean
   onReview?: (conversationId: string) => Promise<void> | void
-  senderRole?: 'user' | 'bot'
+  /** Id do utilizador atual. Necessário para distinguir conversas próprias de conversas de clientes. */
   senderId?: string
   initialConversationId?: string
 }
@@ -60,12 +61,12 @@ const mockReply = (text: string): Promise<BotReply> =>
   )
 
 const deriveTopic = (text: string) => {
-  let s = text.replace(/\s+/g, ' ').trim();
+  let s = text.replace(/\s+/g, ' ').trim()
   while (s.length > 0 && '?!.'.includes(s[s.length - 1])) {
-    s = s.slice(0, -1);
+    s = s.slice(0, -1)
   }
-  return s.length > 34 ? `${s.slice(0, 33).trimEnd()}…` : s;
-};
+  return s.length > 34 ? `${s.slice(0, 33).trimEnd()}…` : s
+}
 
 const freshConversation = (): Conversation => ({
   id: newChatId('chat'),
@@ -75,6 +76,13 @@ const freshConversation = (): Conversation => ({
   unread: false,
   awaitingReview: false,
 })
+
+/**
+ * Conversa de outro utilizador que a consultora está a rever.
+ * Conversas próprias (ou ainda sem dono, ou seja, novas) nunca são "a rever".
+ */
+const isReviewing = (c: Conversation, canReview: boolean, me?: string) =>
+  canReview && !!c.ownerId && c.ownerId !== me
 
 /** Junta por id, sem nunca perder mensagens (uma resposta do servidor pode estar desatualizada). */
 const mergeMessages = (local: ChatMessage[], server: ChatMessage[]): ChatMessage[] => {
@@ -104,7 +112,6 @@ export function ChatWidget({
   reviewOnReply,
   canReview = false,
   onReview,
-  senderRole = 'user',
   senderId,
   initialConversationId,
 }: ChatWidgetProps) {
@@ -180,6 +187,7 @@ export function ChatWidget({
           topic: server.topic ?? local.topic,
           createdAt: server.createdAt ?? local.createdAt,
           serverUpdatedAt: server.serverUpdatedAt,
+          ownerId: server.ownerId ?? local.ownerId,
           unread: local.unread || (hasNew && !viewing),
         }
         changed = true
@@ -188,20 +196,21 @@ export function ChatWidget({
     })
   }, [initialConversationId, initialConversations])
 
-  // Guarda apenas o que foi alterado localmente (não a hidratação, nem cada tecla do rascunho)
+  // Guarda apenas o que foi alterado localmente (não a hidratação, nem cada tecla do rascunho).
+  // Conversas de clientes só são guardadas enquanto estão à espera de revisão; as próprias são sempre guardadas.
   useEffect(() => {
     if (!onSaveConversation || !ready || loading) return
     const ids = [...dirty.current]
     if (ids.length === 0) return
     dirty.current.clear()
     conversations
-      .filter((c) => ids.includes(c.id) && (!canReview || c.awaitingReview))
+      .filter((c) => ids.includes(c.id) && (!isReviewing(c, canReview, senderId) || c.awaitingReview))
       .forEach((c) => {
         saveQueue.current = saveQueue.current
           .then(() => onSaveConversation(c))
           .catch(() => toast.show('Não foi possível guardar a conversa.', 'error'))
       })
-  }, [canReview, conversations, loading, onSaveConversation, ready, toast])
+  }, [canReview, conversations, loading, onSaveConversation, ready, senderId, toast])
 
   // Ao abrir ou trocar de conversa: limpa o "não lida"; Esc minimiza
   useEffect(() => {
@@ -246,7 +255,23 @@ export function ChatWidget({
     const text = raw.trim()
     if (!text || !active || active.typing) return
     const id = active.id
-    const userMsg: ChatMessage = { id: newChatId('msg'), role: senderRole, authorId: senderId, text, createdAt: new Date().toISOString() }
+    const reviewing = isReviewing(active, canReview, senderId)
+
+    // Consultora a responder a um cliente: a mensagem é dela (lado do assistente) e a IA não é chamada.
+    if (reviewing) {
+      const consultantMsg: ChatMessage = {
+        id: newChatId('msg'),
+        role: 'bot',
+        authorId: senderId,
+        text,
+        createdAt: new Date().toISOString(),
+      }
+      patch(id, (c) => ({ ...c, messages: [...c.messages, consultantMsg], draft: '', topic: c.topic ?? deriveTopic(text) }))
+      return
+    }
+
+    // Conversa própria (cliente ou consultora): és o "user" e a IA responde.
+    const userMsg: ChatMessage = { id: newChatId('msg'), role: 'user', authorId: senderId, text, createdAt: new Date().toISOString() }
     const history = [...active.messages, userMsg].filter((m) => m.role !== 'notice')
     patch(id, (c) => ({
       ...c,
@@ -263,12 +288,13 @@ export function ChatWidget({
       }
       const body: BotReplyObject = typeof reply === 'string' ? { text: reply } : reply
       const { notice: replyNotice, ...botBody } = body
-      const noticeText = replyNotice ?? from?.notice
+      // A consultora não precisa de revisão: as suas conversas nunca ficam "à espera".
+      const noticeText = canReview ? undefined : (replyNotice ?? from?.notice)
       const stamp = new Date().toISOString()
       const botMsg: ChatMessage = { id: newChatId('msg'), role: 'bot', createdAt: stamp, ...botBody }
       const added: ChatMessage[] = [botMsg]
       if (noticeText) added.push({ id: newChatId('msg'), role: 'notice', text: noticeText, createdAt: stamp })
-      receive(id, added, reviewOnReply?.(text) || !!noticeText)
+      receive(id, added, !canReview && (!!reviewOnReply?.(text) || !!noticeText))
 
       // Resumo do tema (opcional, em segundo plano)
       const userCount = history.filter((m) => m.role === 'user').length
@@ -314,7 +340,7 @@ export function ChatWidget({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Abrir ${title}`}
-        className="group fixed bottom-6 right-6 z-50 inline-flex h-[52px] items-center rounded-full bg-brand px-4 text-white shadow-[0_10px_28px_rgba(2,61,54,0.35)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand max-sm:bottom-3 max-sm:right-3"
+        className="group fixed bottom-6 right-6 z-50 inline-flex h-[52px] items-center rounded-full bg-brand px-4 text-white shadow-[0_10px_28px_rgba(2,61,54,0.35)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand max-sm:bottom-[calc(132px+env(safe-area-inset-bottom))] max-sm:right-3"
       >
         <Sparkles className="size-5 flex-none" aria-hidden />
         <span
@@ -339,6 +365,8 @@ export function ChatWidget({
   const headerBtn =
     'flex size-11 items-center justify-center rounded-[10px] text-white/80 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white'
 
+  const reviewing = isReviewing(active, canReview, senderId)
+
   const bodyProps = {
     conversations,
     activeId: active.id,
@@ -351,7 +379,8 @@ export function ChatWidget({
     onSend: send,
     onDraftChange: (text: string) => patchLocal(active.id, (c) => ({ ...c, draft: text })),
     canReview,
-    onReview: onReview ? async () => {
+    reviewing,
+    onReview: onReview && reviewing ? async () => {
       const id = active.id
       try {
         // garante que a última mensagem da consultora está no servidor antes de rever
@@ -368,7 +397,7 @@ export function ChatWidget({
 
   if (loading || error) {
     return (
-      <section role="dialog" aria-label={title} aria-modal="false" className={`fixed bottom-6 right-6 z-50 flex flex-col overflow-hidden rounded-[20px] border border-brand-soft bg-white shadow-[0_24px_60px_rgba(2,40,35,0.22)] max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] ${panelSize}`}>
+      <section role="dialog" aria-label={title} aria-modal="false" className={`fixed bottom-6 right-6 z-[90] flex flex-col overflow-hidden rounded-[20px] border border-brand-soft bg-white shadow-[0_24px_60px_rgba(2,40,35,0.22)] max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] ${panelSize}`}>
         <header className="flex items-center gap-3 bg-brand py-4 pl-[18px] pr-3 text-white">
           <Sparkles className="size-[18px]" aria-hidden />
           <strong className="flex-1 text-[15px] font-extrabold">{title}</strong>
@@ -385,7 +414,7 @@ export function ChatWidget({
     <section
       role="dialog"
       aria-label={title}
-      className={`fixed bottom-6 right-6 z-50 flex flex-col overflow-hidden rounded-[20px] border border-brand-soft bg-white shadow-[0_24px_60px_rgba(2,40,35,0.22)] transition-[width,height] duration-200 max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] max-sm:max-w-none ${panelSize}`}
+      className={`fixed bottom-6 right-6 z-[90] flex flex-col overflow-hidden rounded-[20px] border border-brand-soft bg-white shadow-[0_24px_60px_rgba(2,40,35,0.22)] transition-[width,height] duration-200 max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] max-sm:max-w-none ${panelSize}`}
     >
       <header className="flex items-center gap-3 bg-brand py-4 pl-[18px] pr-3 text-white">
         <span className="flex size-9 flex-none items-center justify-center rounded-full bg-white/20" aria-hidden>

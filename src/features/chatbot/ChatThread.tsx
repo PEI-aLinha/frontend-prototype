@@ -11,20 +11,22 @@ type ChatThreadProps = {
   suggestions: Suggestion[]
   onSend: (text: string, from?: Suggestion) => void
   onDraftChange: (text: string) => void
+  /** O utilizador é consultora (pode rever conversas de clientes). */
   canReview?: boolean
+  /** A conversa ativa é de um cliente e a consultora está a rever/ajudar. */
+  reviewing?: boolean
   onReview?: () => void
 }
 
 const LABEL = 'font-mono text-[10px] uppercase tracking-[0.1em]'
 
 /** Mensagens da conversa ativa + campo de escrita. */
-export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, onReview }: ChatThreadProps) {
+export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, reviewing, onReview }: ChatThreadProps) {
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Consultora: conversa vazia (nada para rever), à espera de revisão, ou já revista
-  const empty = !!canReview && !active.awaitingReview && !active.serverUpdatedAt
-  const readOnly = !!canReview && !active.awaitingReview && !empty
+  // Só é "readOnly" se for uma conversa de cliente que já veio do servidor e já não está à espera de revisão
+  const readOnly = !!reviewing && !!active.serverUpdatedAt && !active.awaitingReview
   // O aviso "Em revisão" é para o cliente; a consultora não precisa dele
   const messages = canReview ? active.messages.filter((m) => m.role !== 'notice') : active.messages
 
@@ -39,11 +41,11 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
     inputRef.current?.focus()
   }, [active.id])
 
-  const placeholder = canReview ? 'Escreva a sua resposta ao cliente…' : 'Pergunte sobre riscos, ativos ou roadmap…'
+  const placeholder = reviewing ? 'Escreva a sua resposta ao cliente…' : 'Pergunte sobre riscos, ativos ou roadmap…'
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
-      {canReview && !empty && (
+      {reviewing && (
         <div role="note" className="flex items-start gap-2.5 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-amber-900">
           <UserCheck className="mt-0.5 size-4 flex-none" aria-hidden />
           <p className="text-[12.5px] leading-normal">
@@ -59,11 +61,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
         className={`min-h-0 flex-1 overflow-y-auto bg-paper-soft ${expanded ? 'p-6 md:px-8' : 'p-[18px]'}`}
       >
         <div className="mx-auto flex w-full max-w-[760px] flex-col gap-3.5">
-          {empty && (
-            <p className="py-10 text-center text-[14px] text-ink-soft">Sem conversas de clientes para rever.</p>
-          )}
-
-          {!empty && messages.map((m) => {
+          {messages.map((m) => {
             if (m.role === 'notice') {
               return (
                 <div key={m.id} role="status" className="flex items-start gap-2.5 rounded-[12px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-amber-900">
@@ -100,7 +98,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                     <Sparkles className="size-3" aria-hidden />Assistente IA
                   </span>
                 )}
-                {canReview && m.role === 'user' && (
+                {reviewing && m.role === 'user' && (
                   <span className={`self-end text-muted ${LABEL}`}>Cliente</span>
                 )}
                 <div className={bubble}>{m.text}</div>
@@ -123,7 +121,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
             </div>
           )}
 
-          {active.messages.length <= 1 && !active.typing && !empty && (
+          {active.messages.length <= 1 && !active.typing && !reviewing && (
             <div className="flex flex-wrap gap-2 pt-1">
               {suggestions.map((s) => (
                 <button key={s.label} type="button" onClick={() => onSend(s.label, s)} className="min-h-11 rounded-[22px] border border-brand-soft bg-white px-3.5 py-2 text-left text-[13px] font-bold text-brand hover:bg-paper">
@@ -137,12 +135,12 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
 
       <footer className={`border-t border-brand-soft bg-white ${expanded ? 'px-6 pb-3 pt-4' : 'px-3.5 pb-2.5 pt-3'}`}>
         <div className="mx-auto flex w-full max-w-[760px] flex-col gap-2">
-          {canReview && active.awaitingReview && onReview && (
+          {reviewing && active.awaitingReview && onReview && (
             <Button variant="secondary" size="sm" icon={<Check className="size-4" aria-hidden />} onClick={onReview}>
               Marcar como revisto
             </Button>
           )}
-          {empty ? null : readOnly ? (
+          {readOnly ? (
             <p className="rounded-[12px] bg-paper-soft px-3.5 py-3 text-center text-[13px] text-ink-soft">
               Conversa já revista. Só pode ver as mensagens até ao momento da revisão.
             </p>

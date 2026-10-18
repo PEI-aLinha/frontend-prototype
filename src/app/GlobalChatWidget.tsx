@@ -46,6 +46,8 @@ function toWidgetConversation(saved: ChatConversation): Conversation {
     topic: saved.topic,
     createdAt: saved.createdAt,
     serverUpdatedAt: saved.updatedAt,
+    // Dono no servidor: o widget compara com o senderId para saber se a consultora está a rever um cliente
+    ownerId: saved.userId,
   }
 }
 
@@ -54,7 +56,7 @@ function toStoredConversation(conversation: Conversation, scopeKey: string): Cha
   return {
     id: conversation.id,
     scopeKey,
-    userId: '', // o servidor define-o a partir da sessão
+    userId: '', // o servidor define-o a partir da sessão (e preserva o dono original)
     messages: conversation.messages.map((message) => ({
       id: message.id,
       role: message.role,
@@ -89,21 +91,21 @@ export function GlobalChatWidget() {
   const deleteConversation = remove.mutateAsync
   const reviewConversation = review.mutateAsync
 
-  const handleSend = useCallback((_text: string, messages: ChatMessage[]) => isConsultant
-    ? Promise.resolve(null)
-    : sendMessage({
-      messages: messages
-        .filter((message) => message.role !== 'notice')
-        .map(({ role, text }) => ({ role: role as 'user' | 'bot', text })),
-    }), [isConsultant, sendMessage])
+  // A IA responde a toda a gente nas conversas próprias, incluindo a consultora.
+  // (Quando a consultora responde a um cliente, o ChatWidget nem chama o onSend.)
+  const handleSend = useCallback((_text: string, messages: ChatMessage[]) => sendMessage({
+    messages: messages
+      .filter((message) => message.role !== 'notice')
+      .map(({ role, text }) => ({ role: role as 'user' | 'bot', text })),
+  }), [sendMessage])
   const handleSave = useCallback(
     (conversation: Conversation) => saveConversation(toStoredConversation(conversation, scopeKey)).then(() => undefined),
     [saveConversation, scopeKey],
   )
-  // A consultora não é dona das conversas: fechar o separador é só local.
+  // O servidor só apaga conversas de que o utilizador é dono: fechar uma conversa de cliente é só local.
   const handleDelete = useCallback(
-    (id: string) => isConsultant ? Promise.resolve() : deleteConversation(id).then(() => undefined),
-    [deleteConversation, isConsultant],
+    (id: string) => deleteConversation(id).then(() => undefined),
+    [deleteConversation],
   )
   const handleReview = useCallback((id: string) => reviewConversation(id).then(() => undefined), [reviewConversation])
   const needsReview = useCallback((text: string) => !isConsultant && /rascunho|política|incidente|notificação|CNPD|relatório/i.test(text), [isConsultant])
@@ -124,7 +126,6 @@ export function GlobalChatWidget() {
       reviewOnReply={needsReview}
       canReview={isConsultant}
       onReview={handleReview}
-      senderRole={isConsultant ? 'bot' : 'user'}
       senderId={persona.userId}
     />
   )

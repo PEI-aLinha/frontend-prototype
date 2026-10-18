@@ -8,11 +8,13 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
       const actorId = getActor().userId
       const isConsultant = getState().users.find((user) => user.id === actorId)?.role === 'consultor'
       return getState().chat
-        .filter((c) => c.scopeKey === scopeKey && (isConsultant
-          ? c.awaitingReview || c.reviewedMessageCount !== undefined
-          : c.userId === actorId))
-        // Conversa já revista: a consultora só vê até ao momento da revisão
-        .map((c) => isConsultant && !c.awaitingReview && c.reviewedMessageCount !== undefined
+        // Cada utilizador vê as suas próprias conversas; a consultora vê também as de clientes em revisão ou já revistas
+        .filter((c) => c.scopeKey === scopeKey && (
+          c.userId === actorId ||
+          (isConsultant && (c.awaitingReview || c.reviewedMessageCount !== undefined))
+        ))
+        // Conversa de cliente já revista: a consultora só vê até ao momento da revisão
+        .map((c) => isConsultant && c.userId !== actorId && !c.awaitingReview && c.reviewedMessageCount !== undefined
           ? { ...c, messages: c.messages.slice(0, c.reviewedMessageCount) }
           : c)
         .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt))
@@ -25,8 +27,10 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
         const actorId = getActor().userId
         const me = state.users.find((user) => user.id === actorId)
         const before = state.chat.find((item) => item.id === conversation.id)
-        if (me?.role === 'consultor' && (!before || !before.awaitingReview)) throw new ApiError('Conversa não está pendente de revisão.', 409)
-        if (before && me?.role !== 'consultor' && before.userId !== actorId) throw new ApiError('Não tem permissão para esta ação.', 403)
+        // A consultora "a rever" = conversa existente que pertence a outro utilizador
+        const reviewing = me?.role === 'consultor' && !!before && before.userId !== actorId
+        if (reviewing && !before!.awaitingReview) throw new ApiError('Conversa não está pendente de revisão.', 409)
+        if (before && !reviewing && before.userId !== actorId) throw new ApiError('Não tem permissão para esta ação.', 403)
 
         result = {
           ...conversation,

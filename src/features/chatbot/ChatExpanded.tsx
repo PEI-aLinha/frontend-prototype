@@ -78,6 +78,7 @@ export function ChatExpanded({
   onSend,
   onDraftChange,
   canReview,
+  reviewing,
   onReview,
   maxConversations,
   ...nav
@@ -96,6 +97,7 @@ export function ChatExpanded({
           onSend={onSend}
           onDraftChange={onDraftChange}
           canReview={canReview}
+          reviewing={reviewing}
           onReview={onReview}
         />
       </div>
