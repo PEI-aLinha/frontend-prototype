@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { CheckCircle2, Clock, Lock } from 'lucide-react'
 import { useAssessment, useUsers } from '../../api/queries'
 import { useTenant } from '../../core/tenant'
@@ -60,6 +61,7 @@ export function AssessmentPage() {
                           </p>
                         )
                       })}
+                      <Link to={s.id} className="self-start text-[14px] font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span> →</Link>
                     </Card>
                   </li>
                 )

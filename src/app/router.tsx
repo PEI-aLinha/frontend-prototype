@@ -17,6 +17,7 @@ import { ClientOverviewPage } from '../features/portfolio/ClientOverviewPage'
 import { HistoryPage } from '../features/portfolio/HistoryPage'
 import { IntegrationsPage } from '../features/integrations/IntegrationsPage'
 import { AssessmentPage } from '../features/assessment/AssessmentPage'
+import { SectionPage } from '../features/assessment/SectionPage'
 import { QuestionPage } from '../features/tasks/QuestionPage'
 import { CreateAccountPage, MfaSetupPage, OnboardingLayout, RegisterOrganizationPage, RegistrationDonePage, ResumeRegistration, ScopeQuestionsPage, ScopeResultPage, FramingPage, OrganizationSettingsPage, AcceptInvitePage } from '../features/organization/public'
 
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
           { path: 'roadmap', element: <Guard resource="roadmap"><ConsultantRoadmap /></Guard> },
           { path: 'riscos', element: <Guard resource="risk" reason="O registo de riscos fica visível depois de a consultora validar o roadmap."><RisksPage /></Guard> },
           { path: 'avaliacao', element: <Guard resource="roadmap"><AssessmentPage /></Guard> },
+          { path: 'avaliacao/:sectionId', element: <Guard resource="roadmap"><SectionPage /></Guard> },
           { path: 'integracoes', element: <IntegrationsPage /> },
           { path: 'equipa', element: <Guard resource="asset_task" action="assign"><TeamPage /></Guard> },
         ],
