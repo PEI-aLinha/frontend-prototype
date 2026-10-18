@@ -1,4 +1,5 @@
 import type { Id, Level } from '../../api/contracts'
+import { LEVEL_ORDER } from '../../config/riskMatrix'
 
 /** Risk signal received from the Risks and Assets plugin, by action ID only (contract). */
 export interface RiskSignal {
@@ -16,9 +17,8 @@ export interface PrioritizedAction<T extends { id: Id; priority: number }> {
   reason: string | null
 }
 
-const WEIGHT: Record<Level, number> = { baixo: 1, medio: 2, alto: 3 }
-
 function byBase<T extends { id: Id; priority: number }>(a: T, b: T): number {
+  // The id breaks priority ties so two calls with the same actions in a different array order still agree.
   return a.priority - b.priority || a.id.localeCompare(b.id)
 }
 
@@ -33,9 +33,9 @@ export function prioritizeRoadmap<T extends { id: Id; priority: number }>(action
   const top = new Map<Id, RiskSignal>()
   for (const s of signals) {
     const current = top.get(s.actionId)
-    if (!current || WEIGHT[s.level] > WEIGHT[current.level]) top.set(s.actionId, s)
+    if (!current || LEVEL_ORDER[s.level] > LEVEL_ORDER[current.level]) top.set(s.actionId, s)
   }
-  const weight = (a: T) => (top.has(a.id) ? WEIGHT[top.get(a.id)!.level] : 0)
+  const weight = (a: T) => (top.has(a.id) ? LEVEL_ORDER[top.get(a.id)!.level] : 0)
 
   return [...base]
     .sort((a, b) => weight(b) - weight(a) || byBase(a, b))

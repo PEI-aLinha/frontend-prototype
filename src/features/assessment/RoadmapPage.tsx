@@ -91,7 +91,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
       ) : (
         <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
-          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={view === 'riscos'} consultant={consultant} />)}
+          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={view === 'riscos'} consultant={consultant} validated={validated} />)}
         </ol>
       )}
 
@@ -110,11 +110,10 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   )
 }
 
-function ActionRow({ item, users, showMovement, consultant }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean }) {
+function ActionRow({ item, users, showMovement, consultant, validated }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined }) {
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
   const owner = users.find((u) => u.id === a.assignedTo)
-  const { data: status } = useRoadmapStatus(a.organizationId)
   return (
     <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
@@ -150,8 +149,8 @@ function ActionRow({ item, users, showMovement, consultant }: { item: Prioritize
             <ShieldAlert className="size-4" aria-hidden />{consultant ? reason : `Esta ação está ligada a um risco: ${topRisk?.riskLabel}`}
           </p>
         )}
-        {a.aiOutputId && !status?.validated && <div className="mt-2"><AIBadge /></div>}
-        {a.aiOutputId && status?.validated && <div className="mt-2"><Chip tone="outline">Validada pela consultora</Chip></div>}
+        {a.aiOutputId && !validated && <div className="mt-2"><AIBadge /></div>}
+        {a.aiOutputId && validated && <div className="mt-2"><Chip tone="outline">Validada pela consultora</Chip></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}
       </div>
     </li>
