@@ -153,7 +153,7 @@ export function ChatWidget({
     if (initialConversations === undefined) return
     if (!hydrated.current) {
       const next = initialConversations.length ? initialConversations : [freshConversation()]
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       setConversations(next)
       setActiveId(next.find((c) => c.id === initialConversationId)?.id ?? next[0].id)
       hydrated.current = true

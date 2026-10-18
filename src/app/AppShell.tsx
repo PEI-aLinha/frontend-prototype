@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router'
 import { Sparkles, type LucideIcon } from 'lucide-react'
 import { Link, matchPath, useLocation } from 'react-router'
-import type { LucideIcon } from 'lucide-react'
 import { Avatar, Logo, cn } from '../ui'
 import { openExpandedChat } from '../features/chatbot/ChatControl'
 import { MobileTabBar } from './MobileTabBar'

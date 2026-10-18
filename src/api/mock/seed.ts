@@ -233,7 +233,7 @@ function baseAudit(): AuditEntry[] {
 function emptySnapshot(): DemoState {
   return {
     version: STATE_VERSION, consultants: CONSULTANTS, members: [], snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
-    risks: [], links: [], comments: [], actions: [], roadmap: {}, portfolio: portfolio('c0'), audit: [], notifications: [], today: '2026-10-09',
+    risks: [], links: [], comments: [], actions: [], roadmap: {}, portfolio: portfolio('c0'), audit: [], notifications: [], chat: [], today: '2026-10-09',
     connections: {}, discoveries: [], evidence: [],
   }
 }
