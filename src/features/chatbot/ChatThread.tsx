@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 import { Check, Clock, Send, Sparkles, UserCheck } from 'lucide-react'
-import type { Conversation, Suggestion } from './ChatTypes'
+import type { ChatTable, Conversation, Suggestion } from './ChatTypes'
 import { Button, TextInput } from '../../ui'
 
 type ChatThreadProps = {
@@ -19,6 +19,34 @@ type ChatThreadProps = {
 }
 
 const LABEL = 'font-mono text-[10px] uppercase tracking-[0.1em]'
+
+/** Tabela de resposta do assistente (ex.: prazos legais). Faz scroll horizontal no painel pequeno. */
+function MessageTable({ table }: { table: ChatTable }) {
+  const label = table.caption ?? 'Tabela'
+  return (
+    <div role="region" aria-label={label} tabIndex={0} className="max-w-full self-start overflow-x-auto rounded-[12px] border border-brand-soft bg-white">
+      <table className="w-full border-collapse text-left text-[12.5px] leading-snug">
+        <caption className="sr-only">{label}</caption>
+        <thead className="bg-paper">
+          <tr>
+            {table.columns.map((c) => (
+              <th key={c} scope="col" className="px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-ink-soft">{c}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row, r) => (
+            <tr key={r} className="border-t border-brand-soft align-top">
+              {row.map((cell, i) => i === 0
+                ? <th key={i} scope="row" className="px-3 py-2.5 font-bold text-brand">{cell}</th>
+                : <td key={i} className="px-3 py-2.5 text-ink">{cell}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
 
 /** Mensagens da conversa ativa + campo de escrita. */
 export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, reviewing, onReview }: ChatThreadProps) {
@@ -102,6 +130,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                   <span className={`self-end text-muted ${LABEL}`}>Cliente</span>
                 )}
                 <div className={bubble}>{m.text}</div>
+                {m.table && <MessageTable table={m.table} />}
                 {m.source && (
                   <Link to={m.source.to} className="flex max-w-[85%] flex-col gap-1.5 self-start rounded-[12px] border border-brand-soft bg-paper px-3.5 py-3 text-brand no-underline hover:underline">
                     <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">{m.source.label}</span>

@@ -101,6 +101,38 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
       simulate(() => {
         const latest = messages.at(-1)?.text.toLowerCase() ?? ''
 
+        if (latest.includes('responsabilidades')) {
+          return {
+            text: [
+              'Como responsável pela segurança da informação (CISO), as suas responsabilidades principais na NIS2 são:',
+              '• Governação: propor e manter a política de segurança e levá-la à aprovação da gestão de topo, que supervisiona as medidas.',
+              '• Gestão de risco: identificar ativos e riscos, definir o tratamento e rever periodicamente.',
+              '• Medidas técnicas e organizacionais: controlo de acessos, cópias de segurança, cifragem, continuidade de negócio e gestão de vulnerabilidades.',
+              '• Cadeia de fornecimento: avaliar a segurança dos fornecedores críticos.',
+              '• Incidentes: detetar, responder e coordenar as notificações ao CNCS dentro dos prazos legais.',
+              '• Formação: garantir sensibilização e formação para a gestão e os colaboradores.',
+              '• Evidências e reporte: reunir provas de conformidade e reportar o estado à gestão e à consultora.',
+              '',
+              'Informação indicativa: confirme com a consultora.',
+            ].join('\n'),
+          }
+        }
+
+        if (latest.includes('prazos legais')) {
+          return {
+            text: 'Estes são os prazos legais máximos a cumprir depois de detetar um incidente significativo:',
+            table: {
+              caption: 'Prazos legais de notificação de um incidente',
+              columns: ['Fase da notificação', 'Entidade destinatária', 'Prazo legal máximo'],
+              rows: [
+                ['Alerta inicial', 'CNCS (MyCiber)', '24 horas após deteção'],
+                ['Notificação de dados', 'CNPD (se aplicável)', '72 horas após deteção'],
+                ['Atualização do incidente', 'CNCS (MyCiber)', '72 horas após deteção'],
+              ],
+            },
+          }
+        }
+
         if (latest.includes('roadmap')) {
           return {
             text: 'Posso ajudar a analisar o roadmap da organização.',

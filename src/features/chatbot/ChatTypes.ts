@@ -2,17 +2,21 @@
 
 export type ChatSource = { label: string; title: string; to: string; cta?: string }
 
+/** Tabela devolvida pelo assistente (renderizada como <table> no chat). */
+export type ChatTable = { caption?: string; columns: string[]; rows: string[][] }
+
 export type ChatMessage = {
   id: string
   role: 'user' | 'bot' | 'notice'
   authorId?: string
   text: string
   source?: ChatSource
+  table?: ChatTable
   error?: boolean
   createdAt?: string
 }
 
-export type BotReplyObject = { text: string; source?: ChatSource; notice?: string }
+export type BotReplyObject = { text: string; source?: ChatSource; table?: ChatTable; notice?: string }
 export type BotReply = string | BotReplyObject
 
 export type Suggestion = {

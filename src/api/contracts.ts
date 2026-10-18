@@ -430,6 +430,7 @@ export interface ChatStoredMessage {
   source?: { label: string; title: string; to: string; cta?: string }
   error?: boolean
   createdAt: IsoDate
+  table?: ChatTable
 }
 
 export interface ChatConversation {
@@ -453,6 +454,7 @@ export interface ChatReply {
     cta?: string
   }
   notice?: string
+  table?: ChatTable
 }
 
 export interface ChatApi {
@@ -465,4 +467,10 @@ export interface ChatApi {
     organizationId: Id | undefined,
     messages: ChatMessageInput[],
   ): Promise<ChatReply>
+}
+
+export interface ChatTable {
+  caption?: string
+  columns: string[]
+  rows: string[][]
 }

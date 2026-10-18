@@ -10,7 +10,7 @@ const PERSONA_SUGGESTIONS: Record<string, Suggestion[]> = {
   rui: [
     { label: 'Criar rascunho da política de segurança', topic: 'Política de segurança' },
     { label: 'Quais são as minhas responsabilidades?', topic: 'Responsabilidades' },
-    { label: 'Que evidências devo reunir?', topic: 'Evidências' },
+    { label: 'Quais são os prazos legais se sofrermos um ciberataque?', topic: 'Prazos legais' },
   ],
   pedro: [
     { label: 'Que ativos devo registar?', topic: 'Registo de ativos' },
@@ -36,6 +36,7 @@ function toWidgetConversation(saved: ChatConversation): Conversation {
       authorId: message.authorId,
       text: message.text,
       source: message.source,
+      table: message.table,
       error: message.error,
       createdAt: message.createdAt,
     })),
@@ -63,6 +64,7 @@ function toStoredConversation(conversation: Conversation, scopeKey: string): Cha
       authorId: message.authorId,
       text: message.text,
       source: message.source,
+      table: message.table,
       error: message.error,
       createdAt: message.createdAt ?? timestamp,
     })),

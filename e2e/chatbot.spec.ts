@@ -98,3 +98,16 @@ test('US06 - Marta prepara uma notificação de incidente com IA', async ({ page
   //    O separador usa o tema derivado (cortado a 34 caracteres, sem ponto final).
   await expect(chat.getByRole('tab', { name: /Prepara o rascunho/ })).not.toContainText(AWAITING)
 })
+
+test('Rui pergunta pelos prazos legais e recebe uma tabela', async ({ page }) => {
+  await start(page, `${ORG}/inicio`, 'rui')
+  const chat = await openChat(page, 'Assistente Alinha')
+
+  await chat.getByRole('button', { name: 'Quais são os prazos legais se sofrermos um ciberataque?' }).click()
+
+  const table = chat.getByRole('table', { name: 'Prazos legais de notificação de um incidente' })
+  await expect(table).toBeVisible()
+  await expect(table.getByRole('row', { name: /Alerta inicial.*CNCS \(MyCiber\).*24 horas/ })).toBeVisible()
+  await expect(table.getByRole('row', { name: /Notificação de dados.*CNPD.*72 horas/ })).toBeVisible()
+  await expect(chat.getByRole('tab', { name: /Prazos legais/ })).not.toContainText(AWAITING)
+})
