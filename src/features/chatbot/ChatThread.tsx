@@ -20,12 +20,12 @@ type ChatThreadProps = {
 
 const LABEL = 'font-mono text-[10px] uppercase tracking-[0.1em]'
 
-/** Tabela de resposta do assistente (ex.: prazos legais). Faz scroll horizontal no painel pequeno. */
+/** Tabela de resposta do assistente (ex.: prazos legais). O texto das células quebra linha, por isso não precisa de scroll. */
 function MessageTable({ table }: { table: ChatTable }) {
   const label = table.caption ?? 'Tabela'
   return (
-    <div role="region" aria-label={label} tabIndex={0} className="max-w-full self-start overflow-x-auto rounded-[12px] border border-brand-soft bg-white">
-      <table className="w-full border-collapse text-left text-[12.5px] leading-snug">
+    <div className="max-w-full self-start overflow-hidden rounded-[12px] border border-brand-soft bg-white">
+      <table className="w-full border-collapse break-words text-left text-[12.5px] leading-snug">
         <caption className="sr-only">{label}</caption>
         <thead className="bg-paper">
           <tr>
