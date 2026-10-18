@@ -1,0 +1,173 @@
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { ArrowLeft, UserRound } from 'lucide-react'
+import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '../../api/contracts'
+import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUsers } from '../../api/queries'
+import { shortDay } from '../../config/labels'
+import { useTenant } from '../../core/tenant'
+import { Button, Card, Chip, DateInput, EmptyState, ErrorState, Eyebrow, Field, Modal, Note, OptionGroup, PageHeader, Select, SkeletonRows, TextArea, useToast } from '../../ui'
+import { CHOICE_LABEL, CHOICES } from './choices'
+
+/** One assessment question: answer, save progress, or delegate it to an analyst. */
+export function AssessmentQuestionPage() {
+  const { sectionId = '', questionId = '' } = useParams()
+  const org = useTenant()
+  const assessment = useAssessment(org.id)
+  const questions = useAssessmentQuestions(org.id, sectionId)
+  const tasks = useTasks(org.id)
+  const users = useUsers(org.id)
+  const sectionPath = `/org/${org.slug}/avaliacao/${sectionId}`
+
+  const error = assessment.error ?? questions.error
+  if (error) return <ErrorState error={error} onRetry={() => { assessment.refetch(); questions.refetch() }} />
+  if (!assessment.data || !questions.data) return <SkeletonRows rows={4} />
+  const section = assessment.data.sections.find((s) => s.id === sectionId)
+  const index = questions.data.findIndex((q) => q.id === questionId)
+  const question = questions.data[index]
+  if (!section || !question) return <EmptyState title="Pergunta não encontrada"><Link to={`/org/${org.slug}/avaliacao`} className="font-bold text-brand hover:underline">Voltar à avaliação</Link></EmptyState>
+  const next = questions.data[index + 1]
+  const task = tasks.data?.find((t) => t.id === question.delegatedTaskId)
+  const assignee = users.data?.find((u) => u.id === task?.assigneeId)
+  const open = assessment.data.status === 'em_curso'
+
+  return (
+    <>
+      <Link to={sectionPath} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden />{section.name}</Link>
+      <PageHeader eyebrow={`Avaliação de maturidade · ${section.name}`} title={`Pergunta ${index + 1} de ${questions.data.length}`} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <Card className="flex flex-col gap-5 px-7 py-6 max-md:px-5">
+          <p className="text-[20px] font-extrabold leading-snug">{question.text}</p>
+          {open
+            ? <AnswerForm key={question.id} question={question} nextPath={next ? `${sectionPath}/${next.id}` : sectionPath} sectionPath={sectionPath} />
+            : (
+              <div className="rounded-[14px] bg-paper-soft p-4">
+                <Eyebrow>Resposta</Eyebrow>
+                <p className="mt-1 text-[16px] font-bold">{question.answer ? CHOICE_LABEL[question.answer.choice] : 'Sem resposta'}</p>
+                {question.answer?.note && <p className="mt-1 text-[14px] text-ink-soft">"{question.answer.note}"</p>}
+                <p className="mt-3 text-[13px] text-muted">A avaliação já foi submetida. As respostas já não podem ser alteradas.</p>
+              </div>
+            )}
+        </Card>
+        <aside className="flex flex-col gap-3">
+          <section aria-label="Explicação" className="flex flex-col gap-2.5 rounded-[16px] border border-brand-soft bg-paper p-5">
+            <h2 className="text-[15px] font-extrabold">O que esta pergunta quer saber</h2>
+            <p className="text-[14px] leading-relaxed text-ink-soft">{question.explanation}</p>
+          </section>
+          <Delegation question={question} task={task} assignee={assignee} open={open} />
+        </aside>
+      </div>
+    </>
+  )
+}
+
+function AnswerForm({ question, nextPath, sectionPath }: { question: AssessmentQuestion; nextPath: string; sectionPath: string }) {
+  const org = useTenant()
+  const navigate = useNavigate()
+  const toast = useToast()
+  const save = useSaveAnswer(org.id)
+  const [choice, setChoice] = useState<AnswerChoice | null>(question.answer?.choice ?? null)
+  const [note, setNote] = useState(question.answer?.note ?? '')
+  const [error, setError] = useState<string>()
+
+  const submit = () => {
+    if (!choice) { setError('Escolha uma resposta.'); return }
+    save.mutate({ questionId: question.id, answer: { choice, note } }, {
+      onSuccess: () => { toast.show('Resposta guardada'); navigate(nextPath) },
+      onError: (e) => toast.show(e.message, 'error'),
+    })
+  }
+
+  return (
+    <form noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); submit() }}>
+      <OptionGroup name="resposta" legend="A sua resposta" value={choice} onChange={(v) => { setChoice(v); setError(undefined) }} options={CHOICES} columns={2} error={error} />
+      <Field label="Comentário" optional hint="Ajuda a consultora a perceber a resposta. Ex.: em que sistemas falta.">
+        {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />}
+      </Field>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="secondary" onClick={() => navigate(sectionPath)}>Voltar à secção</Button>
+        <Button type="submit" loading={save.isPending}>Guardar e seguinte</Button>
+      </div>
+    </form>
+  )
+}
+
+function Delegation({ question, task, assignee, open }: { question: AssessmentQuestion; task?: Task; assignee?: User; open: boolean }) {
+  const org = useTenant()
+  const members = useMembers(org.id)
+  const [delegating, setDelegating] = useState(false)
+  const analysts = members.data?.filter((m) => m.role === 'analista' && m.status === 'ativo' && m.userId) ?? []
+  const who = assignee?.name ?? 'analista'
+
+  if (task?.status === 'pendente') {
+    return (
+      <Note icon={false}>
+        <span className="flex items-start gap-2"><UserRound className="mt-[2px] size-4 shrink-0" aria-hidden />
+          <span>Delegada a {who}: à espera de resposta{task.dueDate ? ` (prazo ${shortDay(task.dueDate)})` : ''}. Só vê esta pergunta.</span>
+        </span>
+      </Note>
+    )
+  }
+  if (task?.status === 'concluida') {
+    return (
+      <section aria-label="Resposta do analista" className="flex flex-col gap-1.5 rounded-[16px] border border-line-soft bg-paper p-5">
+        <Eyebrow>Resposta de {who}</Eyebrow>
+        <p className="text-[16px] font-bold">{task.answer ? CHOICE_LABEL[task.answer.choice] : '—'}</p>
+        {task.answer?.note && <p className="text-[14px] text-ink-soft">"{task.answer.note}"</p>}
+        {open && <p className="mt-1 text-[12px] text-muted">Pode guardar esta resposta ou responder de outra forma.</p>}
+      </section>
+    )
+  }
+  if (!open || !members.data) return null
+  if (analysts.length === 0) {
+    return <Note>Para delegar uma pergunta técnica, convide um analista em <Link to={`/org/${org.slug}/equipa`} className="underline">Equipa</Link>.</Note>
+  }
+  return (
+    <section aria-label="Delegar" className="flex flex-col gap-2.5 rounded-[16px] border border-line-soft bg-paper p-5">
+      <h2 className="text-[15px] font-extrabold">Não sabe responder?</h2>
+      <p className="text-[14px] text-ink-soft">Envie a pergunta a quem saiba. Recebe a resposta aqui.</p>
+      <Button variant="secondary" onClick={() => setDelegating(true)}>{analysts.length === 1 ? `Delegar a ${analysts[0].name}` : 'Delegar a um analista'}</Button>
+      {delegating && <DelegateModal question={question} analysts={analysts} onClose={() => setDelegating(false)} />}
+    </section>
+  )
+}
+
+function DelegateModal({ question, analysts, onClose }: { question: AssessmentQuestion; analysts: TeamMember[]; onClose: () => void }) {
+  const org = useTenant()
+  const toast = useToast()
+  const today = useToday()
+  const delegate = useDelegateQuestion(org.id)
+  const [assignee, setAssignee] = useState(analysts.length === 1 ? analysts[0].userId! : '')
+  const [due, setDue] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+
+  const errors = {
+    assignee: submitted && !assignee ? 'Escolha o analista.' : undefined,
+    due: submitted && due && today.data && due < today.data ? 'O prazo não pode ser no passado.' : undefined,
+  }
+  const submit = () => {
+    setSubmitted(true)
+    if (!assignee || (due && today.data && due < today.data)) return
+    delegate.mutate({ questionId: question.id, input: { assigneeId: assignee, dueDate: due || null } }, {
+      onSuccess: () => { toast.show(`Pergunta enviada a ${analysts.find((a) => a.userId === assignee)?.name}`); onClose() },
+    })
+  }
+
+  return (
+    <Modal open onOpenChange={(o) => !o && onClose()} chip={<Chip>Pergunta técnica</Chip>} title="Delegar pergunta"
+      description="O analista recebe um email e só vê esta pergunta."
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit} loading={delegate.isPending}>Enviar</Button></>}>
+      <p className="rounded-[12px] bg-paper-soft p-4 text-[15px] font-bold leading-snug">{question.text}</p>
+      {analysts.length > 1 ? (
+        <Field label="Analista" error={errors.assignee}>
+          {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={assignee} placeholder="Escolher o analista…" onChange={setAssignee} options={analysts.map((a) => ({ value: a.userId!, label: a.name, hint: a.email }))} />}
+        </Field>
+      ) : (
+        <p className="text-[14px]">Para: <strong>{analysts[0].name}</strong></p>
+      )}
+      <Field label="Prazo" optional hint="Sem prazo, a pergunta fica sem data limite." error={errors.due} className="max-w-[260px]">
+        {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}
+      </Field>
+      {delegate.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{delegate.error.message}</p>}
+    </Modal>
+  )
+}

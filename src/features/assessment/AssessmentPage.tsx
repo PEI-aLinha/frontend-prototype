@@ -1,8 +1,8 @@
 import { Link } from 'react-router'
-import { CheckCircle2, Clock, Lock } from 'lucide-react'
+import { CheckCircle2, Clock } from 'lucide-react'
 import { useAssessment, useUsers } from '../../api/queries'
 import { useTenant } from '../../core/tenant'
-import { Avatar, Card, Chip, ErrorState, Eyebrow, Explainer, NextSteps, Note, PageHeader, ProgressBar, SkeletonRows, Term } from '../../ui'
+import { Avatar, Card, Chip, ErrorState, Eyebrow, Explainer, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term } from '../../ui'
 
 const STATUS = { em_curso: 'Em curso', submetida: 'Concluída · a aguardar validação', validada: 'Validada pela consultora' } as const
 
@@ -75,7 +75,6 @@ export function AssessmentPage() {
               { label: 'Validação pela consultora', done: a.status === 'validada', hint: 'A Marta revê as respostas e valida o roadmap.' },
               { label: 'Ver resultados e roadmap', done: false, to: a.status === 'validada' ? `/org/${org.slug}/roadmap` : undefined, cta: 'Abrir' },
             ]} />
-            <Note><Lock className="mr-1 inline size-3.5 align-[-2px]" aria-hidden />O questionário completo faz parte do plugin Avaliação e não está incluído neste protótipo de Riscos e Ativos.</Note>
           </aside>
         </div>
       )}

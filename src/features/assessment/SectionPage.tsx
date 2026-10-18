@@ -1,11 +1,10 @@
 import { Link, useParams } from 'react-router'
 import { ArrowLeft, CheckCircle2, Clock, UserRound } from 'lucide-react'
-import type { AnswerChoice, AssessmentQuestion, Task, User } from '../../api/contracts'
+import type { AssessmentQuestion, Task, User } from '../../api/contracts'
 import { useAssessment, useAssessmentQuestions, useTasks, useUsers } from '../../api/queries'
 import { useTenant } from '../../core/tenant'
 import { Card, Chip, EmptyState, ErrorState, Note, PageHeader, ProgressBar, SkeletonRows } from '../../ui'
-
-const CHOICE_LABEL: Record<AnswerChoice, string> = { sim: 'Sim', parcial: 'Em parte', nao: 'Não', nao_sei: 'Não sei' }
+import { CHOICE_LABEL } from './choices'
 
 /** Questions of one assessment section, with the state of each one. */
 export function SectionPage() {
@@ -38,7 +37,7 @@ export function SectionPage() {
                 <Card className="flex items-start gap-4">
                   <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-paper-soft text-[13px] font-bold text-ink-soft" aria-hidden>{i + 1}</span>
                   <div className="flex min-w-0 flex-col gap-2">
-                    <p className="text-[15px] font-bold leading-snug">{q.text}</p>
+                    <Link to={q.id} className="text-[15px] font-bold leading-snug hover:text-brand hover:underline">{q.text}</Link>
                     <QuestionState question={q} task={task} assignee={users.data?.find((u) => u.id === task?.assigneeId)} />
                   </div>
                 </Card>
@@ -57,7 +56,7 @@ function QuestionState({ question, task, assignee }: { question: AssessmentQuest
     return (
       <p className="flex flex-wrap items-center gap-2 text-[13px] text-ink-soft">
         <CheckCircle2 className="size-4 text-brand" aria-hidden />
-        <span>Respondida{byAnalyst && assignee ? ` pelo ${assignee.name}` : ''}:</span>
+        <span>Respondida{byAnalyst && assignee ? ` por ${assignee.name}` : ''}:</span>
         <Chip>{CHOICE_LABEL[question.answer.choice]}</Chip>
       </p>
     )
@@ -66,7 +65,7 @@ function QuestionState({ question, task, assignee }: { question: AssessmentQuest
     return (
       <p className="flex items-center gap-2 text-[13px] text-ink-soft">
         <UserRound className="size-4" aria-hidden />
-        <span>Delegada{assignee ? ` ao ${assignee.name}` : ''}: <strong className="text-ink">à espera de resposta</strong></span>
+        <span>Delegada{assignee ? ` a ${assignee.name}` : ''}: <strong className="text-ink">à espera de resposta</strong></span>
       </p>
     )
   }
