@@ -73,6 +73,13 @@ const freshConversation = (): Conversation => ({
   awaitingReview: false,
 })
 
+/** Junta por id, sem nunca perder mensagens (uma resposta do servidor pode estar desatualizada). */
+const mergeMessages = (local: ChatMessage[], server: ChatMessage[]): ChatMessage[] => {
+  const byId = new Map<string, ChatMessage>()
+  for (const m of [...local, ...server]) byId.set(m.id, m)
+  return [...byId.values()].sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''))
+}
+
 /**
  * Chatbot flutuante: botão (fechado) <-> painel normal <-> painel expandido (conversas à esquerda).
  * Montar UMA vez num layout que não é desmontado entre páginas (por cima do <Outlet />).
@@ -116,7 +123,10 @@ export function ChatWidget({
   const activeRef = useRef(activeId)
   /** Conversas alteradas localmente e ainda por guardar. Só estas são enviadas ao servidor. */
   const dirty = useRef<Set<string>>(new Set())
+  /** Conversas fechadas localmente: a sincronização não as pode ressuscitar. */
   const closed = useRef<Set<string>>(new Set())
+  /** Fila de saves: chegam ao servidor pela ordem em que foram pedidos. */
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve())
 
   useEffect(() => {
     openRef.current = open
@@ -152,12 +162,17 @@ export function ChatWidget({
         }
         const local = next[i]
         if (local.serverUpdatedAt === server.serverUpdatedAt) continue
+        // versão do servidor mais antiga do que a que já temos: ignorar
+        if (local.serverUpdatedAt && server.serverUpdatedAt && server.serverUpdatedAt < local.serverUpdatedAt) continue
         if (dirty.current.has(local.id) || local.typing) continue // não pisar alterações locais
         const viewing = openRef.current && activeRef.current === local.id
-        const hasNew = local.messages.at(-1)?.id !== server.messages.at(-1)?.id || local.messages.length !== server.messages.length
+        const merged = mergeMessages(local.messages, server.messages)
+          // o aviso "Em revisão" só vale enquanto a conversa estiver à espera de revisão
+          .filter((m) => server.awaitingReview || m.role !== 'notice')
+        const hasNew = local.messages.at(-1)?.id !== merged.at(-1)?.id || local.messages.length !== merged.length
         next[i] = {
           ...local,
-          messages: server.messages,
+          messages: merged,
           awaitingReview: server.awaitingReview,
           topic: server.topic ?? local.topic,
           createdAt: server.createdAt ?? local.createdAt,
@@ -179,27 +194,31 @@ export function ChatWidget({
     conversations
       .filter((c) => ids.includes(c.id) && (!canReview || c.awaitingReview))
       .forEach((c) => {
-        Promise.resolve(onSaveConversation(c)).catch(() => toast.show('Não foi possível guardar a conversa.', 'error'))
+        saveQueue.current = saveQueue.current
+          .then(() => onSaveConversation(c))
+          .catch(() => toast.show('Não foi possível guardar a conversa.', 'error'))
       })
   }, [canReview, conversations, loading, onSaveConversation, ready, toast])
 
   // Ao abrir ou trocar de conversa: limpa o "não lida"; Esc minimiza
   useEffect(() => {
-    if (!active) 
-      return null
     if (!open) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setConversations((prev) => prev.map((c) => (c.id === activeId && c.unread ? { ...c, unread: false } : c)))
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
+  }, [open, activeId])
+
+  // Rede de segurança: nunca ficar sem conversas
+  useEffect(() => {
     if (conversations.length === 0) {
-    const c = freshConversation()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setConversations([c])
-    setActiveId(c.id)
-  }
-  }, [open, activeId, conversations.length, active])
+      const c = freshConversation()
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConversations([c])
+      setActiveId(c.id)
+    }
+  }, [conversations.length])
 
   /** Alteração local que deve ser guardada no servidor. */
   const patch = (id: string, fn: (c: Conversation) => Conversation) => {
@@ -222,7 +241,7 @@ export function ChatWidget({
 
   const send = async (raw: string, from?: Suggestion) => {
     const text = raw.trim()
-    if (!text || active.typing) return
+    if (!text || !active || active.typing) return
     const id = active.id
     const userMsg: ChatMessage = { id: newChatId('msg'), role: senderRole, authorId: senderId, text, createdAt: new Date().toISOString() }
     const history = [...active.messages, userMsg].filter((m) => m.role !== 'notice')
@@ -283,6 +302,9 @@ export function ChatWidget({
     Promise.resolve(onDeleteConversation?.(id)).catch(() => toast.show('Não foi possível apagar a conversa.', 'error'))
   }
 
+  // Todos os hooks já correram: seguro devolver cedo
+  if (!active) return null
+
   if (!open) {
     return (
       <button
@@ -316,7 +338,7 @@ export function ChatWidget({
 
   const bodyProps = {
     conversations,
-    activeId,
+    activeId: active.id,
     canAdd,
     onSelect: setActiveId,
     onAdd: addConversation,
@@ -330,6 +352,7 @@ export function ChatWidget({
       const id = active.id
       try {
         // garante que a última mensagem da consultora está no servidor antes de rever
+        await saveQueue.current
         await onSaveConversation?.(active)
         dirty.current.delete(id)
         await onReview(id)

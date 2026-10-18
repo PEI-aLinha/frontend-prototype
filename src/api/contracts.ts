@@ -439,6 +439,7 @@ export interface ChatConversation {
   messages: ChatStoredMessage[]
   topic?: string
   awaitingReview: boolean
+  reviewedMessageCount?: number
   createdAt: IsoDate
   updatedAt: IsoDate
 }

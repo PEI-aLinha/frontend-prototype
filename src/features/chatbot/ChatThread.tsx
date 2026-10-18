@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
-import { Check, Clock, Send } from 'lucide-react'
+import { Check, Clock, Send, Sparkles, UserCheck } from 'lucide-react'
 import type { Conversation, Suggestion } from './ChatTypes'
 import { Button, TextInput } from '../../ui'
 
@@ -15,10 +15,18 @@ type ChatThreadProps = {
   onReview?: () => void
 }
 
+const LABEL = 'font-mono text-[10px] uppercase tracking-[0.1em]'
+
 /** Mensagens da conversa ativa + campo de escrita. */
 export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, onReview }: ChatThreadProps) {
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Consultora: conversa vazia (nada para rever), à espera de revisão, ou já revista
+  const empty = !!canReview && !active.awaitingReview && !active.serverUpdatedAt
+  const readOnly = !!canReview && !active.awaitingReview && !empty
+  // O aviso "Em revisão" é para o cliente; a consultora não precisa dele
+  const messages = canReview ? active.messages.filter((m) => m.role !== 'notice') : active.messages
 
   // Scroll automático para a última mensagem
   useEffect(() => {
@@ -31,8 +39,19 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
     inputRef.current?.focus()
   }, [active.id])
 
+  const placeholder = canReview ? 'Escreva a sua resposta ao cliente…' : 'Pergunte sobre riscos, ativos ou roadmap…'
+
   return (
     <div className="flex min-w-0 flex-1 flex-col">
+      {canReview && !empty && (
+        <div role="note" className="flex items-start gap-2.5 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-amber-900">
+          <UserCheck className="mt-0.5 size-4 flex-none" aria-hidden />
+          <p className="text-[12.5px] leading-normal">
+            <strong>Está a ajudar um cliente.</strong> Esta conversa não é sua: o que escrever aqui é enviado ao cliente como resposta da consultora.
+          </p>
+        </div>
+      )}
+
       <div
         ref={listRef}
         role="tabpanel"
@@ -40,28 +59,51 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
         className={`min-h-0 flex-1 overflow-y-auto bg-paper-soft ${expanded ? 'p-6 md:px-8' : 'p-[18px]'}`}
       >
         <div className="mx-auto flex w-full max-w-[760px] flex-col gap-3.5">
-          {active.messages.map((m) =>
-            m.role === 'notice' ? (
-              <div key={m.id} role="status" className="flex items-start gap-2.5 rounded-[12px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-amber-900">
-                <Clock className="mt-0.5 size-4 flex-none" aria-hidden />
-                <div className="flex flex-col gap-1">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.1em]">Em revisão</span>
-                  <p className="text-[13px] leading-normal">{m.text}</p>
+          {empty && (
+            <p className="py-10 text-center text-[14px] text-ink-soft">Sem conversas de clientes para rever.</p>
+          )}
+
+          {!empty && messages.map((m) => {
+            if (m.role === 'notice') {
+              return (
+                <div key={m.id} role="status" className="flex items-start gap-2.5 rounded-[12px] border border-amber-200 bg-amber-50 px-3.5 py-3 text-amber-900">
+                  <Clock className="mt-0.5 size-4 flex-none" aria-hidden />
+                  <div className="flex flex-col gap-1">
+                    <span className={LABEL}>Em revisão</span>
+                    <p className="text-[13px] leading-normal">{m.text}</p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div key={m.id} className="flex flex-col gap-2">
-                <div
-                  className={
-                    m.role === 'user'
-                      ? 'max-w-[85%] self-end whitespace-pre-wrap break-words rounded-[16px_16px_4px_16px] bg-brand px-3.5 py-2.5 text-[14px] leading-normal text-white'
-                      : `max-w-[85%] self-start whitespace-pre-wrap break-words rounded-[16px_16px_16px_4px] border px-3.5 py-2.5 text-[14px] leading-normal ${
-                          m.error ? 'border-red-200 bg-red-50 text-red-800' : 'border-brand-soft bg-white'
-                        }`
-                  }
-                >
-                  {m.text}
-                </div>
+              )
+            }
+
+            const fromConsultant = m.role === 'bot' && !!m.authorId
+            const fromAi = m.role === 'bot' && !m.authorId
+            const bubble = m.role === 'user'
+              ? 'max-w-[85%] self-end whitespace-pre-wrap break-words rounded-[16px_16px_4px_16px] bg-brand px-3.5 py-2.5 text-[14px] leading-normal text-white'
+              : `max-w-[85%] self-start whitespace-pre-wrap break-words rounded-[16px_16px_16px_4px] border px-3.5 py-2.5 text-[14px] leading-normal ${
+                  m.error
+                    ? 'border-red-200 bg-red-50 text-red-800'
+                    : fromConsultant
+                      ? 'border-brand bg-signal-soft/30'
+                      : 'border-brand-soft bg-white'
+                }`
+
+            return (
+              <div key={m.id} className="flex flex-col gap-1">
+                {fromConsultant && (
+                  <span className={`flex items-center gap-1 self-start font-bold text-brand ${LABEL}`}>
+                    <UserCheck className="size-3" aria-hidden />Consultora
+                  </span>
+                )}
+                {fromAi && !m.error && (
+                  <span className={`flex items-center gap-1 self-start text-muted ${LABEL}`}>
+                    <Sparkles className="size-3" aria-hidden />Assistente IA
+                  </span>
+                )}
+                {canReview && m.role === 'user' && (
+                  <span className={`self-end text-muted ${LABEL}`}>Cliente</span>
+                )}
+                <div className={bubble}>{m.text}</div>
                 {m.source && (
                   <Link to={m.source.to} className="flex max-w-[85%] flex-col gap-1.5 self-start rounded-[12px] border border-brand-soft bg-paper px-3.5 py-3 text-brand no-underline hover:underline">
                     <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">{m.source.label}</span>
@@ -70,8 +112,8 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                   </Link>
                 )}
               </div>
-            ),
-          )}
+            )
+          })}
 
           {active.typing && (
             <div role="status" aria-label="A escrever" className="flex gap-1.5 self-start rounded-[16px_16px_16px_4px] border border-brand-soft bg-white px-4 py-3.5">
@@ -81,7 +123,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
             </div>
           )}
 
-          {active.messages.length <= 1 && !active.typing && (
+          {active.messages.length <= 1 && !active.typing && !empty && (
             <div className="flex flex-wrap gap-2 pt-1">
               {suggestions.map((s) => (
                 <button key={s.label} type="button" onClick={() => onSend(s.label, s)} className="min-h-11 rounded-[22px] border border-brand-soft bg-white px-3.5 py-2 text-left text-[13px] font-bold text-brand hover:bg-paper">
@@ -100,31 +142,39 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
               Marcar como revisto
             </Button>
           )}
-          <form
-            noValidate
-            className="flex items-center gap-2"
-            onSubmit={(e) => { e.preventDefault(); onSend(active.draft) }}
-          >
-            <TextInput
-              ref={inputRef}
-              value={active.draft}
-              onChange={(e) => onDraftChange(e.target.value)}
-              placeholder="Pergunte sobre riscos, ativos ou roadmap…"
-              aria-label="Escreva a sua pergunta"
-              maxLength={1000}
-              className="h-[46px] min-w-0 flex-1 rounded-[12px] border-brand-soft px-3.5 text-[14px] focus-visible:outline-2 focus-visible:outline-brand"
-            />
-            <Button
-              type="submit"
-              disabled={!active.draft.trim() || active.typing}
-              aria-label="Enviar mensagem"
-              className="size-[46px] flex-none !rounded-[12px] !p-0 disabled:cursor-not-allowed disabled:opacity-40"
-              icon={<Send className="size-[18px]" aria-hidden />}
+          {empty ? null : readOnly ? (
+            <p className="rounded-[12px] bg-paper-soft px-3.5 py-3 text-center text-[13px] text-ink-soft">
+              Conversa já revista. Só pode ver as mensagens até ao momento da revisão.
+            </p>
+          ) : (
+            <form
+              noValidate
+              className="flex items-center gap-2"
+              onSubmit={(e) => { e.preventDefault(); onSend(active.draft) }}
             >
-              <span className="sr-only">Enviar</span>
-            </Button>
-          </form>
-          <p className="text-center text-[11px] text-muted">As respostas de IA podem conter erros. Confirme com a consultora.</p>
+              <TextInput
+                ref={inputRef}
+                value={active.draft}
+                onChange={(e) => onDraftChange(e.target.value)}
+                placeholder={placeholder}
+                aria-label={placeholder}
+                maxLength={1000}
+                className="h-[46px] min-w-0 flex-1 rounded-[12px] border-brand-soft px-3.5 text-[14px] focus-visible:outline-2 focus-visible:outline-brand"
+              />
+              <Button
+                type="submit"
+                disabled={!active.draft.trim() || active.typing}
+                aria-label="Enviar mensagem"
+                className="size-[46px] flex-none !rounded-[12px] !p-0 disabled:cursor-not-allowed disabled:opacity-40"
+                icon={<Send className="size-[18px]" aria-hidden />}
+              >
+                <span className="sr-only">Enviar</span>
+              </Button>
+            </form>
+          )}
+          {!canReview && (
+            <p className="text-center text-[11px] text-muted">As respostas de IA podem conter erros. Confirme com a consultora.</p>
+          )}
         </div>
       </footer>
     </div>
