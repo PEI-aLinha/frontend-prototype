@@ -136,21 +136,21 @@ const ASSET_TASK: Task = {
   assigneeId: PEDRO, assignedBy: RUI, dueDate: '2026-10-15', status: 'pendente', expectedCount: 4, createdAt: at(13, '11:20'),
 }
 
-function action(id: string, priority: number, description: string, legalObligation: string, requiredEvidence: string, findingTitle: string, controlCode: string, dueDate: string, assignedTo: string | null): RemediationAction {
+function action(id: string, priority: number, description: string, plainLanguage: string, legalObligation: string, requiredEvidence: string, findingTitle: string, controlCode: string, dueDate: string, assignedTo: string | null): RemediationAction {
   return {
     id, organizationId: ORG_ID, findingId: `fnd-${id.slice(4)}`, description, priority, dueDate, assignedTo,
-    requiredEvidence, status: 'por_iniciar', aiOutputId: `ai-roadmap-${id.slice(4)}`, legalObligation, findingTitle, controlCode, proposedBy: null,
+    requiredEvidence, status: 'por_iniciar', aiOutputId: `ai-roadmap-${id.slice(4)}`, legalObligation, findingTitle, controlCode, proposedBy: null, plainLanguage,
   }
 }
 
 const ACTIONS: RemediationAction[] = [
-  action('act-myciber', 1, 'Registar a entidade no MyCiber', 'RJC (DL 125/2025), art. 25.º — registo junto do CNCS', 'Comprovativo de registo no MyCiber', 'Entidade ainda não registada junto do CNCS', 'GOV.01', '2026-11-15', RUI),
-  action('act-politica-backups', 2, 'Criar política de cópias de segurança', 'NIS2, art. 21.º, n.º 2, al. c) — continuidade das atividades', 'Política aprovada pela administração', 'Sem política formal de cópias de segurança', 'CN.02', '2026-11-30', RUI),
-  action('act-formacao', 3, 'Formação de sensibilização dos trabalhadores', 'NIS2, art. 21.º, n.º 2, al. g) — ciber-higiene e formação', 'Registo de presenças e conteúdos da formação', 'Trabalhadores sem formação em cibersegurança', 'FS.01', '2026-12-15', RUI),
-  action('act-mfa', 4, 'Implementar autenticação multifator (MFA) nos acessos remotos e nas contas de administração', 'NIS2, art. 21.º, n.º 2, al. j) — autenticação multifator', 'Captura da configuração de MFA e lista de contas abrangidas', 'Acessos remotos só com palavra-passe', 'CA.03', '2026-12-31', PEDRO),
-  action('act-teste-backups', 5, 'Testar a reposição das cópias de segurança', 'NIS2, art. 21.º, n.º 2, al. c) — gestão de cópias de segurança', 'Relatório do teste de reposição com data e resultado', 'Reposição das cópias nunca testada', 'CN.03', '2027-01-15', PEDRO),
-  action('act-segmentar-ot', 6, 'Segmentar a rede de produção (OT) da rede administrativa', 'NIS2, art. 21.º, n.º 2, al. a) e e) — segurança das redes', 'Diagrama de rede e regras da firewall', 'Rede de produção e administrativa sem separação', 'RD.02', '2027-02-28', PEDRO),
-  action('act-inventario-lista', 7, 'Comunicar a Lista de Ativos ao CNCS', 'Regulamento n.º 756/2026 — Lista de Ativos', 'Comprovativo de submissão da Lista de Ativos', 'Lista de Ativos por comunicar', 'GOV.04', '2027-01-31', RUI),
+  action('act-myciber', 1, 'Registar a entidade no MyCiber', 'Sem este registo, a empresa não aparece na lista nacional de empresas sujeitas ao regime de cibersegurança.', 'RJC (DL 125/2025), art. 25.º — registo junto do CNCS', 'Comprovativo de registo no MyCiber', 'Entidade ainda não registada junto do CNCS', 'GOV.01', '2026-11-15', RUI),
+  action('act-politica-backups', 2, 'Criar política de cópias de segurança', 'Sem uma política aprovada, ninguém sabe de quanto em quanto tempo as cópias são feitas, e a direção não pode exigir a sua renovação.', 'NIS2, art. 21.º, n.º 2, al. c) — continuidade das atividades', 'Política aprovada pela administração', 'Sem política formal de cópias de segurança', 'CN.02', '2026-11-30', RUI),
+  action('act-formacao', 3, 'Formação de sensibilização dos trabalhadores', 'A maior parte dos ataques começa com uma pessoa a abrir um email falso, e não com uma falha técnica.', 'NIS2, art. 21.º, n.º 2, al. g) — ciber-higiene e formação', 'Registo de presenças e conteúdos da formação', 'Trabalhadores sem formação em cibersegurança', 'FS.01', '2026-12-15', RUI),
+  action('act-mfa', 4, 'Implementar autenticação multifator (MFA) nos acessos remotos e nas contas de administração', 'Com a palavra-passe sozinha, quem roubar uma senha entra na conta. Com um segundo fator, a entrada fica bloqueada.', 'NIS2, art. 21.º, n.º 2, al. j) — autenticação multifator', 'Captura da configuração de MFA e lista de contas abrangidas', 'Acessos remotos só com palavra-passe', 'CA.03', '2026-12-31', PEDRO),
+  action('act-teste-backups', 5, 'Testar a reposição das cópias de segurança', 'Uma cópia que nunca foi restaurada pode estar estragada. Só o teste garante que a reposição funciona.', 'NIS2, art. 21.º, n.º 2, al. c) — gestão de cópias de segurança', 'Relatório do teste de reposição com data e resultado', 'Reposição das cópias nunca testada', 'CN.03', '2027-01-15', PEDRO),
+  action('act-segmentar-ot', 6, 'Segmentar a rede de produção (OT) da rede administrativa', 'Se um computador do escritório for infetado, a rede separada impede que o ataque chegue às máquinas da fábrica.', 'NIS2, art. 21.º, n.º 2, al. a) e e) — segurança das redes', 'Diagrama de rede e regras da firewall', 'Rede de produção e administrativa sem separação', 'RD.02', '2027-02-28', PEDRO),
+  action('act-inventario-lista', 7, 'Comunicar a Lista de Ativos ao CNCS', 'O regulador só sabe que sistemas tem a empresa se a lista for comunicada. Sem isso, não sabe o que proteger.', 'Regulamento n.º 756/2026 — Lista de Ativos', 'Comprovativo de submissão da Lista de Ativos', 'Lista de Ativos por comunicar', 'GOV.04', '2027-01-31', RUI),
 ]
 
 function risk(id: string, threat: string, description: string, assetId: string | null, probability: number, impact: number, day: number, extra: Partial<Risk> = {}): Risk {

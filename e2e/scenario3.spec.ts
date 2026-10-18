@@ -20,6 +20,23 @@ test('Scenario 3 — Rui sees the risks read-only after validation', async ({ pa
   await shot(page, 'c3-03-risco')
 })
 
+test('Scenario 3 — Rui reads the plan in plain language, without the legal citations', async ({ page }) => {
+  await start(page, `${ORG}/roadmap`, 'rui', 'c3')
+  await page.goto(`${ORG}/roadmap?as=rui`)
+  await expect(page.getByText('Como ler esta página')).toBeVisible()
+  await expect(page.getByText('Com a palavra-passe sozinha, quem roubar uma senha entra na conta.', { exact: false }).first()).toBeVisible()
+  await expect(page.getByText('Esta ação está ligada a um risco:', { exact: false }).first()).toBeVisible()
+  await expect(page.getByText('art. 21.º', { exact: false })).toHaveCount(0)
+  await expect(page.getByText('CA.03', { exact: false })).toHaveCount(0)
+  await expect(page.getByText('Origem:', { exact: false })).toHaveCount(0)
+  await expect(page.getByText('Como os riscos mudam o roadmap')).toHaveCount(0)
+  await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeVisible()
+  // The switch works for the client too: the base order is the gap order, where MyCiber is first.
+  await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
+  await expect(page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' }).getByRole('listitem').first()).toContainText('MyCiber')
+  await shot(page, 'c3-04-roadmap-plano')
+})
+
 test('Permissions — before validation Rui cannot see risks and Pedro never can', async ({ page }) => {
   await start(page, `${ORG}/riscos`, 'rui', 'c2')
   await page.goto(`${ORG}/riscos?as=rui`)

@@ -3,6 +3,7 @@ import { ArrowUp, CheckCircle2, ShieldAlert } from 'lucide-react'
 import type { RemediationAction, User } from '../../api/contracts'
 import { useActions, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
 import { ACTION_STATUS_LABEL, dateTime, shortDate } from '../../config/labels'
+import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
@@ -17,12 +18,15 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const org = useTenant()
   const can = useCan()
   const toast = useToast()
+  const { persona } = useSession()
   const actions = useActions(org.id)
   const users = useUsers(org.id)
   const status = useRoadmapStatus(org.id)
   const validate = useValidateRoadmap(org.id)
   const [view, setView] = useState<View>('riscos')
   const [confirm, setConfirm] = useState(false)
+  // The consultant sees the order and why each action sits where it does; the client sees the plan in plain language.
+  const consultant = persona.role === 'consultor'
 
   if (actions.isError || status.isError) {
     return <ErrorState error={actions.error ?? status.error} onRetry={() => { actions.refetch(); status.refetch() }} />
@@ -47,7 +51,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       />
 
       {pending ? null : validated ? (
-        <Note>Roadmap validado {validator ? `por ${validator}` : 'pela consultora'}{status.data?.validatedAt ? ` a ${dateTime(status.data.validatedAt)}` : ''}. O cliente vê as ações e os riscos em só leitura.</Note>
+        <Note>Roadmap validado {validator ? `por ${validator}` : 'pela consultora'}{status.data?.validatedAt ? ` a ${dateTime(status.data.validatedAt)}` : ''}. {consultant ? 'O cliente vê as ações e os riscos em só leitura.' : 'Pode ver as ações e os riscos, mas não os pode alterar.'}</Note>
       ) : (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
           <Chip tone="signal">Avaliação concluída · 14 out.</Chip>
@@ -56,13 +60,23 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         </div>
       )}
 
-      <Explainer id="roadmap" title="Como os riscos mudam o roadmap"
-        intro="A IA propôs uma ordem a partir das lacunas da avaliação. O registo de riscos acrescenta o que é mais grave para esta empresa em concreto."
-        steps={[
-          { title: 'Antes dos riscos', text: 'Ordem proposta pela IA, só com base nas lacunas e nas obrigações legais.' },
-          { title: 'Priorizado pelos riscos', text: <>As ações ligadas a <Term k="risco">riscos</Term> altos sobem para o topo; depois as ligadas a médios. Cada uma mostra porque subiu.</> },
-          { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o cliente vê o plano e os riscos.' },
-        ]} />
+      {consultant ? (
+        <Explainer id="roadmap-consultant" title="Como os riscos mudam o roadmap"
+          intro="A IA propôs uma ordem a partir das lacunas da avaliação. O registo de riscos acrescenta o que é mais grave para esta empresa em concreto."
+          steps={[
+            { title: 'Antes dos riscos', text: 'Ordem proposta pela IA, só com base nas lacunas e nas obrigações legais.' },
+            { title: 'Priorizado pelos riscos', text: <>As ações ligadas a <Term k="risco">riscos</Term> altos sobem para o topo; depois as ligadas a médios. Cada uma mostra porque subiu.</> },
+            { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o cliente vê o plano e os riscos.' },
+          ]} />
+      ) : (
+        <Explainer id="roadmap-client" title="Como ler esta página"
+          intro="Esta é a lista de ações que a empresa pode tomar para fechar as lacunas que a avaliação encontrou. A consultora validou-a."
+          steps={[
+            { title: 'A ordem', text: 'As ações estão ordenadas pela importância para a empresa. As que estão ligadas a riscos registados vêm primeiro.' },
+            { title: 'Cada ação', text: 'Diz o que falta fazer, até quando e quem fica responsável. A prova é o documento que mostra que já está feito.' },
+            { title: 'A consultora', text: 'Ela validou este plano e os riscos por trás dele. Se algo não estiver certo, fale com ela.' },
+          ]} />
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
@@ -76,8 +90,8 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       ) : ranked.length === 0 ? (
         <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
       ) : (
-        <ol className="flex flex-col gap-2.5" aria-label="Ações do roadmap por prioridade">
-          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={view === 'riscos'} />)}
+        <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
+          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={view === 'riscos'} consultant={consultant} />)}
         </ol>
       )}
 
@@ -96,7 +110,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   )
 }
 
-function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean }) {
+function ActionRow({ item, users, showMovement, consultant }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean }) {
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
   const owner = users.find((u) => u.id === a.assignedTo)
@@ -120,16 +134,20 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
             <Chip tone={a.status === 'em_curso' ? 'signal' : 'neutral'}>{ACTION_STATUS_LABEL[a.status]}</Chip>
           </div>
         </div>
-        <p className="mt-1 text-[13px] text-ink-soft">{a.legalObligation}</p>
+        {consultant ? (
+          <p className="mt-1 text-[13px] text-ink-soft">{a.legalObligation}</p>
+        ) : (
+          <p className="mt-1 text-[13px] text-ink-soft">{a.plainLanguage ?? a.findingTitle}</p>
+        )}
         <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-muted">
           <div><dt className="inline">Prazo: </dt><dd className="inline font-semibold text-ink-soft">{a.dueDate ? shortDate(a.dueDate) : '—'}</dd></div>
           <div><dt className="inline">Responsável: </dt><dd className="inline font-semibold text-ink-soft">{owner?.name ?? 'Por atribuir'}</dd></div>
           <div><dt className="inline">Evidência: </dt><dd className="inline font-semibold text-ink-soft">{a.requiredEvidence}</dd></div>
-          <div><dt className="inline">Origem: </dt><dd className="inline font-semibold text-ink-soft">{a.controlCode} · {a.findingTitle}</dd></div>
+          {consultant && <div><dt className="inline">Origem: </dt><dd className="inline font-semibold text-ink-soft">{a.controlCode} · {a.findingTitle}</dd></div>}
         </dl>
         {reason && (
           <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-[8px] bg-signal-soft px-2.5 py-1.5 text-[13px] font-semibold text-brand">
-            <ShieldAlert className="size-4" aria-hidden />{reason}
+            <ShieldAlert className="size-4" aria-hidden />{consultant ? reason : `Esta ação está ligada a um risco: ${topRisk?.riskLabel}`}
           </p>
         )}
         {a.aiOutputId && !status?.validated && <div className="mt-2"><AIBadge /></div>}

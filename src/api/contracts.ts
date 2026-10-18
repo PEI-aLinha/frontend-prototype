@@ -332,6 +332,8 @@ export interface RemediationAction {
   findingTitle: string
   controlCode: string
   proposedBy: Id | null
+  /** What the measure means for the company, in plain language. Shown to the client. */
+  plainLanguage?: string
 }
 
 export interface RoadmapStatus {

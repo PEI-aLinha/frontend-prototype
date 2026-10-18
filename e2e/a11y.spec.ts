@@ -10,6 +10,7 @@ const PAGES: Array<[string, 'rui' | 'pedro' | 'marta', 'c1' | 'c2' | 'c3']> = [
   ['/clientes/componentes-agueda/riscos', 'marta', 'c2'],
   ['/clientes/componentes-agueda/roadmap', 'marta', 'c3'],
   [`${ORG}/riscos`, 'rui', 'c3'],
+  [`${ORG}/roadmap`, 'rui', 'c3'],
   [`${ORG}/inicio`, 'rui', 'c3'],
   [`${ORG}/ambito`, 'rui', 'c1'],
   [`${ORG}/ambito/perguntas`, 'rui', 'c1'],
