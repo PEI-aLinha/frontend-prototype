@@ -117,7 +117,8 @@ function Delegation({ question, task, assignee, open }: { question: AssessmentQu
       </section>
     )
   }
-  if (!open || !members.data) return null
+  // Delegated, but the task is still loading: do not offer to delegate it again.
+  if (!open || !members.data || question.delegatedTaskId) return null
   if (analysts.length === 0) {
     return <Note>Para delegar uma pergunta técnica, convide um analista em <Link to={`/org/${org.slug}/equipa`} className="underline">Equipa</Link>.</Note>
   }
