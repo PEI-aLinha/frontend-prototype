@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { useAssets, useRiskLinks, useRisks, useRoadmapStatus, useServices, useUsers } from '../../api/queries'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
-import { dateTime } from '../../config/labels'
+import { authorNames, dateTime } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { applicableFrameworks, nis2Status } from '../organization/public'
 import { Button, Chip, HighlightCard, NextSteps, PageHeader, StatCard } from '../../ui'
@@ -21,6 +21,7 @@ export function ClientOverviewPage() {
   const highRisks = (risks.data ?? []).filter((r) => computeRiskLevel(r.probability, r.impact).level === 'alto')
   const criticalAssets = (assets.data ?? []).filter((a) => a.criticality === 'alto')
   const covered = criticalAssets.filter((a) => risks.data?.some((r) => r.assetId === a.id)).length
+  const authors = authorNames(assets.data ?? [], users.data ?? [])
   // New client (US01): registration done, nothing else yet.
   const justRegistered = !!roadmap.data && !roadmap.data.assessmentCompletedAt && assets.data?.length === 0
 
@@ -55,7 +56,7 @@ export function ClientOverviewPage() {
       </>)}
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Link to={`${base}/ativos`} className="contents"><StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? '…'} serviços críticos · preenchido pelo Rui e pelo Pedro`} /></Link>
+        <Link to={`${base}/ativos`} className="contents"><StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? '…'} serviços críticos${authors ? ` · preenchido por ${authors}` : ''}`} /></Link>
         <Link to={`${base}/riscos`} className="contents"><StatCard label="Riscos" value={risks.data ? `${risks.data.length} registados` : '…'} caption="Registo segundo a ISO/IEC 27005" /></Link>
         <Link to={`${base}/roadmap`} className="contents"><StatCard label="Roadmap" value={validated ? 'Validado' : 'Por validar'} caption={validated ? 'Visível para o cliente' : 'Proposto pela IA a partir das lacunas'} /></Link>
       </div>

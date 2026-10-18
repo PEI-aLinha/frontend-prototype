@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowUp, CheckCircle2, ShieldAlert } from 'lucide-react'
+import { ArrowDown, ArrowUp, CheckCircle2, ShieldAlert } from 'lucide-react'
 import type { RemediationAction, User } from '../../api/contracts'
 import { useActions, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
 import { ACTION_STATUS_LABEL, dateTime, shortDate } from '../../config/labels'
@@ -31,8 +31,12 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   if (actions.isError || status.isError) {
     return <ErrorState error={actions.error ?? status.error} onRetry={() => { actions.refetch(); status.refetch() }} />
   }
-  const ranked = actions.data ? prioritizeRoadmap(actions.data, view === 'riscos' ? signals : []) : []
+  // Only the risk-prioritized order moves anything; the base order is the AI's proposal as-is.
+  const byRisk = view === 'riscos'
+  const ranked = actions.data ? prioritizeRoadmap(actions.data, byRisk ? signals : []) : []
   const raised = ranked.filter((r) => r.reason).length
+  // An action only falls when a risk-linked one passes it, so every fall has a cause worth naming.
+  const dropped = byRisk ? ranked.filter((r) => r.rank > r.baseRank).length : 0
   const validated = status.data?.validated
   // Until the status resolves, `validated` is undefined and the page would claim the roadmap is not validated yet.
   const pending = status.isPending
@@ -45,7 +49,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
     <>
       <PageHeader
         eyebrow={org.name}
-        title="Avaliação e roadmap"
+        title="Resultados e roadmap"
         subtitle="Ações para fechar as lacunas da avaliação NIS2 + RGPD, ordenadas por prioridade."
         actions={!pending && can('validate', 'roadmap') && !validated && <Button icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
       />
@@ -81,7 +85,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
         <p className="text-[13px] text-ink-soft" aria-live="polite">
-          {view === 'riscos' ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'} por estarem ligadas a riscos.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
+          {byRisk ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
         </p>
       </div>
 
@@ -91,7 +95,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
       ) : (
         <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
-          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={view === 'riscos'} consultant={consultant} validated={validated} />)}
+          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} />)}
         </ol>
       )}
 
@@ -113,14 +117,16 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
 function ActionRow({ item, users, showMovement, consultant, validated }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined }) {
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
+  const rose = moved > 0
+  const fell = moved < 0
   const owner = users.find((u) => u.id === a.assignedTo)
   return (
     <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
         <span className={cn('grid size-9 place-items-center rounded-[10px] text-[15px] font-extrabold', reason ? 'bg-brand text-white' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
-        {moved > 0 && (
-          <span className="mt-0.5 flex flex-col text-[11px] font-bold leading-tight text-brand" aria-label={`Subiu ${moved} posições: era a ${baseRank}.ª`}>
-            <span className="inline-flex items-center"><ArrowUp className="size-3.5" aria-hidden />{moved}</span>
+        {(rose || fell) && (
+          <span className={cn('mt-0.5 flex flex-col text-[11px] font-bold leading-tight', rose ? 'text-brand' : 'text-muted')} aria-label={rose ? `Subiu ${moved} posições: era a ${baseRank}.ª` : `Desceu ${-moved} posições: era a ${baseRank}.ª`}>
+            <span className="inline-flex items-center">{rose ? <ArrowUp className="size-3.5" aria-hidden /> : <ArrowDown className="size-3.5" aria-hidden />}{Math.abs(moved)}</span>
             <span className="font-semibold text-muted line-through">era #{baseRank}</span>
           </span>
         )}
@@ -147,6 +153,11 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
         {reason && (
           <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-[8px] bg-signal-soft px-2.5 py-1.5 text-[13px] font-semibold text-brand">
             <ShieldAlert className="size-4" aria-hidden />{consultant ? reason : `Esta ação está ligada a um risco: ${topRisk?.riskLabel}`}
+          </p>
+        )}
+        {fell && (
+          <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-[8px] bg-paper-soft px-2.5 py-1.5 text-[13px] font-semibold text-ink-soft">
+            <ArrowDown className="size-4" aria-hidden />Desceu porque outras ações ligadas a riscos subiram.
           </p>
         )}
         {a.aiOutputId && !validated && <div className="mt-2"><AIBadge /></div>}

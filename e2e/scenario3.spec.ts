@@ -37,6 +37,15 @@ test('Scenario 3 — Rui reads the plan in plain language, without the legal cit
   await shot(page, 'c3-04-roadmap-plano')
 })
 
+test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {
+  await start(page, `${ORG}/roadmap`, 'rui', 'c3')
+  await page.goto(`${ORG}/roadmap?as=rui`)
+  await expect(page.getByText(/subiram.*desceram por causa dos riscos registados/)).toBeVisible()
+  await expect(page.locator('[aria-label^="Subiu"]').first()).toBeVisible()
+  await expect(page.locator('[aria-label^="Desceu"]').first()).toBeVisible()
+  await expect(page.getByText('Desceu porque outras ações ligadas a riscos subiram.').first()).toBeVisible()
+})
+
 test('Permissions — before validation Rui cannot see risks and Pedro never can', async ({ page }) => {
   await start(page, `${ORG}/riscos`, 'rui', 'c2')
   await page.goto(`${ORG}/riscos?as=rui`)

@@ -3,7 +3,7 @@ import { Link, Navigate, useSearchParams } from 'react-router'
 import { Boxes, Download, FileUp, Layers, Plus, ShieldPlus } from 'lucide-react'
 import { useTasks } from '../../api/queries'
 import type { Asset, Task } from '../../api/contracts'
-import { ASSET_TYPE_LABEL, shortDay } from '../../config/labels'
+import { ASSET_TYPE_LABEL, authorNames, shortDay } from '../../config/labels'
 import { LEVEL_ORDER } from '../../config/riskMatrix'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
@@ -93,6 +93,7 @@ export function AssetsPage() {
 
   const data = inv.data
   const visible = useMemo(() => (data ? applyFilters(data.assets, filters, data) : []), [data, filters])
+  const authors = authorNames(data?.assets ?? [], data?.users ?? [])
 
   if (persona.role === 'analista') {
     // The analyst only works on the assets of their own registration task.
@@ -138,7 +139,7 @@ export function AssetsPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? 'Inventário preenchido pelo Rui Santos e pelo Pedro Almeida. Use-o para registar os riscos.' : undefined} actions={actions} />
+      <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? `Inventário preenchido${authors ? ` por ${authors}` : ''}. Use-o para registar os riscos.` : undefined} actions={actions} />
       <Note>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
       {consultant ? (
         <Explainer id="assets-consultant" intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
