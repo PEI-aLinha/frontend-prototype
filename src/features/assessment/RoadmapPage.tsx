@@ -6,7 +6,7 @@ import { ACTION_STATUS_LABEL, dateTime, shortDate } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  AIBadge, Button, Chip, ErrorState, Explainer, Modal, Note, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
+  AIBadge, Button, Chip, EmptyState, ErrorState, Explainer, Modal, Note, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 
@@ -24,10 +24,14 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const [view, setView] = useState<View>('riscos')
   const [confirm, setConfirm] = useState(false)
 
-  if (actions.isError) return <ErrorState error={actions.error} onRetry={() => actions.refetch()} />
+  if (actions.isError || status.isError) {
+    return <ErrorState error={actions.error ?? status.error} onRetry={() => { actions.refetch(); status.refetch() }} />
+  }
   const ranked = actions.data ? prioritizeRoadmap(actions.data, view === 'riscos' ? signals : []) : []
   const raised = ranked.filter((r) => r.reason).length
   const validated = status.data?.validated
+  // Until the status resolves, `validated` is undefined and the page would claim the roadmap is not validated yet.
+  const pending = status.isPending
 
   return (
     <>
@@ -35,10 +39,10 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         eyebrow={org.name}
         title="Avaliação e roadmap"
         subtitle="Ações para fechar as lacunas da avaliação NIS2 + RGPD, ordenadas por prioridade."
-        actions={can('validate', 'roadmap') && !validated && <Button icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
+        actions={!pending && can('validate', 'roadmap') && !validated && <Button icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
       />
 
-      {validated ? (
+      {pending ? null : validated ? (
         <Note>Roadmap validado por Marta Ferreira{status.data?.validatedAt ? ` a ${dateTime(status.data.validatedAt)}` : ''}. O cliente vê as ações e os riscos em só leitura.</Note>
       ) : (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
@@ -63,7 +67,11 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         </p>
       </div>
 
-      {!actions.data || !users.data ? <SkeletonRows rows={6} /> : (
+      {!actions.data || !users.data || pending ? (
+        <SkeletonRows rows={6} />
+      ) : ranked.length === 0 ? (
+        <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
+      ) : (
         <ol className="flex flex-col gap-2.5" aria-label="Ações do roadmap por prioridade">
           {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={view === 'riscos'} />)}
         </ol>
@@ -121,6 +129,7 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
           </p>
         )}
         {a.aiOutputId && !status?.validated && <div className="mt-2"><AIBadge /></div>}
+        {a.aiOutputId && status?.validated && <div className="mt-2"><Chip tone="outline">Validada pela consultora</Chip></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}
       </div>
     </li>
