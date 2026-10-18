@@ -74,6 +74,15 @@ Os painéis e modais abrem por parâmetro de URL, por isso todos os estados são
 
 Design system: `/_design`.
 
+**Assistente de IA (US18 · US03 · US06)**
+| User story | Persona | Onde | Estado |
+|---|---|---|---|
+| US18 Pedir rascunho de política ao assistente | Rui | `/org/componentes-agueda/inicio` → botão "Pergunta à Alinha" → "Criar rascunho da política de segurança" | Implementada (respostas simuladas) |
+| US03 Editar e aprovar rascunho de política | Marta | Notificação "Resposta do assistente para rever" → `/clientes/componentes-agueda/visao-geral?chat=<id>` → responder → **Marcar como revisto** | Implementada |
+| US06 Preparar notificações de incidente com IA | Marta | — | **Por implementar**: hoje a IA responde à consultora apenas com um placeholder |
+
+Fluxo de demonstração (US18 → US03): o Rui pede um rascunho; a conversa fica **à espera de aprovação** e a Marta é notificada; a Marta responde e marca como revisto; o Rui recebe a notificação e vê a resposta rotulada **Consultora** (as da IA aparecem como **Assistente IA**). Depois da revisão, a Marta mantém a conversa em só leitura até ao momento da revisão. Os pedidos que mencionam rascunho, política, incidente, notificação, CNPD ou relatório vão para revisão (regra provisória em `GlobalChatWidget`).
+
 ## Arquitetura
 
 ```
@@ -86,6 +95,7 @@ src/
 │   ├── assets/     inventário, serviços, tarefas do analista, registo de riscos (plugin Riscos e Ativos)
 │   ├── assessment/ roadmap mínimo e prioritizeRoadmap (plugin Avaliação)
 │   ├── assessment/ também o resumo da avaliação (ecrã do Rui)
+│   ├── chatbot/    assistente flutuante, conversas por organização, fluxo de revisão pela consultora (US18/US03)
 │   ├── integrations/ catálogo só de leitura, sugestões de ativos, evidências (RF37)
 │   ├── home/  portfolio/  tasks/  team/
 ├── ui/             design system (tokens em src/index.css)
@@ -114,7 +124,9 @@ src/
   - Notificações (`notification`), ligações de integração (`integration_connection` com referência ao segredo no OpenBao), `discovered_asset` e `collected_evidence`.
 - **Desvio visual:** o texto "✓ Feito" e outros textos a `signal` (#168C80) não passavam AA sobre branco; passaram a `brand`, com o visto em `signal`.
 - **Tokens de risco novos:** `risk-low/medium/high` (+ `-ink`), sóbrios e com contraste AA testado; os níveis têm sempre ícone e texto.
+- **D5 — Conversas do assistente.** Novas entidades `chat_conversation` (com `scope_key`, `topic`, `awaiting_review` e `reviewed_message_count`) e `chat_message` (com `role`, `author_id`, `source`). A consultora só vê conversas à espera de revisão ou já revistas, e só até ao momento da revisão; esta regra tem de ser aplicada no servidor.
 
 ## Fora do âmbito
 
 Backend real, Keycloak/MFA, envio real de emails, integração com CNCS/MyCiber, ligação real a fornecedores (o consentimento é simulado), IA nova (a ajuda da pergunta técnica é texto pré-gerado e rotulado), questionário completo da Avaliação (só o resumo e a pergunta delegada).
+IA real (as respostas do assistente e a ajuda da pergunta técnica são texto simulado e rotulado), geração de notificações de incidente com IA (US06), questionário completo da Avaliação (só o resumo e a pergunta delegada).

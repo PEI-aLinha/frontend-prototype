@@ -60,9 +60,12 @@ const mockReply = (text: string): Promise<BotReply> =>
   )
 
 const deriveTopic = (text: string) => {
-  const s = text.replace(/\s+/g, ' ').replace(/[?!.]+$/, '').trim()
-  return s.length > 34 ? `${s.slice(0, 33).trimEnd()}…` : s
-}
+  let s = text.replace(/\s+/g, ' ').trim();
+  while (s.length > 0 && '?!.'.includes(s[s.length - 1])) {
+    s = s.slice(0, -1);
+  }
+  return s.length > 34 ? `${s.slice(0, 33).trimEnd()}…` : s;
+};
 
 const freshConversation = (): Conversation => ({
   id: newChatId('chat'),
@@ -88,8 +91,8 @@ export function ChatWidget({
   onSend,
   onSummarize,
   suggestions = DEFAULT_SUGGESTIONS,
-  title: titleProp = 'Assistente Alinha',
-  subtitle: subtitleProp = 'NIS2 + RGPD',
+  title = 'Assistente Alinha',
+  subtitle = 'NIS2 + RGPD',
   defaultOpen = false,
   maxConversations = 8,
   initialConversations,
@@ -106,9 +109,6 @@ export function ChatWidget({
   initialConversationId,
 }: ChatWidgetProps) {
   const toast = useToast()
-  const title = canReview ? 'Conversas de clientes' : titleProp
-  const subtitle = canReview ? 'Modo consultora · a ajudar clientes' : subtitleProp
-
   const [boot] = useState(() => {
     const list = initialConversations?.length ? initialConversations : [freshConversation()]
     return { conversations: list, activeId: initialConversationId ?? list[0].id, open: defaultOpen, expanded: false }
@@ -321,7 +321,7 @@ export function ChatWidget({
           aria-hidden
           className="ml-0 max-w-0 overflow-hidden whitespace-nowrap text-[14px] font-bold opacity-0 transition-all duration-200 group-hover:ml-2.5 group-hover:max-w-[200px] group-hover:opacity-100 group-focus-visible:ml-2.5 group-focus-visible:max-w-[200px] group-focus-visible:opacity-100"
         >
-          {canReview ? 'Conversas para rever' : 'Pergunta à Alinha'}
+          Pergunta à Alinha
         </span>
         {hasUnread && (
           <span className="absolute -right-0.5 -top-0.5 size-3.5 rounded-full border-2 border-white bg-red-500">

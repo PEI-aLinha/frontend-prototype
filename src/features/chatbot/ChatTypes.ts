@@ -39,4 +39,4 @@ export type Conversation = {
 
 /** IDs únicos entre utilizadores e sessões (os contadores locais colidiam). */
 export const newChatId = (prefix: string) =>
-  `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+  `${prefix}-${crypto.randomUUID()}`;
