@@ -23,7 +23,7 @@ export const keys = {
   integrations: (org: Id) => ['integrations', org] as const,
   discoveries: (org: Id) => ['discoveries', org] as const,
   evidence: (org: Id) => ['evidence', org] as const,
-  chat: (scopeKey: string) => ['chat', scopeKey] as const,
+  chat: (scopeKey: string, userId: Id) => ['chat', userId, scopeKey] as const,
 }
 
 const enabled = (org: Id | undefined) => ({ enabled: !!org })
@@ -45,28 +45,43 @@ export const useIntegrations = (org?: Id) => useQuery({ queryKey: keys.integrati
 export const useDiscoveries = (org?: Id) => useQuery({ queryKey: keys.discoveries(org!), queryFn: () => api.integrations.listDiscoveries(org!), ...enabled(org) })
 export const useEvidence = (org?: Id) => useQuery({ queryKey: keys.evidence(org!), queryFn: () => api.integrations.listEvidence(org!), ...enabled(org) })
 
-export const useChatHistory = (scopeKey: string) => useQuery({ queryKey: keys.chat(scopeKey), queryFn: () => api.chat.list(scopeKey) })
+export const useChatHistory = (scopeKey: string, userId: Id) => useQuery({
+  queryKey: keys.chat(scopeKey, userId),
+  queryFn: () => api.chat.list(scopeKey),
+  refetchInterval: 5000, // para o Rui ver a resposta da Marta sem recarregar
+})
 
 export const useSendChatMessage = () => useMutation({
   mutationFn: ({ organizationId, messages }: { organizationId?: Id; messages: ChatMessageInput[] }) => api.chat.send(organizationId, messages),
 })
 
-export function useSaveChatConversation(scopeKey: string) {
+export function useSaveChatConversation(scopeKey: string, userId: Id) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (conversation: ChatConversation) => api.chat.save(scopeKey, conversation),
-    onSuccess: (conversation) => qc.setQueryData<ChatConversation[]>(keys.chat(scopeKey), (current = []) => {
+    onSuccess: (conversation) => qc.setQueryData<ChatConversation[]>(keys.chat(scopeKey, userId), (current = []) => {
       const exists = current.some((item) => item.id === conversation.id)
       return exists ? current.map((item) => item.id === conversation.id ? conversation : item) : [...current, conversation]
     }),
   })
 }
 
-export function useDeleteChatConversation(scopeKey: string) {
+export function useDeleteChatConversation(scopeKey: string, userId: Id) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (conversationId: Id) => api.chat.delete(scopeKey, conversationId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.chat(scopeKey) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.chat(scopeKey, userId) }),
+  })
+}
+
+export function useReviewChatConversation(scopeKey: string, userId: Id) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (conversationId: Id) => api.chat.review(scopeKey, conversationId),
+    onSuccess: (conversation) => {
+      qc.setQueryData<ChatConversation[]>(keys.chat(scopeKey, userId), (current = []) => current.map((item) => item.id === conversation.id ? conversation : item))
+      return qc.invalidateQueries({ queryKey: keys.notifications() })
+    },
   })
 }
 

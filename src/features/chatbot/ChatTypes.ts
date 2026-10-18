@@ -3,11 +3,13 @@
 export type ChatSource = { label: string; title: string; to: string; cta?: string }
 
 export type ChatMessage = {
-  id: number
+  id: string
   role: 'user' | 'bot' | 'notice'
+  authorId?: string
   text: string
   source?: ChatSource
   error?: boolean
+  createdAt?: string
 }
 
 export type BotReplyObject = { text: string; source?: ChatSource; notice?: string }
@@ -22,7 +24,7 @@ export type Suggestion = {
 }
 
 export type Conversation = {
-  id: number
+  id: string
   messages: ChatMessage[]
   draft: string
   typing: boolean
@@ -30,4 +32,11 @@ export type Conversation = {
   awaitingReview: boolean
   /** Resumo do tema, mostrado no separador / barra lateral. */
   topic?: string
+  createdAt?: string
+  /** `updatedAt` da versão do servidor que esta conversa reflete (para saber quando voltar a sincronizar). */
+  serverUpdatedAt?: string
 }
+
+/** IDs únicos entre utilizadores e sessões (os contadores locais colidiam). */
+export const newChatId = (prefix: string) =>
+  `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`

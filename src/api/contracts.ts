@@ -297,7 +297,7 @@ export interface DirectoryApi {
   getToday(): Promise<IsoDate>
 }
 
-export type NotificationKind = 'tarefa' | 'tarefa_concluida' | 'lembrete' | 'prazo' | 'comentario' | 'roadmap' | 'avaliacao' | 'integracao' | 'risco'
+export type NotificationKind = 'tarefa' | 'tarefa_concluida' | 'lembrete' | 'prazo' | 'comentario' | 'roadmap' | 'avaliacao' | 'integracao' | 'risco' | 'chat'
 
 export interface AppNotification {
   id: Id
@@ -425,6 +425,7 @@ export type ChatMessageRole = 'user' | 'bot' | 'notice'
 export interface ChatStoredMessage {
   id: Id
   role: ChatMessageRole
+  authorId?: Id
   text: string
   source?: { label: string; title: string; to: string; cta?: string }
   error?: boolean
@@ -458,6 +459,7 @@ export interface ChatApi {
   save(scopeKey: string, conversation: ChatConversation): Promise<ChatConversation>
   delete(scopeKey: string, conversationId: Id): Promise<void>
   clear(scopeKey: string): Promise<void>
+  review(scopeKey: string, conversationId: Id): Promise<ChatConversation>
   send(
     organizationId: Id | undefined,
     messages: ChatMessageInput[],

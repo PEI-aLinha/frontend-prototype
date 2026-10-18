@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Maximize2, Minimize2, Minus, Sparkles } from 'lucide-react'
 import { ChatCompact } from './ChatCompact'
 import { ChatExpanded } from './ChatExpanded'
+import { newChatId } from './ChatTypes'
 import type { BotReply, BotReplyObject, ChatMessage, Conversation, Suggestion } from './ChatTypes'
 import { Button, ErrorState, SkeletonRows, useToast } from '../../ui'
 
@@ -10,9 +11,8 @@ export type { BotReply, ChatMessage, Suggestion } from './ChatTypes'
 type ChatWidgetProps = {
   /** Liga ao backend. Sem isto, responde com um texto de exemplo.
    *  `history` não inclui os avisos (role 'notice'). Pode devolver `notice` para mostrar um aviso. */
-  onSend?: (text: string, history: ChatMessage[]) => Promise<BotReply>
-  /** Opcional: devolve um resumo curto (≤ 40 caracteres) do tema da conversa.
-   *  Corre depois da 1.ª resposta e depois de cada 3.ª pergunta. Sem isto, usa a 1.ª pergunta. */
+  onSend?: (text: string, history: ChatMessage[]) => Promise<BotReply | null>
+  /** Opcional: devolve um resumo curto (≤ 40 caracteres) do tema da conversa. */
   onSummarize?: (history: ChatMessage[]) => Promise<string>
   suggestions?: Suggestion[]
   title?: string
@@ -20,17 +20,20 @@ type ChatWidgetProps = {
   defaultOpen?: boolean
   /** Máximo de conversas em paralelo. */
   maxConversations?: number
+  /** Conversas do servidor. Quando mudam, são sincronizadas (sem tocar nas que têm alterações por guardar). */
   initialConversations?: Conversation[]
   loading?: boolean
   error?: unknown
   onRetry?: () => void
   onSaveConversation?: (conversation: Conversation) => Promise<void> | void
-  onDeleteConversation?: (conversationId: number) => Promise<void> | void
+  onDeleteConversation?: (conversationId: string) => Promise<void> | void
+  reviewOnReply?: (text: string) => boolean
+  canReview?: boolean
+  onReview?: (conversationId: string) => Promise<void> | void
+  senderRole?: 'user' | 'bot'
+  senderId?: string
+  initialConversationId?: string
 }
-
-/* ------------------------------------------------------------------ */
-/* Dados de exemplo e persistência (mock) — substituir pelo backend.   */
-/* ------------------------------------------------------------------ */
 
 const GREETING =
   'Olá! Sou o assistente da Alinha. Posso ajudar a perceber os riscos, o roadmap e os requisitos da NIS2 e do RGPD.'
@@ -61,9 +64,9 @@ const deriveTopic = (text: string) => {
   return s.length > 34 ? `${s.slice(0, 33).trimEnd()}…` : s
 }
 
-const freshConversation = (id: number, messageId: number): Conversation => ({
-  id,
-  messages: [{ id: messageId, role: 'bot', text: GREETING }],
+const freshConversation = (): Conversation => ({
+  id: newChatId('chat'),
+  messages: [{ id: newChatId('msg'), role: 'bot', text: GREETING, createdAt: new Date().toISOString() }],
   draft: '',
   typing: false,
   unread: false,
@@ -73,9 +76,6 @@ const freshConversation = (id: number, messageId: number): Conversation => ({
 /**
  * Chatbot flutuante: botão (fechado) <-> painel normal <-> painel expandido (conversas à esquerda).
  * Montar UMA vez num layout que não é desmontado entre páginas (por cima do <Outlet />).
- *
- * Ficheiros: ChatCompact (versão normal), ChatExpanded (versão expandida),
- * ChatThread (mensagens + campo de escrita, partilhado), chatTypes (tipos).
  */
 export function ChatWidget({
   onSend,
@@ -91,22 +91,32 @@ export function ChatWidget({
   onRetry,
   onSaveConversation,
   onDeleteConversation,
+  reviewOnReply,
+  canReview = false,
+  onReview,
+  senderRole = 'user',
+  senderId,
+  initialConversationId,
 }: ChatWidgetProps) {
   const toast = useToast()
-  const [boot] = useState(() => ({ conversations: initialConversations?.length ? initialConversations : [freshConversation(1, 1)], activeId: initialConversations?.[0]?.id ?? 1, open: defaultOpen, expanded: false }))
+  const [boot] = useState(() => {
+    const list = initialConversations?.length ? initialConversations : [freshConversation()]
+    return { conversations: list, activeId: initialConversationId ?? list[0].id, open: defaultOpen, expanded: false }
+  })
   const hydrated = useRef(initialConversations !== undefined)
   const [ready, setReady] = useState(initialConversations !== undefined)
-  const nextId = useRef(Math.max(100, ...boot.conversations.flatMap((c) => c.messages.map((m) => m.id))) + 1)
-  const nextConvId = useRef(Math.max(...boot.conversations.map((c) => c.id)) + 1)
 
   const [open, setOpen] = useState(boot.open)
   const [expanded, setExpanded] = useState(boot.expanded)
   const [conversations, setConversations] = useState<Conversation[]>(boot.conversations)
-  const [activeId, setActiveId] = useState<number>(boot.activeId)
+  const [activeId, setActiveId] = useState<string>(boot.activeId)
 
   // Refs para os callbacks assíncronos verem sempre o estado atual
   const openRef = useRef(open)
   const activeRef = useRef(activeId)
+  /** Conversas alteradas localmente e ainda por guardar. Só estas são enviadas ao servidor. */
+  const dirty = useRef<Set<string>>(new Set())
+  const closed = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     openRef.current = open
@@ -117,37 +127,91 @@ export function ChatWidget({
   const hasUnread = conversations.some((c) => c.unread)
   const canAdd = conversations.length < maxConversations
 
+  // Hidratação inicial + sincronização com o servidor (ex.: a consultora respondeu)
   useEffect(() => {
-    if (initialConversations === undefined || hydrated.current) return
-    const next = initialConversations.length ? initialConversations : [freshConversation(1, nextId.current++)]
-    setConversations(next)
-    setActiveId(next[0].id)
-    hydrated.current = true
-    setReady(true)
-  }, [initialConversations])
+    if (initialConversations === undefined) return
+    if (!hydrated.current) {
+      const next = initialConversations.length ? initialConversations : [freshConversation()]
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setConversations(next)
+      setActiveId(next.find((c) => c.id === initialConversationId)?.id ?? next[0].id)
+      hydrated.current = true
+      setReady(true)
+      return
+    }
+    setConversations((prev) => {
+      let changed = false
+      const next = [...prev]
+      for (const server of initialConversations) {
+        if (closed.current.has(server.id)) continue
+        const i = next.findIndex((c) => c.id === server.id)
+        if (i === -1) {
+          next.push(server)
+          changed = true
+          continue
+        }
+        const local = next[i]
+        if (local.serverUpdatedAt === server.serverUpdatedAt) continue
+        if (dirty.current.has(local.id) || local.typing) continue // não pisar alterações locais
+        const viewing = openRef.current && activeRef.current === local.id
+        const hasNew = local.messages.at(-1)?.id !== server.messages.at(-1)?.id || local.messages.length !== server.messages.length
+        next[i] = {
+          ...local,
+          messages: server.messages,
+          awaitingReview: server.awaitingReview,
+          topic: server.topic ?? local.topic,
+          createdAt: server.createdAt ?? local.createdAt,
+          serverUpdatedAt: server.serverUpdatedAt,
+          unread: local.unread || (hasNew && !viewing),
+        }
+        changed = true
+      }
+      return changed ? next : prev
+    })
+  }, [initialConversationId, initialConversations])
 
+  // Guarda apenas o que foi alterado localmente (não a hidratação, nem cada tecla do rascunho)
   useEffect(() => {
     if (!onSaveConversation || !ready || loading) return
-    conversations.forEach((conversation) => {
-      Promise.resolve(onSaveConversation(conversation)).catch(() => toast.show('Não foi possível guardar a conversa.', 'error'))
-    })
-  }, [conversations, loading, onSaveConversation, ready, toast])
+    const ids = [...dirty.current]
+    if (ids.length === 0) return
+    dirty.current.clear()
+    conversations
+      .filter((c) => ids.includes(c.id) && (!canReview || c.awaitingReview))
+      .forEach((c) => {
+        Promise.resolve(onSaveConversation(c)).catch(() => toast.show('Não foi possível guardar a conversa.', 'error'))
+      })
+  }, [canReview, conversations, loading, onSaveConversation, ready, toast])
 
   // Ao abrir ou trocar de conversa: limpa o "não lida"; Esc minimiza
   useEffect(() => {
+    if (!active) 
+      return null
     if (!open) return
-    // Synchronizes the selected conversation's unread badge when the panel opens.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setConversations((prev) => prev.map((c) => (c.id === activeId && c.unread ? { ...c, unread: false } : c)))
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [open, activeId])
+    if (conversations.length === 0) {
+    const c = freshConversation()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setConversations([c])
+    setActiveId(c.id)
+  }
+  }, [open, activeId, conversations.length, active])
 
-  const patch = (id: number, fn: (c: Conversation) => Conversation) =>
+  /** Alteração local que deve ser guardada no servidor. */
+  const patch = (id: string, fn: (c: Conversation) => Conversation) => {
+    dirty.current.add(id)
+    setConversations((prev) => prev.map((c) => (c.id === id ? fn(c) : c)))
+  }
+
+  /** Alteração só de interface (rascunho, etc.): não guarda. */
+  const patchLocal = (id: string, fn: (c: Conversation) => Conversation) =>
     setConversations((prev) => prev.map((c) => (c.id === id ? fn(c) : c)))
 
-  const receive = (id: number, added: ChatMessage[], awaitingReview = false) =>
+  const receive = (id: string, added: ChatMessage[], awaitingReview = false) =>
     patch(id, (c) => ({
       ...c,
       messages: [...c.messages, ...added],
@@ -160,7 +224,7 @@ export function ChatWidget({
     const text = raw.trim()
     if (!text || active.typing) return
     const id = active.id
-    const userMsg: ChatMessage = { id: nextId.current++, role: 'user', text }
+    const userMsg: ChatMessage = { id: newChatId('msg'), role: senderRole, authorId: senderId, text, createdAt: new Date().toISOString() }
     const history = [...active.messages, userMsg].filter((m) => m.role !== 'notice')
     patch(id, (c) => ({
       ...c,
@@ -171,13 +235,18 @@ export function ChatWidget({
     }))
     try {
       const reply = await (onSend ? onSend(text, history) : mockReply(text))
+      if (reply === null) {
+        receive(id, [])
+        return
+      }
       const body: BotReplyObject = typeof reply === 'string' ? { text: reply } : reply
       const { notice: replyNotice, ...botBody } = body
       const noticeText = replyNotice ?? from?.notice
-      const botMsg: ChatMessage = { id: nextId.current++, role: 'bot', ...botBody }
+      const stamp = new Date().toISOString()
+      const botMsg: ChatMessage = { id: newChatId('msg'), role: 'bot', createdAt: stamp, ...botBody }
       const added: ChatMessage[] = [botMsg]
-      if (noticeText) added.push({ id: nextId.current++, role: 'notice', text: noticeText })
-      receive(id, added, !!noticeText)
+      if (noticeText) added.push({ id: newChatId('msg'), role: 'notice', text: noticeText, createdAt: stamp })
+      receive(id, added, reviewOnReply?.(text) || !!noticeText)
 
       // Resumo do tema (opcional, em segundo plano)
       const userCount = history.filter((m) => m.role === 'user').length
@@ -192,21 +261,23 @@ export function ChatWidget({
     } catch {
       toast.show('Não foi possível responder agora. Tente novamente.', 'error')
       receive(id, [
-        { id: nextId.current++, role: 'bot', error: true, text: 'Não consegui responder agora. Tente novamente daqui a pouco.' },
+        { id: newChatId('msg'), role: 'bot', error: true, text: 'Não consegui responder agora. Tente novamente daqui a pouco.', createdAt: new Date().toISOString() },
       ])
     }
   }
 
   const addConversation = () => {
     if (!canAdd) return
-    const c = freshConversation(nextConvId.current++, nextId.current++)
+    const c = freshConversation()
     setConversations((prev) => [...prev, c])
     setActiveId(c.id)
   }
 
-  const closeConversation = (id: number) => {
+  const closeConversation = (id: string) => {
     if (conversations.length <= 1) return
     const remaining = conversations.filter((c) => c.id !== id)
+    dirty.current.delete(id)
+    closed.current.add(id)
     setConversations(remaining)
     if (activeId === id) setActiveId(remaining[0].id)
     Promise.resolve(onDeleteConversation?.(id)).catch(() => toast.show('Não foi possível apagar a conversa.', 'error'))
@@ -253,7 +324,20 @@ export function ChatWidget({
     conversation: active,
     suggestions,
     onSend: send,
-    onDraftChange: (text: string) => patch(active.id, (c) => ({ ...c, draft: text })),
+    onDraftChange: (text: string) => patchLocal(active.id, (c) => ({ ...c, draft: text })),
+    canReview,
+    onReview: onReview ? async () => {
+      const id = active.id
+      try {
+        // garante que a última mensagem da consultora está no servidor antes de rever
+        await onSaveConversation?.(active)
+        dirty.current.delete(id)
+        await onReview(id)
+        patchLocal(id, (c) => ({ ...c, awaitingReview: false, messages: c.messages.filter((m) => m.role !== 'notice') }))
+      } catch {
+        toast.show('Não foi possível marcar como revisto.', 'error')
+      }
+    } : undefined,
   }
 
   if (loading || error) {

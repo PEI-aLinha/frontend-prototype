@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 import * as Popover from '@radix-ui/react-popover'
-import { Bell, BellRing, CheckCheck, ClipboardList, Mail, MessageSquare, Plug, ShieldCheck, Timer } from 'lucide-react'
+import { Bell, BellRing, CheckCheck, ClipboardList, Mail, MessageSquare, Plug, ShieldCheck, Timer, Bot } from 'lucide-react'
 import type { AppNotification, NotificationKind } from '../api/contracts'
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '../api/queries'
 import { dateTime } from '../config/labels'
@@ -9,6 +9,7 @@ import { cn } from '../ui'
 const ICON: Record<NotificationKind, typeof Bell> = {
   tarefa: ClipboardList, tarefa_concluida: CheckCheck, lembrete: BellRing, prazo: Timer, comentario: MessageSquare,
   roadmap: ShieldCheck, avaliacao: ClipboardList, integracao: Plug, risco: ShieldCheck,
+  chat: Bot,
 }
 
 /** Notification center (in-app). The same notifications are also sent by email (simulated). */

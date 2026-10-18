@@ -77,6 +77,8 @@ export function ChatExpanded({
   suggestions,
   onSend,
   onDraftChange,
+  canReview,
+  onReview,
   maxConversations,
   ...nav
 }: ChatBodyProps & { maxConversations: number }) {
@@ -93,6 +95,8 @@ export function ChatExpanded({
           suggestions={suggestions}
           onSend={onSend}
           onDraftChange={onDraftChange}
+          canReview={canReview}
+          onReview={onReview}
         />
       </div>
     </>

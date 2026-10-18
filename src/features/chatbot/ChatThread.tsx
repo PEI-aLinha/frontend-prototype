@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
-import { Clock, Send } from 'lucide-react'
+import { Check, Clock, Send } from 'lucide-react'
 import type { Conversation, Suggestion } from './ChatTypes'
 import { Button, TextInput } from '../../ui'
 
@@ -11,10 +11,12 @@ type ChatThreadProps = {
   suggestions: Suggestion[]
   onSend: (text: string, from?: Suggestion) => void
   onDraftChange: (text: string) => void
+  canReview?: boolean
+  onReview?: () => void
 }
 
 /** Mensagens da conversa ativa + campo de escrita. */
-export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange }: ChatThreadProps) {
+export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, onReview }: ChatThreadProps) {
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -93,6 +95,11 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
 
       <footer className={`border-t border-brand-soft bg-white ${expanded ? 'px-6 pb-3 pt-4' : 'px-3.5 pb-2.5 pt-3'}`}>
         <div className="mx-auto flex w-full max-w-[760px] flex-col gap-2">
+          {canReview && active.awaitingReview && onReview && (
+            <Button variant="secondary" size="sm" icon={<Check className="size-4" aria-hidden />} onClick={onReview}>
+              Marcar como revisto
+            </Button>
+          )}
           <form
             noValidate
             className="flex items-center gap-2"

@@ -5,11 +5,11 @@ import type { Conversation, Suggestion } from './ChatTypes'
 
 export type ConversationNavProps = {
   conversations: Conversation[]
-  activeId: number
+  activeId: string
   canAdd: boolean
-  onSelect: (id: number) => void
+  onSelect: (id: string) => void
   onAdd: () => void
-  onClose: (id: number) => void
+  onClose: (id: string) => void
 }
 
 export type ChatBodyProps = ConversationNavProps & {
@@ -18,6 +18,8 @@ export type ChatBodyProps = ConversationNavProps & {
   suggestions: Suggestion[]
   onSend: (text: string, from?: Suggestion) => void
   onDraftChange: (text: string) => void
+  canReview?: boolean
+  onReview?: () => void
 }
 
 /** Ícone de "à espera de aprovação" e ponto de "mensagens novas". Partilhado com a barra lateral do modo expandido. */
@@ -42,7 +44,7 @@ export function ConversationBadges({ conversation: c, selected }: { conversation
 
 /** Mantém o item ativo visível quando a lista tem scroll. */
 // eslint-disable-next-line react-refresh/only-export-components
-export function useScrollActiveIntoView(activeId: number, count: number) {
+export function useScrollActiveIntoView(activeId: string, count: number) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const selected = ref.current?.querySelector('[aria-selected="true"]')
@@ -105,7 +107,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
 }
 
 /** Versão normal (painel pequeno): separadores no topo e conversa por baixo. */
-export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, ...nav }: ChatBodyProps) {
+export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, canReview, onReview, ...nav }: ChatBodyProps) {
   return (
     <>
       <ConversationTabs {...nav} />
@@ -116,6 +118,8 @@ export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, 
           suggestions={suggestions}
           onSend={onSend}
           onDraftChange={onDraftChange}
+          canReview={canReview}
+          onReview={onReview}
         />
       </div>
     </>
