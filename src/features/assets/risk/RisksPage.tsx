@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { ArrowRight, Download, Plus, ShieldCheck } from 'lucide-react'
 import type { Level, Risk } from '../../../api/contracts'
-import { useActions, useAssets, useRiskLinks, useRisks, useToday, useUsers } from '../../../api/queries'
+import { useActions, useAssets, useRiskLinks, useRisks, useRoadmapStatus, useToday, useUsers } from '../../../api/queries'
 import { RISK_MATRIX } from '../../../config/riskMatrix'
 import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
@@ -28,6 +28,9 @@ export function RisksPage() {
   const assets = useAssets(org.id)
   const users = useUsers(org.id)
   const actions = useActions(org.id)
+  const status = useRoadmapStatus(org.id)
+  // The consultant who validated the roadmap is the one who validated the register.
+  const validator = users.data?.find((u) => u.id === status.data?.validatedBy)?.name
   const [raisedBy, setRaisedBy] = useState<string | null>(null)
   const today = useToday()
   const residual = params.get('matriz') === 'residual'
@@ -100,7 +103,7 @@ export function RisksPage() {
           <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[14px] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
         </div>
       )}
-      {!editable && <Note>Registo validado pela consultora Marta Ferreira. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
+      {!editable && <Note>Registo validado pela consultora{validator ? ` ${validator}` : ''}. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
       {editable ? (
         <Explainer id="risks-consultant" intro="O registo de riscos segue o método da ISO/IEC 27005 em três passos. O resultado prioriza o roadmap do cliente."
           steps={[

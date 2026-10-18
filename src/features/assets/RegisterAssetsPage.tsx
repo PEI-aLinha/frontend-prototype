@@ -29,12 +29,13 @@ export function RegisterAssetsPage() {
   const task = inv.tasks.find((t) => t.id === taskId)
   if (inv.error) return <ErrorState error={inv.error} onRetry={inv.refetch} />
   if (!inv.data) return <SkeletonRows rows={5} />
+  const manager = inv.data.users.find((u) => u.role === 'responsavel')?.name
   if (!task) {
     return (
       <>
         <PageHeader eyebrow={org.name} title="Registar ativos técnicos" />
         <EmptyState title="Ainda não tem tarefas de ativos" action={<Button variant="secondary" onClick={() => navigate(`/org/${org.slug}/tarefas`)}>As minhas tarefas</Button>}>
-          Quando o Rui Santos lhe atribuir o registo, os ativos aparecem aqui.
+          Quando {manager ? `o ${manager}` : 'o responsável designado'} lhe atribuir o registo, os ativos aparecem aqui.
         </EmptyState>
       </>
     )
@@ -44,6 +45,8 @@ export function RegisterAssetsPage() {
   const expected = task.expectedCount ?? 4
   const done = task.status === 'concluida'
   const owners = inv.data.users.filter((u) => u.role !== 'consultor')
+  const assigner = inv.data.user(task.assignedBy)?.name
+  const assignerSubject = assigner ?? 'O responsável designado'
 
   const persist = (then: 'another' | 'finish') => {
     if (!form.check()) return
@@ -82,14 +85,14 @@ export function RegisterAssetsPage() {
       <button type="button" onClick={() => navigate(`/org/${org.slug}/tarefas`)} className="-mb-3 inline-flex items-center gap-1.5 self-start text-[13px] font-bold text-brand hover:underline">
         <ArrowLeft className="size-4" aria-hidden />As minhas tarefas
       </button>
-      <PageHeader eyebrow="Tarefa · Inventário de ativos" title="Registar ativos técnicos" subtitle={`Atribuída por Rui Santos · ${task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}`} actions={meta} />
-      <Explainer id="register-assets" intro={`O Rui pediu-lhe para registar: ${task.scope ?? task.title}. Registe um ativo de cada vez.`}
+      <PageHeader eyebrow="Tarefa · Inventário de ativos" title="Registar ativos técnicos" subtitle={`${assigner ? `Atribuída por ${assigner}` : 'Atribuída pelo responsável designado'} · ${task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}`} actions={meta} />
+      <Explainer id="register-assets" intro={`${assignerSubject} pediu-lhe para registar: ${task.scope ?? task.title}. Registe um ativo de cada vez.`}
         steps={[
           { title: 'Preencha o formulário', text: <>Nome, tipo, onde está, que <Term k="servicoCritico">serviço crítico</Term> suporta e a <Term k="criticidade">criticidade</Term>.</> },
           { title: 'Guardar e adicionar outro', text: 'O ativo passa para a lista da esquerda. Clique nele para corrigir.' },
-          { title: 'Guardar e concluir', text: 'No último ativo. O Rui recebe uma notificação e vê-os no inventário.' },
+          { title: 'Guardar e concluir', text: `No último ativo. ${assignerSubject} recebe uma notificação e vê-os no inventário.` },
         ]} />
-      {done && <Note>Tarefa concluída. Pode ainda corrigir os ativos que registou; o Rui vê as alterações no histórico.</Note>}
+      {done && <Note>Tarefa concluída. Pode ainda corrigir os ativos que registou; {assignerSubject} vê as alterações no histórico.</Note>}
 
       <div className="flex items-start gap-7 max-lg:flex-col-reverse">
         <section aria-labelledby="registered" className="flex min-w-0 flex-1 flex-col gap-3 max-lg:w-full">

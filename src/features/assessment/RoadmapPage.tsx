@@ -32,6 +32,10 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const validated = status.data?.validated
   // Until the status resolves, `validated` is undefined and the page would claim the roadmap is not validated yet.
   const pending = status.isPending
+  // The mock stores ids, so both people are resolved from the directory the page already loads.
+  const validator = users.data?.find((u) => u.id === status.data?.validatedBy)?.name
+  // Whoever registered the company is its designated manager.
+  const manager = users.data?.find((u) => u.id === org.registeredBy)?.name
 
   return (
     <>
@@ -43,7 +47,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       />
 
       {pending ? null : validated ? (
-        <Note>Roadmap validado por Marta Ferreira{status.data?.validatedAt ? ` a ${dateTime(status.data.validatedAt)}` : ''}. O cliente vê as ações e os riscos em só leitura.</Note>
+        <Note>Roadmap validado {validator ? `por ${validator}` : 'pela consultora'}{status.data?.validatedAt ? ` a ${dateTime(status.data.validatedAt)}` : ''}. O cliente vê as ações e os riscos em só leitura.</Note>
       ) : (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
           <Chip tone="signal">Avaliação concluída · 14 out.</Chip>
@@ -57,7 +61,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         steps={[
           { title: 'Antes dos riscos', text: 'Ordem proposta pela IA, só com base nas lacunas e nas obrigações legais.' },
           { title: 'Priorizado pelos riscos', text: <>As ações ligadas a <Term k="risco">riscos</Term> altos sobem para o topo; depois as ligadas a médios. Cada uma mostra porque subiu.</> },
-          { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o Rui vê o plano e os riscos.' },
+          { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o cliente vê o plano e os riscos.' },
         ]} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -78,9 +82,9 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       )}
 
       <Modal open={confirm} onOpenChange={setConfirm} chip={<Chip>Decisão da consultora</Chip>} title="Validar o roadmap?"
-        description="O Rui Santos passa a ver o roadmap e o registo de riscos (em só leitura, com linguagem simples). Pode continuar a editar depois."
+        description={`${manager ? `O ${manager}` : 'O cliente'} passa a ver o roadmap e o registo de riscos (em só leitura, com linguagem simples). Pode continuar a editar depois.`}
         footer={<><Button variant="secondary" onClick={() => setConfirm(false)}>Cancelar</Button><Button loading={validate.isPending} onClick={() => validate.mutate(undefined, {
-          onSuccess: () => { setConfirm(false); toast.show('Roadmap validado · o Rui foi notificado') },
+          onSuccess: () => { setConfirm(false); toast.show(`Roadmap validado · ${manager ? `o ${manager.split(' ')[0]}` : 'o cliente'} foi notificado`) },
           onError: (e) => toast.show(e.message, 'error'),
         })}>Validar roadmap</Button></>}>
         <ul className="flex flex-col gap-1.5 text-[14px] text-ink-soft">

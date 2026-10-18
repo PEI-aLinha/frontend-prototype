@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test'
-import { openAsset, shot, start } from './helpers'
+import { openAsset, shot, start, startEmpty } from './helpers'
 
 const CLIENT = '/clientes/componentes-agueda'
+
+test('Portfolio — no illustrative client can be opened before the first registration', async ({ page }) => {
+  await startEmpty(page)
+  await page.goto('/carteira?as=marta')
+  await expect(page.getByRole('list', { name: 'Clientes' }).getByRole('listitem')).toHaveCount(11)
+  await expect(page.getByRole('button', { name: /^Abrir / })).toHaveCount(0)
+})
 
 test('Scenario 2 — Marta registers the ransomware risk, links actions and the roadmap is reprioritized', async ({ page }) => {
   await start(page, '/carteira', 'marta', 'c2')
