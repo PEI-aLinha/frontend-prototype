@@ -379,6 +379,8 @@ export interface AssessmentSummary {
   sections: AssessmentSection[]
   /** Maturity level (1–5), only after validation. */
   maturity: number | null
+  /** Level the applicable law expects (RF10). It follows the frameworks, so it is known before validation. */
+  targetMaturity: number
 }
 
 export interface AssessmentApi {

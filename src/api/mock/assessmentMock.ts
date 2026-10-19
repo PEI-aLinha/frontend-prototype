@@ -13,6 +13,14 @@ const SECTIONS: Array<Omit<AssessmentSection, 'delegated' | 'answered'> & { answ
   { id: 'sec-fornecedores', name: 'Fornecedores e cadeia de abastecimento', total: 5, answeredC1: 2 },
 ]
 
+/**
+ * Level the applicable law expects (RF10). Prototype stand-in: NIS2 raises the bar one level over
+ * the base. A real implementation derives it from the questionnaire and the applicable obligations.
+ */
+function targetMaturity(frameworks: readonly string[]): number {
+  return frameworks.some((f) => f.includes('NIS2')) ? 3 : 2
+}
+
 export function createAssessmentMock(getActor: () => DemoActor): Pick<AssessmentApi, 'getAssessment' | 'answerQuestion'> {
   return {
     getAssessment: (org) => simulate(() => {
@@ -20,6 +28,7 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
       if (s.users.find((u) => u.id === getActor().userId)?.role === 'analista') throw new ApiError('Não tem permissão para ver a avaliação.', 403)
       const roadmap = s.roadmap[org]
       const done = !!roadmap?.assessmentCompletedAt
+      const company = s.organizations.find((o) => o.id === org)
       const sections = SECTIONS.map(({ answeredC1, questionTask, ...sec }) => {
         const task = s.tasks.find((t) => t.id === questionTask)
         return {
@@ -28,7 +37,7 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
           delegated: task ? [{ taskId: task.id, assigneeId: task.assigneeId, status: task.status }] : [],
         }
       })
-      return { status: roadmap?.validated ? 'validada' : done ? 'submetida' : 'em_curso', sections, maturity: roadmap?.validated ? 2 : null }
+      return { status: roadmap?.validated ? 'validada' : done ? 'submetida' : 'em_curso', sections, maturity: roadmap?.validated ? 2 : null, targetMaturity: targetMaturity(company?.frameworks ?? []) }
     }),
 
     answerQuestion: (org, taskId, answer) => simulate(() => {
