@@ -81,7 +81,7 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
             ))}
           </ol>
         </div>
-        <p className="ml-auto flex w-fit flex-col items-start gap-1 text-[11px] text-ink-soft">
+        <p className="ml-auto flex w-fit flex-col items-start gap-1 text-[11px] text-ink-soft lg:self-stretch lg:justify-between">
           <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
           <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-brand" />Em curso</span>
           <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-line" />Por iniciar</span>
