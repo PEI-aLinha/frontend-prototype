@@ -117,7 +117,17 @@ src/
   - Notificações (`notification`), ligações de integração (`integration_connection` com referência ao segredo no OpenBao), `discovered_asset` e `collected_evidence`.
 - **Desvio visual:** o texto "✓ Feito" e outros textos a `signal` (#168C80) não passavam AA sobre branco; passaram a `brand`, com o visto em `signal`.
 - **Tokens de risco novos:** `risk-low/medium/high` (+ `-ink`), sóbrios e com contraste AA testado; os níveis têm sempre ícone e texto.
+- **D5 — Avaliação: desvios aos mockups.**
+  - **Fluxo contínuo.** As perguntas seguem-se umas às outras ("Pergunta 23 de 41", barra de progresso global, "← Anterior" / "Seguinte →" passam de uma secção para a seguinte). As páginas de secção ficam como índice, porque o catálogo tem 41 perguntas em 6 secções.
+  - **Respostas fixas.** Os mockups têm opções próprias por pergunta; aqui todas usam Sim / Em parte / Não / Não sei, porque o contrato `QuestionAnswer` é fixo.
+  - **Delegar num modal com prazo** (US14), em vez da lista de analistas dentro do cartão.
+  - **Ajuda da IA.** A explicação, o exemplo e o "porque é importante" são texto fixo no mock, mas representam a ajuda que a IA pré-gera para cada pergunta (como `task.ai_help`). Por isso levam o rótulo "Gerado por IA · apenas informativo".
+- **Avaliação: o que ainda falta.**
+  - **Submeter a avaliação.** Não há botão nem função no mock para submeter: depois de responder a tudo, a avaliação continua "Em curso". O estado "submetida" só aparece nos dados de demonstração dos cenários 2 e 3.
+  - **"Atribuir tarefa" (Equipa).** A opção "Pergunta" usa uma lista de exemplo (`organization/assignment/catalog.ts`) e cria a tarefa sem `question_id`, por isso a resposta não chega ao questionário. Falta ligá-la às perguntas reais ou tirar a opção (a combinar com o plugin Organização).
+  - **Histórico.** As respostas à avaliação aparecem sem etiqueta de contexto: falta `assessment: 'Avaliação'` em `HistoryPage.tsx`.
+  - **`STATE_VERSION`.** Esta branch e `feat/chatbot` sobem ambas para 11: a que entrar em segundo na `dev` tem de passar para 12.
 
 ## Fora do âmbito
 
-Backend real, Keycloak/MFA, envio real de emails, integração com CNCS/MyCiber, ligação real a fornecedores (o consentimento é simulado), IA nova (a ajuda da pergunta técnica é texto pré-gerado e rotulado). As 41 perguntas da Avaliação são um catálogo de exemplo (`src/api/mock/assessmentMock.ts`), não o questionário oficial.
+Backend real, Keycloak/MFA, envio real de emails, integração com CNCS/MyCiber, ligação real a fornecedores (o consentimento é simulado), IA nova (a ajuda da pergunta técnica é texto pré-gerado e rotulado). As 41 perguntas da Avaliação são um catálogo de exemplo (`src/api/mock/assessmentCatalog.json`), não o questionário oficial.
