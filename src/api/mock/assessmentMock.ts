@@ -21,7 +21,7 @@ type QuestionDef = Omit<AssessmentQuestion, 'answer' | 'delegatedTaskId'>
  * Questionnaire catalog (mock data in assessmentCatalog.json). The explanation, example and "why it matters" stand in for the AI help that
  * the real service pre-generates per question (informational only). The answers live in DemoState.answers or in the analyst's task.
  */
-const QUESTIONS: QuestionDef[] = catalog
+const QUESTIONS = catalog as QuestionDef[]
 
 const CHOICE_LABEL = { sim: 'Sim', parcial: 'Em parte', nao: 'Não', nao_sei: 'Não sei' } as const
 
@@ -67,6 +67,7 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
       return {
         status: roadmap?.validated ? 'validada' : done ? 'submetida' : 'em_curso', sections, maturity: roadmap?.validated ? 2 : null,
         nextQuestion: next ? { sectionId: next.sectionId, questionId: next.id } : null,
+        savedAt: s.audit.findLast((e) => e.organizationId === org && e.entityType === 'assessment')?.createdAt ?? null,
       }
     }),
 

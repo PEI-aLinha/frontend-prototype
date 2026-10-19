@@ -2,6 +2,7 @@
   {
     "sectionId": "sec-gov",
     "id": "q-gov-politica",
+    "kind": "gestao",
     "text": "A empresa tem uma política de segurança da informação aprovada pela gerência?",
     "explanation": "Um documento curto que diz como a empresa protege a informação e quem é responsável. Conta se foi aprovado e comunicado a todos.",
     "example": "Duas páginas assinadas pela gerência, enviadas por email a todos e afixadas na sala de pausa.",
@@ -10,6 +11,7 @@
   {
     "sectionId": "sec-gov",
     "id": "q-gov-responsavel",
+    "kind": "gestao",
     "text": "Está designado um responsável pela cibersegurança, com tempo e meios para o fazer?",
     "explanation": "Uma pessoa que responde pela cibersegurança perante a gerência e o CNCS, com tempo reservado para isso.",
     "example": "O diretor administrativo dedica meio dia por semana à segurança e tem apoio de uma consultora externa.",
@@ -18,6 +20,7 @@
   {
     "sectionId": "sec-gov",
     "id": "q-gov-gerencia",
+    "kind": "gestao",
     "text": "A gerência acompanha a cibersegurança pelo menos uma vez por ano?",
     "explanation": "A gerência olha para os riscos, os incidentes e o plano de ação, e decide o que fazer a seguir.",
     "example": "Uma reunião em janeiro onde se revêem os incidentes do ano e se aprova o orçamento de segurança.",
@@ -26,6 +29,7 @@
   {
     "sectionId": "sec-gov",
     "id": "q-gov-formacao-gerencia",
+    "kind": "gestao",
     "text": "Os membros da gerência receberam formação em cibersegurança?",
     "explanation": "Quem gere a empresa sabe o suficiente para aprovar e supervisionar as medidas de segurança.",
     "example": "Os sócios-gerentes fizeram um curso online de quatro horas sobre riscos e obrigações da NIS2.",
@@ -34,6 +38,7 @@
   {
     "sectionId": "sec-gov",
     "id": "q-gov-formacao",
+    "kind": "gestao",
     "text": "Os colaboradores recebem formação regular sobre segurança, por exemplo a reconhecer phishing?",
     "explanation": "Todas as pessoas que usam computadores aprendem os cuidados básicos e relembram-nos com regularidade.",
     "example": "Uma sessão anual de uma hora sobre emails falsos, com uma folha de presenças assinada.",
@@ -42,6 +47,7 @@
   {
     "sectionId": "sec-gov",
     "id": "q-gov-riscos",
+    "kind": "gestao",
     "text": "A empresa identifica e revê os riscos de cibersegurança de forma periódica?",
     "explanation": "A empresa sabe o que de pior pode acontecer aos seus sistemas e volta a pensar nisso de tempos a tempos.",
     "example": "Uma lista com os cinco riscos mais importantes, como ficar sem o ERP, revista uma vez por ano.",
@@ -50,6 +56,7 @@
   {
     "sectionId": "sec-gov",
     "id": "q-gov-funcoes",
+    "kind": "gestao",
     "text": "As responsabilidades de segurança estão definidas para cada função?",
     "explanation": "Cada tarefa de segurança tem alguém responsável e essa pessoa sabe que é dela.",
     "example": "O técnico faz as cópias de segurança, a gerente aprova os acessos novos e o responsável trata os incidentes.",
@@ -58,6 +65,7 @@
   {
     "sectionId": "sec-gov",
     "id": "q-gov-revisao",
+    "kind": "gestao",
     "text": "As medidas de segurança são revistas quando há mudanças importantes na empresa?",
     "explanation": "Sempre que algo grande muda, a empresa confirma se as medidas de segurança ainda chegam.",
     "example": "Ao mudar para um ERP na nuvem, revê-se quem tem acesso e onde ficam as cópias de segurança.",
@@ -66,6 +74,7 @@
   {
     "sectionId": "sec-ativos",
     "id": "q-ativos-inventario",
+    "kind": "gestao",
     "text": "Existe um inventário atualizado dos equipamentos, sistemas e aplicações da empresa?",
     "explanation": "Uma lista de tudo o que a empresa usa: computadores, servidores, rede, programas e serviços na nuvem.",
     "example": "A lista de ativos do aLinha, com os portáteis, o servidor de produção e o ERP, conta como inventário se estiver completa.",
@@ -74,6 +83,7 @@
   {
     "sectionId": "sec-ativos",
     "id": "q-ativos-dono",
+    "kind": "gestao",
     "text": "Cada ativo importante tem um responsável identificado?",
     "explanation": "A pessoa que sabe para que serve o ativo e decide sobre ele, não necessariamente quem o mantém.",
     "example": "O ERP pertence ao diretor financeiro, mesmo que seja o fornecedor a fazer as atualizações.",
@@ -82,6 +92,7 @@
   {
     "sectionId": "sec-ativos",
     "id": "q-ativos-criticidade",
+    "kind": "gestao",
     "text": "Os ativos estão classificados pela importância para o negócio?",
     "explanation": "Saber que ativos fazem parar a empresa se falharem, e quais podem esperar.",
     "example": "O servidor de produção é crítico; a impressora do escritório é pouco importante.",
@@ -90,6 +101,7 @@
   {
     "sectionId": "sec-ativos",
     "id": "q-ativos-dados",
+    "kind": "gestao",
     "text": "Sabe onde estão guardados os dados mais sensíveis, como os de clientes e colaboradores?",
     "explanation": "As pastas, servidores ou serviços na nuvem onde ficam os dados pessoais e confidenciais.",
     "example": "Os recibos de vencimento estão numa pasta do servidor; os contactos dos clientes estão no CRM.",
@@ -98,6 +110,7 @@
   {
     "sectionId": "sec-ativos",
     "id": "q-ativos-abate",
+    "kind": "tecnica",
     "text": "Os equipamentos são apagados de forma segura antes de serem abatidos ou vendidos?",
     "explanation": "Antes de um disco ou portátil sair da empresa, os dados são apagados de forma a não poderem ser recuperados.",
     "example": "O técnico usa uma ferramenta de apagamento seguro antes de vender os portáteis antigos. Formatar não chega.",
@@ -106,6 +119,7 @@
   {
     "sectionId": "sec-ativos",
     "id": "q-ativos-software",
+    "kind": "tecnica",
     "text": "Só é instalado software autorizado nos computadores da empresa?",
     "explanation": "Os programas nos computadores foram aprovados por quem gere a informática.",
     "example": "Os colaboradores não têm permissão para instalar programas e pedem ao técnico quando precisam.",
@@ -114,6 +128,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-acessos-contas",
+    "kind": "tecnica",
     "text": "Cada pessoa tem a sua própria conta, sem contas partilhadas?",
     "explanation": "Cada pessoa entra nos sistemas com o seu nome de utilizador e a sua senha.",
     "example": "Na receção, cada pessoa do turno entra com a sua conta, em vez de uma conta \"rececao\" comum.",
@@ -122,6 +137,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-acessos-saidas",
+    "kind": "gestao",
     "text": "Os acessos são retirados no dia em que um colaborador sai da empresa?",
     "explanation": "Quando alguém sai, todas as contas dessa pessoa são desativadas no próprio dia.",
     "example": "No último dia, os recursos humanos avisam o técnico, que desativa o email, a VPN e o ERP.",
@@ -130,6 +146,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-acessos-minimo",
+    "kind": "gestao",
     "text": "Cada pessoa só tem acesso ao que precisa para o seu trabalho?",
     "explanation": "As pessoas veem e alteram apenas a informação de que precisam para a sua função.",
     "example": "Quem está na produção não acede às pastas dos recursos humanos.",
@@ -138,6 +155,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-acessos-revisao",
+    "kind": "gestao",
     "text": "Os acessos são revistos pelo menos uma vez por ano?",
     "explanation": "Uma verificação simples de quem tem acesso a quê e se ainda precisa.",
     "example": "Em dezembro, cada chefe de equipa confirma a lista de acessos da sua equipa e pede para retirar o que sobra.",
@@ -146,6 +164,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-acessos-senhas",
+    "kind": "tecnica",
     "text": "Existem regras para as senhas, como um comprimento mínimo?",
     "explanation": "A empresa define como devem ser as senhas e os sistemas obrigam a cumprir essas regras.",
     "example": "Pelo menos 12 caracteres e nunca reutilizar a senha de outro serviço.",
@@ -154,6 +173,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-acessos-admin",
+    "kind": "tecnica",
     "text": "As contas de administrador são usadas só para tarefas de administração?",
     "explanation": "Quem administra os sistemas tem duas contas: uma normal para o dia a dia e outra só para administrar.",
     "example": "O técnico lê o email com a conta normal e só usa a conta de administrador para instalar programas.",
@@ -162,6 +182,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-mfa",
+    "kind": "tecnica",
     "text": "As contas de administrador usam autenticação multifator (MFA)?",
     "explanation": "MFA é pedir uma segunda prova além da senha, por exemplo um código no telemóvel.",
     "example": "Ao entrar no Microsoft 365 como administrador, além da senha é preciso aprovar o pedido na app do telemóvel.",
@@ -170,6 +191,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-acessos-remoto",
+    "kind": "tecnica",
     "text": "O acesso remoto à rede da empresa é feito de forma segura, por exemplo por VPN?",
     "explanation": "Quem trabalha de fora, incluindo os fornecedores, entra na rede por uma ligação protegida.",
     "example": "O fornecedor do ERP liga-se por VPN com a sua própria conta, em vez de um programa de acesso remoto sempre ligado.",
@@ -178,6 +200,7 @@
   {
     "sectionId": "sec-acessos",
     "id": "q-acessos-wifi",
+    "kind": "tecnica",
     "text": "A rede Wi-Fi para visitantes está separada da rede da empresa?",
     "explanation": "Os visitantes não devem conseguir chegar aos servidores nem aos computadores da empresa.",
     "example": "Há uma rede \"Visitantes\" que só dá acesso à internet, diferente da rede onde estão os servidores.",
@@ -186,6 +209,7 @@
   {
     "sectionId": "sec-continuidade",
     "id": "q-backups",
+    "kind": "tecnica",
     "text": "As cópias de segurança dos sistemas críticos são feitas regularmente e a reposição é testada?",
     "explanation": "Não basta fazer cópias: é preciso experimentar repor os dados para ter a certeza de que funcionam.",
     "example": "Uma vez por mês, o técnico repõe uma pasta a partir da cópia e confirma que os ficheiros abrem.",
@@ -194,6 +218,7 @@
   {
     "sectionId": "sec-continuidade",
     "id": "q-cont-copia-fora",
+    "kind": "tecnica",
     "text": "Existe uma cópia de segurança guardada fora das instalações ou desligada da rede?",
     "explanation": "Pelo menos uma cópia dos dados fica longe da empresa ou sem ligação aos sistemas.",
     "example": "Um disco que o técnico desliga depois de cada cópia e guarda noutro edifício, ou uma cópia num serviço na nuvem.",
@@ -202,6 +227,7 @@
   {
     "sectionId": "sec-continuidade",
     "id": "q-cont-plano",
+    "kind": "gestao",
     "text": "Existe um plano escrito para continuar a trabalhar se um sistema crítico falhar?",
     "explanation": "Um documento que diz o que fazer, por que ordem e quem decide quando um sistema importante para.",
     "example": "Se o ERP parar, as encomendas passam a ser registadas numa folha e o fornecedor é chamado de imediato.",
@@ -210,6 +236,7 @@
   {
     "sectionId": "sec-continuidade",
     "id": "q-cont-tempo",
+    "kind": "gestao",
     "text": "Sabe quanto tempo a empresa aguenta sem cada serviço crítico?",
     "explanation": "Para cada serviço importante, a empresa sabe ao fim de quanto tempo a paragem começa a causar danos sérios.",
     "example": "A faturação pode parar um dia, mas a produção só aguenta algumas horas.",
@@ -218,6 +245,7 @@
   {
     "sectionId": "sec-continuidade",
     "id": "q-cont-energia",
+    "kind": "tecnica",
     "text": "Os equipamentos críticos estão protegidos contra cortes de energia?",
     "explanation": "Os servidores e a rede continuam ligados, ou desligam-se em segurança, se faltar a luz.",
     "example": "Uma UPS dá ao servidor dez minutos para gravar o trabalho e desligar sem perder dados.",
@@ -226,6 +254,7 @@
   {
     "sectionId": "sec-continuidade",
     "id": "q-cont-contactos",
+    "kind": "gestao",
     "text": "Há uma lista de contactos de emergência, como fornecedores, técnicos e seguradora?",
     "explanation": "Os números de quem ajuda numa crise estão reunidos e acessíveis mesmo sem os sistemas da empresa.",
     "example": "Uma folha impressa no gabinete da gerência com os contactos do técnico, do fornecedor do ERP e da seguradora.",
@@ -234,6 +263,7 @@
   {
     "sectionId": "sec-continuidade",
     "id": "q-cont-teste",
+    "kind": "gestao",
     "text": "O plano de continuidade é testado pelo menos uma vez por ano?",
     "explanation": "A equipa experimenta o plano para confirmar que funciona e que todos sabem o seu papel.",
     "example": "Um exercício de uma hora à mesa: \"o servidor de produção avariou, o que fazemos?\"",
@@ -242,6 +272,7 @@
   {
     "sectionId": "sec-incidentes",
     "id": "q-inc-procedimento",
+    "kind": "gestao",
     "text": "Existe um procedimento para quando acontece um incidente de segurança?",
     "explanation": "Passos escritos sobre quem contactar, o que fazer primeiro e como guardar provas.",
     "example": "Desligar da rede o computador afetado, avisar o responsável e não apagar nada até a situação ser analisada.",
@@ -250,6 +281,7 @@
   {
     "sectionId": "sec-incidentes",
     "id": "q-inc-reportar",
+    "kind": "gestao",
     "text": "Os colaboradores sabem a quem comunicar um email ou comportamento suspeito?",
     "explanation": "Existe uma pessoa ou endereço que todos conhecem para avisar, sem receio de ser culpados.",
     "example": "Um endereço como seguranca@empresa.pt, lembrado na formação anual e afixado junto aos computadores.",
@@ -258,6 +290,7 @@
   {
     "sectionId": "sec-incidentes",
     "id": "q-inc-cncs",
+    "kind": "gestao",
     "text": "Sabe que os incidentes significativos têm de ser notificados ao CNCS em 24 horas?",
     "explanation": "Quando um incidente afeta muito o serviço, a empresa tem de avisar o Centro Nacional de Cibersegurança dentro de prazos curtos.",
     "example": "Um ransomware para a produção na terça de manhã: o alerta inicial segue até quarta de manhã e a notificação completa até sexta.",
@@ -266,6 +299,7 @@
   {
     "sectionId": "sec-incidentes",
     "id": "q-inc-registo",
+    "kind": "gestao",
     "text": "Os incidentes ficam registados, mesmo os pequenos?",
     "explanation": "Cada incidente fica anotado: o que aconteceu, quando e o que se fez.",
     "example": "Uma folha partilhada onde se anota o portátil com vírus em março e o email falso aberto em maio.",
@@ -274,6 +308,7 @@
   {
     "sectionId": "sec-incidentes",
     "id": "q-inc-antivirus",
+    "kind": "tecnica",
     "text": "Todos os computadores e servidores têm proteção contra malware atualizada?",
     "explanation": "Cada computador e servidor tem um antivírus ou EDR ativo, que se atualiza sozinho.",
     "example": "O Microsoft Defender está ligado em todos os portáteis e o técnico confirma no painel que estão atualizados.",
@@ -282,6 +317,7 @@
   {
     "sectionId": "sec-incidentes",
     "id": "q-inc-registos",
+    "kind": "tecnica",
     "text": "Os registos (logs) dos sistemas críticos são guardados e consultados?",
     "explanation": "Os sistemas importantes guardam um histórico de quem entrou e do que aconteceu, e alguém olha para ele.",
     "example": "O servidor guarda as entradas e saídas durante seis meses e o técnico revê os alertas todas as semanas.",
@@ -290,6 +326,7 @@
   {
     "sectionId": "sec-fornecedores",
     "id": "q-forn-lista",
+    "kind": "gestao",
     "text": "Tem uma lista dos fornecedores com acesso aos sistemas ou aos dados da empresa?",
     "explanation": "Saber que empresas externas conseguem entrar nos sistemas ou tratam dados da empresa.",
     "example": "A empresa de informática, o fornecedor do ERP e o serviço de email.",
@@ -298,6 +335,7 @@
   {
     "sectionId": "sec-fornecedores",
     "id": "q-forn-contratos",
+    "kind": "gestao",
     "text": "Os contratos com esses fornecedores incluem cláusulas de segurança?",
     "explanation": "Os contratos dizem o que o fornecedor tem de fazer para proteger a informação da empresa.",
     "example": "Confidencialidade, aviso em 24 horas em caso de incidente e um acordo de tratamento de dados (RGPD).",
@@ -306,6 +344,7 @@
   {
     "sectionId": "sec-fornecedores",
     "id": "q-forn-acessos",
+    "kind": "tecnica",
     "text": "Os acessos dos fornecedores são controlados e retirados quando deixam de ser precisos?",
     "explanation": "Os fornecedores só entram quando precisam e as contas deles são fechadas no fim do trabalho.",
     "example": "O acesso remoto do técnico externo só é ligado durante a intervenção e desligado a seguir.",
@@ -314,6 +353,7 @@
   {
     "sectionId": "sec-fornecedores",
     "id": "q-forn-avaliacao",
+    "kind": "gestao",
     "text": "Avalia a segurança dos fornecedores críticos antes de os contratar?",
     "explanation": "Antes de escolher um fornecedor importante, a empresa confirma se ele protege bem a informação.",
     "example": "Pedir ao novo fornecedor de cloud que responda a um questionário curto ou mostre o certificado ISO 27001.",
@@ -322,6 +362,7 @@
   {
     "sectionId": "sec-fornecedores",
     "id": "q-forn-cloud",
+    "kind": "gestao",
     "text": "Sabe em que país ficam os dados guardados em serviços na nuvem?",
     "explanation": "Para cada serviço na nuvem, a empresa sabe se os dados ficam na União Europeia ou fora dela.",
     "example": "O email está no Microsoft 365 com dados na UE; a ferramenta de inquéritos guarda os dados nos EUA.",

@@ -18,10 +18,12 @@ describe('assessment questionnaire (mock API)', () => {
     expect(await progress()).toEqual(['8/8', '6/6', '7/9', '7/7', '4/6', '2/5'])
   })
 
-  it('gives every question an explanation, an example and why it matters', async () => {
+  it('gives every question a kind, an explanation, an example and why it matters', async () => {
     const questions = (await Promise.all((await api.assessment.getAssessment(ORG_ID)).sections.map((s) => api.assessment.listQuestions(ORG_ID, s.id)))).flat()
     expect(questions).toHaveLength(41)
     for (const q of questions) expect([q.explanation, q.example, q.whyItMatters].every((t) => t.trim().length > 0), q.id).toBe(true)
+    expect(questions.filter((q) => q.kind === 'tecnica')).toHaveLength(14)
+    expect(questions.filter((q) => q.kind === 'gestao')).toHaveLength(27)
   })
 
   it('points to the next question to answer, skipping the delegated ones', async () => {
@@ -37,6 +39,13 @@ describe('assessment questionnaire (mock API)', () => {
     expect(await progress()).toEqual(['8/8', '6/6', '8/9', '7/7', '4/6', '2/5'])
     const history = await api.audit.list(ORG_ID, { entityId: 'q-acessos-wifi' })
     expect(history[0]).toMatchObject({ userId: RUI, action: 'answer', entityType: 'assessment' })
+  })
+
+  it('keeps when the progress was last saved', async () => {
+    expect((await api.assessment.getAssessment(ORG_ID)).savedAt).toBeNull()
+    await api.assessment.saveAnswer(ORG_ID, 'q-acessos-wifi', { choice: 'sim' })
+    const [entry] = await api.audit.list(ORG_ID, { entityId: 'q-acessos-wifi' })
+    expect((await api.assessment.getAssessment(ORG_ID)).savedAt).toBe(entry.createdAt)
   })
 
   it('denies the questionnaire to the analyst', async () => {

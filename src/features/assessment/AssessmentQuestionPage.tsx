@@ -1,12 +1,21 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ArrowLeft, UserRound } from 'lucide-react'
+import { ArrowLeft, Check, UserRound } from 'lucide-react'
 import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '../../api/contracts'
 import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUsers } from '../../api/queries'
-import { shortDay } from '../../config/labels'
+import { dateTime, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { AIBadge, Button, Card, Chip, DateInput, EmptyState, ErrorState, Eyebrow, Field, Modal, Note, OptionGroup, PageHeader, Select, SkeletonRows, TextArea, useToast } from '../../ui'
 import { CHOICE_LABEL, CHOICES } from './choices'
+
+const KIND_LABEL = { tecnica: 'Pergunta técnica', gestao: 'Pergunta de gestão' } as const
+
+/** "às 17:44" when saved today, otherwise "a 16 out. · 15:40". */
+function savedLabel(iso: string) {
+  const d = new Date(iso)
+  if (d.toDateString() !== new Date().toDateString()) return `a ${dateTime(iso)}`
+  return `às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
 
 /** One assessment question: answer, save progress, or delegate it to an analyst. */
 export function AssessmentQuestionPage() {
@@ -29,14 +38,27 @@ export function AssessmentQuestionPage() {
   const task = tasks.data?.find((t) => t.id === question.delegatedTaskId)
   const assignee = users.data?.find((u) => u.id === task?.assigneeId)
   const open = assessment.data.status === 'em_curso'
+  const { savedAt } = assessment.data
 
   return (
     <>
       <Link to={sectionPath} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar a </span>{section.name}</Link>
-      <PageHeader eyebrow={`Avaliação de maturidade · ${section.name}`} title={`Pergunta ${index + 1} de ${questions.data.length}`} />
+      <PageHeader eyebrow="Avaliação de maturidade · NIS2 + RGPD" title={`Pergunta ${index + 1} de ${questions.data.length}`}
+        actions={
+          // Always rendered, so screen readers announce it when a save fills it in.
+          <p role="status" className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft">
+            {savedAt && <><Check className="size-4 text-signal" aria-hidden />Progresso guardado {savedLabel(savedAt)}</>}
+          </p>
+        } />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="flex flex-col gap-5 px-7 py-6 max-md:px-5">
-          <h2 className="text-[20px] font-extrabold leading-snug">{question.text}</h2>
+          <div className="flex flex-col gap-2.5">
+            <p className="flex flex-wrap items-center gap-2">
+              <Chip tone={question.kind === 'tecnica' ? 'dark' : 'neutral'}>{KIND_LABEL[question.kind]}</Chip>
+              <span className="text-[13px] font-semibold text-ink-soft">{section.name}</span>
+            </p>
+            <h2 className="text-[20px] font-extrabold leading-snug">{question.text}</h2>
+          </div>
           {open
             ? <AnswerForm key={question.id} question={question} sectionPath={sectionPath}
                 nextPath={next ? `${sectionPath}/${next.id}` : sectionPath}

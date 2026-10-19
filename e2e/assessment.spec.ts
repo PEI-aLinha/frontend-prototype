@@ -12,6 +12,9 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await page.getByRole('link', { name: /Wi-Fi para visitantes/ }).click()
 
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 9 de 9' })).toBeVisible()
+  await expect(page.getByText('Avaliação de maturidade · NIS2 + RGPD')).toBeVisible()
+  await expect(page.getByText('Pergunta técnica', { exact: true })).toBeVisible()
+  await expect(page.getByText(/Progresso guardado/)).toHaveCount(0)
   const help = page.getByRole('region', { name: 'O que significa esta pergunta?' })
   await expect(help.getByText('Os visitantes não devem conseguir chegar aos servidores')).toBeVisible()
   await expect(help.getByRole('heading', { name: 'Exemplo' })).toBeVisible()
@@ -31,6 +34,7 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await expect(page.getByText('8 de 9 perguntas respondidas')).toBeVisible()
   await page.getByRole('link', { name: /Wi-Fi para visitantes/ }).click()
   await expect(page.getByRole('radio', { name: /^Sim/ })).toBeChecked()
+  await expect(page.getByRole('status').filter({ hasText: /^Progresso guardado às \d{2}:\d{2}$/ })).toBeVisible()
   await expect(page.getByLabel('Comentário')).toHaveValue('Rede de visitantes separada desde 2025.')
   await page.getByRole('link', { name: 'Voltar a Controlo de acessos' }).click()
   await page.getByRole('link', { name: 'Voltar à Avaliação' }).click()

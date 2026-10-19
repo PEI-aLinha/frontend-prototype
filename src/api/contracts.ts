@@ -381,12 +381,16 @@ export interface AssessmentSummary {
   maturity: number | null
   /** First question still to answer (not answered nor waiting for an analyst); null once there is none or after submission. */
   nextQuestion: { sectionId: Id; questionId: Id } | null
+  /** When the designated manager last saved an answer; null before the first save. */
+  savedAt: IsoDate | null
 }
 
 /** One question of the maturity questionnaire, with the designated manager's answer. */
 export interface AssessmentQuestion {
   id: Id
   sectionId: Id
+  /** Technical questions are the ones usually delegated to an analyst. */
+  kind: 'tecnica' | 'gestao'
   text: string
   /** AI help, pre-generated per question (like Task.aiHelp), informational only: what the question means in plain language. */
   explanation: string
