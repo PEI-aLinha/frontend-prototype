@@ -139,6 +139,24 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         </div>
       )}
 
+      {consultant ? (
+        <Explainer id="roadmap-consultant" title="Como os riscos mudam o roadmap"
+          intro="A IA propôs uma ordem a partir das lacunas da avaliação. O registo de riscos acrescenta o que é mais grave para esta empresa em concreto."
+          steps={[
+            { title: 'Antes dos riscos', text: 'Ordem proposta pela IA, só com base nas lacunas e nas obrigações legais.' },
+            { title: 'Priorizado pelos riscos', text: <>As ações ligadas a <Term k="risco">riscos</Term> altos sobem para o topo; depois as ligadas a médios. Cada uma mostra porque subiu.</> },
+            { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o cliente vê o plano e os riscos.' },
+          ]} />
+      ) : (
+        <Explainer id="roadmap-client" title="Como ler esta página"
+          intro="Esta é a lista de ações que a empresa pode tomar para fechar as lacunas que a avaliação encontrou. A consultora validou-a."
+          steps={[
+            { title: 'A ordem', text: 'As ações estão ordenadas pela importância para a empresa. As que estão ligadas a riscos registados vêm primeiro.' },
+            { title: 'Cada ação', text: 'Diz o que falta fazer, até quando e quem fica responsável. A prova é o documento que mostra que já está feito.' },
+            { title: 'A consultora', text: 'Ela validou este plano e os riscos por trás dele. Se algo não estiver certo, fale com ela.' },
+          ]} />
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Only the client has an assessment route under /org; the consultant's prefix has none, so hers stays a card. */}
         {!consultant ? <Link to={`${base}/avaliacao`} className="contents">{levelCard}</Link> : levelCard}
@@ -157,24 +175,6 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           <MiniList label="Primeiras ações do plano" rows={planRows} more={Math.max(0, ranked.length - PREVIEW_ROWS)} />
         </StatCard>
       </div>
-
-      {consultant ? (
-        <Explainer id="roadmap-consultant" title="Como os riscos mudam o roadmap"
-          intro="A IA propôs uma ordem a partir das lacunas da avaliação. O registo de riscos acrescenta o que é mais grave para esta empresa em concreto."
-          steps={[
-            { title: 'Antes dos riscos', text: 'Ordem proposta pela IA, só com base nas lacunas e nas obrigações legais.' },
-            { title: 'Priorizado pelos riscos', text: <>As ações ligadas a <Term k="risco">riscos</Term> altos sobem para o topo; depois as ligadas a médios. Cada uma mostra porque subiu.</> },
-            { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o cliente vê o plano e os riscos.' },
-          ]} />
-      ) : (
-        <Explainer id="roadmap-client" title="Como ler esta página"
-          intro="Esta é a lista de ações que a empresa pode tomar para fechar as lacunas que a avaliação encontrou. A consultora validou-a."
-          steps={[
-            { title: 'A ordem', text: 'As ações estão ordenadas pela importância para a empresa. As que estão ligadas a riscos registados vêm primeiro.' },
-            { title: 'Cada ação', text: 'Diz o que falta fazer, até quando e quem fica responsável. A prova é o documento que mostra que já está feito.' },
-            { title: 'A consultora', text: 'Ela validou este plano e os riscos por trás dele. Se algo não estiver certo, fale com ela.' },
-          ]} />
-      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
