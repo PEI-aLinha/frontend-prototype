@@ -10,7 +10,7 @@ import { useCan } from '../../core/useCan'
 import {
   AIBadge, Button, Chip, EmptyState, ErrorState, Explainer, HistoryList, Modal, Note, StatCard, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
-import { evidenceState, type EvidenceTone } from './evidenceState'
+import { evidenceState } from './evidenceState'
 import { printResults } from './exportResults'
 import { PREVIEW_ROWS, planSummary } from './planSummary'
 import { ProposeActionModal } from './ProposeActionModal'
@@ -20,11 +20,6 @@ import { roadmapHistory } from './roadmapHistory'
 type View = 'base' | 'riscos'
 
 const NO_EVIDENCE: CollectedEvidence[] = []
-
-const EVIDENCE_TONE: Record<EvidenceTone, string> = {
-  brand: 'bg-signal-soft text-brand',
-  risk: 'bg-risk-high text-risk-high-ink',
-}
 
 interface MiniRow { key: string; label: string; meta?: ReactNode }
 
@@ -243,13 +238,12 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   )
 }
 
-function ActionRow({ item, users, showMovement, consultant, validated, evidence }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined; evidence: CollectedEvidence[] }) {
+function ActionRow({ item, users, showMovement, consultant, validated }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined; evidence: CollectedEvidence[] }) {
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
   const rose = moved > 0
   const fell = moved < 0
   const owner = users.find((u) => u.id === a.assignedTo)
-  const ev = evidenceState(evidence)
   return (
     <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
@@ -290,11 +284,7 @@ function ActionRow({ item, users, showMovement, consultant, validated, evidence 
             <ArrowDown className="size-4" aria-hidden />Desceu porque outras ações ligadas a riscos subiram.
           </p>
         )}
-        {ev && (
-          <p className={cn('mt-2.5 inline-flex flex-wrap items-center gap-x-2 rounded-[8px] px-2.5 py-1.5 text-[13px] font-semibold', EVIDENCE_TONE[ev.tone])}>
-            {ev.label}<span className="font-normal text-ink-soft">{ev.detail}</span>
-          </p>
-        )}
+
         {a.aiOutputId && !validated && <div className="mt-2"><AIBadge /></div>}
         {a.aiOutputId && validated && <div className="mt-2"><Chip tone="outline">Validada pela consultora</Chip></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}
