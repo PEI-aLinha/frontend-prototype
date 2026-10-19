@@ -49,7 +49,7 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
 
   return (
     <div className="rounded-[16px] border border-line-soft bg-paper px-5 py-5">
-      <div ref={wrap} className="relative">
+      <div ref={wrap} className="relative md:pr-36">
         {line && (
           <svg aria-hidden viewBox={`0 0 ${line.w} ${line.h}`} className="absolute inset-0 size-full">
             <path d={d} fill="none" className="stroke-line-soft" strokeWidth={2} strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />
@@ -79,12 +79,12 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
             </li>
           ))}
         </ol>
+        <p className="mt-3 ml-auto flex w-fit flex-col items-start gap-1 text-[11px] text-ink-soft md:absolute md:bottom-0 md:right-0 md:mt-0">
+          <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
+          <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-brand" />Em curso</span>
+          <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-line" />Por iniciar</span>
+        </p>
       </div>
-      <p className="mt-3 ml-auto flex w-fit flex-col items-start gap-1 text-[11px] text-ink-soft">
-        <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
-        <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-brand" />Em curso</span>
-        <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-line" />Por iniciar</span>
-      </p>
     </div>
   )
 }
