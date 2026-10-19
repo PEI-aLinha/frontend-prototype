@@ -80,7 +80,7 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
           ))}
         </ol>
       </div>
-      <p className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-ink-soft">
+      <p className="mt-3 ml-auto flex w-fit flex-col items-start gap-1 text-[11px] text-ink-soft">
         <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
         <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-brand" />Em curso</span>
         <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-line" />Por iniciar</span>
