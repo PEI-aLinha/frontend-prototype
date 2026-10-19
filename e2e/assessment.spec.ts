@@ -1,0 +1,72 @@
+import { expect, test } from '@playwright/test'
+import { ORG, start } from './helpers'
+
+test('Assessment — Rui answers a question and the progress is kept', async ({ page }) => {
+  await start(page, `${ORG}/avaliacao`, 'rui')
+  await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '7')
+  await page.getByRole('link', { name: 'Ver perguntas de Controlo de acessos', exact: true }).click()
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Controlo de acessos' })).toBeVisible()
+  await expect(page.getByText('7 de 9 perguntas respondidas')).toBeVisible()
+  await expect(page.getByText('Delegada a Pedro Almeida:')).toBeVisible()
+  await page.getByRole('link', { name: /Wi-Fi para visitantes/ }).click()
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 9 de 9' })).toBeVisible()
+  await expect(page.getByText('Os visitantes não devem conseguir chegar aos servidores')).toBeVisible()
+  await page.getByRole('button', { name: 'Guardar e seguinte' }).click()
+  await expect(page.getByText('Escolha uma resposta.')).toBeVisible()
+
+  await page.getByText('Sim', { exact: true }).click()
+  await page.getByLabel('Comentário').fill('Rede de visitantes separada desde 2025.')
+  await page.getByRole('button', { name: 'Guardar e seguinte' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Resposta guardada. Voltou à lista da secção.' })).toBeVisible()
+  await expect(page.getByText('8 de 9 perguntas respondidas')).toBeVisible()
+
+  // The answer survives a reload and can be changed later.
+  await page.reload()
+  await expect(page.getByText('8 de 9 perguntas respondidas')).toBeVisible()
+  await page.getByRole('link', { name: /Wi-Fi para visitantes/ }).click()
+  await expect(page.getByRole('radio', { name: /^Sim/ })).toBeChecked()
+  await expect(page.getByLabel('Comentário')).toHaveValue('Rede de visitantes separada desde 2025.')
+  await page.getByRole('link', { name: 'Voltar a Controlo de acessos' }).click()
+  await page.getByRole('link', { name: 'Voltar à Avaliação' }).click()
+  await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
+})
+
+test('Assessment — Rui delegates a question, Pedro answers it and Rui sees the answer', async ({ page }) => {
+  const question = 'Todos os computadores e servidores têm proteção contra malware atualizada?'
+  await start(page, `${ORG}/avaliacao/sec-incidentes/q-inc-antivirus`, 'rui')
+  await page.getByRole('button', { name: 'Delegar a Pedro Almeida' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Delegar pergunta' })
+  await expect(dialog.getByText(question)).toBeVisible()
+  await dialog.getByRole('button', { name: 'Enviar' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Pergunta enviada a Pedro Almeida' })).toBeVisible()
+  await expect(page.getByText(/Delegada a Pedro Almeida: à espera de resposta/)).toBeVisible()
+  await expect(page.getByRole('button', { name: /^Delegar/ })).toHaveCount(0)
+
+  await page.goto(`${ORG}/tarefas?as=pedro`)
+  await page.getByRole('article').filter({ hasText: question }).getByRole('button', { name: 'Responder' }).click()
+  await expect(page.getByText('Avaliação de maturidade · Gestão de incidentes')).toBeVisible()
+  await page.getByText('Em parte', { exact: true }).click()
+  await page.getByLabel('Comentário').fill('Falta nos portáteis.')
+  await page.getByRole('button', { name: 'Enviar resposta' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Resposta enviada ao Rui Santos' })).toBeVisible()
+
+  await page.goto(`${ORG}/avaliacao/sec-incidentes/q-inc-antivirus?as=rui`)
+  const analystAnswer = page.getByRole('region', { name: 'Resposta do analista' })
+  await expect(analystAnswer.getByText('Resposta de Pedro Almeida')).toBeVisible()
+  await expect(analystAnswer.getByText('"Falta nos portáteis."')).toBeVisible()
+  await page.getByRole('link', { name: 'Voltar a Gestão de incidentes' }).click()
+  await expect(page.getByText('5 de 6 perguntas respondidas')).toBeVisible()
+  await expect(page.getByText('Respondida por Pedro Almeida:').first()).toBeVisible()
+})
+
+test('Assessment — the analyst cannot open it and it is read-only after submission', async ({ page }) => {
+  await start(page, `${ORG}/avaliacao/sec-acessos`, 'pedro')
+  await expect(page.getByText('Este ecrã não está disponível para o seu papel')).toBeVisible()
+
+  await start(page, `${ORG}/avaliacao/sec-gov/q-gov-politica`, 'rui', 'c3')
+  await expect(page.getByText('A avaliação já foi submetida. As respostas já não podem ser alteradas.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Guardar e seguinte' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Delegar/ })).toHaveCount(0)
+})
