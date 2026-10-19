@@ -55,9 +55,9 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
 }
 
 /** Aviso: fundo signal-soft, texto brand SemiBold 13, a toda a largura. */
-export function Note({ children, icon = true, className }: { children: ReactNode; icon?: boolean; className?: string }) {
+export function Note({ children, icon = true, plain = false, className }: { children: ReactNode; icon?: boolean; plain?: boolean; className?: string }) {
   return (
-    <div role="note" className={cn('flex items-start gap-2.5 rounded-[10px] bg-signal-soft px-3.5 py-2.5 text-[13px] font-semibold text-brand', className)}>
+    <div role="note" className={cn('flex items-start gap-2.5 text-[13px]', plain ? 'text-ink-soft' : 'rounded-[10px] bg-signal-soft px-3.5 py-2.5 font-semibold text-brand', className)}>
       {icon && <Info className="mt-[2px] size-4 shrink-0" aria-hidden />}
       <div className="min-w-0">{children}</div>
     </div>

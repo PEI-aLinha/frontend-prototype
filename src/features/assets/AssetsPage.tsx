@@ -7,7 +7,7 @@ import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Explainer, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
+  Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Explainer, NextAction, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
   Segmented, SkeletonRows, StatCard, type ColumnDef,
 } from '../../ui'
 import { AssetDrawer } from './AssetDrawer'
@@ -111,7 +111,7 @@ export function AssetsPage() {
     </>
   )
 
-  const pending = !data || state === 'done' || consultant ? null : (
+  const pending = !data || state !== 'assigned' || consultant ? null : (
     <PendingRow
       assigned={state === 'assigned'}
       title={task?.scope ?? 'Servidores, rede e sistemas de produção'}
@@ -124,19 +124,32 @@ export function AssetsPage() {
     />
   )
 
+  const nextAction = (() => {
+    if (!data) return null
+    if (consultant) {
+      const target = can('create', 'risk') ? data.assets.find((a) => a.criticality === 'alto' && !data.risksByAsset.has(a.id)) : undefined
+      return target && <NextAction title={`Registe o risco de "${target.name}"`} text="É um ativo de criticidade alta e ainda não tem nenhum risco associado." cta="Registar risco" to={`/clientes/${org.slug}/riscos?novo=1&ativo=${target.id}`} />
+    }
+    if (!can('create', 'asset')) return null
+    if (data.assets.length === 0) return <NextAction title="Registe o primeiro ativo" text="Comece pelos sistemas sem os quais a empresa para: faturação, produção, email." cta="Adicionar ativo" onClick={() => update({ novo: '1' })} />
+    if (state === 'empty' && can('assign', 'asset_task')) return <NextAction title="Atribua o registo técnico ao Pedro" text="Servidores, rede e máquinas da fábrica: ele conhece-os e só vê esses ativos." cta="Atribuir ao Pedro" onClick={() => update({ atribuir: '1' })} />
+    return null
+  })()
+
   return (
     <>
       <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? 'Inventário preenchido pelo Rui Santos e pelo Pedro Almeida. Use-o para registar os riscos.' : undefined} actions={actions} />
-      <Note>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
+      {nextAction}
+      <Note plain>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
       {consultant ? (
-        <Explainer id="assets-consultant" intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
+        <Explainer id="assets-consultant" collapseOnRevisit intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
           steps={[
             { title: 'Reveja o inventário', text: 'Abra um ativo para ver os detalhes e deixe comentários ao cliente se faltar alguma coisa.' },
             { title: 'Comece pelos críticos', text: 'Os ativos de criticidade Alta são os primeiros candidatos a riscos.' },
             { title: 'Registe o risco', text: 'Use "Registar risco" na linha do ativo: o formulário abre já com o ativo escolhido.' },
           ]} />
       ) : (
-        <Explainer id="assets-client" intro="O inventário é a lista do que a empresa tem de proteger. Não precisa de saber tudo: registe o que conhece e atribua o resto a quem sabe."
+        <Explainer id="assets-client" collapseOnRevisit intro="O inventário é a lista do que a empresa tem de proteger. Não precisa de saber tudo: registe o que conhece e atribua o resto a quem sabe."
           steps={[
             { title: 'Registe o que conhece', text: <>Programas e serviços que usa todos os dias (ERP, email). Para cada um indique o <Term k="servicoCritico">serviço crítico</Term> e a <Term k="criticidade">criticidade</Term>.</> },
             { title: 'Atribua a parte técnica', text: 'Servidores, rede e máquinas da fábrica: use "Atribuir ao Pedro". Ele recebe uma tarefa e só vê esses ativos.' },

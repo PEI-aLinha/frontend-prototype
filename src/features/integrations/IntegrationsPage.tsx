@@ -5,7 +5,7 @@ import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveri
 import { dateTime } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, Chip, ErrorState, Eyebrow, Explainer, Note, PageHeader, SkeletonRows, Term, cn, useToast } from '../../ui'
+import { Button, Card, Chip, ErrorState, Eyebrow, Explainer, NextAction, Note, PageHeader, SkeletonRows, Term, cn, useToast } from '../../ui'
 import { ConnectModal } from './ConnectModal'
 import { DiscoveryList } from './DiscoveryList'
 
@@ -116,12 +116,16 @@ export function IntegrationsPage() {
   const error = integrations.error ?? discoveries.error ?? evidence.error
   const providerName = (id: string) => integrations.data?.find((c) => c.provider.id === id)?.provider.name ?? id
   const pending = discoveries.data?.filter((d) => d.status === 'proposto').length ?? 0
+  const firstToConnect = isConsultant ? undefined : integrations.data?.find((c) => c.provider.applies && c.status !== 'ligado' && (isOwner || c.assignedTo === persona.userId))
+  const nextAction = isOwner && pending > 0
+    ? <NextAction title={`Reveja ${pending} ${pending === 1 ? 'ativo encontrado' : 'ativos encontrados'}`} text="Só entram no inventário depois de decidir: acrescentar, associar a um que já existe ou ignorar." cta="Ver sugestões" onClick={() => document.getElementById('int-disc')?.scrollIntoView({ behavior: 'smooth' })} />
+    : firstToConnect && <NextAction title={`Ligue ${firstToConnect.provider.name}`} text={firstToConnect.provider.description} cta="Ligar" onClick={() => setConnecting(firstToConnect.provider)} />
 
   return (
     <>
       <PageHeader eyebrow={org.name} title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
       {!isConsultant && (
-        <Explainer id={`integrations-${persona.role}`} intro={<>Uma <Term k="integracao">integração</Term> lê dados de um sistema que já usam (ex.: Microsoft 365). Nunca altera nada.</>}
+        <Explainer id={`integrations-${persona.role}`} collapseOnRevisit intro={<>Uma <Term k="integracao">integração</Term> lê dados de um sistema que já usam (ex.: Microsoft 365). Nunca altera nada.</>}
           steps={persona.role === 'analista' ? [
             { title: 'Autorize o acesso', text: 'O Rui pediu-lhe para ligar um sistema. Clique em "Ligar" e siga os três passos.' },
             { title: 'Primeira leitura', text: 'O aLinha lê os dados e prepara sugestões de ativos.' },
@@ -132,6 +136,7 @@ export function IntegrationsPage() {
             { title: 'Evidências automáticas', text: 'Algumas ações do roadmap (ex.: MFA) passam a ser verificadas sozinhas. A consultora vê o resultado.' },
           ]} />
       )}
+      {integrations.data && nextAction}
       {error ? <ErrorState error={error} onRetry={() => { integrations.refetch(); discoveries.refetch(); evidence.refetch() }} /> : !integrations.data ? <SkeletonRows rows={4} /> : (
         <>
           {!isConsultant && (
@@ -159,7 +164,7 @@ export function IntegrationsPage() {
               <EvidenceList items={evidence.data ?? []} providerName={providerName} />
             </section>
           )}
-          <Note>Todas as ligações são só de leitura. As credenciais ficam num cofre cifrado (OpenBao) e nunca aparecem no ecrã. Cada ligação, leitura e decisão fica no histórico.</Note>
+          <Note plain>Todas as ligações são só de leitura. As credenciais ficam num cofre cifrado (OpenBao) e nunca aparecem no ecrã. Cada ligação, leitura e decisão fica no histórico.</Note>
         </>
       )}
       <ConnectModal key={connecting?.id ?? 'none'} provider={connecting} open={!!connecting} onClose={() => setConnecting(null)} />

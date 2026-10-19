@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ChevronDown, Lightbulb } from 'lucide-react'
 import { cn } from './cn'
 
@@ -9,24 +9,37 @@ interface ExplainerProps {
   intro: ReactNode
   steps: Array<{ title: string; text: ReactNode }>
   footer?: ReactNode
+  /** Open on the first visit, collapsed on later ones (unless the person reopens it). */
+  collapseOnRevisit?: boolean
 }
 
-function readCollapsed(id: string): boolean {
+const storageKey = (id: string) => `alinha-explainer-${id}`
+
+function readCollapsed(id: string, collapseOnRevisit: boolean): boolean {
   try {
-    return localStorage.getItem(`alinha-explainer-${id}`) === 'closed'
+    const stored = localStorage.getItem(storageKey(id))
+    return stored === 'closed' || (collapseOnRevisit && stored === 'seen')
   } catch {
     return false
   }
 }
 
 /** "How this screen works": short step-by-step explanation that can be collapsed. */
-export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps, footer }: ExplainerProps) {
-  const [collapsed, setCollapsed] = useState(() => readCollapsed(id))
+export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps, footer, collapseOnRevisit = false }: ExplainerProps) {
+  const [collapsed, setCollapsed] = useState(() => readCollapsed(id, collapseOnRevisit))
+  useEffect(() => {
+    if (!collapseOnRevisit) return
+    try {
+      if (localStorage.getItem(storageKey(id)) === null) localStorage.setItem(storageKey(id), 'seen')
+    } catch {
+      // no persistence: stays open each visit
+    }
+  }, [id, collapseOnRevisit])
   const toggle = () => {
     const next = !collapsed
     setCollapsed(next)
     try {
-      localStorage.setItem(`alinha-explainer-${id}`, next ? 'closed' : 'open')
+      localStorage.setItem(storageKey(id), next ? 'closed' : 'open')
     } catch {
       // no persistence: lasts only for this session
     }

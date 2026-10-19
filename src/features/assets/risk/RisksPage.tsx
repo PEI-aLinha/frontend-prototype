@@ -8,7 +8,7 @@ import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from 
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
 import {
-  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows,
+  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows,
   type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
@@ -81,6 +81,14 @@ export function RisksPage() {
   const isNew = params.get('novo') === '1'
   const counts = (l: Level) => all.filter((r) => levelOf(pos(r).p, pos(r).i) === l).length
 
+  const undecided = all.filter((r) => !r.treatment && levelOf(r.probability, r.impact) === 'alto')
+  const nextAction = editable && ready && undecided.length > 0 && (
+    <NextAction
+      title={`Decida o tratamento de ${undecided.length} ${undecided.length === 1 ? 'risco alto' : 'riscos altos'}`}
+      text={`Comece por "${undecided[0].threat}". Ao mitigar, ligue ações do roadmap: sobem de prioridade.`}
+      cta="Abrir risco" onClick={() => update({ risco: undecided[0].id })} />
+  )
+
   return (
     <>
       <PageHeader
@@ -100,16 +108,17 @@ export function RisksPage() {
           <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[14px] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
         </div>
       )}
+      {nextAction}
       {!editable && <Note>Registo validado pela consultora Marta Ferreira. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
       {editable ? (
-        <Explainer id="risks-consultant" intro="O registo de riscos segue o método da ISO/IEC 27005 em três passos. O resultado prioriza o roadmap do cliente."
+        <Explainer id="risks-consultant" collapseOnRevisit intro="O registo de riscos segue o método da ISO/IEC 27005 em três passos. O resultado prioriza o roadmap do cliente."
           steps={[
             { title: 'Identificar', text: <>Escolha o <Term k="ativo" /> e descreva a <Term k="ameaca">ameaça</Term>: o que pode correr mal.</> },
             { title: 'Avaliar', text: <>Indique a <Term k="probabilidade">probabilidade</Term> e o <Term k="impacto">impacto</Term>. O <Term k="nivelRisco">nível</Term> é calculado pelo sistema.</> },
             { title: 'Tratar', text: <>Decida o <Term k="tratamento">tratamento</Term>. Ao mitigar, ligue ações do <Term k="roadmap" />: as ligadas a riscos altos sobem de prioridade.</> },
           ]} />
       ) : (
-        <Explainer id="risks-client" title="Como ler esta página" intro="Cada linha é algo que pode correr mal à empresa. A consultora avaliou quão provável é e quão grave seria, e definiu o que fazer."
+        <Explainer id="risks-client" collapseOnRevisit title="Como ler esta página" intro="Cada linha é algo que pode correr mal à empresa. A consultora avaliou quão provável é e quão grave seria, e definiu o que fazer."
           steps={[
             { title: 'Nível', text: <>Alto, médio ou baixo, calculado por regra: <Term k="probabilidade">probabilidade</Term> × <Term k="impacto">impacto</Term>. Comece pelos altos.</> },
             { title: 'O que pode acontecer', text: 'Explicado em linguagem simples. Abra a linha para ver o detalhe.' },
