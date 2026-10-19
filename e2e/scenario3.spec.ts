@@ -7,6 +7,12 @@ test('Scenario 3 — Rui sees the risks read-only after validation', async ({ pa
   await expect(page.getByText('1 risco alto · em tratamento')).toBeVisible()
   await shot(page, 'c3-01-inicio')
 
+  // Only the validated home CTA leads somewhere real: it hands Rui the plan he just got validated.
+  await expect(page.getByRole('link', { name: 'Ver roadmap →' })).toHaveAttribute('href', `${ORG}/roadmap`)
+  await page.getByRole('link', { name: 'Ver roadmap →' }).click()
+  await expect(page).toHaveURL(`${ORG}/roadmap`)
+  await expect(page.getByRole('heading', { name: 'Roadmap validado' })).toBeVisible()
+
   await page.goto(`${ORG}/ativos`)
   await expect(page.getByRole('columnheader', { name: 'Risco' }).or(page.getByText('Servidor de produção').locator('visible=true')).first()).toBeVisible()
   await shot(page, 'c3-02-ativos')
