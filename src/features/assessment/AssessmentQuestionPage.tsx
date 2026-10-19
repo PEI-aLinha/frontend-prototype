@@ -150,9 +150,10 @@ function DelegateModal({ question, analysts, onClose }: { question: AssessmentQu
   const submit = () => {
     setSubmitted(true)
     if (!assignee || (due && today.data && due < today.data)) return
-    delegate.mutate({ questionId: question.id, input: { assigneeId: assignee, dueDate: due || null } }, {
-      onSuccess: () => { toast.show(`Pergunta enviada a ${analysts.find((a) => a.userId === assignee)?.name}`); onClose() },
-    })
+    // mutateAsync: once the refetch marks the question as delegated, this dialog unmounts and mutate() callbacks would be dropped.
+    delegate.mutateAsync({ questionId: question.id, input: { assigneeId: assignee, dueDate: due || null } })
+      .then(() => { toast.show(`Pergunta enviada a ${analysts.find((a) => a.userId === assignee)?.name}`); onClose() })
+      .catch(() => {}) // The error is shown in the dialog (delegate.isError).
   }
 
   return (
