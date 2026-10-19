@@ -7,7 +7,7 @@ import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Explainer, NextAction, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
+  Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Explainer, NextAction, Note, Term, PageHeader, PendingRow, Person, ProgressBar, RiskLevelBadge,
   Segmented, SkeletonRows, StatCard, type ColumnDef,
 } from '../../ui'
 import { AssetDrawer } from './AssetDrawer'
@@ -164,7 +164,11 @@ export function AssetsPage() {
           <div className="flex gap-4 max-md:flex-col">
             <StatCard label="Serviços críticos" value={data.services.length} caption={data.services.map((s) => s.name).join(' · ') || 'Ainda não definidos'} onClick={() => update({ servicos: '1' })} />
             <StatCard label="Ativos registados" value={data.assets.length} caption={byAnalyst.length && analystName ? `${byAnalyst.length} registados pelo ${analystName}` : consultant ? 'Pelo cliente' : 'Registados por si'} />
-            <StatCard label="Por registar" value={state === 'done' ? '0' : '—'} caption={state === 'done' ? 'Inventário completo' : task?.scope ?? 'Servidores, rede e sistemas de produção'} />
+            <StatCard label="Por registar"
+              value={state === 'done' ? '0' : state === 'assigned' ? `${byAnalyst.length} de ${task?.expectedCount ?? 4}` : '—'}
+              caption={state === 'assigned'
+                ? <><ProgressBar value={byAnalyst.length} max={task?.expectedCount ?? 4} label="Ativos registados pelo técnico" className="mb-1.5" />{task?.scope}</>
+                : state === 'done' ? 'Inventário completo' : task?.scope ?? 'Servidores, rede e sistemas de produção'} />
           </div>
 
           {data.assets.length > 0 && (

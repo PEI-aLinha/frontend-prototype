@@ -5,7 +5,7 @@ import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveri
 import { dateTime } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, Chip, ErrorState, Eyebrow, Explainer, NextAction, Note, PageHeader, SkeletonRows, Term, cn, useToast } from '../../ui'
+import { Button, Card, Chip, ErrorState, Eyebrow, Explainer, NextAction, Note, PageHeader, ProgressBar, SkeletonRows, Term, cn, useToast } from '../../ui'
 import { ConnectModal } from './ConnectModal'
 import { DiscoveryList } from './DiscoveryList'
 
@@ -85,19 +85,24 @@ function Lock() {
 
 function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; providerName: (p: CollectedEvidence['provider']) => string }) {
   if (!items.length) return <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Ainda não há evidências recolhidas. Ligue uma integração para começar.</p>
+  const newestFirst = [...items].sort((a, b) => b.collectedAt.localeCompare(a.collectedAt))
   return (
-    <ul className="flex flex-col gap-2">
-      {items.map((e) => (
-        <li key={e.id} className="flex items-start gap-3 rounded-[12px] border border-line-soft px-4 py-3">
-          {e.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" aria-label="Cumpre" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-risk-high-ink" aria-label="Não cumpre" />}
-          <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-bold">{e.title}</p>
-            <p className="text-[13px] text-ink-soft">{e.result}</p>
-            <p className="mt-1 text-[12px] text-muted">{providerName(e.provider)} · {STRENGTH[e.strength]} · {dateTime(e.collectedAt)}</p>
+    <ol className="ml-2 flex flex-col border-l-2 border-line-soft">
+      {newestFirst.map((e) => (
+        <li key={e.id} className="relative pb-4 pl-6 last:pb-0">
+          <span aria-hidden className={cn('absolute -left-[7px] top-1 size-3 rounded-full ring-4 ring-paper', e.ok ? 'bg-brand' : 'bg-risk-high-ink')} />
+          <p className="text-[12px] font-semibold text-muted">{dateTime(e.collectedAt)} · {providerName(e.provider)}</p>
+          <div className="mt-1 flex items-start gap-2 rounded-[12px] border border-line-soft px-4 py-3">
+            {e.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" aria-label="Cumpre" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-risk-high-ink" aria-label="Não cumpre" />}
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-bold">{e.title}</p>
+              <p className="text-[13px] text-ink-soft">{e.result}</p>
+              <p className="mt-1 text-[12px] text-muted">{STRENGTH[e.strength]}</p>
+            </div>
           </div>
         </li>
       ))}
-    </ul>
+    </ol>
   )
 }
 
@@ -116,6 +121,8 @@ export function IntegrationsPage() {
   const error = integrations.error ?? discoveries.error ?? evidence.error
   const providerName = (id: string) => integrations.data?.find((c) => c.provider.id === id)?.provider.name ?? id
   const pending = discoveries.data?.filter((d) => d.status === 'proposto').length ?? 0
+  const usable = integrations.data?.filter((c) => c.provider.applies) ?? []
+  const connected = usable.filter((c) => c.status === 'ligado').length
   const firstToConnect = isConsultant ? undefined : integrations.data?.find((c) => c.provider.applies && c.status !== 'ligado' && (isOwner || c.assignedTo === persona.userId))
   const nextAction = isOwner && pending > 0
     ? <NextAction title={`Reveja ${pending} ${pending === 1 ? 'ativo encontrado' : 'ativos encontrados'}`} text="Só entram no inventário depois de decidir: acrescentar, associar a um que já existe ou ignorar." cta="Ver sugestões" onClick={() => document.getElementById('int-disc')?.scrollIntoView({ behavior: 'smooth' })} />
@@ -142,6 +149,12 @@ export function IntegrationsPage() {
           {!isConsultant && (
             <section aria-labelledby="int-catalog" className="flex flex-col gap-3">
               <h2 id="int-catalog" className="text-[18px] font-extrabold">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
+              {usable.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[13px] font-semibold text-ink-soft">{connected} de {usable.length} sistemas ligados</p>
+                  <ProgressBar value={connected} max={usable.length} label="Sistemas ligados" />
+                </div>
+              )}
               {integrations.data.length === 0
                 ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Não tem integrações para ligar.</p>
                 : groupByCategory(integrations.data).map(({ category, items }) => (
