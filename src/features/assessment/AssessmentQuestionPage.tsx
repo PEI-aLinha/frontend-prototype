@@ -32,13 +32,15 @@ export function AssessmentQuestionPage() {
 
   return (
     <>
-      <Link to={sectionPath} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden />{section.name}</Link>
+      <Link to={sectionPath} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar a </span>{section.name}</Link>
       <PageHeader eyebrow={`Avaliação de maturidade · ${section.name}`} title={`Pergunta ${index + 1} de ${questions.data.length}`} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="flex flex-col gap-5 px-7 py-6 max-md:px-5">
-          <p className="text-[20px] font-extrabold leading-snug">{question.text}</p>
+          <h2 className="text-[20px] font-extrabold leading-snug">{question.text}</h2>
           {open
-            ? <AnswerForm key={question.id} question={question} nextPath={next ? `${sectionPath}/${next.id}` : sectionPath} sectionPath={sectionPath} />
+            ? <AnswerForm key={question.id} question={question} sectionPath={sectionPath}
+                nextPath={next ? `${sectionPath}/${next.id}` : sectionPath}
+                savedMessage={next ? `Resposta guardada. Pergunta ${index + 2} de ${questions.data.length}.` : 'Resposta guardada. Voltou à lista da secção.'} />
             : (
               <div className="rounded-[14px] bg-paper-soft p-4">
                 <Eyebrow>Resposta</Eyebrow>
@@ -60,7 +62,7 @@ export function AssessmentQuestionPage() {
   )
 }
 
-function AnswerForm({ question, nextPath, sectionPath }: { question: AssessmentQuestion; nextPath: string; sectionPath: string }) {
+function AnswerForm({ question, nextPath, sectionPath, savedMessage }: { question: AssessmentQuestion; nextPath: string; sectionPath: string; savedMessage: string }) {
   const org = useTenant()
   const navigate = useNavigate()
   const toast = useToast()
@@ -72,7 +74,7 @@ function AnswerForm({ question, nextPath, sectionPath }: { question: AssessmentQ
   const submit = () => {
     if (!choice) { setError('Escolha uma resposta.'); return }
     save.mutate({ questionId: question.id, answer: { choice, note } }, {
-      onSuccess: () => { toast.show('Resposta guardada'); navigate(nextPath) },
+      onSuccess: () => { toast.show(savedMessage); navigate(nextPath) },
       onError: (e) => toast.show(e.message, 'error'),
     })
   }

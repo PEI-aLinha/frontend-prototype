@@ -46,7 +46,7 @@ export function AssessmentPage() {
                     <Card className="flex flex-col gap-2.5">
                       <div className="flex items-start justify-between gap-3">
                         <h2 className="flex items-center gap-2 text-[15px] font-bold">
-                          {complete ? <CheckCircle2 className="size-4 text-brand" aria-label="Completa" /> : <Clock className="size-4 text-muted" aria-label="Por completar" />}
+                          {complete ? <CheckCircle2 className="size-4 text-brand" role="img" aria-label="Completa" /> : <Clock className="size-4 text-muted" role="img" aria-label="Por completar" />}
                           {s.name}
                         </h2>
                         <span className="shrink-0 text-[13px] text-ink-soft">{s.answered}/{s.total}</span>
@@ -61,7 +61,7 @@ export function AssessmentPage() {
                           </p>
                         )
                       })}
-                      <Link to={s.id} className="self-start text-[14px] font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span> →</Link>
+                      <Link to={s.id} className="self-start text-[14px] font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span> <span aria-hidden>→</span></Link>
                     </Card>
                   </li>
                 )
