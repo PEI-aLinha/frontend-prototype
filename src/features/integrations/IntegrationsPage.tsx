@@ -66,6 +66,19 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   )
 }
 
+const UNUSED_GROUP = 'Não usa'
+
+/** One group per category, in catalog order; providers the company doesn't use go last. */
+function groupByCategory(items: IntegrationConnection[]): { category: string; items: IntegrationConnection[] }[] {
+  const groups = new Map<string, IntegrationConnection[]>()
+  for (const c of items) {
+    const key = c.provider.applies ? c.provider.category : UNUSED_GROUP
+    groups.set(key, [...(groups.get(key) ?? []), c])
+  }
+  const entries = [...groups].map(([category, list]) => ({ category, items: list }))
+  return [...entries.filter((g) => g.category !== UNUSED_GROUP), ...entries.filter((g) => g.category === UNUSED_GROUP)]
+}
+
 function Lock() {
   return <ShieldCheck className="inline size-3.5 align-[-2px]" aria-hidden />
 }
@@ -126,7 +139,12 @@ export function IntegrationsPage() {
               <h2 id="int-catalog" className="text-[18px] font-extrabold">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
               {integrations.data.length === 0
                 ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Não tem integrações para ligar.</p>
-                : <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{integrations.data.map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>}
+                : groupByCategory(integrations.data).map(({ category, items }) => (
+                  <div key={category} className="flex flex-col gap-2">
+                    <h3 className="text-[13px] font-extrabold uppercase tracking-wide text-muted">{category}</h3>
+                    <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>
+                  </div>
+                ))}
             </section>
           )}
           {isOwner && (
