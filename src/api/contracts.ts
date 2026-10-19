@@ -379,6 +379,8 @@ export interface AssessmentSummary {
   sections: AssessmentSection[]
   /** Maturity level (1–5), only after validation. */
   maturity: number | null
+  /** First question still to answer (not answered nor waiting for an analyst); null once there is none or after submission. */
+  nextQuestion: { sectionId: Id; questionId: Id } | null
 }
 
 /** One question of the maturity questionnaire, with the designated manager's answer. */
@@ -386,8 +388,12 @@ export interface AssessmentQuestion {
   id: Id
   sectionId: Id
   text: string
-  /** Plain-language explanation of what the question asks. */
+  /** AI help, pre-generated per question (like Task.aiHelp), informational only: what the question means in plain language. */
   explanation: string
+  /** AI help: a concrete example from a small company. */
+  example: string
+  /** AI help: why the question matters (risk or legal obligation). */
+  whyItMatters: string
   /** Null while unanswered. When delegated, the analyst's answer once they reply. */
   answer: QuestionAnswer | null
   /** Technical question task, when delegated to an analyst. */

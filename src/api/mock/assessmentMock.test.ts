@@ -18,6 +18,19 @@ describe('assessment questionnaire (mock API)', () => {
     expect(await progress()).toEqual(['8/8', '6/6', '7/9', '7/7', '4/6', '2/5'])
   })
 
+  it('gives every question an explanation, an example and why it matters', async () => {
+    const questions = (await Promise.all((await api.assessment.getAssessment(ORG_ID)).sections.map((s) => api.assessment.listQuestions(ORG_ID, s.id)))).flat()
+    expect(questions).toHaveLength(41)
+    for (const q of questions) expect([q.explanation, q.example, q.whyItMatters].every((t) => t.trim().length > 0), q.id).toBe(true)
+  })
+
+  it('points to the next question to answer, skipping the delegated ones', async () => {
+    // q-mfa (same section) is waiting for Pedro.
+    expect((await api.assessment.getAssessment(ORG_ID)).nextQuestion).toEqual({ sectionId: 'sec-acessos', questionId: 'q-acessos-wifi' })
+    await api.assessment.saveAnswer(ORG_ID, 'q-acessos-wifi', { choice: 'sim' })
+    expect((await api.assessment.getAssessment(ORG_ID)).nextQuestion).toEqual({ sectionId: 'sec-incidentes', questionId: 'q-inc-antivirus' })
+  })
+
   it('saves the designated manager answer and audits it', async () => {
     const saved = await api.assessment.saveAnswer(ORG_ID, 'q-acessos-wifi', { choice: 'sim', note: '  Rede separada desde 2025.  ' })
     expect(saved.answer).toEqual({ choice: 'sim', note: 'Rede separada desde 2025.' })
@@ -36,6 +49,7 @@ describe('assessment questionnaire (mock API)', () => {
     await expect(api.assessment.delegateQuestion(ORG_ID, 'q-inc-antivirus', { assigneeId: PEDRO, dueDate: '2020-01-01' })).rejects.toMatchObject({ status: 422 })
     const task = await api.assessment.delegateQuestion(ORG_ID, 'q-inc-antivirus', { assigneeId: PEDRO, dueDate: null })
     expect(task).toMatchObject({ kind: 'pergunta', questionId: 'q-inc-antivirus', assigneeId: PEDRO, status: 'pendente', context: 'Avaliação de maturidade · Gestão de incidentes' })
+    expect(task.aiHelp).toMatch(/^Cada computador e servidor tem um antivírus.+ Exemplo: O Microsoft Defender/)
     await expect(api.assessment.delegateQuestion(ORG_ID, 'q-inc-antivirus', { assigneeId: PEDRO, dueDate: null })).rejects.toMatchObject({ status: 409 })
 
     who = PEDRO
@@ -56,6 +70,7 @@ describe('assessment questionnaire (mock API)', () => {
   it('locks the questionnaire after submission', async () => {
     resetDemo('c3')
     expect(await progress()).toEqual(['8/8', '6/6', '9/9', '7/7', '6/6', '5/5'])
+    expect((await api.assessment.getAssessment(ORG_ID)).nextQuestion).toBeNull()
     await expect(api.assessment.saveAnswer(ORG_ID, 'q-gov-politica', { choice: 'nao' })).rejects.toMatchObject({ status: 409 })
     await expect(api.assessment.delegateQuestion(ORG_ID, 'q-gov-politica', { assigneeId: PEDRO, dueDate: null })).rejects.toMatchObject({ status: 409 })
   })

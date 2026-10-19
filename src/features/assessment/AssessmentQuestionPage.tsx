@@ -5,7 +5,7 @@ import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '.
 import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUsers } from '../../api/queries'
 import { shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, Chip, DateInput, EmptyState, ErrorState, Eyebrow, Field, Modal, Note, OptionGroup, PageHeader, Select, SkeletonRows, TextArea, useToast } from '../../ui'
+import { AIBadge, Button, Card, Chip, DateInput, EmptyState, ErrorState, Eyebrow, Field, Modal, Note, OptionGroup, PageHeader, Select, SkeletonRows, TextArea, useToast } from '../../ui'
 import { CHOICE_LABEL, CHOICES } from './choices'
 
 /** One assessment question: answer, save progress, or delegate it to an analyst. */
@@ -51,14 +51,31 @@ export function AssessmentQuestionPage() {
             )}
         </Card>
         <aside className="flex flex-col gap-3">
-          <section aria-label="Explicação" className="flex flex-col gap-2.5 rounded-[16px] border border-brand-soft bg-paper p-5">
-            <h2 className="text-[15px] font-extrabold">O que esta pergunta quer saber</h2>
-            <p className="text-[14px] leading-relaxed text-ink-soft">{question.explanation}</p>
-          </section>
+          <AIHelp question={question} />
           <Delegation question={question} task={task} assignee={assignee} open={open} />
         </aside>
       </div>
     </>
+  )
+}
+
+/** US33 explanation panel (mockup 04/05): AI help pre-generated per question, informational only. */
+function AIHelp({ question }: { question: AssessmentQuestion }) {
+  return (
+    <section aria-labelledby="ajuda-ia" className="flex flex-col gap-3.5 rounded-[18px] bg-brand-deep p-[26px] max-md:p-5">
+      <Eyebrow className="text-[12px] text-signal-soft">Ajuda da IA</Eyebrow>
+      <h2 id="ajuda-ia" className="text-[19px] font-extrabold leading-snug text-white">O que significa esta pergunta?</h2>
+      <p className="text-[14px] leading-relaxed text-brand-soft">{question.explanation}</p>
+      <div className="rounded-[12px] bg-brand px-4 py-3.5">
+        <h3 className="text-[13px] font-bold text-white">Exemplo</h3>
+        <p className="text-[13px] leading-relaxed text-brand-soft">{question.example}</p>
+      </div>
+      <div>
+        <h3 className="text-[13px] font-bold text-white">Porque é importante</h3>
+        <p className="text-[13px] leading-relaxed text-brand-soft">{question.whyItMatters}</p>
+      </div>
+      <div><AIBadge kind="info" onDark /></div>
+    </section>
   )
 }
 

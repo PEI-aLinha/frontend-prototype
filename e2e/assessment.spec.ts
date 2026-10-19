@@ -12,7 +12,11 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await page.getByRole('link', { name: /Wi-Fi para visitantes/ }).click()
 
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 9 de 9' })).toBeVisible()
-  await expect(page.getByText('Os visitantes não devem conseguir chegar aos servidores')).toBeVisible()
+  const help = page.getByRole('region', { name: 'O que significa esta pergunta?' })
+  await expect(help.getByText('Os visitantes não devem conseguir chegar aos servidores')).toBeVisible()
+  await expect(help.getByRole('heading', { name: 'Exemplo' })).toBeVisible()
+  await expect(help.getByRole('heading', { name: 'Porque é importante' })).toBeVisible()
+  await expect(help.getByText('Gerado por IA · apenas informativo')).toBeVisible()
   await page.getByRole('button', { name: 'Guardar e seguinte' }).click()
   await expect(page.getByText('Escolha uma resposta.')).toBeVisible()
 
@@ -47,6 +51,7 @@ test('Assessment — Rui delegates a question, Pedro answers it and Rui sees the
   await page.goto(`${ORG}/tarefas?as=pedro`)
   await page.getByRole('article').filter({ hasText: question }).getByRole('button', { name: 'Responder' }).click()
   await expect(page.getByText('Avaliação de maturidade · Gestão de incidentes')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Ajuda' }).getByText(/Exemplo: O Microsoft Defender/)).toBeVisible()
   await page.getByText('Em parte', { exact: true }).click()
   await page.getByLabel('Comentário').fill('Falta nos portáteis.')
   await page.getByRole('button', { name: 'Enviar resposta' }).click()
@@ -69,4 +74,13 @@ test('Assessment — the analyst cannot open it and it is read-only after submis
   await expect(page.getByText('A avaliação já foi submetida. As respostas já não podem ser alteradas.')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Guardar e seguinte' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Delegar/ })).toHaveCount(0)
+})
+
+test('Assessment — the home page shows the real progress and continues where Rui stopped', async ({ page }) => {
+  await start(page, `${ORG}/inicio`, 'rui')
+  await expect(page.getByRole('heading', { name: '34 de 41 perguntas respondidas' })).toBeVisible()
+  await expect(page.getByText('1 pergunta atribuída a Pedro Almeida')).toBeVisible()
+  await page.getByRole('button', { name: 'Continuar avaliação →' }).click()
+  await expect(page).toHaveURL(/\/avaliacao\/sec-acessos\/q-acessos-wifi$/)
+  await expect(page.getByRole('heading', { level: 2, name: /Wi-Fi para visitantes/ })).toBeVisible()
 })
