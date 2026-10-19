@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ArrowLeft, Check, UserRound } from 'lucide-react'
 import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '../../api/contracts'
 import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUsers } from '../../api/queries'
 import { dateTime, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { AIBadge, Button, Card, Chip, DateInput, EmptyState, ErrorState, Eyebrow, Field, Modal, Note, OptionGroup, PageHeader, Select, SkeletonRows, TextArea, useToast } from '../../ui'
+import { AIBadge, Button, Card, Chip, DateInput, EmptyState, ErrorState, Eyebrow, Field, Modal, Note, OptionGroup, PageHeader, ProgressBar, Select, SkeletonRows, TextArea, useToast } from '../../ui'
 import { CHOICE_LABEL, CHOICES } from './choices'
 
 const KIND_LABEL = { tecnica: 'Pergunta técnica', gestao: 'Pergunta de gestão' } as const
@@ -17,24 +17,46 @@ function savedLabel(iso: string) {
   return `às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-/** One assessment question: answer, save progress, or delegate it to an analyst. */
+/** Paths of the previous and next questions; undefined while unknown (or before the first question). */
+interface Neighbours { prev?: string; next?: string }
+
+/**
+ * One assessment question: answer, save progress, or delegate it to an analyst.
+ * The questions are one continuous flow (mockup 04/05); the section pages are an index into it.
+ */
 export function AssessmentQuestionPage() {
   const { sectionId = '', questionId = '' } = useParams()
   const org = useTenant()
+  const navigate = useNavigate()
   const assessment = useAssessment(org.id)
   const questions = useAssessmentQuestions(org.id, sectionId)
   const tasks = useTasks(org.id)
   const users = useUsers(org.id)
-  const sectionPath = `/org/${org.slug}/avaliacao/${sectionId}`
+  const base = `/org/${org.slug}/avaliacao`
+  const sections = assessment.data?.sections ?? []
+  const at = sections.findIndex((s) => s.id === sectionId)
+  const prevSection = at > 0 ? sections[at - 1] : undefined
+  const nextSection = at >= 0 ? sections[at + 1] : undefined
+  // The neighbouring sections, to cross into them from the first or last question.
+  const prevQuestions = useAssessmentQuestions(prevSection && org.id, prevSection?.id ?? '')
+  const nextQuestions = useAssessmentQuestions(nextSection && org.id, nextSection?.id ?? '')
 
   const error = assessment.error ?? questions.error
   if (error) return <ErrorState error={error} onRetry={() => { assessment.refetch(); questions.refetch() }} />
   if (!assessment.data || !questions.data) return <SkeletonRows rows={4} />
-  const section = assessment.data.sections.find((s) => s.id === sectionId)
+  const section = sections[at]
   const index = questions.data.findIndex((q) => q.id === questionId)
   const question = questions.data[index]
-  if (!section || !question) return <EmptyState title="Pergunta não encontrada"><Link to={`/org/${org.slug}/avaliacao`} className="font-bold text-brand hover:underline">Voltar à avaliação</Link></EmptyState>
-  const next = questions.data[index + 1]
+  if (!section || !question) return <EmptyState title="Pergunta não encontrada"><Link to={base} className="font-bold text-brand hover:underline">Voltar à avaliação</Link></EmptyState>
+
+  const before = questions.data[index - 1] ?? prevQuestions.data?.at(-1)
+  const after = questions.data[index + 1] ?? nextQuestions.data?.[0]
+  const pathOf = (q?: AssessmentQuestion) => q && `${base}/${q.sectionId}/${q.id}`
+  // After the very last question, "Seguinte" goes back to the overview of the sections.
+  const nav: Neighbours = { prev: pathOf(before), next: pathOf(after) ?? (nextSection ? undefined : base) }
+  const total = sections.reduce((n, s) => n + s.total, 0)
+  const answered = sections.reduce((n, s) => n + s.answered, 0)
+  const number = sections.slice(0, at).reduce((n, s) => n + s.total, 0) + index + 1
   const task = tasks.data?.find((t) => t.id === question.delegatedTaskId)
   const assignee = users.data?.find((u) => u.id === task?.assigneeId)
   const open = assessment.data.status === 'em_curso'
@@ -42,14 +64,15 @@ export function AssessmentQuestionPage() {
 
   return (
     <>
-      <Link to={sectionPath} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar a </span>{section.name}</Link>
-      <PageHeader eyebrow="Avaliação de maturidade · NIS2 + RGPD" title={`Pergunta ${index + 1} de ${questions.data.length}`}
+      <Link to={`${base}/${sectionId}`} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar a </span>{section.name}</Link>
+      <PageHeader eyebrow="Avaliação de maturidade · NIS2 + RGPD" title={`Pergunta ${number} de ${total}`}
         actions={
           // Always rendered, so screen readers announce it when a save fills it in.
           <p role="status" className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft">
             {savedAt && <><Check className="size-4 text-signal" aria-hidden />Progresso guardado {savedLabel(savedAt)}</>}
           </p>
         } />
+      <ProgressBar value={answered} max={total} label="Progresso da avaliação" className="-mt-2" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="flex flex-col gap-5 px-7 py-6 max-md:px-5">
           <div className="flex flex-col gap-2.5">
@@ -60,16 +83,17 @@ export function AssessmentQuestionPage() {
             <h2 className="text-[20px] font-extrabold leading-snug">{question.text}</h2>
           </div>
           {open
-            ? <AnswerForm key={question.id} question={question} sectionPath={sectionPath}
-                nextPath={next ? `${sectionPath}/${next.id}` : sectionPath}
-                savedMessage={next ? `Resposta guardada. Pergunta ${index + 2} de ${questions.data.length}.` : 'Resposta guardada. Voltou à lista da secção.'} />
+            ? <AnswerForm key={question.id} question={question} nav={nav} overviewPath={base} />
             : (
-              <div className="rounded-[14px] bg-paper-soft p-4">
-                <Eyebrow>Resposta</Eyebrow>
-                <p className="mt-1 text-[16px] font-bold">{question.answer ? CHOICE_LABEL[question.answer.choice] : 'Sem resposta'}</p>
-                {question.answer?.note && <p className="mt-1 text-[14px] text-ink-soft">"{question.answer.note}"</p>}
-                <p className="mt-3 text-[13px] text-muted">A avaliação já foi submetida. As respostas já não podem ser alteradas.</p>
-              </div>
+              <>
+                <div className="rounded-[14px] bg-paper-soft p-4">
+                  <Eyebrow>Resposta</Eyebrow>
+                  <p className="mt-1 text-[16px] font-bold">{question.answer ? CHOICE_LABEL[question.answer.choice] : 'Sem resposta'}</p>
+                  {question.answer?.note && <p className="mt-1 text-[14px] text-ink-soft">"{question.answer.note}"</p>}
+                  <p className="mt-3 text-[13px] text-muted">A avaliação já foi submetida. As respostas já não podem ser alteradas.</p>
+                </div>
+                <QuestionNav nav={nav} onGo={(path) => navigate(path)} />
+              </>
             )}
         </Card>
         <aside className="flex flex-col gap-3">
@@ -101,34 +125,53 @@ function AIHelp({ question }: { question: AssessmentQuestion }) {
   )
 }
 
-function AnswerForm({ question, nextPath, sectionPath, savedMessage }: { question: AssessmentQuestion; nextPath: string; sectionPath: string; savedMessage: string }) {
+type Leaving = 'prev' | 'later' | 'next'
+
+function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuestion; nav: Neighbours; overviewPath: string }) {
   const org = useTenant()
   const navigate = useNavigate()
   const toast = useToast()
   const save = useSaveAnswer(org.id)
   const [choice, setChoice] = useState<AnswerChoice | null>(question.answer?.choice ?? null)
   const [note, setNote] = useState(question.answer?.note ?? '')
-  const [error, setError] = useState<string>()
+  const [leaving, setLeaving] = useState<Leaving>()
+  // Only a new or changed answer is saved. Without an answer, moving on skips the question ("Por responder").
+  const changed = !!choice && (choice !== question.answer?.choice || note.trim() !== (question.answer?.note ?? ''))
 
-  const submit = () => {
-    if (!choice) { setError('Escolha uma resposta.'); return }
-    save.mutate({ questionId: question.id, answer: { choice, note } }, {
-      onSuccess: () => { toast.show(savedMessage); navigate(nextPath) },
-      onError: (e) => toast.show(e.message, 'error'),
-    })
+  const leave = (action: Leaving, path: string, message?: string) => {
+    const go = () => { if (message) toast.show(message); navigate(path) }
+    if (!choice || !changed) { go(); return }
+    setLeaving(action)
+    // mutateAsync: navigating unmounts this form, and mutate() callbacks would be dropped.
+    save.mutateAsync({ questionId: question.id, answer: { choice, note } })
+      .then(go)
+      .catch((e: Error) => { setLeaving(undefined); toast.show(e.message, 'error') })
   }
 
   return (
-    <form noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); submit() }}>
-      <OptionGroup name="resposta" legend="A sua resposta" value={choice} onChange={(v) => { setChoice(v); setError(undefined) }} options={CHOICES} columns={2} error={error} />
+    <form noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (nav.next && !leaving) leave('next', nav.next) }}>
+      <OptionGroup name="resposta" legend="A sua resposta" value={choice} onChange={setChoice} options={CHOICES} columns={2} />
       <Field label="Comentário" optional hint="Ajuda a consultora a perceber a resposta. Ex.: em que sistemas falta.">
         {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />}
       </Field>
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button variant="secondary" onClick={() => navigate(sectionPath)}>Voltar à secção</Button>
-        <Button type="submit" loading={save.isPending}>Guardar e seguinte</Button>
-      </div>
+      <QuestionNav nav={nav} leaving={leaving} onGo={(path, action) => leave(action, path)}>
+        <Button variant="secondary" loading={leaving === 'later'} disabled={!!leaving}
+          onClick={() => leave('later', overviewPath, 'Progresso guardado. Pode continuar quando quiser.')}>Guardar e continuar depois</Button>
+      </QuestionNav>
     </form>
+  )
+}
+
+/** ← Anterior on the left; Seguinte → (and any extra action) on the right. */
+function QuestionNav({ nav, leaving, onGo, children }: { nav: Neighbours; leaving?: Leaving; onGo: (path: string, action: 'prev' | 'next') => void; children?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <Button variant="secondary" loading={leaving === 'prev'} disabled={!nav.prev || !!leaving} onClick={() => nav.prev && onGo(nav.prev, 'prev')}>← Anterior</Button>
+      <div className="flex flex-wrap justify-end gap-2">
+        {children}
+        <Button loading={leaving === 'next'} disabled={!nav.next || !!leaving} onClick={() => nav.next && onGo(nav.next, 'next')}>Seguinte →</Button>
+      </div>
+    </div>
   )
 }
 
