@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ArrowRight, Download, Plus, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Download, FileSpreadsheet, Plus, ShieldCheck } from 'lucide-react'
 import type { Level, Risk } from '../../../api/contracts'
 import { useActions, useAssets, useRiskLinks, useRisks, useToday, useUsers } from '../../../api/queries'
 import { RISK_MATRIX } from '../../../config/riskMatrix'
@@ -8,12 +8,13 @@ import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from 
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
 import {
-  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows,
+  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, useToast,
   type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
 import { RiskEditDrawer, RiskReadDrawer } from './RiskDrawer'
 import { exportRiskRegister } from './exportRisks'
+import { downloadRiskTemplate } from './riskTemplate'
 
 const levelOf = (p: number, i: number): Level => computeRiskLevel(p, i).level
 
@@ -30,6 +31,7 @@ export function RisksPage() {
   const actions = useActions(org.id)
   const [raisedBy, setRaisedBy] = useState<string | null>(null)
   const today = useToday()
+  const toast = useToast()
   const residual = params.get('matriz') === 'residual'
   const showArchived = params.get('arquivados') === '1'
 
@@ -96,6 +98,7 @@ export function RisksPage() {
         title={editable ? 'Registo de riscos' : 'Riscos'}
         subtitle={editable ? 'Segundo a ISO/IEC 27005. O nível é calculado: probabilidade × impacto.' : 'Os riscos que a consultora identificou e o que está a ser feito para os reduzir.'}
         actions={<>
+          {editable && <Button variant="secondary" icon={<FileSpreadsheet className="size-4" aria-hidden />} onClick={() => downloadRiskTemplate().catch(() => toast.show('Não foi possível gerar o template. Tente outra vez.', 'error'))}>Template Excel</Button>}
           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! })}>Exportar registo</Button>}
           {can('create', 'risk') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
         </>}
