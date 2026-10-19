@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ArrowDown, ArrowUp, CheckCircle2, Download, Plus, ShieldAlert } from 'lucide-react'
 import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/contracts'
@@ -66,6 +66,14 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const [confirm, setConfirm] = useState(false)
   const [proposing, setProposing] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const planTitle = useRef<HTMLHeadingElement>(null)
+  // The card jumps to the plan it summarises, and leaves the keyboard on the section title.
+  const jumpToPlan = () => {
+    const h = planTitle.current
+    if (!h) return
+    h.scrollIntoView({ block: 'start' })
+    h.focus({ preventScroll: true })
+  }
   // The consultant sees the order and why each action sits where it does; the client sees the plan in plain language.
   const consultant = persona.role === 'consultor'
   // ClientLayout redirects the consultant to /clientes and ConsultantLayout redirects everyone else, so the role picks the prefix.
@@ -181,29 +189,37 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
             <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />
           </StatCard>
         </Link>
-        {/* The full ordered plan is the list right below, so this one is a summary and not a link. */}
-        <StatCard label="Roadmap" value={`${ranked.length} ${ranked.length === 1 ? 'ação' : 'ações'}`} caption={byRisk ? 'Priorizadas pelos riscos' : 'Ordenadas pela IA'}>
+        {/* It summarises the plan on the same page, so it jumps there instead of to another route. */}
+        <StatCard onClick={jumpToPlan} label="Roadmap" value={`${ranked.length} ${ranked.length === 1 ? 'ação' : 'ações'}`} caption={byRisk ? 'Priorizadas pelos riscos' : 'Ordenadas pela IA'}>
           <MiniList label="Primeiras ações do plano" rows={planRows} more={Math.max(0, ranked.length - PREVIEW_ROWS)} />
         </StatCard>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
-        <p className="text-[13px] text-ink-soft" aria-live="polite">
-          {byRisk ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
-          {soonest && ` Próximo prazo: ${shortDate(soonest.dueDate)} · ${soonest.description}.`}
-        </p>
-      </div>
+      <section aria-labelledby="plan-titulo" className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+          <div className="flex min-w-0 flex-col gap-1">
+            {/* tabIndex lets the card above hand the keyboard to this heading; scroll-mt clears the fixed mobile header. */}
+            <h2 id="plan-titulo" ref={planTitle} tabIndex={-1} className="scroll-mt-14 text-[18px] font-extrabold md:scroll-mt-0">{validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
+            {soonest && <p className="text-[13px] text-ink-soft">Próximo prazo: {shortDate(soonest.dueDate)} · {soonest.description}.</p>}
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
+            <p className="text-[13px] text-ink-soft" aria-live="polite">
+              {byRisk ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
+            </p>
+          </div>
+        </div>
 
-      {!actions.data || !users.data || pending ? (
-        <SkeletonRows rows={6} />
-      ) : ranked.length === 0 ? (
-        <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
-      ) : (
-        <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
-          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
-        </ol>
-      )}
+        {!actions.data || !users.data || pending ? (
+          <SkeletonRows rows={6} />
+        ) : ranked.length === 0 ? (
+          <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
+        ) : (
+          <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
+            {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
+          </ol>
+        )}
+      </section>
 
       <ProposeActionModal open={proposing} onClose={() => setProposing(false)} />
 

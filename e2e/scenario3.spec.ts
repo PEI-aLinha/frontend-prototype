@@ -63,11 +63,21 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(evidence.getByRole('list', { name: 'Ações com a prova por resolver' }).locator('li')).toHaveCount(3)
   await expect(evidence.getByText('+4')).toBeVisible()
 
-  // The roadmap card summarises the ordered plan below it, so it is not a link to itself.
+  // The roadmap card summarises the ordered plan on this same page, so it jumps down instead of to a route.
   const plan = page.getByRole('list', { name: 'Primeiras ações do plano' })
   await expect(plan.locator('li')).toHaveCount(3)
   await expect(page.getByText('7 ações', { exact: true })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Priorizadas pelos riscos|Ordenadas pela IA/ })).toHaveCount(0)
+  const roadmapCard = page.getByRole('button', { name: /Roadmap 7 ações/ })
+  await expect(roadmapCard).toBeVisible()
+
+  // The deadline is the section subtitle; the toggle line only explains the order.
+  await expect(page.getByRole('heading', { name: 'Roadmap validado' })).toBeVisible()
+  await expect(page.locator('#plan-titulo ~ p')).toHaveText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')
+  // The action rows and the card preview also carry dates, but only the subtitle calls one a deadline.
+  await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
+
+  await roadmapCard.click()
+  await expect(page.getByRole('heading', { name: 'Roadmap validado' })).toBeFocused()
 
   // RF17, shown only where a check exists: one action in c3 has one.
   await expect(page.getByText('Estado: não comprovada')).toHaveCount(1)
