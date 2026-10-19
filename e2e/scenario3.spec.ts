@@ -78,12 +78,23 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
   await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
 
+  // The map is the overview above the list: one circle per action, in the order on screen.
+  const map = page.getByRole('list', { name: 'Progresso do plano' })
+  const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' })
+  await expect(map.locator('li')).toHaveCount(7)
+  await expect(map.getByRole('button').first()).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
+  expect((await map.boundingBox())!.y).toBeLessThan((await rows.boundingBox())!.y)
+
   // The link is display:contents, so the summary column is what has a box to measure.
   const headingBox = await heading.boundingBox()
   const railBox = await page.getByRole('complementary', { name: 'Resumo da avaliação' }).boundingBox()
   expect(headingBox && railBox).toBeTruthy()
   if ((page.viewportSize()?.width ?? 0) >= 1024) expect(headingBox!.x).toBeLessThan(railBox!.x)
   else expect(headingBox!.y).toBeLessThan(railBox!.y)
+
+  // A circle hands the keyboard to its row, so the map is a way into the plan and not just a picture.
+  await page.getByRole('button', { name: /Registar a entidade no MyCiber/ }).click()
+  await expect(page.locator('#acao-act-myciber')).toBeFocused()
 })
 
 test('Scenario 3 — Rui can read the plan history and export it, but not change it', async ({ page }) => {
@@ -103,12 +114,15 @@ test('Scenario 3 — the plan follows the order switch', async ({ page }) => {
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)
   const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' }).locator('li')
+  const first = page.getByRole('list', { name: 'Progresso do plano' }).getByRole('button').first()
   await expect(page.getByRole('radio', { name: 'Priorizado pelos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Implementar autenticação multifator')
+  await expect(first).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
 
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
   await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
+  await expect(first).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber/)
 })
 
 test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {

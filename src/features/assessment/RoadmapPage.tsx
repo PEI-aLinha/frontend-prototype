@@ -14,6 +14,7 @@ import { evidenceState } from './evidenceState'
 import { printResults } from './exportResults'
 import { PREVIEW_ROWS, planSummary } from './planSummary'
 import { ProposeActionModal } from './ProposeActionModal'
+import { RoadmapMap } from './RoadmapMap'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 import { roadmapHistory } from './roadmapHistory'
 
@@ -185,9 +186,12 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           ) : ranked.length === 0 ? (
             <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
           ) : (
-            <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
-              {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
-            </ol>
+            <>
+              <RoadmapMap items={ranked.map((r) => r.action)} />
+              <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
+                {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
+              </ol>
+            </>
           )}
         </section>
 
@@ -236,7 +240,7 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
   const fell = moved < 0
   const owner = users.find((u) => u.id === a.assignedTo)
   return (
-    <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
+    <li id={`acao-${a.id}`} tabIndex={-1} className={cn('flex scroll-mt-14 gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3 md:scroll-mt-0', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
         <span className={cn('grid size-9 place-items-center rounded-[10px] text-[15px] font-extrabold', reason ? 'bg-brand text-white' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
         {(rose || fell) && (
