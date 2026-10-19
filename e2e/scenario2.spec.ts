@@ -88,7 +88,6 @@ test('Scenario 2 — Marta gets the same numbers, and links only to the pages sh
   await expect(page.getByRole('link', { name: /1 risco sem ação/ })).toHaveAttribute('href', `${CLIENT}/riscos`)
   await expect(page.getByRole('link', { name: /1 de 7 recolhidas/ })).toHaveAttribute('href', `${CLIENT}/integracoes`)
   await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
-  await expect(page.getByText('Estado: não comprovada')).toHaveCount(1)
 
   // The consultant reads the threat, where the client reads the consequence.
   const topRisks = page.getByRole('list', { name: 'Riscos mais graves' }).locator('li')

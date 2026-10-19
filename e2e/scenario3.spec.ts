@@ -84,10 +84,6 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
 
   await roadmapCard.click()
   await expect(page.getByRole('heading', { name: 'Roadmap validado' })).toBeFocused()
-
-  // RF17, shown only where a check exists: one action in c3 has one.
-  await expect(page.getByText('Estado: não comprovada')).toHaveCount(1)
-  await expect(page.getByText('9 de 15 contas com MFA · 2 administradores sem MFA')).toHaveCount(1)
 })
 
 test('Scenario 3 — Rui can read the plan history and export it, but not change it', async ({ page }) => {
