@@ -1,0 +1,330 @@
+[
+  {
+    "sectionId": "sec-gov",
+    "id": "q-gov-politica",
+    "text": "A empresa tem uma política de segurança da informação aprovada pela gerência?",
+    "explanation": "Um documento curto que diz como a empresa protege a informação e quem é responsável. Conta se foi aprovado e comunicado a todos.",
+    "example": "Duas páginas assinadas pela gerência, enviadas por email a todos e afixadas na sala de pausa.",
+    "whyItMatters": "Sem regras escritas, cada pessoa faz à sua maneira. A NIS2 pede políticas aprovadas pela gestão."
+  },
+  {
+    "sectionId": "sec-gov",
+    "id": "q-gov-responsavel",
+    "text": "Está designado um responsável pela cibersegurança, com tempo e meios para o fazer?",
+    "explanation": "Uma pessoa que responde pela cibersegurança perante a gerência e o CNCS, com tempo reservado para isso.",
+    "example": "O diretor administrativo dedica meio dia por semana à segurança e tem apoio de uma consultora externa.",
+    "whyItMatters": "A NIS2 obriga a nomear este responsável. Sem ele, ninguém acompanha os riscos nem os prazos."
+  },
+  {
+    "sectionId": "sec-gov",
+    "id": "q-gov-gerencia",
+    "text": "A gerência acompanha a cibersegurança pelo menos uma vez por ano?",
+    "explanation": "A gerência olha para os riscos, os incidentes e o plano de ação, e decide o que fazer a seguir.",
+    "example": "Uma reunião em janeiro onde se revêem os incidentes do ano e se aprova o orçamento de segurança.",
+    "whyItMatters": "A lei torna a gerência responsável pelas falhas de segurança. Acompanhar é a forma de cumprir essa responsabilidade."
+  },
+  {
+    "sectionId": "sec-gov",
+    "id": "q-gov-formacao-gerencia",
+    "text": "Os membros da gerência receberam formação em cibersegurança?",
+    "explanation": "Quem gere a empresa sabe o suficiente para aprovar e supervisionar as medidas de segurança.",
+    "example": "Os sócios-gerentes fizeram um curso online de quatro horas sobre riscos e obrigações da NIS2.",
+    "whyItMatters": "O Decreto-Lei 125/2025 exige esta formação à gestão. Sem ela, é difícil decidir onde investir."
+  },
+  {
+    "sectionId": "sec-gov",
+    "id": "q-gov-formacao",
+    "text": "Os colaboradores recebem formação regular sobre segurança, por exemplo a reconhecer phishing?",
+    "explanation": "Todas as pessoas que usam computadores aprendem os cuidados básicos e relembram-nos com regularidade.",
+    "example": "Uma sessão anual de uma hora sobre emails falsos, com uma folha de presenças assinada.",
+    "whyItMatters": "A maioria dos ataques começa com um email enganador. Uma pessoa atenta trava muitos deles."
+  },
+  {
+    "sectionId": "sec-gov",
+    "id": "q-gov-riscos",
+    "text": "A empresa identifica e revê os riscos de cibersegurança de forma periódica?",
+    "explanation": "A empresa sabe o que de pior pode acontecer aos seus sistemas e volta a pensar nisso de tempos a tempos.",
+    "example": "Uma lista com os cinco riscos mais importantes, como ficar sem o ERP, revista uma vez por ano.",
+    "whyItMatters": "Sem conhecer os riscos, o dinheiro vai para o sítio errado. A NIS2 pede uma análise de riscos."
+  },
+  {
+    "sectionId": "sec-gov",
+    "id": "q-gov-funcoes",
+    "text": "As responsabilidades de segurança estão definidas para cada função?",
+    "explanation": "Cada tarefa de segurança tem alguém responsável e essa pessoa sabe que é dela.",
+    "example": "O técnico faz as cópias de segurança, a gerente aprova os acessos novos e o responsável trata os incidentes.",
+    "whyItMatters": "Quando ninguém sabe de quem é a tarefa, ela fica por fazer."
+  },
+  {
+    "sectionId": "sec-gov",
+    "id": "q-gov-revisao",
+    "text": "As medidas de segurança são revistas quando há mudanças importantes na empresa?",
+    "explanation": "Sempre que algo grande muda, a empresa confirma se as medidas de segurança ainda chegam.",
+    "example": "Ao mudar para um ERP na nuvem, revê-se quem tem acesso e onde ficam as cópias de segurança.",
+    "whyItMatters": "Uma mudança pode abrir falhas novas que as medidas antigas não cobrem."
+  },
+  {
+    "sectionId": "sec-ativos",
+    "id": "q-ativos-inventario",
+    "text": "Existe um inventário atualizado dos equipamentos, sistemas e aplicações da empresa?",
+    "explanation": "Uma lista de tudo o que a empresa usa: computadores, servidores, rede, programas e serviços na nuvem.",
+    "example": "A lista de ativos do aLinha, com os portáteis, o servidor de produção e o ERP, conta como inventário se estiver completa.",
+    "whyItMatters": "Não se protege o que não se conhece. É o ponto de partida para avaliar os riscos."
+  },
+  {
+    "sectionId": "sec-ativos",
+    "id": "q-ativos-dono",
+    "text": "Cada ativo importante tem um responsável identificado?",
+    "explanation": "A pessoa que sabe para que serve o ativo e decide sobre ele, não necessariamente quem o mantém.",
+    "example": "O ERP pertence ao diretor financeiro, mesmo que seja o fornecedor a fazer as atualizações.",
+    "whyItMatters": "Sem um responsável, ninguém decide quem pode aceder nem o que fazer se o ativo falhar."
+  },
+  {
+    "sectionId": "sec-ativos",
+    "id": "q-ativos-criticidade",
+    "text": "Os ativos estão classificados pela importância para o negócio?",
+    "explanation": "Saber que ativos fazem parar a empresa se falharem, e quais podem esperar.",
+    "example": "O servidor de produção é crítico; a impressora do escritório é pouco importante.",
+    "whyItMatters": "Ajuda a proteger primeiro o que mais importa, com o orçamento que existe."
+  },
+  {
+    "sectionId": "sec-ativos",
+    "id": "q-ativos-dados",
+    "text": "Sabe onde estão guardados os dados mais sensíveis, como os de clientes e colaboradores?",
+    "explanation": "As pastas, servidores ou serviços na nuvem onde ficam os dados pessoais e confidenciais.",
+    "example": "Os recibos de vencimento estão numa pasta do servidor; os contactos dos clientes estão no CRM.",
+    "whyItMatters": "O RGPD obriga a proteger os dados pessoais. Só se protege bem o que se sabe onde está."
+  },
+  {
+    "sectionId": "sec-ativos",
+    "id": "q-ativos-abate",
+    "text": "Os equipamentos são apagados de forma segura antes de serem abatidos ou vendidos?",
+    "explanation": "Antes de um disco ou portátil sair da empresa, os dados são apagados de forma a não poderem ser recuperados.",
+    "example": "O técnico usa uma ferramenta de apagamento seguro antes de vender os portáteis antigos. Formatar não chega.",
+    "whyItMatters": "Um portátil vendido com dados de clientes é uma violação do RGPD."
+  },
+  {
+    "sectionId": "sec-ativos",
+    "id": "q-ativos-software",
+    "text": "Só é instalado software autorizado nos computadores da empresa?",
+    "explanation": "Os programas nos computadores foram aprovados por quem gere a informática.",
+    "example": "Os colaboradores não têm permissão para instalar programas e pedem ao técnico quando precisam.",
+    "whyItMatters": "Programas descarregados da internet são uma das formas mais comuns de entrar malware."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-acessos-contas",
+    "text": "Cada pessoa tem a sua própria conta, sem contas partilhadas?",
+    "explanation": "Cada pessoa entra nos sistemas com o seu nome de utilizador e a sua senha.",
+    "example": "Na receção, cada pessoa do turno entra com a sua conta, em vez de uma conta \"rececao\" comum.",
+    "whyItMatters": "Com contas partilhadas não se consegue saber quem fez o quê, nem retirar o acesso a uma só pessoa."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-acessos-saidas",
+    "text": "Os acessos são retirados no dia em que um colaborador sai da empresa?",
+    "explanation": "Quando alguém sai, todas as contas dessa pessoa são desativadas no próprio dia.",
+    "example": "No último dia, os recursos humanos avisam o técnico, que desativa o email, a VPN e o ERP.",
+    "whyItMatters": "Contas esquecidas de ex-colaboradores são uma porta aberta, muitas vezes sem ninguém dar por isso."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-acessos-minimo",
+    "text": "Cada pessoa só tem acesso ao que precisa para o seu trabalho?",
+    "explanation": "As pessoas veem e alteram apenas a informação de que precisam para a sua função.",
+    "example": "Quem está na produção não acede às pastas dos recursos humanos.",
+    "whyItMatters": "Se uma conta for roubada, o atacante só chega ao que essa pessoa podia ver."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-acessos-revisao",
+    "text": "Os acessos são revistos pelo menos uma vez por ano?",
+    "explanation": "Uma verificação simples de quem tem acesso a quê e se ainda precisa.",
+    "example": "Em dezembro, cada chefe de equipa confirma a lista de acessos da sua equipa e pede para retirar o que sobra.",
+    "whyItMatters": "Com o tempo, as pessoas acumulam acessos de que já não precisam."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-acessos-senhas",
+    "text": "Existem regras para as senhas, como um comprimento mínimo?",
+    "explanation": "A empresa define como devem ser as senhas e os sistemas obrigam a cumprir essas regras.",
+    "example": "Pelo menos 12 caracteres e nunca reutilizar a senha de outro serviço.",
+    "whyItMatters": "Senhas curtas ou repetidas são adivinhadas ou reaproveitadas de fugas de dados noutros sites."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-acessos-admin",
+    "text": "As contas de administrador são usadas só para tarefas de administração?",
+    "explanation": "Quem administra os sistemas tem duas contas: uma normal para o dia a dia e outra só para administrar.",
+    "example": "O técnico lê o email com a conta normal e só usa a conta de administrador para instalar programas.",
+    "whyItMatters": "Se um email malicioso for aberto com uma conta de administrador, o atacante fica com controlo total."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-mfa",
+    "text": "As contas de administrador usam autenticação multifator (MFA)?",
+    "explanation": "MFA é pedir uma segunda prova além da senha, por exemplo um código no telemóvel.",
+    "example": "Ao entrar no Microsoft 365 como administrador, além da senha é preciso aprovar o pedido na app do telemóvel.",
+    "whyItMatters": "Trava a maioria dos ataques com senhas roubadas. A NIS2 refere a autenticação multifator de forma explícita."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-acessos-remoto",
+    "text": "O acesso remoto à rede da empresa é feito de forma segura, por exemplo por VPN?",
+    "explanation": "Quem trabalha de fora, incluindo os fornecedores, entra na rede por uma ligação protegida.",
+    "example": "O fornecedor do ERP liga-se por VPN com a sua própria conta, em vez de um programa de acesso remoto sempre ligado.",
+    "whyItMatters": "Acessos remotos mal protegidos são uma das portas de entrada mais usadas pelo ransomware."
+  },
+  {
+    "sectionId": "sec-acessos",
+    "id": "q-acessos-wifi",
+    "text": "A rede Wi-Fi para visitantes está separada da rede da empresa?",
+    "explanation": "Os visitantes não devem conseguir chegar aos servidores nem aos computadores da empresa.",
+    "example": "Há uma rede \"Visitantes\" que só dá acesso à internet, diferente da rede onde estão os servidores.",
+    "whyItMatters": "Um equipamento infetado de um visitante não deve conseguir espalhar-se pela rede da empresa."
+  },
+  {
+    "sectionId": "sec-continuidade",
+    "id": "q-backups",
+    "text": "As cópias de segurança dos sistemas críticos são feitas regularmente e a reposição é testada?",
+    "explanation": "Não basta fazer cópias: é preciso experimentar repor os dados para ter a certeza de que funcionam.",
+    "example": "Uma vez por mês, o técnico repõe uma pasta a partir da cópia e confirma que os ficheiros abrem.",
+    "whyItMatters": "Muitas empresas só descobrem que as cópias não funcionam no dia em que precisam delas."
+  },
+  {
+    "sectionId": "sec-continuidade",
+    "id": "q-cont-copia-fora",
+    "text": "Existe uma cópia de segurança guardada fora das instalações ou desligada da rede?",
+    "explanation": "Pelo menos uma cópia dos dados fica longe da empresa ou sem ligação aos sistemas.",
+    "example": "Um disco que o técnico desliga depois de cada cópia e guarda noutro edifício, ou uma cópia num serviço na nuvem.",
+    "whyItMatters": "Protege contra incêndios e contra ransomware, que costuma cifrar também as cópias ligadas à rede."
+  },
+  {
+    "sectionId": "sec-continuidade",
+    "id": "q-cont-plano",
+    "text": "Existe um plano escrito para continuar a trabalhar se um sistema crítico falhar?",
+    "explanation": "Um documento que diz o que fazer, por que ordem e quem decide quando um sistema importante para.",
+    "example": "Se o ERP parar, as encomendas passam a ser registadas numa folha e o fornecedor é chamado de imediato.",
+    "whyItMatters": "Numa crise não há tempo para pensar. Um plano evita decisões à pressa e paragens longas."
+  },
+  {
+    "sectionId": "sec-continuidade",
+    "id": "q-cont-tempo",
+    "text": "Sabe quanto tempo a empresa aguenta sem cada serviço crítico?",
+    "explanation": "Para cada serviço importante, a empresa sabe ao fim de quanto tempo a paragem começa a causar danos sérios.",
+    "example": "A faturação pode parar um dia, mas a produção só aguenta algumas horas.",
+    "whyItMatters": "Diz que serviços repor primeiro e quanto vale a pena investir em cópias e alternativas."
+  },
+  {
+    "sectionId": "sec-continuidade",
+    "id": "q-cont-energia",
+    "text": "Os equipamentos críticos estão protegidos contra cortes de energia?",
+    "explanation": "Os servidores e a rede continuam ligados, ou desligam-se em segurança, se faltar a luz.",
+    "example": "Uma UPS dá ao servidor dez minutos para gravar o trabalho e desligar sem perder dados.",
+    "whyItMatters": "Um corte de energia pode estragar discos e corromper as bases de dados."
+  },
+  {
+    "sectionId": "sec-continuidade",
+    "id": "q-cont-contactos",
+    "text": "Há uma lista de contactos de emergência, como fornecedores, técnicos e seguradora?",
+    "explanation": "Os números de quem ajuda numa crise estão reunidos e acessíveis mesmo sem os sistemas da empresa.",
+    "example": "Uma folha impressa no gabinete da gerência com os contactos do técnico, do fornecedor do ERP e da seguradora.",
+    "whyItMatters": "Se os computadores pararem, os contactos guardados neles também deixam de estar disponíveis."
+  },
+  {
+    "sectionId": "sec-continuidade",
+    "id": "q-cont-teste",
+    "text": "O plano de continuidade é testado pelo menos uma vez por ano?",
+    "explanation": "A equipa experimenta o plano para confirmar que funciona e que todos sabem o seu papel.",
+    "example": "Um exercício de uma hora à mesa: \"o servidor de produção avariou, o que fazemos?\"",
+    "whyItMatters": "Um plano nunca testado costuma falhar nos pormenores, como um contacto errado ou um passo esquecido."
+  },
+  {
+    "sectionId": "sec-incidentes",
+    "id": "q-inc-procedimento",
+    "text": "Existe um procedimento para quando acontece um incidente de segurança?",
+    "explanation": "Passos escritos sobre quem contactar, o que fazer primeiro e como guardar provas.",
+    "example": "Desligar da rede o computador afetado, avisar o responsável e não apagar nada até a situação ser analisada.",
+    "whyItMatters": "As primeiras horas decidem o tamanho do estrago. A NIS2 exige que os incidentes sejam tratados."
+  },
+  {
+    "sectionId": "sec-incidentes",
+    "id": "q-inc-reportar",
+    "text": "Os colaboradores sabem a quem comunicar um email ou comportamento suspeito?",
+    "explanation": "Existe uma pessoa ou endereço que todos conhecem para avisar, sem receio de ser culpados.",
+    "example": "Um endereço como seguranca@empresa.pt, lembrado na formação anual e afixado junto aos computadores.",
+    "whyItMatters": "Um aviso rápido de um colaborador pode travar um ataque antes de se espalhar."
+  },
+  {
+    "sectionId": "sec-incidentes",
+    "id": "q-inc-cncs",
+    "text": "Sabe que os incidentes significativos têm de ser notificados ao CNCS em 24 horas?",
+    "explanation": "Quando um incidente afeta muito o serviço, a empresa tem de avisar o Centro Nacional de Cibersegurança dentro de prazos curtos.",
+    "example": "Um ransomware para a produção na terça de manhã: o alerta inicial segue até quarta de manhã e a notificação completa até sexta.",
+    "whyItMatters": "A NIS2 obriga a um alerta inicial em 24 horas e a uma notificação completa em 72 horas. Falhar os prazos pode dar coima."
+  },
+  {
+    "sectionId": "sec-incidentes",
+    "id": "q-inc-registo",
+    "text": "Os incidentes ficam registados, mesmo os pequenos?",
+    "explanation": "Cada incidente fica anotado: o que aconteceu, quando e o que se fez.",
+    "example": "Uma folha partilhada onde se anota o portátil com vírus em março e o email falso aberto em maio.",
+    "whyItMatters": "O registo ajuda a perceber o que se repete e serve de prova perante o CNCS."
+  },
+  {
+    "sectionId": "sec-incidentes",
+    "id": "q-inc-antivirus",
+    "text": "Todos os computadores e servidores têm proteção contra malware atualizada?",
+    "explanation": "Cada computador e servidor tem um antivírus ou EDR ativo, que se atualiza sozinho.",
+    "example": "O Microsoft Defender está ligado em todos os portáteis e o técnico confirma no painel que estão atualizados.",
+    "whyItMatters": "Um só computador sem proteção pode ser a porta de entrada para toda a rede."
+  },
+  {
+    "sectionId": "sec-incidentes",
+    "id": "q-inc-registos",
+    "text": "Os registos (logs) dos sistemas críticos são guardados e consultados?",
+    "explanation": "Os sistemas importantes guardam um histórico de quem entrou e do que aconteceu, e alguém olha para ele.",
+    "example": "O servidor guarda as entradas e saídas durante seis meses e o técnico revê os alertas todas as semanas.",
+    "whyItMatters": "Sem registos não se consegue perceber o que aconteceu depois de um incidente, nem explicá-lo ao CNCS."
+  },
+  {
+    "sectionId": "sec-fornecedores",
+    "id": "q-forn-lista",
+    "text": "Tem uma lista dos fornecedores com acesso aos sistemas ou aos dados da empresa?",
+    "explanation": "Saber que empresas externas conseguem entrar nos sistemas ou tratam dados da empresa.",
+    "example": "A empresa de informática, o fornecedor do ERP e o serviço de email.",
+    "whyItMatters": "Muitos ataques entram por um fornecedor. A NIS2 pede atenção à cadeia de abastecimento."
+  },
+  {
+    "sectionId": "sec-fornecedores",
+    "id": "q-forn-contratos",
+    "text": "Os contratos com esses fornecedores incluem cláusulas de segurança?",
+    "explanation": "Os contratos dizem o que o fornecedor tem de fazer para proteger a informação da empresa.",
+    "example": "Confidencialidade, aviso em 24 horas em caso de incidente e um acordo de tratamento de dados (RGPD).",
+    "whyItMatters": "Sem isto no contrato, é difícil exigir ao fornecedor que avise ou que corrija uma falha."
+  },
+  {
+    "sectionId": "sec-fornecedores",
+    "id": "q-forn-acessos",
+    "text": "Os acessos dos fornecedores são controlados e retirados quando deixam de ser precisos?",
+    "explanation": "Os fornecedores só entram quando precisam e as contas deles são fechadas no fim do trabalho.",
+    "example": "O acesso remoto do técnico externo só é ligado durante a intervenção e desligado a seguir.",
+    "whyItMatters": "Acessos de fornecedores sempre ligados são um alvo fácil para os atacantes."
+  },
+  {
+    "sectionId": "sec-fornecedores",
+    "id": "q-forn-avaliacao",
+    "text": "Avalia a segurança dos fornecedores críticos antes de os contratar?",
+    "explanation": "Antes de escolher um fornecedor importante, a empresa confirma se ele protege bem a informação.",
+    "example": "Pedir ao novo fornecedor de cloud que responda a um questionário curto ou mostre o certificado ISO 27001.",
+    "whyItMatters": "Quando um fornecedor é atacado, os dados da empresa podem ir com ele."
+  },
+  {
+    "sectionId": "sec-fornecedores",
+    "id": "q-forn-cloud",
+    "text": "Sabe em que país ficam os dados guardados em serviços na nuvem?",
+    "explanation": "Para cada serviço na nuvem, a empresa sabe se os dados ficam na União Europeia ou fora dela.",
+    "example": "O email está no Microsoft 365 com dados na UE; a ferramenta de inquéritos guarda os dados nos EUA.",
+    "whyItMatters": "Importa para o RGPD: os dados fora da União Europeia têm regras próprias."
+  }
+]
