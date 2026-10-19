@@ -69,21 +69,21 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(evidence.getByRole('list', { name: 'Ações com a prova por resolver' }).locator('li')).toHaveCount(3)
   await expect(evidence.getByText('+4')).toBeVisible()
 
-  // The roadmap card summarises the ordered plan on this same page, so it jumps down instead of to a route.
-  const plan = page.getByRole('list', { name: 'Primeiras ações do plano' })
-  await expect(plan.locator('li')).toHaveCount(3)
-  await expect(page.getByText('7 ações', { exact: true })).toBeVisible()
-  const roadmapCard = page.getByRole('button', { name: /Roadmap 7 ações/ })
-  await expect(roadmapCard).toBeVisible()
+  // The plan is the first column; the three result cards are a summary rail beside it, after it on a phone.
+  const heading = page.getByRole('heading', { name: 'Roadmap validado' })
+  await expect(heading).toBeVisible()
+  await expect(page.getByText('Os próximos passos')).toBeVisible()
 
-  // The deadline is the section subtitle; the toggle line only explains the order.
-  await expect(page.getByRole('heading', { name: 'Roadmap validado' })).toBeVisible()
-  await expect(page.locator('#plan-titulo ~ p')).toHaveText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')
-  // The action rows and the card preview also carry dates, but only the subtitle calls one a deadline.
+  // Only the section subtitle calls a date a deadline; the action rows phrase it as "Prazo:".
+  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
   await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
 
-  await roadmapCard.click()
-  await expect(page.getByRole('heading', { name: 'Roadmap validado' })).toBeFocused()
+  // The link is display:contents, so the summary column is what has a box to measure.
+  const headingBox = await heading.boundingBox()
+  const railBox = await page.getByRole('complementary', { name: 'Resumo da avaliação' }).boundingBox()
+  expect(headingBox && railBox).toBeTruthy()
+  if ((page.viewportSize()?.width ?? 0) >= 1024) expect(headingBox!.x).toBeLessThan(railBox!.x)
+  else expect(headingBox!.y).toBeLessThan(railBox!.y)
 })
 
 test('Scenario 3 — Rui can read the plan history and export it, but not change it', async ({ page }) => {
@@ -99,15 +99,15 @@ test('Scenario 3 — Rui can read the plan history and export it, but not change
   await expect(page.getByRole('dialog').getByText('validou o roadmap')).toBeVisible()
 })
 
-test('Scenario 3 — the roadmap card follows the order switch', async ({ page }) => {
+test('Scenario 3 — the plan follows the order switch', async ({ page }) => {
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)
-  const rows = page.getByRole('list', { name: 'Primeiras ações do plano' }).locator('li')
-  await expect(page.getByText('Priorizadas pelos riscos')).toBeVisible()
+  const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' }).locator('li')
+  await expect(page.getByRole('radio', { name: 'Priorizado pelos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Implementar autenticação multifator')
 
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
-  await expect(page.getByText('Ordenadas pela IA')).toBeVisible()
+  await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
 })
 

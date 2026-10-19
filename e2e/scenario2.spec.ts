@@ -93,7 +93,7 @@ test('Scenario 2 — Marta gets the same numbers, and links only to the pages sh
   const topRisks = page.getByRole('list', { name: 'Riscos mais graves' }).locator('li')
   await expect(topRisks).toHaveCount(3)
   await expect(topRisks.first()).toContainText('Ransomware')
-  await expect(page.getByRole('list', { name: 'Primeiras ações do plano' }).locator('li')).toHaveCount(3)
+  await expect(page.getByRole('list', { name: 'Ações do roadmap por prioridade' }).locator('li')).toHaveCount(7)
 })
 
 test('Scenario 2 — the consultant adjusts the plan, and the history records it', async ({ page }) => {
