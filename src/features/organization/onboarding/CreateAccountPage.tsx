@@ -1,7 +1,8 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { useCheckEmail } from '../../../api/queries'
-import { Button, Card, Eyebrow, Field, Note, TextInput } from '../../../ui'
+import { Button, Field, Note, TextInput } from '../../../ui'
+import { StepBadge } from './OnboardingLayout'
 import { PasswordInput } from './PasswordInput'
 import { PasswordChecklist } from './PasswordChecklist'
 import { examplePassword, passwordIsValid } from './password'
@@ -72,13 +73,12 @@ export function CreateAccountPage() {
 
   return (
     <>
-      <header className="flex flex-col gap-2">
-        <Eyebrow className="text-[12px]">Passo 1 de 3 · Conta</Eyebrow>
+      <header className="flex flex-col gap-3">
+        <StepBadge>Passo 1 de 3</StepBadge>
         <h1 className="text-[30px] font-extrabold title-tight">Crie a sua conta</h1>
       </header>
 
-      <Card className="px-7 py-7 max-md:px-5">
-        <form noValidate onSubmit={submit} className="flex flex-col gap-5">
+      <form noValidate onSubmit={submit} className="flex flex-col gap-5">
           <div className="grid items-start gap-5 md:grid-cols-2">
             <Field label="Nome completo" error={errors.name}>
               {(p) => <TextInput ref={(el) => { refs.current.name = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ex.: Rui Santos" />}
@@ -108,15 +108,14 @@ export function CreateAccountPage() {
           </div>
 
           {checkEmail.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{checkEmail.error.message}</p>}
-          <Button type="submit" block loading={checkEmail.isPending}>Criar conta e continuar</Button>
+          <Button type="submit" className="w-fit max-sm:w-full" loading={checkEmail.isPending}>Criar conta e continuar</Button>
         </form>
-      </Card>
 
       {emailTaken && (
         <Note>Na demonstração, a conta do Rui Santos já existe. Para ver o registo desde o início, abra o menu Demo (Alt+P) e escolha «Adesão · empresa por registar».</Note>
       )}
 
-      <div className="flex flex-col items-center gap-2 text-center">
+      <div className="flex flex-col items-start gap-1">
         <Button variant="link" size="sm" onClick={() => { const example = examplePassword(); setForm({ ...EXAMPLE, password: example, confirm: example }); setSubmitted(false) }}>Preencher com o exemplo do Rui Santos</Button>
         <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
       </div>

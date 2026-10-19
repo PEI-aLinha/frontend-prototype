@@ -3,7 +3,8 @@ import { Navigate, useNavigate } from 'react-router'
 import { Info, Save } from 'lucide-react'
 import { useRegisterOrganization } from '../../../api/queries'
 import { useSession } from '../../../core/session'
-import { Button, Card, Eyebrow, Field, Note, Select, TextArea, TextInput, Tooltip, useToast } from '../../../ui'
+import { Button, Field, Note, Select, TextArea, TextInput, Tooltip, useToast } from '../../../ui'
+import { StepBadge } from './OnboardingLayout'
 import { SECTORS, sectorById } from '../sectors'
 import { EMPTY_ORGANIZATION, EXAMPLE_ORGANIZATION, toOrganizationInput, validateOrganization, type OrganizationForm } from './organizationForm'
 import { useRegistration } from './registration'
@@ -85,16 +86,15 @@ export function RegisterOrganizationPage() {
 
   return (
     <>
-      <header className="flex flex-col gap-2">
-        <Eyebrow className="text-[12px]">Passo 3 de 3 · Organização</Eyebrow>
+      <header className="flex flex-col gap-3">
+        <StepBadge>Passo 3 de 3</StepBadge>
         <h1 className="text-[30px] font-extrabold title-tight">Registe a sua organização</h1>
         <p className="text-[16px] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
       </header>
 
       {restored && organization && <Note>Retomámos o registo que deixou a meio. Confirme os dados e termine quando quiser.</Note>}
 
-      <Card className="px-7 py-7 max-md:px-5">
-        <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-6">
+      <form ref={formRef} noValidate onSubmit={submit} className="flex flex-col gap-6">
           <Section title="Identificação">
             <Field label="Denominação" hint="O nome oficial da empresa." error={errors.name}>{text('name', { autoComplete: 'organization', placeholder: 'Ex.: Componentes Águeda, Lda.' })}</Field>
             <div className={row}>
@@ -165,12 +165,11 @@ export function RegisterOrganizationPage() {
           )}
           <div className="flex gap-3 max-sm:flex-col-reverse">
             <Button variant="secondary" icon={<Save className="size-4" aria-hidden />} onClick={saveForLater} disabled={register.isPending}>Guardar e continuar mais tarde</Button>
-            <Button type="submit" className="flex-1" loading={register.isPending}>Registar organização</Button>
+            <Button type="submit" loading={register.isPending}>Registar organização</Button>
           </div>
         </form>
-      </Card>
 
-      <div className="flex flex-col items-center gap-2 text-center">
+      <div className="flex flex-col items-start gap-1">
         <Button variant="link" size="sm" onClick={() => { setForm(EXAMPLE_ORGANIZATION); setSubmitted(false) }}>Preencher com o exemplo da Componentes Águeda</Button>
         <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
         <Button variant="link" size="sm" className="mt-2 !text-ink-soft" onClick={() => navigate('/registo/seguranca')}>Voltar ao passo anterior</Button>
