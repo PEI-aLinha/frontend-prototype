@@ -84,13 +84,13 @@ export function MfaSetup({ email, submitLabel = 'Confirmar e continuar', onVerif
               />
             )}
           </Field>
-          <Button type="submit" block loading={checking}>{submitLabel}</Button>
+          <Button type="submit" className="w-fit max-sm:w-full" loading={checking}>{submitLabel}</Button>
         </form>
       </Card>
 
       <Note>Sempre que entrar no aLinha, vai pedir-lhe a palavra-passe e um código novo da aplicação.</Note>
 
-      <div className="flex flex-col items-center gap-2 text-center">
+      <div className="flex flex-col items-start gap-1">
         <Button variant="link" size="sm" onClick={() => { setCode(DEMO_CODE); setError(undefined) }}>Preencher com o código da demonstração</Button>
         <p className="text-[12px] text-muted">Só existe no protótipo. Qualquer outro código dá erro, para mostrar a mensagem.</p>
       </div>

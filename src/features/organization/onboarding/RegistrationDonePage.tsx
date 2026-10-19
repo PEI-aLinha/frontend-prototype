@@ -1,6 +1,7 @@
 import { Navigate, useNavigate } from 'react-router'
 import { CheckCircle2 } from 'lucide-react'
-import { Button, Card, Eyebrow } from '../../../ui'
+import { Button, Card } from '../../../ui'
+import { StepBadge } from './OnboardingLayout'
 import { ConsultantCard } from '../consultant/ConsultantCard'
 import { sectorById } from '../sectors'
 import { useRegistration } from './registration'
@@ -28,7 +29,7 @@ export function RegistrationDonePage() {
     <>
       <header className="flex flex-col gap-3">
         <span className="grid size-12 place-items-center rounded-full bg-signal-soft text-brand"><CheckCircle2 className="size-6" aria-hidden /></span>
-        <Eyebrow className="text-[12px]">Registo concluído</Eyebrow>
+        <StepBadge>Registo concluído</StepBadge>
         <h1 className="text-[30px] font-extrabold title-tight">A {registered.name} está registada</h1>
         <p className="text-[16px] text-ink-soft">A organização ficou associada à sua conta. É o Responsável designado: vê toda a informação da empresa e pode convidar a sua equipa.</p>
       </header>
@@ -46,7 +47,7 @@ export function RegistrationDonePage() {
 
       <ConsultantCard orgId={registered.id} className="px-7 py-6 max-md:px-5" />
 
-      <Button block onClick={() => navigate(`/org/${registered.slug}/ambito/perguntas`)}>Continuar</Button>
+      <Button className="w-fit max-sm:w-full" onClick={() => navigate(`/org/${registered.slug}/ambito/perguntas`)}>Continuar</Button>
     </>
   )
 }
