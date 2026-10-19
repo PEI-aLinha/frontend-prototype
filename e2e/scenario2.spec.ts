@@ -108,7 +108,7 @@ test('Scenario 2 — the consultant adjusts the plan, and the history records it
   await page.getByLabel('O que fazer').fill('Rever com a direção a política de acessos ao ERP')
   await page.getByRole('dialog').getByRole('button', { name: 'Propor ação' }).click()
   await expect(page.getByRole('heading', { name: 'Rever com a direção a política de acessos ao ERP' })).toBeVisible()
-  await expect(page.locator('li').filter({ hasText: 'Rever com a direção' })).toContainText('Proposta pela consultora')
+  await expect(page.getByRole('list', { name: 'Ações do roadmap por prioridade' }).locator('li').filter({ hasText: 'Rever com a direção' })).toContainText('Proposta pela consultora')
 
   await page.getByRole('button', { name: 'Histórico' }).click()
   await expect(page.getByRole('dialog').getByText('propôs a ação "Rever com a direção a política de acessos ao ERP"')).toBeVisible()

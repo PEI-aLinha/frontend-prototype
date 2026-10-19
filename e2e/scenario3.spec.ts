@@ -69,7 +69,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(evidence.getByRole('list', { name: 'Ações com a prova por resolver' }).locator('li')).toHaveCount(3)
   await expect(evidence.getByText('+4')).toBeVisible()
 
-  // The plan is the first column; the three result cards are a summary rail beside it, after it on a phone.
+  // The plan comes first; the three result cards sit above it, in one line on a wide screen.
   const heading = page.getByRole('heading', { name: 'Roadmap validado' })
   await expect(heading).toBeVisible()
   await expect(page.getByText('Os próximos passos')).toBeVisible()
@@ -78,6 +78,24 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
   await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
 
+  // The links are display:contents, so each card's own label is what has a box to measure.
+  const cardBoxes = await Promise.all([
+    level.getByText('Nível de maturidade', { exact: true }).boundingBox(),
+    gaps.getByText('Por resolver', { exact: true }).boundingBox(),
+    evidence.getByText('Evidências', { exact: true }).boundingBox(),
+  ])
+  expect(cardBoxes.every(Boolean)).toBeTruthy()
+  const headingBox = await heading.boundingBox()
+  expect(headingBox).toBeTruthy()
+  if ((page.viewportSize()?.width ?? 0) >= 768) {
+    // One line: same top, left to right.
+    expect(Math.abs(cardBoxes[0]!.y - cardBoxes[2]!.y)).toBeLessThan(2)
+    expect(cardBoxes[0]!.x).toBeLessThan(cardBoxes[2]!.x)
+  } else {
+    expect(cardBoxes[0]!.y).toBeLessThan(cardBoxes[2]!.y)
+  }
+  expect(cardBoxes[0]!.y).toBeLessThan(headingBox!.y)
+
   // The map is the overview above the list: one circle per action, in the order on screen.
   const map = page.getByRole('list', { name: 'Progresso do plano' })
   const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' })
@@ -85,12 +103,12 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(map.getByRole('button').first()).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
   expect((await map.boundingBox())!.y).toBeLessThan((await rows.boundingBox())!.y)
 
-  // The link is display:contents, so the summary column is what has a box to measure.
-  const headingBox = await heading.boundingBox()
-  const railBox = await page.getByRole('complementary', { name: 'Resumo da avaliação' }).boundingBox()
-  expect(headingBox && railBox).toBeTruthy()
-  if ((page.viewportSize()?.width ?? 0) >= 1024) expect(headingBox!.x).toBeLessThan(railBox!.x)
-  else expect(headingBox!.y).toBeLessThan(railBox!.y)
+  // Bigger circles, and each one carries the action's name under it on a wide screen only.
+  const firstNode = map.getByRole('button').first()
+  const wide = (page.viewportSize()?.width ?? 0) >= 768
+  expect((await firstNode.locator('span').first().boundingBox())!.width).toBeGreaterThanOrEqual(wide ? 56 : 48)
+  if (wide) await expect(firstNode.locator('span').nth(1)).toBeVisible()
+  else await expect(firstNode.locator('span').nth(1)).toBeHidden()
 
   // A circle hands the keyboard to its row, so the map is a way into the plan and not just a picture.
   await page.getByRole('button', { name: /Registar a entidade no MyCiber/ }).click()

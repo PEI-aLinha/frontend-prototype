@@ -163,53 +163,51 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           ]} />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <section aria-labelledby="plan-titulo" className="flex min-w-0 flex-col gap-4">
-          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
-            <div className="flex min-w-0 flex-col gap-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 id="plan-titulo" className="text-[18px] font-extrabold">{validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
-                <Chip>Os próximos passos</Chip>
-              </div>
-              {soonest && <p className="text-[13px] text-ink-soft">Próximo prazo: {shortDate(soonest.dueDate)} · {soonest.description}.</p>}
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
-              <p className="text-[13px] text-ink-soft" aria-live="polite">
-                {byRisk ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
-              </p>
-            </div>
-          </div>
-
-          {!actions.data || !users.data || pending ? (
-            <SkeletonRows rows={6} />
-          ) : ranked.length === 0 ? (
-            <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
-          ) : (
-            <>
-              <RoadmapMap items={ranked.map((r) => r.action)} />
-              <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
-                {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
-              </ol>
-            </>
-          )}
-        </section>
-
-        <aside aria-label="Resumo da avaliação" className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">
-          {/* Only the client has an assessment route under /org; the consultant's prefix has none, so hers stays a card. */}
-          {!consultant ? <Link to={`${base}/avaliacao`} className="contents">{levelCard}</Link> : levelCard}
-          <Link to={`${base}/riscos`} className="contents">
-            <StatCard label="Por resolver" value={`${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`} caption={`${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`}>
-              <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />
-            </StatCard>
-          </Link>
-          <Link to={`${base}/integracoes`} className="contents">
-            <StatCard label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} comprovadas, ${evidenceCount - provenCount} por resolver`}>
-              <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />
-            </StatCard>
-          </Link>
-        </aside>
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Only the client has an assessment route under /org; the consultant's prefix has none, so hers stays a card. */}
+        {!consultant ? <Link to={`${base}/avaliacao`} className="contents">{levelCard}</Link> : levelCard}
+        <Link to={`${base}/riscos`} className="contents">
+          <StatCard label="Por resolver" value={`${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`} caption={`${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`}>
+            <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />
+          </StatCard>
+        </Link>
+        <Link to={`${base}/integracoes`} className="contents">
+          <StatCard label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} comprovadas, ${evidenceCount - provenCount} por resolver`}>
+            <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />
+          </StatCard>
+        </Link>
       </div>
+
+      <section aria-labelledby="plan-titulo" className="flex min-w-0 flex-col gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+          <div className="flex min-w-0 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id="plan-titulo" className="text-[18px] font-extrabold">{validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
+              <Chip>Os próximos passos</Chip>
+            </div>
+            {soonest && <p className="text-[13px] text-ink-soft">Próximo prazo: {shortDate(soonest.dueDate)} · {soonest.description}.</p>}
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
+            <p className="text-[13px] text-ink-soft" aria-live="polite">
+              {byRisk ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
+            </p>
+          </div>
+        </div>
+
+        {!actions.data || !users.data || pending ? (
+          <SkeletonRows rows={6} />
+        ) : ranked.length === 0 ? (
+          <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
+        ) : (
+          <>
+            <RoadmapMap items={ranked.map((r) => r.action)} />
+            <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
+              {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
+            </ol>
+          </>
+        )}
+      </section>
 
       <ProposeActionModal open={proposing} onClose={() => setProposing(false)} />
 
