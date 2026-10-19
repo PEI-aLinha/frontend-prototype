@@ -77,18 +77,18 @@ test('Scenario 2 — Marta registers the ransomware risk, links actions and the 
   await expect(page.getByText('Validada pela consultora', { exact: true }).first()).toBeVisible()
 })
 
-test('Scenario 2 — Marta reads the same summary band as the client', async ({ page }) => {
+test('Scenario 2 — Marta gets the same numbers, and links only to the pages she can reach', async ({ page }) => {
   await start(page, `${CLIENT}/roadmap`, 'marta', 'c3')
   await page.goto(`${CLIENT}/roadmap?as=marta`)
-  const band = page.getByRole('region', { name: 'Estado do plano' })
-  await expect(band.getByText('Nível de maturidade')).toBeVisible()
-  await expect(band.getByText('2 de 5', { exact: true })).toBeVisible()
-  await expect(band.getByText('Cobertura da avaliação')).toBeVisible()
-  await expect(band.getByText('Por resolver')).toBeVisible()
-  await expect(band.getByText('7 ações abertas')).toBeVisible()
-  await expect(band.getByText('Próximos prazos')).toBeVisible()
-  await expect(band.getByText('15 nov. 2026', { exact: true })).toBeVisible()
-  await expect(page.getByText('Estado: não comprovada').first()).toBeVisible()
+
+  // There is no assessment route under /clientes, so the level is a card, not a dead link.
+  await expect(page.getByText('2 → 3 de 5')).toBeVisible()
+  await expect(page.getByRole('link', { name: /2 → 3 de 5/ })).toHaveCount(0)
+
+  await expect(page.getByRole('link', { name: /1 risco sem ação/ })).toHaveAttribute('href', `${CLIENT}/riscos`)
+  await expect(page.getByRole('link', { name: /1 de 7 recolhidas/ })).toHaveAttribute('href', `${CLIENT}/integracoes`)
+  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
+  await expect(page.getByText('Estado: não comprovada')).toHaveCount(1)
 })
 
 test('Scenario 2 — accepting a risk requires a justification and the history records the change', async ({ page }) => {

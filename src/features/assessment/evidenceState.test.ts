@@ -6,8 +6,8 @@ const ev = (id: string, ok: boolean, result: string): CollectedEvidence =>
   ({ id, provider: 'microsoft365', title: `Evidência ${id}`, result, ok, strength: 'continuamente_verificada', remediationActionId: 'act-mfa', collectedAt: '2026-10-16T17:30' })
 
 describe('evidenceState', () => {
-  it('is in falta without collected evidence', () => {
-    expect(evidenceState([])).toEqual({ tone: 'neutral', label: 'Estado: em falta', detail: null })
+  it('has nothing to say without collected evidence', () => {
+    expect(evidenceState([])).toBeNull()
   })
 
   it('is comprovada when the check passed', () => {

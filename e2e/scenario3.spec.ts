@@ -37,25 +37,27 @@ test('Scenario 3 — Rui reads the plan in plain language, without the legal cit
   await shot(page, 'c3-04-roadmap-plano')
 })
 
-test('Scenario 3 — Rui sees the level with its target, the coverage, the gaps and the next deadlines', async ({ page }) => {
+test('Scenario 3 — Rui gets three cards, each sending him to the page its number belongs to', async ({ page }) => {
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)
-  const band = page.getByRole('region', { name: 'Estado do plano' })
-  await expect(band.getByText('Nível de maturidade')).toBeVisible()
-  await expect(band.getByText('2 de 5', { exact: true })).toBeVisible()
-  await expect(band.getByText('Objetivo 3 de 5 · Definido')).toBeVisible()
-  await expect(band.getByText('Cobertura da avaliação')).toBeVisible()
-  await expect(band.getByRole('progressbar', { name: 'Cobertura de Continuidade do negócio' })).toHaveAttribute('aria-valuenow', '7')
-  await expect(band.getByText('Por resolver')).toBeVisible()
-  await expect(band.getByText('7 ações abertas')).toBeVisible()
-  await expect(band.getByText('1 risco sem ação ligada')).toBeVisible()
-  await expect(band.getByText('Próximos prazos')).toBeVisible()
-  await expect(band.getByText('Registar a entidade no MyCiber', { exact: true })).toBeVisible()
-  await expect(band.getByText('15 nov. 2026', { exact: true })).toBeVisible()
-  // RF17: every action states the state of its evidence.
-  await expect(page.getByText('Estado: não comprovada').first()).toBeVisible()
-  await expect(page.getByText('9 de 15 contas com MFA · 2 administradores sem MFA').first()).toBeVisible()
-  await expect(page.getByText('Estado: em falta').first()).toBeVisible()
+
+  const level = page.getByRole('link', { name: /2 → 3 de 5/ })
+  await expect(level).toHaveAttribute('href', `${ORG}/avaliacao`)
+  await expect(level).toContainText('Definido · 41 de 41 perguntas respondidas')
+
+  const gaps = page.getByRole('link', { name: /1 risco sem ação/ })
+  await expect(gaps).toHaveAttribute('href', `${ORG}/riscos`)
+  await expect(gaps).toContainText('7 ações por resolver, nenhuma concluída')
+
+  const evidence = page.getByRole('link', { name: /1 de 7 recolhidas/ })
+  await expect(evidence).toHaveAttribute('href', `${ORG}/integracoes`)
+  await expect(evidence).toContainText('0 comprovadas, 1 por resolver')
+
+  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
+
+  // RF17, shown only where a check exists: one action in c3 has one.
+  await expect(page.getByText('Estado: não comprovada')).toHaveCount(1)
+  await expect(page.getByText('9 de 15 contas com MFA · 2 administradores sem MFA')).toHaveCount(1)
 })
 
 test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {

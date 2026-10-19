@@ -9,12 +9,10 @@ export interface PlanSummary {
   /** Null while the assessment has not loaded, like maturity. */
   targetMaturity: number | null
   sections: PlanSection[]
-  actionsTotal: number
   /** status !== 'concluida' */
   actionsOpen: number
   /** status === 'concluida' */
   actionsDone: number
-  risksTotal: number
   /** Risks with no RiskActionLink row. */
   risksUnlinked: number
   /** Open actions with a dueDate, soonest first. */
@@ -42,10 +40,8 @@ export function planSummary(input: {
     maturity: assessment?.maturity ?? null,
     targetMaturity: assessment?.targetMaturity ?? null,
     sections: (assessment?.sections ?? []).map(({ id, name, answered, total }) => ({ id, name, answered, total })),
-    actionsTotal: actions.length,
     actionsOpen: actions.length - actionsDone,
     actionsDone,
-    risksTotal: risks.length,
     risksUnlinked: risks.filter((r) => !linked.has(r.id)).length,
     deadlines,
   }

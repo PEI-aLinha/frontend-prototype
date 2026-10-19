@@ -17,12 +17,12 @@ const empty = planSummary({ actions: [], assessment: undefined, risks: [], links
 
 describe('planSummary', () => {
   it('is empty without data', () => {
-    expect(empty).toEqual({ maturity: null, targetMaturity: null, sections: [], actionsTotal: 0, actionsOpen: 0, actionsDone: 0, risksTotal: 0, risksUnlinked: 0, deadlines: [] })
+    expect(empty).toEqual({ maturity: null, targetMaturity: null, sections: [], actionsOpen: 0, actionsDone: 0, risksUnlinked: 0, deadlines: [] })
   })
 
   it('counts the actions by status', () => {
     const result = planSummary({ actions: [action('a', 'por_iniciar'), action('b', 'em_curso'), action('c', 'em_curso'), action('d', 'concluida')], assessment: undefined, risks: [], links: [] })
-    expect([result.actionsTotal, result.actionsOpen, result.actionsDone]).toEqual([4, 3, 1])
+    expect([result.actionsOpen, result.actionsDone]).toEqual([3, 1])
   })
 
   it('keeps a null maturity and passes the target through', () => {
@@ -43,7 +43,6 @@ describe('planSummary', () => {
       risks: [risk('rsk-a'), risk('rsk-b'), risk('rsk-c')],
       links: [link('lnk-1', 'rsk-a', 'act-mfa'), link('lnk-2', 'rsk-b', 'act-mfa'), link('lnk-3', 'rsk-c', 'act-ot')],
     })
-    expect(result.risksTotal).toBe(3)
     expect(result.risksUnlinked).toBe(0)
     expect(planSummary({ actions: [], assessment: undefined, risks: [risk('rsk-a'), risk('rsk-b')], links: [link('lnk-1', 'rsk-a', 'act-mfa')] }).risksUnlinked).toBe(1)
   })

@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import { ArrowDown, ArrowUp, CheckCircle2, ShieldAlert } from 'lucide-react'
 import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/contracts'
 import { useActions, useAssessment, useEvidence, useRiskLinks, useRisks, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
-import { ACTION_STATUS_LABEL, dateTime, shortDate } from '../../config/labels'
+import { ACTION_STATUS_LABEL, dateTime, MATURITY_LABEL, shortDate } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  AIBadge, Button, Chip, EmptyState, ErrorState, Explainer, Modal, Note, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
+  AIBadge, Button, Chip, EmptyState, ErrorState, Explainer, Modal, Note, StatCard, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
 import { evidenceState, type EvidenceTone } from './evidenceState'
-import { PlanSummaryBand } from './PlanSummaryBand'
 import { planSummary } from './planSummary'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 
@@ -19,7 +19,6 @@ type View = 'base' | 'riscos'
 const NO_EVIDENCE: CollectedEvidence[] = []
 
 const EVIDENCE_TONE: Record<EvidenceTone, string> = {
-  neutral: 'bg-paper-soft text-ink-soft',
   brand: 'bg-signal-soft text-brand',
   risk: 'bg-risk-high text-risk-high-ink',
 }
@@ -43,6 +42,8 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const [confirm, setConfirm] = useState(false)
   // The consultant sees the order and why each action sits where it does; the client sees the plan in plain language.
   const consultant = persona.role === 'consultor'
+  // ClientLayout redirects the consultant to /clientes and ConsultantLayout redirects everyone else, so the role picks the prefix.
+  const base = consultant ? `/clientes/${org.slug}` : `/org/${org.slug}`
 
   const summary = useMemo(() => planSummary({ actions: actions.data ?? [], assessment: assessment.data, risks: risks.data ?? [], links: riskLinks.data ?? [] }), [actions.data, assessment.data, risks.data, riskLinks.data])
   const evidenceByAction = useMemo(() => {
@@ -70,6 +71,18 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const validator = users.data?.find((u) => u.id === status.data?.validatedBy)?.name
   // Whoever registered the company is its designated manager.
   const manager = users.data?.find((u) => u.id === org.registeredBy)?.name
+  const { sectionTotal, answered } = summary.sections.reduce(
+    (acc, s) => ({ sectionTotal: acc.sectionTotal + s.total, answered: acc.answered + s.answered }),
+    { sectionTotal: 0, answered: 0 },
+  )
+  // Each action carries at most one useful verdict, so counting the rows is enough.
+  const evidenceRows = ranked.map((r) => evidenceState(evidenceByAction.get(r.action.id) ?? NO_EVIDENCE))
+  const evidenceCount = evidenceRows.filter(Boolean).length
+  const provenCount = evidenceRows.filter((e) => e?.tone === 'brand').length
+  const soonest = summary.deadlines[0]
+  const levelCard = assessment.data
+    ? <StatCard label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`} />
+    : <StatCard label="Nível de maturidade" value="—" caption="A carregar a avaliação" />
 
   return (
     <>
@@ -90,7 +103,16 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         </div>
       )}
 
-      <PlanSummaryBand summary={summary} />
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Only the client has an assessment route under /org; the consultant's prefix has none, so hers stays a card. */}
+        {!consultant ? <Link to={`${base}/avaliacao`} className="contents">{levelCard}</Link> : levelCard}
+        <Link to={`${base}/riscos`} className="contents">
+          <StatCard label="Por resolver" value={`${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`} caption={`${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`} />
+        </Link>
+        <Link to={`${base}/integracoes`} className="contents">
+          <StatCard label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} comprovadas, ${evidenceCount - provenCount} por resolver`} />
+        </Link>
+      </div>
 
       {consultant ? (
         <Explainer id="roadmap-consultant" title="Como os riscos mudam o roadmap"
@@ -114,6 +136,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
         <p className="text-[13px] text-ink-soft" aria-live="polite">
           {byRisk ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
+          {soonest && ` Próximo prazo: ${shortDate(soonest.dueDate)} · ${soonest.description}.`}
         </p>
       </div>
 
@@ -189,9 +212,11 @@ function ActionRow({ item, users, showMovement, consultant, validated, evidence 
             <ArrowDown className="size-4" aria-hidden />Desceu porque outras ações ligadas a riscos subiram.
           </p>
         )}
-        <p className={cn('mt-2.5 inline-flex flex-wrap items-center gap-x-2 rounded-[8px] px-2.5 py-1.5 text-[13px] font-semibold', EVIDENCE_TONE[ev.tone])}>
-          {ev.label}{ev.detail && <span className="font-normal text-ink-soft">{ev.detail}</span>}
-        </p>
+        {ev && (
+          <p className={cn('mt-2.5 inline-flex flex-wrap items-center gap-x-2 rounded-[8px] px-2.5 py-1.5 text-[13px] font-semibold', EVIDENCE_TONE[ev.tone])}>
+            {ev.label}<span className="font-normal text-ink-soft">{ev.detail}</span>
+          </p>
+        )}
         {a.aiOutputId && !validated && <div className="mt-2"><AIBadge /></div>}
         {a.aiOutputId && validated && <div className="mt-2"><Chip tone="outline">Validada pela consultora</Chip></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}
