@@ -74,6 +74,19 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(page.getByText('9 de 15 contas com MFA · 2 administradores sem MFA')).toHaveCount(1)
 })
 
+test('Scenario 3 — Rui can read the plan history and export it, but not change it', async ({ page }) => {
+  await start(page, `${ORG}/roadmap`, 'rui', 'c3')
+  await page.goto(`${ORG}/roadmap?as=rui`)
+
+  // Exportar is in the same actions block, so once it is visible the absence of Propor ação is real
+  // rather than just the pre-render state.
+  await expect(page.getByRole('button', { name: 'Exportar' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Propor ação', exact: true })).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Histórico' }).click()
+  await expect(page.getByRole('dialog').getByText('validou o roadmap')).toBeVisible()
+})
+
 test('Scenario 3 — the roadmap card follows the order switch', async ({ page }) => {
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)

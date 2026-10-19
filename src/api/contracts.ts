@@ -348,6 +348,9 @@ export interface ProposeActionInput {
   legalObligation: string
   requiredEvidence: string
   dueDate: IsoDate | null
+  /** Where the action came from. Defaults to the risk register, which is where the picker proposes from. */
+  findingTitle?: string
+  controlCode?: string
 }
 
 export interface PortfolioClient {

@@ -428,7 +428,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           created = {
             id: newId('act'), organizationId: org, findingId: 'fnd-risco', description: input.description.trim(), priority: max + 1,
             dueDate: input.dueDate, assignedTo: null, requiredEvidence: input.requiredEvidence, status: 'por_iniciar', aiOutputId: null,
-            legalObligation: input.legalObligation, findingTitle: 'Proposta a partir do registo de riscos', controlCode: '—', proposedBy: me.id,
+            legalObligation: input.legalObligation, findingTitle: input.findingTitle ?? 'Proposta a partir do registo de riscos', controlCode: input.controlCode ?? '—', proposedBy: me.id,
           }
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'create', entityType: 'remediation_action', entityId: created.id, summary: `Propôs a ação "${created.description}" para o roadmap`, before: null, after: { description: created.description } })
           return { ...s, actions: [...s.actions, created], audit: [...s.audit, entry] }

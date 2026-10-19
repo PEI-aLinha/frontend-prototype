@@ -1,18 +1,21 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { ArrowDown, ArrowUp, CheckCircle2, ShieldAlert } from 'lucide-react'
+import { ArrowDown, ArrowUp, CheckCircle2, Download, Plus, ShieldAlert } from 'lucide-react'
 import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/contracts'
-import { useActions, useAssessment, useEvidence, useRiskLinks, useRisks, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
+import { useActions, useAssessment, useAudit, useEvidence, useRiskLinks, useRisks, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
 import { ACTION_STATUS_LABEL, dateTime, MATURITY_LABEL, shortDate } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  AIBadge, Button, Chip, EmptyState, ErrorState, Explainer, Modal, Note, StatCard, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
+  AIBadge, Button, Chip, EmptyState, ErrorState, Explainer, HistoryList, Modal, Note, StatCard, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
 import { evidenceState, type EvidenceTone } from './evidenceState'
+import { printResults } from './exportResults'
 import { PREVIEW_ROWS, planSummary } from './planSummary'
+import { ProposeActionModal } from './ProposeActionModal'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
+import { roadmapHistory } from './roadmapHistory'
 
 type View = 'base' | 'riscos'
 
@@ -58,8 +61,11 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   // Already loaded by useRiskSignals in the parent, under the same query keys.
   const risks = useRisks(org.id)
   const riskLinks = useRiskLinks(org.id)
+  const audit = useAudit(org.id)
   const [view, setView] = useState<View>('riscos')
   const [confirm, setConfirm] = useState(false)
+  const [proposing, setProposing] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
   // The consultant sees the order and why each action sits where it does; the client sees the plan in plain language.
   const consultant = persona.role === 'consultor'
   // ClientLayout redirects the consultant to /clientes and ConsultantLayout redirects everyone else, so the role picks the prefix.
@@ -126,7 +132,12 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         eyebrow={org.name}
         title="Resultados e roadmap"
         subtitle="Ações para fechar as lacunas da avaliação NIS2 + RGPD, ordenadas por prioridade."
-        actions={!pending && can('validate', 'roadmap') && !validated && <Button icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
+        actions={<>
+          {!pending && ranked.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA')}>Exportar</Button>}
+          {can('create', 'roadmap') && <Button variant="secondary" icon={<Plus className="size-4" aria-hidden />} onClick={() => setProposing(true)}>Propor ação</Button>}
+          {can('view', 'history') && <Button variant="link" onClick={() => setShowHistory(true)}>Histórico</Button>}
+          {!pending && can('validate', 'roadmap') && !validated && <Button icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
+        </>}
       />
 
       {pending ? null : validated ? (
@@ -193,6 +204,13 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
         </ol>
       )}
+
+      <ProposeActionModal open={proposing} onClose={() => setProposing(false)} />
+
+      <Modal open={showHistory} onOpenChange={(o) => !o && setShowHistory(false)} chip={<Chip>Registo de alterações</Chip>} title="Histórico do plano"
+        description="Quem propôs, ligou e validou o plano. Nenhum registo pode ser apagado." width={640}>
+        {!audit.data || !users.data ? <SkeletonRows rows={4} /> : <HistoryList items={roadmapHistory(audit.data, users.data)} />}
+      </Modal>
 
       <Modal open={confirm} onOpenChange={setConfirm} chip={<Chip>Decisão da consultora</Chip>} title="Validar o roadmap?"
         description={`${manager ? `O ${manager}` : 'O cliente'} passa a ver o roadmap e o registo de riscos (em só leitura, com linguagem simples). Pode continuar a editar depois.`}

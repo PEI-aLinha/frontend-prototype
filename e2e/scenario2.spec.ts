@@ -97,6 +97,44 @@ test('Scenario 2 — Marta gets the same numbers, and links only to the pages sh
   await expect(page.getByRole('list', { name: 'Primeiras ações do plano' }).locator('li')).toHaveCount(3)
 })
 
+test('Scenario 2 — the consultant adjusts the plan, and the history records it', async ({ page }) => {
+  await start(page, `${CLIENT}/roadmap`, 'marta', 'c3')
+  await page.goto(`${CLIENT}/roadmap?as=marta`)
+
+  await page.getByRole('button', { name: 'Propor ação', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Propor ação' }).click()
+  await expect(page.getByText('Descreva a ação em pelo menos 5 caracteres.')).toBeVisible()
+
+  await page.getByLabel('O que fazer').fill('Rever com a direção a política de acessos ao ERP')
+  await page.getByRole('dialog').getByRole('button', { name: 'Propor ação' }).click()
+  await expect(page.getByRole('heading', { name: 'Rever com a direção a política de acessos ao ERP' })).toBeVisible()
+  await expect(page.locator('li').filter({ hasText: 'Rever com a direção' })).toContainText('Proposta pela consultora')
+
+  await page.getByRole('button', { name: 'Histórico' }).click()
+  await expect(page.getByRole('dialog').getByText('propôs a ação "Rever com a direção a política de acessos ao ERP"')).toBeVisible()
+})
+
+test('Scenario 2 — the export follows the order on screen', async ({ page }) => {
+  await start(page, `${CLIENT}/roadmap`, 'marta', 'c3')
+  await page.goto(`${CLIENT}/roadmap?as=marta`)
+
+  // The listener has to be attached before the click, or the popup opens unseen.
+  const opened = page.waitForEvent('popup')
+  await page.getByRole('button', { name: 'Exportar' }).click()
+  let win = await opened
+  await win.waitForLoadState('domcontentloaded')
+  await expect(win).toHaveTitle(/^Resultados e roadmap — /)
+  await expect(win.locator('h2')).toHaveText(['Resumo', 'Plano de ação · priorizado pelos riscos', 'Registo de riscos'])
+  await win.close()
+
+  await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
+  const reopened = page.waitForEvent('popup')
+  await page.getByRole('button', { name: 'Exportar' }).click()
+  win = await reopened
+  await win.waitForLoadState('domcontentloaded')
+  await expect(win.locator('h2').nth(1)).toHaveText('Plano de ação · ordem proposta pela IA')
+})
+
 test('Scenario 2 — accepting a risk requires a justification and the history records the change', async ({ page }) => {
   await start(page, `${CLIENT}/riscos`, 'marta', 'c2')
   await page.goto(`${CLIENT}/riscos`)
