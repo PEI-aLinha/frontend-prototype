@@ -53,13 +53,13 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
 
   const gaps = page.getByRole('link', { name: /1 risco sem ação/ })
   await expect(gaps).toHaveAttribute('href', `${ORG}/riscos`)
-  await expect(gaps).toContainText('7 ações por resolver, nenhuma concluída')
+  await expect(gaps).toContainText('6 ações por resolver, 1 concluída')
 
   const evidence = page.getByRole('link', { name: /1 de 7 recolhidas/ })
   await expect(evidence).toHaveAttribute('href', `${ORG}/integracoes`)
   await expect(evidence).toContainText('0 comprovadas, 1 por resolver')
 
-  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
+  await expect(page.getByText('Próximo prazo: 30 nov. 2026 · Criar política de cópias de segurança.')).toBeVisible()
 
   // Each card previews three rows and says how many it left out.
   await expect(level.getByRole('list', { name: 'Secções com menos respostas' }).locator('li')).toHaveCount(3)
@@ -75,7 +75,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(page.getByText('Os próximos passos')).toBeVisible()
 
   // Only the section subtitle calls a date a deadline; the action rows phrase it as "Prazo:".
-  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
+  await expect(page.getByText('Próximo prazo: 30 nov. 2026 · Criar política de cópias de segurança.')).toBeVisible()
   await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
 
   // The links are display:contents, so each card's own label is what has a box to measure.
@@ -140,7 +140,7 @@ test('Scenario 3 — the plan follows the order switch', async ({ page }) => {
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
   await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
-  await expect(first).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber/)
+  await expect(first).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber\. Concluída\.$/)
 })
 
 test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {

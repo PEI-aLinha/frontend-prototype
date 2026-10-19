@@ -23,14 +23,20 @@ describe('pathThrough', () => {
 })
 
 describe('progressPercent', () => {
-  it('is zero until an action starts', () => {
+  it('is zero until an action is concluded, even if others have started', () => {
     expect(progressPercent([])).toBe(0)
     expect(progressPercent(statuses(['por_iniciar', 'por_iniciar']))).toBe(0)
+    expect(progressPercent(statuses(['em_curso', 'em_curso', 'por_iniciar', 'por_iniciar', 'por_iniciar', 'por_iniciar', 'por_iniciar']))).toBe(0)
   })
 
-  it('reaches half a stretch past the last action started', () => {
-    expect(progressPercent(statuses(['em_curso', 'em_curso', 'por_iniciar', 'por_iniciar', 'por_iniciar', 'por_iniciar', 'por_iniciar']))).toBe(25)
+  it('reaches half a stretch past the last concluded action at the head', () => {
+    expect(progressPercent(statuses(['concluida', 'concluida', 'por_iniciar', 'por_iniciar', 'por_iniciar', 'por_iniciar', 'por_iniciar']))).toBe(25)
     expect(progressPercent(statuses(['concluida', 'por_iniciar']))).toBe(50)
+  })
+
+  it('stops at the first action that is not concluded', () => {
+    expect(progressPercent(statuses(['concluida', 'por_iniciar', 'concluida', 'concluida']))).toBe(16.7)
+    expect(progressPercent(statuses(['concluida', 'em_curso', 'concluida']))).toBe(25)
   })
 
   it('stops at the end when every action is done', () => {

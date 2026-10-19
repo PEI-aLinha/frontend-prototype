@@ -12,11 +12,11 @@ export function pathThrough(points: readonly Pt[]): string {
   }, `M ${points[0].x} ${points[0].y}`)
 }
 
-/** How much of the line is solid: half a stretch past the last action already started. */
+/** How much of the line is solid: through the concluded actions at the head of the order, half a stretch past the last one. */
 export function progressPercent(items: Array<{ status: ActionStatus }>): number {
   const n = items.length
-  let last = -1
-  items.forEach((a, i) => { if (a.status !== 'por_iniciar') last = i })
-  if (n < 2 || last < 0) return 0
-  return Math.min(100, Math.round(((last + 0.5) / (n - 1)) * 1000) / 10)
+  let lead = 0
+  while (lead < n && items[lead].status === 'concluida') lead++
+  if (n < 2 || lead === 0) return 0
+  return Math.min(100, Math.round(((lead - 0.5) / (n - 1)) * 1000) / 10)
 }
