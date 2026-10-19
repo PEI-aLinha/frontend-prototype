@@ -1,14 +1,27 @@
 import type { AssessmentSummary, Id, IsoDate, RemediationAction, Risk, RiskActionLink } from '../../api/contracts'
+import type { Level } from '../../config/riskMatrix'
+import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 
 export interface PlanSection { id: string; name: string; answered: number; total: number }
 
 export interface PlanDeadline { actionId: Id; description: string; dueDate: IsoDate }
+
+export interface PlanRisk { risk: Risk; level: Level }
+
+/** How many rows each card preview shows before it says how many it left out. */
+export const PREVIEW_ROWS = 3
 
 export interface PlanSummary {
   maturity: number | null
   /** Null while the assessment has not loaded, like maturity. */
   targetMaturity: number | null
   sections: PlanSection[]
+  /** The weakest sections first, cut to PREVIEW_ROWS. These are what is holding maturity down. */
+  topSections: PlanSection[]
+  /** Open risks, worst first, cut to PREVIEW_ROWS. */
+  topRisks: PlanRisk[]
+  /** Open risks before the cut, so a card can say how many it left out. */
+  openRisks: number
   /** status !== 'concluida' */
   actionsOpen: number
   /** status === 'concluida' */
@@ -36,10 +49,19 @@ export function planSummary(input: {
     .flatMap((a) => (a.status !== 'concluida' && a.dueDate ? [{ actionId: a.id, description: a.description, dueDate: a.dueDate }] : []))
     // ISO dates compare as text.
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+  const sections = (assessment?.sections ?? []).map(({ id, name, answered, total }) => ({ id, name, answered, total }))
+  const topRisks = risks
+    .filter((r) => r.status !== 'arquivado')
+    // Worst first. Level alone is too coarse, so the score behind it decides.
+    .map((risk) => ({ risk, level: computeRiskLevel(risk.probability, risk.impact).level }))
+    .sort((a, b) => computeRiskLevel(b.risk.probability, b.risk.impact).score - computeRiskLevel(a.risk.probability, a.risk.impact).score)
   return {
     maturity: assessment?.maturity ?? null,
     targetMaturity: assessment?.targetMaturity ?? null,
-    sections: (assessment?.sections ?? []).map(({ id, name, answered, total }) => ({ id, name, answered, total })),
+    sections,
+    topSections: [...sections].sort((a, b) => a.answered / a.total - b.answered / b.total).slice(0, PREVIEW_ROWS),
+    topRisks: topRisks.slice(0, PREVIEW_ROWS),
+    openRisks: topRisks.length,
     actionsOpen: actions.length - actionsDone,
     actionsDone,
     risksUnlinked: risks.filter((r) => !linked.has(r.id)).length,

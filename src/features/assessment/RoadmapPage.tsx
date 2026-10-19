@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { ArrowDown, ArrowUp, CheckCircle2, ShieldAlert } from 'lucide-react'
 import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/contracts'
@@ -11,7 +11,7 @@ import {
   AIBadge, Button, Chip, EmptyState, ErrorState, Explainer, Modal, Note, StatCard, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
 import { evidenceState, type EvidenceTone } from './evidenceState'
-import { planSummary } from './planSummary'
+import { PREVIEW_ROWS, planSummary } from './planSummary'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 
 type View = 'base' | 'riscos'
@@ -21,6 +21,26 @@ const NO_EVIDENCE: CollectedEvidence[] = []
 const EVIDENCE_TONE: Record<EvidenceTone, string> = {
   brand: 'bg-signal-soft text-brand',
   risk: 'bg-risk-high text-risk-high-ink',
+}
+
+interface MiniRow { key: string; label: string; meta?: ReactNode }
+
+/** Three rows of preview inside a StatCard, then how many the card left out. */
+function MiniList({ label, rows, more }: { label: string; rows: MiniRow[]; more?: number }) {
+  if (!rows.length) return <p className="text-[13px] text-muted">Nada a mostrar aqui.</p>
+  return (
+    <>
+      <ul aria-label={label} className="flex flex-col">
+        {rows.map((r) => (
+          <li key={r.key} className="flex items-baseline gap-2 border-t border-line-soft py-1.5 text-[13px]">
+            <span className="line-clamp-1 min-w-0 flex-1">{r.label}</span>
+            {r.meta && <span className="shrink-0 text-[12px] font-semibold text-muted">{r.meta}</span>}
+          </li>
+        ))}
+      </ul>
+      {more ? <p className="border-t border-line-soft pt-1.5 text-[12px] font-semibold text-muted">+{more}</p> : null}
+    </>
+  )
 }
 
 /** Assessment and roadmap (minimal Assessment plugin): shows the effect of risks on priority. */
@@ -81,8 +101,24 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const provenCount = evidenceRows.filter((e) => e?.tone === 'brand').length
   const soonest = summary.deadlines[0]
   const levelCard = assessment.data
-    ? <StatCard label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`} />
+    ? <StatCard label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`}>
+      <MiniList label="Secções com menos respostas" rows={summary.topSections.map((s) => ({ key: s.id, label: s.name, meta: `${s.answered}/${s.total}` }))} more={Math.max(0, summary.sections.length - PREVIEW_ROWS)} />
+    </StatCard>
     : <StatCard label="Nível de maturidade" value="—" caption="A carregar a avaliação" />
+
+  const riskRows = summary.topRisks.map(({ risk, level }) => ({
+    key: risk.id,
+    // The client reads the consequence, the consultant the threat, as in the risk register.
+    label: consultant ? risk.threat : risk.plainLanguage ?? risk.threat,
+    meta: <RiskLevelBadge level={level} />,
+  }))
+  const unproven = ranked.filter((r) => evidenceState(evidenceByAction.get(r.action.id) ?? NO_EVIDENCE)?.tone !== 'brand')
+  const proofRows = unproven.slice(0, PREVIEW_ROWS).map((r) => ({
+    key: r.action.id,
+    label: r.action.description,
+    meta: evidenceState(evidenceByAction.get(r.action.id) ?? NO_EVIDENCE)?.tone === 'risk' ? 'não comprovada' : 'sem prova',
+  }))
+  const planRows = ranked.slice(0, PREVIEW_ROWS).map((r) => ({ key: r.action.id, label: r.action.description, meta: r.action.dueDate ? shortDate(r.action.dueDate) : undefined }))
 
   return (
     <>
@@ -103,15 +139,23 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Only the client has an assessment route under /org; the consultant's prefix has none, so hers stays a card. */}
         {!consultant ? <Link to={`${base}/avaliacao`} className="contents">{levelCard}</Link> : levelCard}
         <Link to={`${base}/riscos`} className="contents">
-          <StatCard label="Por resolver" value={`${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`} caption={`${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`} />
+          <StatCard label="Por resolver" value={`${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`} caption={`${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`}>
+            <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />
+          </StatCard>
         </Link>
         <Link to={`${base}/integracoes`} className="contents">
-          <StatCard label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} comprovadas, ${evidenceCount - provenCount} por resolver`} />
+          <StatCard label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} comprovadas, ${evidenceCount - provenCount} por resolver`}>
+            <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />
+          </StatCard>
         </Link>
+        {/* The full ordered plan is the list right below, so this one is a summary and not a link. */}
+        <StatCard label="Roadmap" value={`${ranked.length} ${ranked.length === 1 ? 'ação' : 'ações'}`} caption={byRisk ? 'Priorizadas pelos riscos' : 'Ordenadas pela IA'}>
+          <MiniList label="Primeiras ações do plano" rows={planRows} more={Math.max(0, ranked.length - PREVIEW_ROWS)} />
+        </StatCard>
       </div>
 
       {consultant ? (

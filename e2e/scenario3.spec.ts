@@ -55,9 +55,35 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
 
   await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
 
+  // Each card previews three rows and says how many it left out.
+  await expect(level.getByRole('list', { name: 'Secções com menos respostas' }).locator('li')).toHaveCount(3)
+  await expect(level.getByText('+3')).toBeVisible()
+  await expect(gaps.getByRole('list', { name: 'Riscos mais graves' }).locator('li')).toHaveCount(3)
+  await expect(gaps.getByText('+3')).toBeVisible()
+  await expect(evidence.getByRole('list', { name: 'Ações com a prova por resolver' }).locator('li')).toHaveCount(3)
+  await expect(evidence.getByText('+4')).toBeVisible()
+
+  // The roadmap card summarises the ordered plan below it, so it is not a link to itself.
+  const plan = page.getByRole('list', { name: 'Primeiras ações do plano' })
+  await expect(plan.locator('li')).toHaveCount(3)
+  await expect(page.getByText('7 ações', { exact: true })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Priorizadas pelos riscos|Ordenadas pela IA/ })).toHaveCount(0)
+
   // RF17, shown only where a check exists: one action in c3 has one.
   await expect(page.getByText('Estado: não comprovada')).toHaveCount(1)
   await expect(page.getByText('9 de 15 contas com MFA · 2 administradores sem MFA')).toHaveCount(1)
+})
+
+test('Scenario 3 — the roadmap card follows the order switch', async ({ page }) => {
+  await start(page, `${ORG}/roadmap`, 'rui', 'c3')
+  await page.goto(`${ORG}/roadmap?as=rui`)
+  const rows = page.getByRole('list', { name: 'Primeiras ações do plano' }).locator('li')
+  await expect(page.getByText('Priorizadas pelos riscos')).toBeVisible()
+  await expect(rows.first()).toContainText('Implementar autenticação multifator')
+
+  await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
+  await expect(page.getByText('Ordenadas pela IA')).toBeVisible()
+  await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
 })
 
 test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {

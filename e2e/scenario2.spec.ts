@@ -89,6 +89,12 @@ test('Scenario 2 — Marta gets the same numbers, and links only to the pages sh
   await expect(page.getByRole('link', { name: /1 de 7 recolhidas/ })).toHaveAttribute('href', `${CLIENT}/integracoes`)
   await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
   await expect(page.getByText('Estado: não comprovada')).toHaveCount(1)
+
+  // The consultant reads the threat, where the client reads the consequence.
+  const topRisks = page.getByRole('list', { name: 'Riscos mais graves' }).locator('li')
+  await expect(topRisks).toHaveCount(3)
+  await expect(topRisks.first()).toContainText('Ransomware')
+  await expect(page.getByRole('list', { name: 'Primeiras ações do plano' }).locator('li')).toHaveCount(3)
 })
 
 test('Scenario 2 — accepting a risk requires a justification and the history records the change', async ({ page }) => {
