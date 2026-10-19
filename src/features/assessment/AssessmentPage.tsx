@@ -1,5 +1,6 @@
 import { CheckCircle2, Clock, Lock } from 'lucide-react'
 import { useAssessment, useUsers } from '../../api/queries'
+import { MATURITY_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { Avatar, Card, Chip, ErrorState, Eyebrow, Explainer, NextSteps, Note, PageHeader, ProgressBar, SkeletonRows, Term } from '../../ui'
 
@@ -35,7 +36,7 @@ export function AssessmentPage() {
               </div>
               <p className="text-[28px] font-extrabold">{answered} <span className="text-[16px] font-semibold text-ink-soft">de {total} perguntas respondidas</span></p>
               <ProgressBar value={answered} max={total} label="Progresso da avaliação" />
-              {a.maturity && <p className="text-[14px]">Nível de maturidade: <strong>{a.maturity} de 5</strong> · Básico</p>}
+              {a.maturity && <p className="text-[14px]">Nível de maturidade: <strong>{a.maturity} de 5</strong> · {MATURITY_LABEL[a.maturity]}</p>}
             </Card>
             <ul className="flex flex-col gap-3" aria-label="Secções da avaliação">
               {a.sections.map((s) => {

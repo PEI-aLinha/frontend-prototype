@@ -1,4 +1,4 @@
-import type { ActionStatus, AssetType, Id, Level, RiskStatus, Role, Treatment, User } from '../api/contracts'
+import type { ActionStatus, AssetType, EvidenceStrength, Id, Level, RiskStatus, Role, Treatment, User } from '../api/contracts'
 
 export const CRITICALITY_LABEL: Record<Level, string> = { alto: 'Alta', medio: 'Média', baixo: 'Baixa' }
 export const RISK_LEVEL_LABEL: Record<Level, string> = { alto: 'Alto', medio: 'Médio', baixo: 'Baixo' }
@@ -41,6 +41,16 @@ export const ACTION_STATUS_LABEL: Record<ActionStatus, string> = {
   por_iniciar: 'Por iniciar',
   em_curso: 'Em curso',
   concluida: 'Concluída',
+}
+
+/** Maturity scale 1 to 5 (glossary: 1 inicial, 5 otimizada). */
+export const MATURITY_LABEL: Record<number, string> = { 1: 'Inicial', 2: 'Básico', 3: 'Definido', 4: 'Gerido', 5: 'Otimizada' }
+
+export const EVIDENCE_STRENGTH_LABEL: Record<EvidenceStrength, string> = {
+  autodeclarada: 'Autodeclarada',
+  documento_verificado: 'Documento verificado',
+  tecnicamente_verificada: 'Verificada tecnicamente',
+  continuamente_verificada: 'Verificada continuamente',
 }
 
 export const ROLE_LABEL: Record<Role, string> = {

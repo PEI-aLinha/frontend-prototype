@@ -37,6 +37,27 @@ test('Scenario 3 — Rui reads the plan in plain language, without the legal cit
   await shot(page, 'c3-04-roadmap-plano')
 })
 
+test('Scenario 3 — Rui sees the level with its target, the coverage, the gaps and the next deadlines', async ({ page }) => {
+  await start(page, `${ORG}/roadmap`, 'rui', 'c3')
+  await page.goto(`${ORG}/roadmap?as=rui`)
+  const band = page.getByRole('region', { name: 'Estado do plano' })
+  await expect(band.getByText('Nível de maturidade')).toBeVisible()
+  await expect(band.getByText('2 de 5', { exact: true })).toBeVisible()
+  await expect(band.getByText('Objetivo 3 de 5 · Definido')).toBeVisible()
+  await expect(band.getByText('Cobertura da avaliação')).toBeVisible()
+  await expect(band.getByRole('progressbar', { name: 'Cobertura de Continuidade do negócio' })).toHaveAttribute('aria-valuenow', '7')
+  await expect(band.getByText('Por resolver')).toBeVisible()
+  await expect(band.getByText('7 ações abertas')).toBeVisible()
+  await expect(band.getByText('1 risco sem ação ligada')).toBeVisible()
+  await expect(band.getByText('Próximos prazos')).toBeVisible()
+  await expect(band.getByText('Registar a entidade no MyCiber', { exact: true })).toBeVisible()
+  await expect(band.getByText('15 nov. 2026', { exact: true })).toBeVisible()
+  // RF17: every action states the state of its evidence.
+  await expect(page.getByText('Estado: não comprovada').first()).toBeVisible()
+  await expect(page.getByText('9 de 15 contas com MFA · 2 administradores sem MFA').first()).toBeVisible()
+  await expect(page.getByText('Estado: em falta').first()).toBeVisible()
+})
+
 test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)

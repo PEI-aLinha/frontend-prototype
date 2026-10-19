@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, CheckCircle2, ShieldAlert } from 'lucide-react'
-import type { RemediationAction, User } from '../../api/contracts'
-import { useActions, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
+import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/contracts'
+import { useActions, useAssessment, useEvidence, useRiskLinks, useRisks, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
 import { ACTION_STATUS_LABEL, dateTime, shortDate } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
@@ -9,9 +9,20 @@ import { useCan } from '../../core/useCan'
 import {
   AIBadge, Button, Chip, EmptyState, ErrorState, Explainer, Modal, Note, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
+import { evidenceState, type EvidenceTone } from './evidenceState'
+import { PlanSummaryBand } from './PlanSummaryBand'
+import { planSummary } from './planSummary'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 
 type View = 'base' | 'riscos'
+
+const NO_EVIDENCE: CollectedEvidence[] = []
+
+const EVIDENCE_TONE: Record<EvidenceTone, string> = {
+  neutral: 'bg-paper-soft text-ink-soft',
+  brand: 'bg-signal-soft text-brand',
+  risk: 'bg-risk-high text-risk-high-ink',
+}
 
 /** Assessment and roadmap (minimal Assessment plugin): shows the effect of risks on priority. */
 export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
@@ -23,10 +34,25 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const users = useUsers(org.id)
   const status = useRoadmapStatus(org.id)
   const validate = useValidateRoadmap(org.id)
+  const assessment = useAssessment(org.id)
+  const evidence = useEvidence(org.id)
+  // Already loaded by useRiskSignals in the parent, under the same query keys.
+  const risks = useRisks(org.id)
+  const riskLinks = useRiskLinks(org.id)
   const [view, setView] = useState<View>('riscos')
   const [confirm, setConfirm] = useState(false)
   // The consultant sees the order and why each action sits where it does; the client sees the plan in plain language.
   const consultant = persona.role === 'consultor'
+
+  const summary = useMemo(() => planSummary({ actions: actions.data ?? [], assessment: assessment.data, risks: risks.data ?? [], links: riskLinks.data ?? [] }), [actions.data, assessment.data, risks.data, riskLinks.data])
+  const evidenceByAction = useMemo(() => {
+    const byAction = new Map<Id, CollectedEvidence[]>()
+    for (const e of evidence.data ?? []) {
+      if (!e.remediationActionId) continue
+      byAction.set(e.remediationActionId, [...(byAction.get(e.remediationActionId) ?? []), e])
+    }
+    return byAction
+  }, [evidence.data])
 
   if (actions.isError || status.isError) {
     return <ErrorState error={actions.error ?? status.error} onRetry={() => { actions.refetch(); status.refetch() }} />
@@ -64,6 +90,8 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         </div>
       )}
 
+      <PlanSummaryBand summary={summary} />
+
       {consultant ? (
         <Explainer id="roadmap-consultant" title="Como os riscos mudam o roadmap"
           intro="A IA propôs uma ordem a partir das lacunas da avaliação. O registo de riscos acrescenta o que é mais grave para esta empresa em concreto."
@@ -95,7 +123,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         <EmptyState title="Ainda não há ações no roadmap">Quando a avaliação identificar lacunas, as ações para as fechar aparecem aqui, ordenadas por prioridade.</EmptyState>
       ) : (
         <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
-          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} />)}
+          {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
         </ol>
       )}
 
@@ -114,12 +142,13 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   )
 }
 
-function ActionRow({ item, users, showMovement, consultant, validated }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined }) {
+function ActionRow({ item, users, showMovement, consultant, validated, evidence }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined; evidence: CollectedEvidence[] }) {
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
   const rose = moved > 0
   const fell = moved < 0
   const owner = users.find((u) => u.id === a.assignedTo)
+  const ev = evidenceState(evidence)
   return (
     <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
@@ -160,6 +189,9 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
             <ArrowDown className="size-4" aria-hidden />Desceu porque outras ações ligadas a riscos subiram.
           </p>
         )}
+        <p className={cn('mt-2.5 inline-flex flex-wrap items-center gap-x-2 rounded-[8px] px-2.5 py-1.5 text-[13px] font-semibold', EVIDENCE_TONE[ev.tone])}>
+          {ev.label}{ev.detail && <span className="font-normal text-ink-soft">{ev.detail}</span>}
+        </p>
         {a.aiOutputId && !validated && <div className="mt-2"><AIBadge /></div>}
         {a.aiOutputId && validated && <div className="mt-2"><Chip tone="outline">Validada pela consultora</Chip></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}

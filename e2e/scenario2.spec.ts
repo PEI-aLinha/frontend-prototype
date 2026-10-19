@@ -77,6 +77,20 @@ test('Scenario 2 — Marta registers the ransomware risk, links actions and the 
   await expect(page.getByText('Validada pela consultora', { exact: true }).first()).toBeVisible()
 })
 
+test('Scenario 2 — Marta reads the same summary band as the client', async ({ page }) => {
+  await start(page, `${CLIENT}/roadmap`, 'marta', 'c3')
+  await page.goto(`${CLIENT}/roadmap?as=marta`)
+  const band = page.getByRole('region', { name: 'Estado do plano' })
+  await expect(band.getByText('Nível de maturidade')).toBeVisible()
+  await expect(band.getByText('2 de 5', { exact: true })).toBeVisible()
+  await expect(band.getByText('Cobertura da avaliação')).toBeVisible()
+  await expect(band.getByText('Por resolver')).toBeVisible()
+  await expect(band.getByText('7 ações abertas')).toBeVisible()
+  await expect(band.getByText('Próximos prazos')).toBeVisible()
+  await expect(band.getByText('15 nov. 2026', { exact: true })).toBeVisible()
+  await expect(page.getByText('Estado: não comprovada').first()).toBeVisible()
+})
+
 test('Scenario 2 — accepting a risk requires a justification and the history records the change', async ({ page }) => {
   await start(page, `${CLIENT}/riscos`, 'marta', 'c2')
   await page.goto(`${CLIENT}/riscos`)
