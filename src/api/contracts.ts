@@ -137,7 +137,7 @@ export interface AuditEntry {
   actorType: ActorType
   userId: Id | null
   action: string
-  entityType: 'organization' | 'member' | 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration'
+  entityType: 'organization' | 'member' | 'asset' | 'critical_service' | 'risk' | 'risk_action' | 'task' | 'remediation_action' | 'roadmap' | 'comment' | 'integration' | 'assessment'
   entityId: Id
   summary: string
   before: Record<string, unknown> | null
@@ -197,6 +197,8 @@ export interface Task {
   answer?: QuestionAnswer
   /** Technical question: AI-pregenerated help (D10), informational only. */
   aiHelp?: string
+  /** Technical question: the assessment question it was delegated from. */
+  questionId?: Id
   /** For integration tasks: which system to connect. */
   provider?: ProviderId
   title: string
@@ -377,6 +379,34 @@ export interface AssessmentSummary {
   sections: AssessmentSection[]
   /** Maturity level (1–5), only after validation. */
   maturity: number | null
+  /** First question still to answer (not answered nor waiting for an analyst); null once there is none or after submission. */
+  nextQuestion: { sectionId: Id; questionId: Id } | null
+  /** When the designated manager last saved an answer; null before the first save. */
+  savedAt: IsoDate | null
+}
+
+/** One question of the maturity questionnaire, with the designated manager's answer. */
+export interface AssessmentQuestion {
+  id: Id
+  sectionId: Id
+  /** Technical questions are the ones usually delegated to an analyst. */
+  kind: 'tecnica' | 'gestao'
+  text: string
+  /** AI help, pre-generated per question (like Task.aiHelp), informational only: what the question means in plain language. */
+  explanation: string
+  /** AI help: a concrete example from a small company. */
+  example: string
+  /** AI help: why the question matters (risk or legal obligation). */
+  whyItMatters: string
+  /** Null while unanswered. When delegated, the analyst's answer once they reply. */
+  answer: QuestionAnswer | null
+  /** Technical question task, when delegated to an analyst. */
+  delegatedTaskId: Id | null
+}
+
+export interface DelegateQuestionInput {
+  assigneeId: Id
+  dueDate: IsoDate | null
 }
 
 export interface AssessmentApi {
@@ -387,6 +417,13 @@ export interface AssessmentApi {
   getRoadmapStatus(org: Id): Promise<RoadmapStatus>
   validateRoadmap(org: Id): Promise<RoadmapStatus>
   listPortfolio(): Promise<PortfolioClient[]>
+  listQuestions(org: Id, sectionId: Id): Promise<AssessmentQuestion[]>
+  /** Saves the designated manager's answer; the progress is kept between visits. */
+  saveAnswer(org: Id, questionId: Id, answer: QuestionAnswer): Promise<AssessmentQuestion>
+  /** Creates a technical question task for an analyst (they only see that question). */
+  delegateQuestion(org: Id, questionId: Id, input: DelegateQuestionInput): Promise<Task>
+  /** Submits the questionnaire once every question is answered; the answers become read-only and the consultant is notified. */
+  submitAssessment(org: Id): Promise<void>
 }
 
 // ---------------- organization (Organization plugin) ----------------
