@@ -103,10 +103,10 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const provenCount = evidenceRows.filter((e) => e?.tone === 'brand').length
   const soonest = summary.deadlines[0]
   const levelCard = assessment.data
-    ? <StatCard label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`}>
+    ? <StatCard className="h-full" label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`}>
       <MiniList label="Secções com menos respostas" rows={summary.topSections.map((s) => ({ key: s.id, label: s.name, meta: `${s.answered}/${s.total}` }))} more={Math.max(0, summary.sections.length - PREVIEW_ROWS)} />
     </StatCard>
-    : <StatCard label="Nível de maturidade" value="—" caption="A carregar a avaliação" />
+    : <StatCard className="h-full" label="Nível de maturidade" value="—" caption="A carregar a avaliação" />
 
   const riskRows = summary.topRisks.map(({ risk, level }) => ({
     key: risk.id,
@@ -138,7 +138,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       {pending ? null : validated ? (
         <Note>Roadmap validado {validator ? `por ${validator}` : 'pela consultora'}{status.data?.validatedAt ? ` a ${dateTime(status.data.validatedAt)}` : ''}. {consultant ? 'O cliente vê as ações e os riscos em só leitura.' : 'Pode ver as ações e os riscos, mas não os pode alterar.'}</Note>
       ) : (
-        <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
+        <div role="note" className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
           <Chip tone="signal">Avaliação concluída · 14 out.</Chip>
           <span className="text-[13px] text-ink-soft">O roadmap foi proposto pela IA a partir das lacunas. A prioridade final é decidida pela consultora.</span>
           <span className="ml-auto"><AIBadge /></span>
@@ -163,31 +163,13 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           ]} />
       )}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* Only the client has an assessment route under /org; the consultant's prefix has none, so hers stays a card. */}
-        {!consultant ? <Link to={`${base}/avaliacao`} className="contents">{levelCard}</Link> : levelCard}
-        <Link to={`${base}/riscos`} className="contents">
-          <StatCard label="Por resolver" value={`${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`} caption={`${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`}>
-            <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />
-          </StatCard>
-        </Link>
-        <Link to={`${base}/integracoes`} className="contents">
-          <StatCard label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}, ${evidenceCount - provenCount} por resolver`}>
-            <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />
-          </StatCard>
-        </Link>
-      </div>
-
       <section aria-labelledby="plan-titulo" className="flex min-w-0 flex-col gap-4">
-        <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+        <div className="flex flex-col gap-3">
           <div className="flex min-w-0 flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 id="plan-titulo" className="text-[18px] font-extrabold">{validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
-              <Chip>Os próximos passos</Chip>
-            </div>
+            <h2 id="plan-titulo" className="text-[19px] font-extrabold">{validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
             {soonest && <p className="text-[13px] text-ink-soft">Próximo prazo: {shortDate(soonest.dueDate)} · {soonest.description}.</p>}
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
             <p className="text-[13px] text-ink-soft" aria-live="polite">
               {byRisk ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
@@ -203,10 +185,32 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           <>
             <RoadmapMap items={ranked.map((r) => r.action)} />
             <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
-              {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} evidence={evidenceByAction.get(r.action.id) ?? NO_EVIDENCE} />)}
+              {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} />)}
             </ol>
           </>
         )}
+      </section>
+
+      <section aria-labelledby="resumo-titulo" className="flex min-w-0 flex-col gap-4">
+        <h2 id="resumo-titulo" className="text-[19px] font-extrabold">Resumo do plano</h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Only the client has an assessment route under /org; the consultant's prefix has none, so hers stays a card. */}
+          {!consultant ? (
+            <Link to={`${base}/avaliacao`} aria-label={`Ver a avaliação. Nível de maturidade ${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5.`} className="block h-full rounded-[14px]">
+              {levelCard}
+            </Link>
+          ) : levelCard}
+          <Link to={`${base}/riscos`} aria-label={`Ver os riscos por resolver. ${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}.`} className="block h-full rounded-[14px]">
+            <StatCard className="h-full" label="Por resolver" value={`${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`} caption={`${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`}>
+              <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />
+            </StatCard>
+          </Link>
+          <Link to={`${base}/integracoes`} aria-label={`Ver as evidências. ${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas.`} className="block h-full rounded-[14px]">
+            <StatCard className="h-full" label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}, ${evidenceCount - provenCount} por resolver`}>
+              <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />
+            </StatCard>
+          </Link>
+        </div>
       </section>
 
       <ProposeActionModal open={proposing} onClose={() => setProposing(false)} />
@@ -222,16 +226,16 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           onSuccess: () => { setConfirm(false); toast.show(`Roadmap validado · ${manager ? `o ${manager.split(' ')[0]}` : 'o cliente'} foi notificado`) },
           onError: (e) => toast.show(e.message, 'error'),
         })}>Validar roadmap</Button></>}>
-        <ul className="flex flex-col gap-1.5 text-[14px] text-ink-soft">
-          <li>• {ranked.length} ações, {raised} priorizadas pelos riscos</li>
-          <li>• As etiquetas "Proposta pela IA" passam a "Validada pela consultora"</li>
+        <ul className="flex list-disc flex-col gap-1.5 pl-5 text-[14px] text-ink-soft">
+          <li>{ranked.length} ações, {raised} priorizadas pelos riscos</li>
+          <li>As etiquetas "Proposta pela IA · por validar" desaparecem do plano</li>
         </ul>
       </Modal>
     </>
   )
 }
 
-function ActionRow({ item, users, showMovement, consultant, validated }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined; evidence: CollectedEvidence[] }) {
+function ActionRow({ item, users, showMovement, consultant, validated }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined }) {
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
   const rose = moved > 0
@@ -240,20 +244,23 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
   return (
     <li id={`acao-${a.id}`} tabIndex={-1} className={cn('flex scroll-mt-14 gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3 md:scroll-mt-0', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
-        <span className={cn('grid size-9 place-items-center rounded-[10px] text-[15px] font-extrabold', reason ? 'bg-brand text-white' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
+        <span className="grid size-9 place-items-center rounded-[10px] bg-paper-soft text-[15px] font-extrabold text-ink-soft"><span className="sr-only">Prioridade </span>{rank}</span>
         {(rose || fell) && (
-          <span className={cn('mt-0.5 flex flex-col text-[11px] font-bold leading-tight', rose ? 'text-brand' : 'text-muted')} aria-label={rose ? `Subiu ${moved} posições: era a ${baseRank}.ª` : `Desceu ${-moved} posições: era a ${baseRank}.ª`}>
-            <span className="inline-flex items-center">{rose ? <ArrowUp className="size-3.5" aria-hidden /> : <ArrowDown className="size-3.5" aria-hidden />}{Math.abs(moved)}</span>
-            <span className="font-semibold text-muted line-through">era #{baseRank}</span>
+          <span className="mt-0.5 flex flex-col text-[11px] font-bold leading-tight">
+            <span className={cn('inline-flex items-center', rose ? 'text-brand' : 'text-muted')} aria-hidden>
+              {rose ? <ArrowUp className="size-3.5" aria-hidden /> : <ArrowDown className="size-3.5" aria-hidden />}{Math.abs(moved)}
+            </span>
+            <span className="font-semibold text-muted line-through" aria-hidden>era #{baseRank}</span>
+            <span className="sr-only">{rose ? `Subiu ${moved} posições: era a ${baseRank}.ª` : `Desceu ${-moved} posições: era a ${baseRank}.ª`}</span>
           </span>
         )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <h3 className="text-[15px] font-bold">{a.description}</h3>
+          <h3 className="text-[16px] font-bold">{a.description}</h3>
           <div className="flex flex-wrap gap-1.5">
             {topRisk && <RiskLevelBadge level={topRisk.level} prefix="Risco " />}
-            <Chip tone={a.status === 'em_curso' ? 'signal' : 'neutral'}>{ACTION_STATUS_LABEL[a.status]}</Chip>
+            <Chip tone={a.status === 'concluida' ? 'dark' : a.status === 'em_curso' ? 'signal' : 'neutral'} icon={a.status === 'concluida' ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{ACTION_STATUS_LABEL[a.status]}</Chip>
           </div>
         </div>
         {consultant ? (
@@ -272,14 +279,8 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
             <ShieldAlert className="size-4" aria-hidden />{consultant ? reason : `Esta ação está ligada a um risco: ${topRisk?.riskLabel}`}
           </p>
         )}
-        {fell && (
-          <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-[8px] bg-paper-soft px-2.5 py-1.5 text-[13px] font-semibold text-ink-soft">
-            <ArrowDown className="size-4" aria-hidden />Desceu porque outras ações ligadas a riscos subiram.
-          </p>
-        )}
 
         {a.aiOutputId && !validated && <div className="mt-2"><AIBadge /></div>}
-        {a.aiOutputId && validated && <div className="mt-2"><Chip tone="outline">Validada pela consultora</Chip></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}
       </div>
     </li>

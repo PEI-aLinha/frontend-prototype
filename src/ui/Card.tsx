@@ -18,10 +18,11 @@ interface StatCardProps {
   children?: ReactNode
   onClick?: () => void
   accent?: ReactNode
+  className?: string
 }
 
 /** Summary card: eyebrow 11 + ExtraBold 18 value + 13 caption. */
-export function StatCard({ label, value, caption, children, onClick, accent }: StatCardProps) {
+export function StatCard({ label, value, caption, children, onClick, accent, className }: StatCardProps) {
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
@@ -33,7 +34,7 @@ export function StatCard({ label, value, caption, children, onClick, accent }: S
       {children && <div className="mt-3">{children}</div>}
     </>
   )
-  const cls = 'flex-1 min-w-0 rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] text-left'
+  const cls = cn('flex-1 min-w-0 rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] text-left', className)
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cn(cls, 'transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]')}>

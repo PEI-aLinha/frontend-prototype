@@ -69,16 +69,16 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(evidence.getByRole('list', { name: 'Ações com a prova por resolver' }).locator('li')).toHaveCount(3)
   await expect(evidence.getByText('+3')).toBeVisible()
 
-  // The plan comes first; the three result cards sit above it, in one line on a wide screen.
+  // The plan comes first; the three result cards sit below it, in one line on a wide screen.
   const heading = page.getByRole('heading', { name: 'Roadmap validado' })
   await expect(heading).toBeVisible()
-  await expect(page.getByText('Os próximos passos')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Resumo do plano' })).toBeVisible()
 
   // Only the section subtitle calls a date a deadline; the action rows phrase it as "Prazo:".
   await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
   await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
 
-  // The links are display:contents, so each card's own label is what has a box to measure.
+  // The links wrap their cards, so each card's own label is what has a box to measure.
   const cardBoxes = await Promise.all([
     level.getByText('Nível de maturidade', { exact: true }).boundingBox(),
     gaps.getByText('Por resolver', { exact: true }).boundingBox(),
@@ -94,7 +94,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   } else {
     expect(cardBoxes[0]!.y).toBeLessThan(cardBoxes[2]!.y)
   }
-  expect(cardBoxes[0]!.y).toBeLessThan(headingBox!.y)
+  expect(cardBoxes[0]!.y).toBeGreaterThan(headingBox!.y)
 
   // The map is the overview above the list: one circle per action, in the order on screen.
   const map = page.getByRole('list', { name: 'Progresso do plano' })
@@ -147,9 +147,8 @@ test('Scenario 3 — the risk register moves actions down as well as up', async 
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)
   await expect(page.getByText(/subiram.*desceram por causa dos riscos registados/)).toBeVisible()
-  await expect(page.locator('[aria-label^="Subiu"]').first()).toBeVisible()
-  await expect(page.locator('[aria-label^="Desceu"]').first()).toBeVisible()
-  await expect(page.getByText('Desceu porque outras ações ligadas a riscos subiram.').first()).toBeVisible()
+  await expect(page.getByText(/Subiu \d+ posições/).first()).toBeVisible()
+  await expect(page.getByText(/Desceu \d+ posições/).first()).toBeVisible()
 })
 
 test('Permissions — before validation Rui cannot see risks and Pedro never can', async ({ page }) => {

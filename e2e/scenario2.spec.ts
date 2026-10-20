@@ -74,7 +74,7 @@ test('Scenario 2 — Marta registers the ransomware risk, links actions and the 
   await page.getByRole('dialog').getByRole('button', { name: 'Validar roadmap' }).click()
   await expect(page.getByText('Roadmap validado · o Rui foi notificado')).toBeVisible()
   await expect(page.getByText('Proposta pela IA · por validar').first()).toBeHidden()
-  await expect(page.getByText('Validada pela consultora', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText(/Roadmap validado por Marta Ferreira/)).toBeVisible()
 })
 
 test('Scenario 2 — Marta gets the same numbers, and links only to the pages she can reach', async ({ page }) => {
