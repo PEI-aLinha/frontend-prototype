@@ -251,3 +251,8 @@ export function useDelegateQuestion(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: ({ questionId, input }: { questionId: Id; input: DelegateQuestionInput }) => api.assessment.delegateQuestion(org, questionId, input), onSuccess: () => invalidate('assessment', 'tasks', 'audit') })
 }
+
+export function useSubmitAssessment(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: () => api.assessment.submitAssessment(org), onSuccess: () => invalidate('assessment', 'roadmap', 'portfolio', 'audit') })
+}

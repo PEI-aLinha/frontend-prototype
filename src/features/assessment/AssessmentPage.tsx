@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { CheckCircle2, Clock } from 'lucide-react'
-import { useAssessment, useUsers } from '../../api/queries'
+import { useAssessment, useSubmitAssessment, useUsers } from '../../api/queries'
 import { useTenant } from '../../core/tenant'
-import { Avatar, Card, Chip, ErrorState, Eyebrow, Explainer, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term } from '../../ui'
+import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Explainer, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term, useToast } from '../../ui'
 
 const STATUS = { em_curso: 'Em curso', submetida: 'Concluída · a aguardar validação', validada: 'Validada pela consultora' } as const
 
@@ -11,6 +12,7 @@ export function AssessmentPage() {
   const org = useTenant()
   const assessment = useAssessment(org.id)
   const users = useUsers(org.id)
+  const [confirming, setConfirming] = useState(false)
   if (assessment.error) return <ErrorState error={assessment.error} onRetry={assessment.refetch} />
   const a = assessment.data
   const answered = a?.sections.reduce((n, s) => n + s.answered, 0) ?? 0
@@ -38,6 +40,13 @@ export function AssessmentPage() {
               <ProgressBar value={answered} max={total} label="Progresso da avaliação" />
               {a.maturity && <p className="text-[14px]">Nível de maturidade: <strong>{a.maturity} de 5</strong> · Básico</p>}
             </Card>
+            {a.status === 'em_curso' && total > 0 && answered === total && (
+              <Card className="flex flex-col items-start gap-3 border-brand">
+                <h2 className="text-[17px] font-extrabold">Avaliação completa</h2>
+                <p className="text-[14px] text-ink-soft">Respondeu a todas as perguntas. Quando submeter, a consultora revê as respostas e valida o roadmap.</p>
+                <Button onClick={() => setConfirming(true)}>Submeter avaliação</Button>
+              </Card>
+            )}
             <ul className="flex flex-col gap-3" aria-label="Secções da avaliação">
               {a.sections.map((s) => {
                 const complete = s.answered === s.total
@@ -78,6 +87,26 @@ export function AssessmentPage() {
           </aside>
         </div>
       )}
+      {confirming && <SubmitModal onClose={() => setConfirming(false)} />}
     </>
+  )
+}
+
+/** Confirms the submission: afterwards the answers are read-only. */
+function SubmitModal({ onClose }: { onClose: () => void }) {
+  const org = useTenant()
+  const toast = useToast()
+  const submit = useSubmitAssessment(org.id)
+  const confirm = () => {
+    submit.mutateAsync()
+      .then(() => { toast.show('Avaliação submetida. A consultora vai rever as respostas.'); onClose() })
+      .catch(() => {}) // The error is shown in the dialog (submit.isError).
+  }
+  return (
+    <Modal open onOpenChange={(o) => !o && onClose()} title="Submeter a avaliação?"
+      description="Depois de submeter, as respostas deixam de poder ser alteradas. A consultora vai revê-las e validar o roadmap."
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={confirm} loading={submit.isPending}>Submeter</Button></>}>
+      {submit.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{submit.error.message}</p>}
+    </Modal>
   )
 }

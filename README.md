@@ -122,9 +122,7 @@ src/
   - **Respostas fixas.** Os mockups têm opções próprias por pergunta; aqui todas usam Sim / Em parte / Não / Não sei, porque o contrato `QuestionAnswer` é fixo.
   - **Delegar num modal com prazo** (US14), em vez da lista de analistas dentro do cartão.
   - **Ajuda da IA.** A explicação, o exemplo e o "porque é importante" são texto fixo no mock, mas representam a ajuda que a IA pré-gera para cada pergunta (como `task.ai_help`). Por isso levam o rótulo "Gerado por IA · apenas informativo".
-- **Avaliação: o que ainda falta.**
-  - **Submeter a avaliação.** Não há botão nem função no mock para submeter: depois de responder a tudo, a avaliação continua "Em curso". O estado "submetida" só aparece nos dados de demonstração dos cenários 2 e 3.
-  - **`STATE_VERSION`.** Esta branch e `feat/chatbot` sobem ambas para 11: a que entrar em segundo na `dev` tem de passar para 12.
+- **Avaliação: `STATE_VERSION`.** Esta branch e `feat/chatbot` sobem ambas para 11: a que entrar em segundo na `dev` tem de passar para 12.
 
 ## Fora do âmbito
 

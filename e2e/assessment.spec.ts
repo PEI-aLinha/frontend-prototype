@@ -103,6 +103,37 @@ test('Assessment — the analyst cannot open it and it is read-only after submis
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 2 de 41' })).toBeVisible()
 })
 
+test('Assessment — Rui answers the last questions and submits the assessment', async ({ page }) => {
+  await start(page, `${ORG}/avaliacao`, 'rui')
+  await expect(page.getByText('Faltam 7 perguntas.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Submeter avaliação' })).toHaveCount(0)
+
+  // The home page always opens the next open question (the one waiting for Pedro is skipped).
+  for (let i = 0; i < 6; i++) {
+    await page.goto(`${ORG}/inicio?as=rui`)
+    await page.getByRole('button', { name: 'Continuar avaliação →' }).click()
+    await page.getByText('Sim', { exact: true }).click()
+    await page.getByRole('button', { name: 'Guardar e continuar depois' }).click()
+    await expect(page).toHaveURL(new RegExp(`${ORG}/avaliacao$`))
+  }
+  // Rui can also answer the question waiting for Pedro himself.
+  await page.goto(`${ORG}/avaliacao/sec-acessos/q-mfa?as=rui`)
+  await page.getByText('Em parte', { exact: true }).click()
+  await page.getByRole('button', { name: 'Guardar e continuar depois' }).click()
+
+  await expect(page.getByRole('progressbar', { name: 'Progresso da avaliação' })).toHaveAttribute('aria-valuenow', '41')
+  await page.getByRole('button', { name: 'Submeter avaliação' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Submeter a avaliação?' })
+  await dialog.getByRole('button', { name: 'Submeter', exact: true }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Avaliação submetida. A consultora vai rever as respostas.' })).toBeVisible()
+  await expect(page.getByText('Concluída · a aguardar validação')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Submeter avaliação' })).toHaveCount(0)
+
+  // The answers are now read-only.
+  await page.goto(`${ORG}/avaliacao/sec-acessos/q-mfa?as=rui`)
+  await expect(page.getByText('A avaliação já foi submetida. As respostas já não podem ser alteradas.')).toBeVisible()
+})
+
 test('Assessment — the home page shows the real progress and continues where Rui stopped', async ({ page }) => {
   await start(page, `${ORG}/inicio`, 'rui')
   await expect(page.getByRole('heading', { name: '34 de 41 perguntas respondidas' })).toBeVisible()

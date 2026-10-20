@@ -422,6 +422,8 @@ export interface AssessmentApi {
   saveAnswer(org: Id, questionId: Id, answer: QuestionAnswer): Promise<AssessmentQuestion>
   /** Creates a technical question task for an analyst (they only see that question). */
   delegateQuestion(org: Id, questionId: Id, input: DelegateQuestionInput): Promise<Task>
+  /** Submits the questionnaire once every question is answered; the answers become read-only and the consultant is notified. */
+  submitAssessment(org: Id): Promise<void>
 }
 
 // ---------------- organization (Organization plugin) ----------------

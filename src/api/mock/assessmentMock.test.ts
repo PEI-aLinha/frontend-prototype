@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMockApi } from './mockApi'
 import { resetDemo } from './store'
-import { ORG_ID, PEDRO, RUI } from './seed'
+import { MARTA, ORG_ID, PEDRO, RUI } from './seed'
 
 let who = RUI
 const api = createMockApi(() => ({ userId: who }))
@@ -75,6 +75,27 @@ describe('assessment questionnaire (mock API)', () => {
     expect(question).toMatchObject({ answer: { choice: 'parcial', note: 'Falta nos portáteis.' }, delegatedTaskId: task.id })
     expect(await progress()).toEqual(['8/8', '6/6', '7/9', '7/7', '5/6', '2/5'])
   })
+
+  it('submits only when every question is answered, then notifies the consultant', async () => {
+    await expect(api.assessment.submitAssessment(ORG_ID)).rejects.toMatchObject({ status: 422, message: 'Faltam 7 perguntas por responder.' })
+    who = PEDRO
+    await expect(api.assessment.submitAssessment(ORG_ID)).rejects.toMatchObject({ status: 403 })
+
+    who = RUI
+    const { sections } = await api.assessment.getAssessment(ORG_ID)
+    const questions = (await Promise.all(sections.map((s) => api.assessment.listQuestions(ORG_ID, s.id)))).flat()
+    await Promise.all(questions.filter((x) => !x.answer).map((q) => api.assessment.saveAnswer(ORG_ID, q.id, { choice: 'sim' })))
+    await api.assessment.submitAssessment(ORG_ID)
+
+    expect((await api.assessment.getAssessment(ORG_ID)).status).toBe('submetida')
+    await expect(api.assessment.saveAnswer(ORG_ID, 'q-gov-politica', { choice: 'nao' })).rejects.toMatchObject({ status: 409 })
+    await expect(api.assessment.submitAssessment(ORG_ID)).rejects.toMatchObject({ status: 409 })
+    expect((await api.audit.list(ORG_ID, { entityType: 'assessment' }))[0]).toMatchObject({ userId: RUI, action: 'submit', summary: 'Submeteu a avaliação' })
+
+    who = MARTA
+    expect((await api.notifications.list())[0]).toMatchObject({ kind: 'avaliacao', title: 'Avaliação concluída', link: '/clientes/componentes-agueda/visao-geral' })
+    expect((await api.assessment.listPortfolio()).find((p) => p.organization.id === ORG_ID)).toMatchObject({ stage: 'Avaliação concluída', nextStep: 'Registar riscos e validar roadmap' })
+  }, 15_000) // About 15 mock calls, each with simulated latency.
 
   it('locks the questionnaire after submission', async () => {
     resetDemo('c3')

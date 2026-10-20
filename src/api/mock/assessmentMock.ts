@@ -35,7 +35,7 @@ function withAnswer(s: DemoState, org: Id, question: QuestionDef): AssessmentQue
   return { ...question, answer: s.answers[org]?.[question.id] ?? delegatedAnswer, delegatedTaskId: task?.id ?? null }
 }
 
-export function createAssessmentMock(getActor: () => DemoActor): Pick<AssessmentApi, 'getAssessment' | 'answerQuestion' | 'listQuestions' | 'saveAnswer' | 'delegateQuestion'> {
+export function createAssessmentMock(getActor: () => DemoActor): Pick<AssessmentApi, 'getAssessment' | 'answerQuestion' | 'listQuestions' | 'saveAnswer' | 'delegateQuestion' | 'submitAssessment'> {
   const role = (s: DemoState) => s.users.find((u) => u.id === getActor().userId)?.role
   const findQuestion = (id: Id) => {
     const question = QUESTIONS.find((x) => x.id === id)
@@ -117,6 +117,27 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
         body: `${question.text}${input.dueDate ? ` · até ${shortDayPt(input.dueDate)}` : ' · sem prazo'}`, link: `/org/${o.slug}/tarefas/${task.id}/pergunta`,
       }))
       return task
+    }),
+
+    submitAssessment: (org) => simulate(() => {
+      const s = getState()
+      if (role(s) !== 'responsavel') throw new ApiError('Só o Responsável designado pode submeter a avaliação.', 403)
+      assertOpen(s, org)
+      const missing = QUESTIONS.filter((x) => !withAnswer(s, org, x).answer).length
+      if (missing > 0) throw new ApiError(`Faltam ${missing} ${missing === 1 ? 'pergunta' : 'perguntas'} por responder.`, 422)
+      const o = s.organizations.find((x) => x.id === org)!
+      const me = s.users.find((u) => u.id === getActor().userId)!
+      const entry = auditEntry({ organizationId: org, userId: me.id, action: 'submit', entityType: 'assessment', entityId: org, summary: 'Submeteu a avaliação', before: { status: 'em_curso' }, after: { status: 'submetida' } })
+      setState((st) => {
+        const next = {
+          ...st,
+          roadmap: { ...st.roadmap, [org]: { ...st.roadmap[org], assessmentCompletedAt: now() } },
+          portfolio: st.portfolio.map((p) => (p.organization.id === org ? { ...p, stage: 'Avaliação concluída', stageTone: 'signal' as const, nextStep: 'Registar riscos e validar roadmap', updatedAt: now() } : p)),
+          audit: [...st.audit, entry],
+        }
+        // The consultant reviews the answers next.
+        return o.consultantId ? notify(next, { organizationId: org, userId: o.consultantId, kind: 'avaliacao', title: 'Avaliação concluída', body: `${me.name} submeteu a avaliação de ${o.name}.`, link: `/clientes/${o.slug}/visao-geral` }) : next
+      })
     }),
 
     answerQuestion: (org, taskId, answer) => simulate(() => {
