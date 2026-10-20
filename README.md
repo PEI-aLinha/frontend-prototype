@@ -125,7 +125,6 @@ src/
 - **Avaliação: o que ainda falta.**
   - **Submeter a avaliação.** Não há botão nem função no mock para submeter: depois de responder a tudo, a avaliação continua "Em curso". O estado "submetida" só aparece nos dados de demonstração dos cenários 2 e 3.
   - **"Atribuir tarefa" (Equipa).** A opção "Pergunta" usa uma lista de exemplo (`organization/assignment/catalog.ts`) e cria a tarefa sem `question_id`, por isso a resposta não chega ao questionário. Falta ligá-la às perguntas reais ou tirar a opção (a combinar com o plugin Organização).
-  - **Histórico.** As respostas à avaliação aparecem sem etiqueta de contexto: falta `assessment: 'Avaliação'` em `HistoryPage.tsx`.
   - **`STATE_VERSION`.** Esta branch e `feat/chatbot` sobem ambas para 11: a que entrar em segundo na `dev` tem de passar para 12.
 
 ## Fora do âmbito

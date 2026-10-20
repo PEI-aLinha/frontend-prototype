@@ -54,6 +54,10 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await page.getByRole('link', { name: 'Voltar a Controlo de acessos' }).click()
   await page.getByRole('link', { name: 'Voltar à Avaliação' }).click()
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
+
+  // The consultant sees the answers in the history, labelled as Assessment.
+  await page.goto('/clientes/componentes-agueda/historico?as=marta')
+  await expect(page.getByRole('listitem').filter({ hasText: /respondeu "Em parte" à pergunta "A rede Wi-Fi/ }).getByText(/ · Avaliação$/)).toBeVisible()
 })
 
 test('Assessment — Rui delegates a question, Pedro answers it and Rui sees the answer', async ({ page }) => {
