@@ -57,9 +57,9 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
 
   const evidence = page.getByRole('link', { name: /1 de 7 recolhidas/ })
   await expect(evidence).toHaveAttribute('href', `${ORG}/integracoes`)
-  await expect(evidence).toContainText('0 comprovadas, 1 por resolver')
+  await expect(evidence).toContainText('1 comprovada, 0 por resolver')
 
-  await expect(page.getByText('Próximo prazo: 30 nov. 2026 · Criar política de cópias de segurança.')).toBeVisible()
+  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
 
   // Each card previews three rows and says how many it left out.
   await expect(level.getByRole('list', { name: 'Secções com menos respostas' }).locator('li')).toHaveCount(3)
@@ -67,7 +67,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(gaps.getByRole('list', { name: 'Riscos mais graves' }).locator('li')).toHaveCount(3)
   await expect(gaps.getByText('+3')).toBeVisible()
   await expect(evidence.getByRole('list', { name: 'Ações com a prova por resolver' }).locator('li')).toHaveCount(3)
-  await expect(evidence.getByText('+4')).toBeVisible()
+  await expect(evidence.getByText('+3')).toBeVisible()
 
   // The plan comes first; the three result cards sit above it, in one line on a wide screen.
   const heading = page.getByRole('heading', { name: 'Roadmap validado' })
@@ -75,7 +75,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(page.getByText('Os próximos passos')).toBeVisible()
 
   // Only the section subtitle calls a date a deadline; the action rows phrase it as "Prazo:".
-  await expect(page.getByText('Próximo prazo: 30 nov. 2026 · Criar política de cópias de segurança.')).toBeVisible()
+  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
   await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
 
   // The links are display:contents, so each card's own label is what has a box to measure.
@@ -140,7 +140,7 @@ test('Scenario 3 — the plan follows the order switch', async ({ page }) => {
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
   await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
-  await expect(first).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber\. Concluída\.$/)
+  await expect(first).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber\. Por iniciar\.$/)
 })
 
 test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {

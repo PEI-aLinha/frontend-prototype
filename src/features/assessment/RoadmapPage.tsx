@@ -172,7 +172,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           </StatCard>
         </Link>
         <Link to={`${base}/integracoes`} className="contents">
-          <StatCard label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} comprovadas, ${evidenceCount - provenCount} por resolver`}>
+          <StatCard label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}, ${evidenceCount - provenCount} por resolver`}>
             <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />
           </StatCard>
         </Link>
