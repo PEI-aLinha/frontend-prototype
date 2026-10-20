@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { TeamMember, WorkAssignmentInput } from '../../../api/contracts'
-import { useAssignWork, useToday } from '../../../api/queries'
+import { useAssignWork, useDelegateQuestion, useToday } from '../../../api/queries'
 import { useTenant } from '../../../core/tenant'
 import { Button, Chip, DateInput, Field, Modal, OptionGroup, Select, TextArea, useToast, type OptionItem } from '../../../ui'
 import { ASSET_TASK, EVIDENCE, TECHNICAL_QUESTIONS } from './catalog'
@@ -21,6 +21,8 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
   const toast = useToast()
   const today = useToday()
   const assign = useAssignWork(org.id)
+  // A technical question is delegated through the Assessment plugin, so it stays linked to the questionnaire.
+  const delegate = useDelegateQuestion(org.id)
   const [assignee, setAssignee] = useState(assigneeId ?? (analysts.length === 1 ? analysts[0].userId! : ''))
   const [kind, setKind] = useState<Kind | null>(null)
   const [item, setItem] = useState('')
@@ -45,22 +47,28 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
   const submit = () => {
     setSubmitted(true)
     if (Object.keys(validate()).length > 0) return
-    const chosen = items.find((i) => i.id === item)
-    const input: WorkAssignmentInput = item === OTHER
-      ? { assigneeId: assignee, kind: 'tarefa', title: other.trim(), context: 'Pedido do Responsável designado', dueDate: due || null }
-      : { assigneeId: assignee, kind: chosen === ASSET_TASK ? 'ativos' : kind!, title: chosen!.title, context: chosen!.context, dueDate: due || null }
-    assign.mutate(input, {
+    const done = {
       onSuccess: () => {
         toast.show(`Tarefa enviada a ${analysts.find((a) => a.userId === assignee)?.name}`)
         onClose()
       },
-    })
+    }
+    if (kind === 'pergunta') {
+      delegate.mutate({ questionId: item, input: { assigneeId: assignee, dueDate: due || null } }, done)
+      return
+    }
+    const chosen = items.find((i) => i.id === item)
+    const input: WorkAssignmentInput = item === OTHER
+      ? { assigneeId: assignee, kind: 'tarefa', title: other.trim(), context: 'Pedido do Responsável designado', dueDate: due || null }
+      : { assigneeId: assignee, kind: chosen === ASSET_TASK ? 'ativos' : kind!, title: chosen!.title, context: chosen!.context, dueDate: due || null }
+    assign.mutate(input, done)
   }
+  const failure = assign.error ?? delegate.error
 
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} width={640} chip={<Chip>Tarefa para analista</Chip>} title="Atribuir tarefa"
       description="O analista recebe um email e vê a tarefa na sua lista."
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit} loading={assign.isPending}>Atribuir</Button></>}>
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit} loading={assign.isPending || delegate.isPending}>Atribuir</Button></>}>
       <Field label="Analista" error={errors.assignee}>
         {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={assignee} placeholder="Escolher o analista…" onChange={setAssignee} options={analysts.map((a) => ({ value: a.userId!, label: a.name, hint: a.email }))} />}
       </Field>
@@ -82,7 +90,7 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
         {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}
       </Field>
 
-      {assign.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{assign.error.message}</p>}
+      {failure && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{failure.message}</p>}
     </Modal>
   )
 }
