@@ -49,43 +49,41 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
 
   return (
     <div className="rounded-[16px] border border-line-soft bg-paper px-5 py-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-5">
-        <div ref={wrap} className="relative min-w-0 flex-1">
-          {line && (
-            <svg aria-hidden viewBox={`0 0 ${line.w} ${line.h}`} className="absolute inset-0 size-full">
-              <path d={d} fill="none" className="stroke-line-soft" strokeWidth={2} strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />
-              {solid > 0 && <path d={d} pathLength={100} strokeDasharray={`${solid} 100`} fill="none" className="stroke-brand" strokeWidth={2} vectorEffect="non-scaling-stroke" />}
-            </svg>
-          )}
-          <ol ref={grid} aria-label="Progresso do plano" className="relative grid auto-cols-fr grid-flow-col">
-            {items.map((a, i) => (
-              <li key={a.id} className={cn('flex justify-center', i % 2 === 1 && 'md:pt-8')}>
-                <button
-                  type="button"
-                  onClick={() => jumpTo(a.id)}
-                  title={a.description}
-                  aria-label={`Ação ${i + 1} de ${items.length}: ${a.description}. ${ACTION_STATUS_LABEL[a.status]}.`}
-                  className="group flex flex-col items-center gap-1.5"
-                >
-                  <span className={cn(
-                    'grid size-12 place-items-center rounded-full border-2 text-[15px] font-extrabold transition-transform group-hover:scale-110 md:size-14',
-                    a.status === 'concluida' ? 'border-brand bg-brand text-white' : a.status === 'em_curso' ? 'border-brand bg-paper text-brand' : 'border-line bg-paper text-ink-soft',
-                  )}>
-                    {a.status === 'concluida' ? <Check className="size-6" strokeWidth={3} aria-hidden /> : i + 1}
-                  </span>
-                  <span className="hidden max-w-[15ch] md:block">
-                    <span className="line-clamp-2 text-center text-[11px] leading-tight text-ink-soft">{a.description}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <p className="ml-auto flex w-fit flex-col items-start gap-1 text-[11px] text-ink-soft lg:self-stretch lg:justify-between">
-          <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
-          <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-brand" />Em curso</span>
-          <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-line" />Por iniciar</span>
-        </p>
+      <p className="mb-3 flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[11px] text-ink-soft">
+        <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
+        <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-brand" />Em curso</span>
+        <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-line" />Por iniciar</span>
+      </p>
+      <div ref={wrap} className="relative">
+        {line && (
+          <svg aria-hidden viewBox={`0 0 ${line.w} ${line.h}`} className="absolute inset-0 size-full">
+            <path d={d} fill="none" className="stroke-line-soft" strokeWidth={2} strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />
+            {solid > 0 && <path d={d} pathLength={100} strokeDasharray={`${solid} 100`} fill="none" className="stroke-brand" strokeWidth={2} vectorEffect="non-scaling-stroke" />}
+          </svg>
+        )}
+        <ol ref={grid} aria-label="Progresso do plano" className="relative grid auto-cols-fr grid-flow-col">
+          {items.map((a, i) => (
+            <li key={a.id} className={cn('flex justify-center', i % 2 === 1 && 'md:pt-8')}>
+              <button
+                type="button"
+                onClick={() => jumpTo(a.id)}
+                title={a.description}
+                aria-label={`Ação ${i + 1} de ${items.length}: ${a.description}. ${ACTION_STATUS_LABEL[a.status]}.`}
+                className="group flex flex-col items-center gap-1.5"
+              >
+                <span className={cn(
+                  'grid size-12 place-items-center rounded-full border-2 text-[15px] font-extrabold transition-transform group-hover:scale-110 md:size-14',
+                  a.status === 'concluida' ? 'border-brand bg-brand text-white' : a.status === 'em_curso' ? 'border-brand bg-paper text-brand' : 'border-line bg-paper text-ink-soft',
+                )}>
+                  {a.status === 'concluida' ? <Check className="size-6" strokeWidth={3} aria-hidden /> : i + 1}
+                </span>
+                <span className="hidden max-w-[15ch] md:block">
+                  <span className="line-clamp-2 text-center text-[11px] leading-tight text-ink-soft">{a.description}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   )
