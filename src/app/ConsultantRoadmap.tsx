@@ -5,7 +5,7 @@ import { useSession } from '../core/session'
 import { useTenant } from '../core/tenant'
 import { RoadmapPage } from '../features/assessment/public'
 import { useRiskSignals } from '../features/assets/public'
-import { EmptyState, PageHeader } from '../ui'
+import { EmptyState, ErrorState, PageHeader, SkeletonRows } from '../ui'
 
 /** Composition: the roadmap (Assessment) receives the risk signals (Risks and Assets) only through the contract. */
 export function ConsultantRoadmap() {
@@ -13,6 +13,22 @@ export function ConsultantRoadmap() {
   const org = useTenant()
   const { persona } = useSession()
   const status = useRoadmapStatus(org.id)
+  if (status.isPending) {
+    return (
+      <>
+        <PageHeader eyebrow={org.name} title="Resultados e roadmap" />
+        <SkeletonRows rows={6} />
+      </>
+    )
+  }
+  if (status.isError) {
+    return (
+      <>
+        <PageHeader eyebrow={org.name} title="Resultados e roadmap" />
+        <ErrorState error={status.error} onRetry={() => status.refetch()} />
+      </>
+    )
+  }
   if (persona.role !== 'consultor' && !status.data?.validated) {
     return (
       <>

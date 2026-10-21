@@ -75,6 +75,7 @@ test('Scenario 2 — Marta registers the ransomware risk, links actions and the 
   await expect(page.getByText('Roadmap validado · o Rui foi notificado')).toBeVisible()
   await expect(page.getByText('Proposta pela IA · por validar').first()).toBeHidden()
   await expect(page.getByText(/Roadmap validado por Marta Ferreira/)).toBeVisible()
+  await expect(page.getByText('2 → 3 de 5')).toBeVisible()
 })
 
 test('Scenario 2 — Marta gets the same numbers, and links only to the pages she can reach', async ({ page }) => {
@@ -109,6 +110,10 @@ test('Scenario 2 — the consultant adjusts the plan, and the history records it
   await page.getByRole('dialog').getByRole('button', { name: 'Propor ação' }).click()
   await expect(page.getByRole('heading', { name: 'Rever com a direção a política de acessos ao ERP' })).toBeVisible()
   await expect(page.getByRole('list', { name: 'Ações do roadmap por prioridade' }).locator('li').filter({ hasText: 'Rever com a direção' })).toContainText('Proposta pela consultora')
+
+  await page.getByRole('button', { name: 'Propor ação', exact: true }).click()
+  await expect(page.getByLabel('O que fazer')).toHaveValue('')
+  await page.getByRole('button', { name: 'Cancelar' }).click()
 
   await page.getByRole('button', { name: 'Histórico' }).click()
   await expect(page.getByRole('dialog').getByText('propôs a ação "Rever com a direção a política de acessos ao ERP"')).toBeVisible()

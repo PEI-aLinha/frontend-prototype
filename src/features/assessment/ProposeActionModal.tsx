@@ -17,6 +17,7 @@ export function ProposeActionModal({ open, onClose }: { open: boolean; onClose: 
   const [error, setError] = useState<string>()
 
   const reset = () => { setDescription(''); setEvidence(''); setObligation(''); setDue(''); setError(undefined) }
+  const close = () => { reset(); onClose() }
 
   const submit = () => {
     if (description.trim().length < MIN_LENGTH) { setError('Descreva a ação em pelo menos 5 caracteres.'); return }
@@ -27,15 +28,15 @@ export function ProposeActionModal({ open, onClose }: { open: boolean; onClose: 
       dueDate: due || null,
       findingTitle: 'Proposta da consultora ao validar o plano',
     }, {
-      onSuccess: () => { reset(); onClose(); toast.show('Ação proposta para o roadmap') },
+      onSuccess: () => { close(); toast.show('Ação proposta para o roadmap') },
       onError: (e) => toast.show(e.message, 'error'),
     })
   }
 
   return (
-    <Modal open={open} onOpenChange={(o) => !o && onClose()} chip={<Chip>Ajuste do plano</Chip>} title="Propor uma ação"
-      description="A ação entra no fim da lista, com a prioridade mais baixa, e o cliente passa a vê-la."
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit} loading={propose.isPending}>Propor ação</Button></>}>
+    <Modal open={open} onOpenChange={(o) => !o && close()} chip={<Chip>Ajuste do plano</Chip>} title="Propor uma ação"
+      description="A ação entra no fim da lista, com a prioridade mais baixa, e o cliente passa a vê-la depois de a consultora validar o roadmap."
+      footer={<><Button variant="secondary" onClick={close}>Cancelar</Button><Button onClick={submit} loading={propose.isPending}>Propor ação</Button></>}>
       <Field label="O que fazer" error={error}>{(p) => <TextArea id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} value={description} onChange={(e) => { setDescription(e.target.value); setError(undefined) }} placeholder="Ex.: Rever com a direção a política de acessos ao ERP" />}</Field>
       <Field label="Prova necessária" optional hint="O documento que mostra que ficou feito.">{(p) => <TextInput id={p.id} aria-describedby={p.describedBy} value={evidence} onChange={(e) => setEvidence(e.target.value)} placeholder="Ex.: Política aprovada pela administração" />}</Field>
       <Field label="Obrigação legal" optional hint="Deixa em branco se ainda não a identificou.">{(p) => <TextInput id={p.id} aria-describedby={p.describedBy} value={obligation} onChange={(e) => setObligation(e.target.value)} placeholder="Ex.: NIS2, art. 21.º" />}</Field>

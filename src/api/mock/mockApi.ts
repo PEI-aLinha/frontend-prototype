@@ -422,6 +422,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       proposeAction: (org, input) => simulate(() => {
         if (actor().role !== 'consultor') deny()
         if (!input.description.trim()) throw new ApiError('Descreva a ação.', 422)
+        if (input.dueDate && input.dueDate < getState().today) throw new ApiError('O prazo não pode ser no passado.', 422)
         let created!: RemediationAction
         write((s, me) => {
           const max = Math.max(0, ...s.actions.filter((a) => a.organizationId === org).map((a) => a.priority))
@@ -444,7 +445,9 @@ export function createMockApi(getActor: ActorProvider): Api {
 
       validateRoadmap: (org) => simulate(() => {
         if (actor().role !== 'consultor') deny()
-        let status = getState().roadmap[org]
+        const current = getState().roadmap[org]
+        if (current?.validated) return current
+        let status = current
         write((s, me) => {
           status = { ...s.roadmap[org], validated: true, validatedAt: now(), validatedBy: me.id }
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'validate', entityType: 'roadmap', entityId: org, summary: 'Validou o roadmap', before: { validated: false }, after: { validated: true } })

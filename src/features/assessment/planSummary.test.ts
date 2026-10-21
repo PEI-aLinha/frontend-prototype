@@ -21,7 +21,7 @@ const empty = planSummary({ actions: [], assessment: undefined, risks: [], links
 
 describe('planSummary', () => {
   it('is empty without data', () => {
-    expect(empty).toEqual({ maturity: null, targetMaturity: null, sections: [], topSections: [], topRisks: [], openRisks: 0, actionsOpen: 0, actionsDone: 0, risksUnlinked: 0, deadlines: [] })
+    expect(empty).toEqual({ maturity: null, targetMaturity: null, sections: [], topSections: [], topRisks: [], openRisks: 0, actionsOpen: 0, actionsDone: 0, risksUnlinked: 0 })
   })
 
   it('counts the actions by status', () => {
@@ -44,10 +44,11 @@ describe('planSummary', () => {
   it('counts the risks with no linked action', () => {
     const result = planSummary({
       actions: [], assessment: assessment(2),
-      risks: [risk('rsk-a'), risk('rsk-b'), risk('rsk-c')],
+      risks: [risk('rsk-a'), risk('rsk-b'), risk('rsk-c'), risk('rsk-d', { status: 'arquivado' })],
       links: [link('lnk-1', 'rsk-a', 'act-mfa'), link('lnk-2', 'rsk-b', 'act-mfa'), link('lnk-3', 'rsk-c', 'act-ot')],
     })
     expect(result.risksUnlinked).toBe(0)
+    expect(result.openRisks).toBe(3)
     expect(planSummary({ actions: [], assessment: undefined, risks: [risk('rsk-a'), risk('rsk-b')], links: [link('lnk-1', 'rsk-a', 'act-mfa')] }).risksUnlinked).toBe(1)
   })
 
@@ -71,20 +72,4 @@ describe('planSummary', () => {
     expect(result.openRisks).toBe(4)
   })
 
-  it('orders the deadlines soonest first', () => {
-    const result = planSummary({
-      actions: [action('c', 'por_iniciar', '2027-01-31'), action('a', 'por_iniciar', '2026-11-15'), action('b', 'por_iniciar', '2026-12-15')],
-      assessment: undefined, risks: [], links: [],
-    })
-    expect(result.deadlines.map((d) => d.actionId)).toEqual(['a', 'b', 'c'])
-    expect(result.deadlines[0]).toEqual({ actionId: 'a', description: 'Ação a', dueDate: '2026-11-15' })
-  })
-
-  it('leaves out concluded actions and actions with no due date', () => {
-    const result = planSummary({
-      actions: [action('feita', 'concluida', '2026-11-15'), action('sem-prazo', 'por_iniciar'), action('aberta', 'em_curso', '2026-12-01')],
-      assessment: undefined, risks: [], links: [],
-    })
-    expect(result.deadlines.map((d) => d.actionId)).toEqual(['aberta'])
-  })
 })

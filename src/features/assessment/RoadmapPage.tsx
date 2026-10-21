@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { ArrowDown, ArrowUp, CheckCircle2, Download, Plus, ShieldAlert } from 'lucide-react'
 import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/contracts'
 import { useActions, useAssessment, useAudit, useEvidence, useRiskLinks, useRisks, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
@@ -63,10 +63,21 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const risks = useRisks(org.id)
   const riskLinks = useRiskLinks(org.id)
   const audit = useAudit(org.id)
-  const [view, setView] = useState<View>('riscos')
+  const [params, setParams] = useSearchParams()
   const [confirm, setConfirm] = useState(false)
   const [proposing, setProposing] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
+  const view: View = params.get('ordem') === 'base' ? 'base' : 'riscos'
+  const showHistory = params.get('historico') === '1'
+  const update = (next: Record<string, string | null>) => {
+    const p = new URLSearchParams(params)
+    for (const [k, v] of Object.entries(next)) {
+      if (v === null) p.delete(k)
+      else p.set(k, v)
+    }
+    setParams(p, { replace: true, preventScrollReset: true })
+  }
+  const setView = (next: View) => update({ ordem: next === 'base' ? 'base' : null })
+  const setShowHistory = (open: boolean) => update({ historico: open ? '1' : null })
   // The consultant sees the order and why each action sits where it does; the client sees the plan in plain language.
   const consultant = persona.role === 'consultor'
   // ClientLayout redirects the consultant to /clientes and ConsultantLayout redirects everyone else, so the role picks the prefix.
@@ -108,7 +119,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const evidenceRows = ranked.map((r) => evidenceState(evidenceByAction.get(r.action.id) ?? NO_EVIDENCE))
   const evidenceCount = evidenceRows.filter(Boolean).length
   const provenCount = evidenceRows.filter((e) => e?.tone === 'brand').length
-  const canExport = !pending && !!users.data && !!evidence.data && !!risks.data && ranked.length > 0
+  const canExport = !pending && !!users.data && !!evidence.data && !!risks.data && !!riskLinks.data && !!assessment.data && ranked.length > 0
   // A failed side query gets a dash, not a false zero, and a pending one gets a placeholder.
   const risksLoading = actions.isPending || risks.isPending || riskLinks.isPending
   const risksFailed = risks.isError || riskLinks.isError
@@ -149,7 +160,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         title="Resultados e roadmap"
         subtitle="Ações para fechar as lacunas da avaliação NIS2 + RGPD, ordenadas por prioridade."
         actions={<div className="flex flex-wrap items-center gap-3 max-md:w-full">
-          {canExport && <Button className="max-md:flex-1" variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA')}>Exportar</Button>}
+          {canExport && <Button className="max-md:flex-1" variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA', consultant ? 'consultant' : 'client')}>Exportar</Button>}
           {can('create', 'roadmap') && <Button className="max-md:flex-1" variant="secondary" icon={<Plus className="size-4" aria-hidden />} onClick={() => setProposing(true)}>Propor ação</Button>}
           {can('view', 'history') && <Button variant="link" onClick={() => setShowHistory(true)}>Histórico</Button>}
           {!pending && !!actions.data && can('validate', 'roadmap') && !validated && <Button className="max-md:ml-auto" icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
@@ -161,7 +172,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       ) : (
         <div role="note" className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
           <Chip tone="signal">{status.data?.assessmentCompletedAt ? `Avaliação concluída · ${shortDate(status.data.assessmentCompletedAt)}` : 'Avaliação em curso'}</Chip>
-          <span className="text-[13px] text-ink-soft">O roadmap foi proposto pela IA a partir das lacunas. A prioridade final é decidida pela consultora.</span>
+          <span className="text-[13px] text-ink-soft">O roadmap foi proposto pela IA a partir das lacunas. A prioridade final é validada pela consultora.</span>
           <span className="ml-auto"><AIBadge /></span>
         </div>
       )}
@@ -190,7 +201,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
             <p className="text-[13px] text-ink-soft" aria-live="polite">
-              {actions.isPending ? 'A carregar a ordem do roadmap.' : byRisk ? (linked === 0 ? 'Ainda não há ações ligadas a riscos.' : raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Nenhuma ação mudou de posição por causa dos riscos registados.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
+              {actions.isPending || (byRisk && risksLoading) ? 'A carregar a ordem do roadmap.' : byRisk ? (risksFailed ? 'Não foi possível carregar os riscos ligados. A mostrar a ordem proposta pela IA.' : linked === 0 ? 'Ainda não há ações ligadas a riscos.' : raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Nenhuma ação mudou de posição por causa dos riscos registados.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
             </p>
           </div>
         </div>
@@ -219,7 +230,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
             </Link>
           ) : levelCard}
           <Link to={`${base}/riscos`} aria-label={risksReady ? `Ver os riscos por resolver. ${risksUnlinkedLabel}.` : 'Ver os riscos por resolver.'} className="group block h-full rounded-[14px]">
-            <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Por resolver" value={risksLoading ? '…' : risksFailed ? '—' : risksUnlinkedLabel} caption={risksLoading ? 'A carregar os riscos' : risksFailed ? 'Não foi possível carregar os riscos' : actionsOpenLabel}>
+            <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Por resolver" value={risksLoading ? '…' : risksFailed ? '—' : `${summary.openRisks} ${summary.openRisks === 1 ? 'risco' : 'riscos'}`} caption={risksLoading ? 'A carregar os riscos' : risksFailed ? 'Não foi possível carregar os riscos' : `${risksUnlinkedLabel} · ${actionsOpenLabel}`}>
               {risksReady && <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />}
             </StatCard>
           </Link>
@@ -294,7 +305,7 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
         </dl>
         {reason && (
           <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-[8px] bg-signal-soft px-2.5 py-1.5 text-[13px] font-semibold text-brand">
-            <ShieldAlert className="size-4" aria-hidden />{consultant ? reason : `Esta ação está ligada a um risco: ${topRisk?.riskLabel}`}
+            <ShieldAlert className="size-4" aria-hidden />{consultant ? reason : `Esta ação está ligada a um risco: ${topRisk?.plainLabel ?? topRisk?.riskLabel}`}
           </p>
         )}
 

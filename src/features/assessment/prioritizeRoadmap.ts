@@ -5,7 +5,10 @@ import { LEVEL_ORDER } from '../../config/riskMatrix'
 export interface RiskSignal {
   actionId: Id
   level: Level
+  /** Technical label for the consultant. */
   riskLabel: string
+  /** Plain-language label for the client. */
+  plainLabel: string
 }
 
 export interface PrioritizedAction<T extends { id: Id; priority: number }> {

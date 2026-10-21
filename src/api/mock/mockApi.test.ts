@@ -72,4 +72,14 @@ describe('mock API permissions', () => {
     who = MARTA
     await expect(api.assessment.proposeAction(ORG_ID, { description: '  ', legalObligation: '', requiredEvidence: '', dueDate: null })).rejects.toMatchObject({ status: 422 })
   })
+
+  it('refuses a past due date and validates the roadmap once', async () => {
+    who = MARTA
+    await expect(api.assessment.proposeAction(ORG_ID, { description: 'Rever acessos', legalObligation: '', requiredEvidence: '', dueDate: '2026-10-08' })).rejects.toMatchObject({ status: 422 })
+
+    const first = await api.assessment.validateRoadmap(ORG_ID)
+    const before = (await api.audit.list(ORG_ID)).length
+    expect(await api.assessment.validateRoadmap(ORG_ID)).toEqual(first)
+    expect((await api.audit.list(ORG_ID)).length).toBe(before)
+  })
 })

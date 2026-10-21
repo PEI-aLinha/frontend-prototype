@@ -1,10 +1,8 @@
-import type { AssessmentSummary, Id, IsoDate, RemediationAction, Risk, RiskActionLink } from '../../api/contracts'
+import type { AssessmentSummary, RemediationAction, Risk, RiskActionLink } from '../../api/contracts'
 import type { Level } from '../../config/riskMatrix'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 
 export interface PlanSection { id: string; name: string; answered: number; total: number }
-
-export interface PlanDeadline { actionId: Id; description: string; dueDate: IsoDate }
 
 export interface PlanRisk { risk: Risk; level: Level }
 
@@ -26,15 +24,13 @@ export interface PlanSummary {
   actionsOpen: number
   /** status === 'concluida' */
   actionsDone: number
-  /** Risks with no RiskActionLink row. */
+  /** Open risks with no RiskActionLink row. */
   risksUnlinked: number
-  /** Open actions with a dueDate, soonest first. */
-  deadlines: PlanDeadline[]
 }
 
 /**
- * What the manager needs to read the plan (RF10/US15: level, target and gaps; RF27/US25: coverage,
- * gaps and next deadlines). Pure and deterministic: same inputs, same summary.
+ * What the manager needs to read the plan (RF10/US15: level, target and gaps; RF27/US25: coverage
+ * and gaps). Pure and deterministic: same inputs, same summary.
  */
 export function planSummary(input: {
   actions: readonly RemediationAction[]
@@ -45,13 +41,9 @@ export function planSummary(input: {
   const { actions, assessment, risks, links } = input
   const actionsDone = actions.filter((a) => a.status === 'concluida').length
   const linked = new Set(links.map((l) => l.riskId))
-  const deadlines = actions
-    .flatMap((a) => (a.status !== 'concluida' && a.dueDate ? [{ actionId: a.id, description: a.description, dueDate: a.dueDate }] : []))
-    // ISO dates compare as text.
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
   const sections = (assessment?.sections ?? []).map(({ id, name, answered, total }) => ({ id, name, answered, total }))
-  const topRisks = risks
-    .filter((r) => r.status !== 'arquivado')
+  const openRisks = risks.filter((r) => r.status !== 'arquivado')
+  const topRisks = openRisks
     // Worst first. Level alone is too coarse, so the score behind it decides.
     .map((risk) => ({ risk, level: computeRiskLevel(risk.probability, risk.impact).level }))
     .sort((a, b) => computeRiskLevel(b.risk.probability, b.risk.impact).score - computeRiskLevel(a.risk.probability, a.risk.impact).score)
@@ -64,7 +56,6 @@ export function planSummary(input: {
     openRisks: topRisks.length,
     actionsOpen: actions.length - actionsDone,
     actionsDone,
-    risksUnlinked: risks.filter((r) => !linked.has(r.id)).length,
-    deadlines,
+    risksUnlinked: openRisks.filter((r) => !linked.has(r.id)).length,
   }
 }

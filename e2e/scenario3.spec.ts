@@ -53,6 +53,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
 
   const gaps = page.getByRole('link', { name: /1 risco sem ação/ })
   await expect(gaps).toHaveAttribute('href', `${ORG}/riscos`)
+  await expect(gaps).toContainText('6 riscos')
   await expect(gaps).toContainText('6 ações por resolver, 1 concluída')
 
   const evidence = page.getByRole('link', { name: /1 de 7 recolhidas/ })
@@ -95,6 +96,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
     // The map is the overview above the list: one circle per action, in the order on screen.
     const map = page.getByRole('list', { name: 'Progresso do plano' })
     const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' })
+    await expect(page.getByText('A linha marca o que está concluído até à primeira ação por concluir.')).toBeVisible()
     await expect(map.locator('li')).toHaveCount(7)
     await expect(map.getByRole('button').first()).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
     expect((await map.boundingBox())!.y).toBeLessThan((await rows.boundingBox())!.y)
@@ -130,7 +132,20 @@ test('Scenario 3 — Rui can read the plan history and export it, but not change
   await expect(page.getByRole('button', { name: 'Propor ação', exact: true })).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Histórico' }).click()
+  await expect(page).toHaveURL(/historico=1/)
   await expect(page.getByRole('dialog').getByText('validou o roadmap')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  const [popup] = await Promise.all([
+    page.waitForEvent('popup'),
+    page.getByRole('button', { name: 'Exportar' }).click(),
+  ])
+  await expect.poll(() => popup.evaluate(() => document.body?.innerText ?? '')).toContain('Um vírus pode bloquear')
+  const text = await popup.evaluate(() => document.body?.innerText ?? '')
+  expect(text).not.toContain('Obrigação legal')
+  expect(text).not.toContain('Origem')
+  await popup.close()
 })
 
 test('Scenario 3 — the plan follows the order switch', async ({ page }) => {
@@ -145,8 +160,13 @@ test('Scenario 3 — the plan follows the order switch', async ({ page }) => {
 
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
   await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
+  await expect(page).toHaveURL(/ordem=base/)
   await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
   if (wide) await expect(mapFirst).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber\. Por iniciar\.$/)
+
+  await page.reload()
+  await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
+  await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
 })
 
 test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {
