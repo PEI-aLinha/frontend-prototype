@@ -25,7 +25,8 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
   return {
     getAssessment: (org) => simulate(() => {
       const s = getState()
-      if (s.users.find((u) => u.id === getActor().userId)?.role === 'analista') throw new ApiError('Não tem permissão para ver a avaliação.', 403)
+      const me = s.users.find((u) => u.id === getActor().userId)
+      if (me?.role === 'analista') throw new ApiError('Não tem permissão para ver a avaliação.', 403)
       const roadmap = s.roadmap[org]
       const done = !!roadmap?.assessmentCompletedAt
       const company = s.organizations.find((o) => o.id === org)
@@ -37,7 +38,10 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
           delegated: task ? [{ taskId: task.id, assigneeId: task.assigneeId, status: task.status }] : [],
         }
       })
-      return { status: roadmap?.validated ? 'validada' : done ? 'submetida' : 'em_curso', sections, maturity: roadmap?.validated ? 2 : null, targetMaturity: targetMaturity(company?.frameworks ?? []) }
+      // shortcut: the computed level is still the fixed 2 stand-in; upgrade when the scoring model lands.
+      // The consultant sees it once the answers are complete; the client only after validation.
+      const maturity = roadmap?.validated || (done && me?.role === 'consultor') ? 2 : null
+      return { status: roadmap?.validated ? 'validada' : done ? 'submetida' : 'em_curso', sections, maturity, targetMaturity: targetMaturity(company?.frameworks ?? []) }
     }),
 
     answerQuestion: (org, taskId, answer) => simulate(() => {

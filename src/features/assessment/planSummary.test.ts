@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AssessmentSection, AssessmentSummary, RemediationAction, Risk, RiskActionLink } from '../../api/contracts'
-import { planSummary } from './planSummary'
+import { planGaps, planSummary } from './planSummary'
+import { prioritizeRoadmap } from './prioritizeRoadmap'
 
 const action = (id: string, status: RemediationAction['status'], dueDate: string | null = null): RemediationAction =>
   ({ id, organizationId: 'org', findingId: 'fnd', description: `Ação ${id}`, priority: 1, dueDate, assignedTo: 'rui', requiredEvidence: 'Comprovativo', status, aiOutputId: null, legalObligation: 'art. 21.º', findingTitle: 'Lacuna', controlCode: 'CA.03', proposedBy: null })
@@ -50,6 +51,25 @@ describe('planSummary', () => {
     expect(result.risksUnlinked).toBe(0)
     expect(result.openRisks).toBe(3)
     expect(planSummary({ actions: [], assessment: undefined, risks: [risk('rsk-a'), risk('rsk-b')], links: [link('lnk-1', 'rsk-a', 'act-mfa')] }).risksUnlinked).toBe(1)
+  })
+
+  it('does not count accepted or treated risks as needing an action', () => {
+    const result = planSummary({
+      actions: [], assessment: undefined,
+      risks: [risk('rsk-a'), risk('rsk-b', { status: 'aceite' }), risk('rsk-c', { status: 'tratado' })],
+      links: [],
+    })
+    expect(result.openRisks).toBe(3)
+    expect(result.risksUnlinked).toBe(1)
+  })
+
+  it('lists one gap per finding, skipping the consultant proposals', () => {
+    const a = action('a', 'por_iniciar')
+    const other = { ...action('b', 'por_iniciar'), findingId: 'fnd-b' }
+    const sameFinding = { ...action('c', 'por_iniciar'), findingId: a.findingId }
+    const proposed = { ...action('d', 'por_iniciar'), findingId: 'fnd-d', proposedBy: 'usr-marta' }
+    const gaps = planGaps(prioritizeRoadmap([a, other, sameFinding, proposed], []))
+    expect(gaps.map((g) => g.actionId)).toEqual(['a', 'b'])
   })
 
   it('previews the weakest sections first and leaves the full order untouched', () => {

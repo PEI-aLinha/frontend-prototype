@@ -31,6 +31,25 @@ describe('assessment summary (RF10)', () => {
     expect(summary.targetMaturity).toBe(3)
   })
 
+  it('shows the calculated level to the consultant once the assessment is complete', async () => {
+    resetDemo('c2')
+    who = MARTA
+    const summary = await api.assessment.getAssessment(ORG_ID)
+    expect(summary.status).toBe('submetida')
+    expect(summary.maturity).toBe(2)
+  })
+
+  it('keeps the calculated level hidden from the client until validation', async () => {
+    resetDemo('c2')
+    expect((await api.assessment.getAssessment(ORG_ID)).maturity).toBeNull()
+  })
+
+  it('does not invent a level while the assessment is in course', async () => {
+    resetDemo('c1')
+    who = MARTA
+    expect((await api.assessment.getAssessment(ORG_ID)).maturity).toBeNull()
+  })
+
   it('reports both levels once the consultant validates', async () => {
     resetDemo('c3')
     const summary = await api.assessment.getAssessment(ORG_ID)

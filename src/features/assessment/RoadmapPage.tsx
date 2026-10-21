@@ -12,7 +12,7 @@ import {
 } from '../../ui'
 import { evidenceState } from './evidenceState'
 import { printResults } from './exportResults'
-import { PREVIEW_ROWS, planSummary } from './planSummary'
+import { planGaps, PREVIEW_ROWS, planSummary } from './planSummary'
 import { ProposeActionModal } from './ProposeActionModal'
 import { RoadmapMap } from './RoadmapMap'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
@@ -48,7 +48,7 @@ function MiniList({ label, rows, more }: { label: string; rows: MiniRow[]; more?
 }
 
 /** Assessment and roadmap (minimal Assessment plugin): shows the effect of risks on priority. */
-export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
+export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; frameworks: string[] }) {
   const org = useTenant()
   const can = useCan()
   const toast = useToast()
@@ -115,10 +115,15 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
     (acc, s) => ({ sectionTotal: acc.sectionTotal + s.total, answered: acc.answered + s.answered }),
     { sectionTotal: 0, answered: 0 },
   )
+  const allAnswered = sectionTotal > 0 && answered === sectionTotal
+  const gaps = planGaps(ranked)
+  const gapPreview = gaps.slice(0, PREVIEW_ROWS).map((g) => ({ key: g.actionId, label: g.findingTitle, meta: consultant ? g.controlCode : undefined }))
   // Each action carries at most one useful verdict, so counting the rows is enough.
   const evidenceRows = ranked.map((r) => evidenceState(evidenceByAction.get(r.action.id) ?? NO_EVIDENCE))
   const evidenceCount = evidenceRows.filter(Boolean).length
   const provenCount = evidenceRows.filter((e) => e?.tone === 'brand').length
+  const failedCount = evidenceRows.filter((e) => e?.tone === 'risk').length
+  const missingCount = ranked.length - evidenceCount
   const canExport = !pending && !!users.data && !!evidence.data && !!risks.data && !!riskLinks.data && !!assessment.data && ranked.length > 0
   // A failed side query gets a dash, not a false zero, and a pending one gets a placeholder.
   const risksLoading = actions.isPending || risks.isPending || riskLinks.isPending
@@ -127,16 +132,20 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const evidenceLoading = actions.isPending || evidence.isPending
   const evidenceFailed = evidence.isError
   const evidenceReady = !evidenceLoading && !evidenceFailed
-  const risksUnlinkedLabel = `${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`
+  const risksUnlinkedLabel = summary.risksUnlinked === 0
+    ? 'Nenhum risco sem ação'
+    : `${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`
   const actionsOpenLabel = `${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`
-  const evidenceLabel = `${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`
-  const provenLabel = `${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}, ${evidenceCount - provenCount} por resolver`
+  const evidenceLabel = `${evidenceCount} de ${ranked.length} recolhidas`
+  const provenLabel = `${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}, ${failedCount} ${failedCount === 1 ? 'não comprovada' : 'não comprovadas'}, ${missingCount} sem prova recolhida`
   const cardHover = 'transition-[border-color,box-shadow] group-hover:border-line group-hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]'
   const levelCard = assessment.isError
     ? <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value="—" caption="Não foi possível carregar a avaliação" />
     : assessment.data
       ? <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`}>
-        <MiniList label="Secções com menos respostas" rows={summary.topSections.map((s) => ({ key: s.id, label: s.name, meta: `${s.answered}/${s.total}` }))} more={Math.max(0, summary.sections.length - PREVIEW_ROWS)} />
+        {allAnswered
+          ? <MiniList label="Lacunas identificadas" rows={gapPreview} more={Math.max(0, gaps.length - PREVIEW_ROWS)} />
+          : <MiniList label="Secções com menos respostas" rows={summary.topSections.map((s) => ({ key: s.id, label: s.name, meta: `${s.answered}/${s.total}` }))} more={Math.max(0, summary.sections.length - PREVIEW_ROWS)} />}
       </StatCard>
       : <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value="—" caption="A carregar a avaliação" />
 
@@ -158,9 +167,9 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       <PageHeader
         eyebrow={org.name}
         title="Resultados e roadmap"
-        subtitle="Ações para fechar as lacunas da avaliação NIS2 + RGPD, ordenadas por prioridade."
+        subtitle={`Ações para fechar as lacunas da avaliação, ordenadas por prioridade.${frameworks.length ? ` Âmbito: ${frameworks.join(' · ')}.` : ''}`}
         actions={<div className="flex flex-wrap items-center gap-3 max-md:w-full">
-          {canExport && <Button className="max-md:flex-1" variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA', consultant ? 'consultant' : 'client')}>Exportar</Button>}
+          {canExport && <Button className="max-md:flex-1" variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA', consultant ? 'consultant' : 'client', { frameworks, validated: !!validated, validator, validatedAt: status.data?.validatedAt ?? undefined })}>Exportar</Button>}
           {can('create', 'roadmap') && <Button className="max-md:flex-1" variant="secondary" icon={<Plus className="size-4" aria-hidden />} onClick={() => setProposing(true)}>Propor ação</Button>}
           {can('view', 'history') && <Button variant="link" onClick={() => setShowHistory(true)}>Histórico</Button>}
           {!pending && !!actions.data && can('validate', 'roadmap') && !validated && <Button className="max-md:ml-auto" icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
@@ -229,8 +238,8 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
               {levelCard}
             </Link>
           ) : levelCard}
-          <Link to={`${base}/riscos`} aria-label={risksReady ? `Ver os riscos por resolver. ${risksUnlinkedLabel}.` : 'Ver os riscos por resolver.'} className="group block h-full rounded-[14px]">
-            <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Por resolver" value={risksLoading ? '…' : risksFailed ? '—' : `${summary.openRisks} ${summary.openRisks === 1 ? 'risco' : 'riscos'}`} caption={risksLoading ? 'A carregar os riscos' : risksFailed ? 'Não foi possível carregar os riscos' : `${risksUnlinkedLabel} · ${actionsOpenLabel}`}>
+          <Link to={`${base}/riscos`} aria-label={risksReady ? `Ver os riscos em aberto. ${risksUnlinkedLabel}.` : 'Ver os riscos em aberto.'} className="group block h-full rounded-[14px]">
+            <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Riscos em aberto" value={risksLoading ? '…' : risksFailed ? '—' : `${summary.openRisks} ${summary.openRisks === 1 ? 'risco' : 'riscos'}`} caption={risksLoading ? 'A carregar os riscos' : risksFailed ? 'Não foi possível carregar os riscos' : `${risksUnlinkedLabel} · ${actionsOpenLabel}`}>
               {risksReady && <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />}
             </StatCard>
           </Link>

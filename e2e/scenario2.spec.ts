@@ -86,7 +86,7 @@ test('Scenario 2 — Marta gets the same numbers, and links only to the pages sh
   await expect(page.getByText('2 → 3 de 5')).toBeVisible()
   await expect(page.getByRole('link', { name: /2 → 3 de 5/ })).toHaveCount(0)
 
-  await expect(page.getByRole('link', { name: /1 risco sem ação/ })).toHaveAttribute('href', `${CLIENT}/riscos`)
+  await expect(page.getByRole('link', { name: /Nenhum risco sem ação/ })).toHaveAttribute('href', `${CLIENT}/riscos`)
   await expect(page.getByRole('link', { name: /1 de 7 recolhidas/ })).toHaveAttribute('href', `${CLIENT}/integracoes`)
 
   // The consultant reads the threat, where the client reads the consequence.
@@ -129,16 +129,32 @@ test('Scenario 2 — the export follows the order on screen', async ({ page }) =
   let win = await opened
   await win.waitForLoadState('domcontentloaded')
   await expect(win).toHaveTitle(/^Resultados e roadmap — /)
-  await expect(win.locator('h2')).toHaveText(['Resumo', 'Plano de ação · priorizado pelos riscos', 'Registo de riscos'])
+  await expect(win.locator('h2')).toHaveText(['Documento', 'Resumo', 'Lacunas identificadas', 'Plano de ação · priorizado pelos riscos', 'Registo de riscos'])
+  await expect(win.locator('body')).toContainText('Validado por Marta Ferreira')
   await expect(win.locator('th[scope="col"]').first()).toBeVisible()
   await win.close()
 
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
+  await expect(page).toHaveURL(/ordem=base/)
   const reopened = page.waitForEvent('popup')
   await page.getByRole('button', { name: 'Exportar' }).click()
   win = await reopened
   await win.waitForLoadState('domcontentloaded')
-  await expect(win.locator('h2').nth(1)).toHaveText('Plano de ação · ordem proposta pela IA')
+  await expect(win.locator('h2').nth(3)).toHaveText('Plano de ação · ordem proposta pela IA')
+})
+
+test('Scenario 2 — the draft export says it is not validated yet', async ({ page }) => {
+  await start(page, `${CLIENT}/roadmap`, 'marta', 'c2')
+  await page.goto(`${CLIENT}/roadmap?as=marta`)
+
+  const opened = page.waitForEvent('popup')
+  await page.getByRole('button', { name: 'Exportar' }).click()
+  const win = await opened
+  await win.waitForLoadState('domcontentloaded')
+  await expect.poll(() => win.evaluate(() => document.body?.innerText ?? '')).toContain('Rascunho — por validar')
+  await expect(win.locator('h2').nth(0)).toHaveText('Documento')
+  await expect(win.locator('h2').nth(2)).toHaveText('Lacunas identificadas')
+  await win.close()
 })
 
 test('Scenario 2 — accepting a risk requires a justification and the history records the change', async ({ page }) => {

@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { CollectedEvidence, RemediationAction, Risk, User } from '../../api/contracts'
-import { planRows, riskRows } from './exportResults'
+import { printDocument } from '../../ui/printDocument'
+import { gapRows, planRows, printResults, riskRows } from './exportResults'
+import { planSummary } from './planSummary'
 import { prioritizeRoadmap } from './prioritizeRoadmap'
+
+vi.mock('../../ui/printDocument', () => ({ printDocument: vi.fn() }))
 
 const MARTA = 'usr-marta'
 const RUI = 'usr-rui'
@@ -52,6 +56,31 @@ describe('planRows', () => {
 
   it('says no when the action has no date', () => {
     expect(planRows({ ranked: prioritizeRoadmap([action('a', { dueDate: null })], []), users, evidence: new Map(), risks: [] }, 'consultant')[0][3]).toBe('Sem prazo')
+  })
+})
+
+describe('gapRows', () => {
+  it('writes the gap and the action, with the control and obligation for the consultant', () => {
+    const ranked = prioritizeRoadmap([action('a')], [])
+    expect(gapRows(ranked, 'consultant')).toEqual([['Lacuna', 'CA.03', 'Ação a', 'NIS2, art. 21.º']])
+    expect(gapRows(ranked, 'client')).toEqual([['Lacuna', 'Ação a']])
+  })
+
+  it('leaves out the actions the consultant proposed', () => {
+    expect(gapRows(prioritizeRoadmap([action('a', { proposedBy: MARTA })], []), 'client')).toEqual([])
+  })
+})
+
+describe('printResults', () => {
+  const summary = planSummary({ actions: [], assessment: undefined, risks: [], links: [] })
+  const ctx = { ranked: [], users: [], evidence: new Map<string, CollectedEvidence[]>(), risks: [] }
+  const estado = () => (vi.mocked(printDocument).mock.lastCall?.[0].sections[0].rows[0] ?? [])[1]
+
+  it('names the validator, and the role when the name is unknown', () => {
+    printResults('Org', summary, ctx, 'ordem', 'client', { frameworks: [], validated: true, validator: 'Marta Ferreira' })
+    expect(estado()).toBe('Validado por Marta Ferreira')
+    printResults('Org', summary, ctx, 'ordem', 'client', { frameworks: [], validated: true })
+    expect(estado()).toBe('Validado pela consultora')
   })
 })
 

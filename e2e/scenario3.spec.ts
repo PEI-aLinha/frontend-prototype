@@ -51,18 +51,18 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(level).toHaveAttribute('href', `${ORG}/avaliacao`)
   await expect(level).toContainText('Definido · 41 de 41 perguntas respondidas')
 
-  const gaps = page.getByRole('link', { name: /1 risco sem ação/ })
+  const gaps = page.getByRole('link', { name: /Nenhum risco sem ação/ })
   await expect(gaps).toHaveAttribute('href', `${ORG}/riscos`)
   await expect(gaps).toContainText('6 riscos')
   await expect(gaps).toContainText('6 ações por resolver, 1 concluída')
 
   const evidence = page.getByRole('link', { name: /1 de 7 recolhidas/ })
   await expect(evidence).toHaveAttribute('href', `${ORG}/integracoes`)
-  await expect(evidence).toContainText('1 comprovada, 0 por resolver')
+  await expect(evidence).toContainText('1 comprovada, 0 não comprovadas, 6 sem prova recolhida')
 
   // Each card previews three rows and says how many it left out.
-  await expect(level.getByRole('list', { name: 'Secções com menos respostas' }).locator('li')).toHaveCount(3)
-  await expect(level.getByText('+3')).toBeVisible()
+  await expect(level.getByRole('list', { name: 'Lacunas identificadas' }).locator('li')).toHaveCount(3)
+  await expect(level.getByText('+4')).toBeVisible()
   await expect(gaps.getByRole('list', { name: 'Riscos mais graves' }).locator('li')).toHaveCount(3)
   await expect(gaps.getByText('+3')).toBeVisible()
   await expect(evidence.getByRole('list', { name: 'Ações com a prova por resolver' }).locator('li')).toHaveCount(3)
@@ -76,7 +76,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   // The links wrap their cards, and each card's label is a heading under "Resumo do plano".
   const cardBoxes = await Promise.all([
     level.getByRole('heading', { name: 'Nível de maturidade' }).boundingBox(),
-    gaps.getByRole('heading', { name: 'Por resolver' }).boundingBox(),
+    gaps.getByRole('heading', { name: 'Riscos em aberto' }).boundingBox(),
     evidence.getByRole('heading', { name: 'Evidências' }).boundingBox(),
   ])
   expect(cardBoxes.every(Boolean)).toBeTruthy()

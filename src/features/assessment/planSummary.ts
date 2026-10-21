@@ -1,10 +1,20 @@
-import type { AssessmentSummary, RemediationAction, Risk, RiskActionLink } from '../../api/contracts'
+import type { AssessmentSummary, Id, RemediationAction, Risk, RiskActionLink } from '../../api/contracts'
 import type { Level } from '../../config/riskMatrix'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
+import type { PrioritizedAction } from './prioritizeRoadmap'
 
 export interface PlanSection { id: string; name: string; answered: number; total: number }
 
 export interface PlanRisk { risk: Risk; level: Level }
+
+export interface PlanGap {
+  actionId: Id
+  findingId: Id
+  findingTitle: string
+  controlCode: string
+  description: string
+  legalObligation: string
+}
 
 /** How many rows each card preview shows before it says how many it left out. */
 export const PREVIEW_ROWS = 3
@@ -24,7 +34,7 @@ export interface PlanSummary {
   actionsOpen: number
   /** status === 'concluida' */
   actionsDone: number
-  /** Open risks with no RiskActionLink row. */
+  /** Risks that still need an action (por tratar/em tratamento) and have no RiskActionLink row. */
   risksUnlinked: number
 }
 
@@ -43,6 +53,7 @@ export function planSummary(input: {
   const linked = new Set(links.map((l) => l.riskId))
   const sections = (assessment?.sections ?? []).map(({ id, name, answered, total }) => ({ id, name, answered, total }))
   const openRisks = risks.filter((r) => r.status !== 'arquivado')
+  const needsAction = openRisks.filter((r) => r.status === 'por_tratar' || r.status === 'em_tratamento')
   const topRisks = openRisks
     // Worst first. Level alone is too coarse, so the score behind it decides.
     .map((risk) => ({ risk, level: computeRiskLevel(risk.probability, risk.impact).level }))
@@ -56,6 +67,28 @@ export function planSummary(input: {
     openRisks: topRisks.length,
     actionsOpen: actions.length - actionsDone,
     actionsDone,
-    risksUnlinked: openRisks.filter((r) => !linked.has(r.id)).length,
+    risksUnlinked: needsAction.filter((r) => !linked.has(r.id)).length,
   }
+}
+
+/**
+ * The gaps behind the plan, one per finding. The consultant's own proposals are not assessment gaps.
+ * shortcut: gaps are derived from roadmap actions, not from the assessment's requirement→evidence model; upgrade with US39.
+ */
+export function planGaps(ranked: readonly PrioritizedAction<RemediationAction>[]): PlanGap[] {
+  const seen = new Set<Id>()
+  const gaps: PlanGap[] = []
+  for (const { action } of ranked) {
+    if (action.proposedBy !== null || seen.has(action.findingId)) continue
+    seen.add(action.findingId)
+    gaps.push({
+      actionId: action.id,
+      findingId: action.findingId,
+      findingTitle: action.findingTitle,
+      controlCode: action.controlCode,
+      description: action.description,
+      legalObligation: action.legalObligation,
+    })
+  }
+  return gaps
 }

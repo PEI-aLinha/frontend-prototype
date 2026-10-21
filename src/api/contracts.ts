@@ -380,7 +380,7 @@ export interface AssessmentSection {
 export interface AssessmentSummary {
   status: 'em_curso' | 'submetida' | 'validada'
   sections: AssessmentSection[]
-  /** Maturity level (1–5), only after validation. */
+  /** Maturity level (1–5): visible to the consultant once the assessment is complete, to the client only after validation. */
   maturity: number | null
   /** Level the applicable law expects (RF10). It follows the frameworks, so it is known before validation. */
   targetMaturity: number

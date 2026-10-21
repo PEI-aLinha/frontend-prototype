@@ -5,12 +5,14 @@ import { useSession } from '../core/session'
 import { useTenant } from '../core/tenant'
 import { RoadmapPage } from '../features/assessment/public'
 import { useRiskSignals } from '../features/assets/public'
+import { applicableFrameworks } from '../features/organization/public'
 import { EmptyState, ErrorState, PageHeader, SkeletonRows } from '../ui'
 
 /** Composition: the roadmap (Assessment) receives the risk signals (Risks and Assets) only through the contract. */
 export function ConsultantRoadmap() {
   const signals = useRiskSignals()
   const org = useTenant()
+  const frameworks = applicableFrameworks(org) ?? org.frameworks
   const { persona } = useSession()
   const status = useRoadmapStatus(org.id)
   if (status.isPending) {
@@ -39,5 +41,5 @@ export function ConsultantRoadmap() {
       </>
     )
   }
-  return <RoadmapPage signals={signals} />
+  return <RoadmapPage signals={signals} frameworks={frameworks} />
 }
