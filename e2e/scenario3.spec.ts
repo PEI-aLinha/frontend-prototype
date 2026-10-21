@@ -96,7 +96,6 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
     // The map is the overview above the list: one circle per action, in the order on screen.
     const map = page.getByRole('list', { name: 'Progresso do plano' })
     const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' })
-    await expect(page.getByText('A linha marca o que está concluído até à primeira ação por concluir.')).toBeVisible()
     await expect(map.locator('li')).toHaveCount(7)
     await expect(map.getByRole('button').first()).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
     expect((await map.boundingBox())!.y).toBeLessThan((await rows.boundingBox())!.y)

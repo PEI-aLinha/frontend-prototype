@@ -49,8 +49,7 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
 
   return (
     <div className="hidden rounded-[16px] border border-line-soft bg-paper px-5 py-5 md:block">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[11px] text-ink-soft">
-        <p>A linha marca o que está concluído até à primeira ação por concluir.</p>
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[11px] text-ink-soft">
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
           <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-dashed border-brand" />Em curso</span>
