@@ -37,7 +37,12 @@ function MiniList({ label, rows, more }: { label: string; rows: MiniRow[]; more?
           </li>
         ))}
       </ul>
-      {more ? <p className="border-t border-line-soft pt-1.5 text-[12px] font-semibold text-muted">+{more}</p> : null}
+      {more ? (
+        <p className="border-t border-line-soft pt-1.5 text-[12px] font-semibold text-muted">
+          <span aria-hidden>+{more}</span>
+          <span className="sr-only">mais {more} {more === 1 ? 'item' : 'itens'}</span>
+        </p>
+      ) : null}
     </>
   )
 }
@@ -77,13 +82,15 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
     return byAction
   }, [evidence.data])
 
-  if (actions.isError || status.isError) {
-    return <ErrorState error={actions.error ?? status.error} onRetry={() => { actions.refetch(); status.refetch() }} />
+  if (actions.isError || status.isError || users.isError) {
+    return <ErrorState error={actions.error ?? status.error ?? users.error} onRetry={() => { actions.refetch(); status.refetch(); users.refetch() }} />
   }
   // Only the risk-prioritized order moves anything; the base order is the AI's proposal as-is.
   const byRisk = view === 'riscos'
   const ranked = actions.data ? prioritizeRoadmap(actions.data, byRisk ? signals : []) : []
   const raised = ranked.filter((r) => r.reason).length
+  // Links can exist without moving anything, so the count the message needs is not the count of moves.
+  const linked = ranked.filter((r) => r.topRisk).length
   // An action only falls when a risk-linked one passes it, so every fall has a cause worth naming.
   const dropped = byRisk ? ranked.filter((r) => r.rank > r.baseRank).length : 0
   const validated = status.data?.validated
@@ -102,11 +109,26 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const evidenceCount = evidenceRows.filter(Boolean).length
   const provenCount = evidenceRows.filter((e) => e?.tone === 'brand').length
   const soonest = summary.deadlines[0]
-  const levelCard = assessment.data
-    ? <StatCard className="h-full" label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`}>
-      <MiniList label="Secções com menos respostas" rows={summary.topSections.map((s) => ({ key: s.id, label: s.name, meta: `${s.answered}/${s.total}` }))} more={Math.max(0, summary.sections.length - PREVIEW_ROWS)} />
-    </StatCard>
-    : <StatCard className="h-full" label="Nível de maturidade" value="—" caption="A carregar a avaliação" />
+  const canExport = !pending && !!users.data && !!evidence.data && !!risks.data && ranked.length > 0
+  // A failed side query gets a dash, not a false zero, and a pending one gets a placeholder.
+  const risksLoading = actions.isPending || risks.isPending || riskLinks.isPending
+  const risksFailed = risks.isError || riskLinks.isError
+  const risksReady = !risksLoading && !risksFailed
+  const evidenceLoading = actions.isPending || evidence.isPending
+  const evidenceFailed = evidence.isError
+  const evidenceReady = !evidenceLoading && !evidenceFailed
+  const risksUnlinkedLabel = `${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`
+  const actionsOpenLabel = `${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`
+  const evidenceLabel = `${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`
+  const provenLabel = `${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}, ${evidenceCount - provenCount} por resolver`
+  const cardHover = 'transition-[border-color,box-shadow] group-hover:border-line group-hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]'
+  const levelCard = assessment.isError
+    ? <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value="—" caption="Não foi possível carregar a avaliação" />
+    : assessment.data
+      ? <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`}>
+        <MiniList label="Secções com menos respostas" rows={summary.topSections.map((s) => ({ key: s.id, label: s.name, meta: `${s.answered}/${s.total}` }))} more={Math.max(0, summary.sections.length - PREVIEW_ROWS)} />
+      </StatCard>
+      : <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value="—" caption="A carregar a avaliação" />
 
   const riskRows = summary.topRisks.map(({ risk, level }) => ({
     key: risk.id,
@@ -127,19 +149,19 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         eyebrow={org.name}
         title="Resultados e roadmap"
         subtitle="Ações para fechar as lacunas da avaliação NIS2 + RGPD, ordenadas por prioridade."
-        actions={<>
-          {!pending && ranked.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA')}>Exportar</Button>}
-          {can('create', 'roadmap') && <Button variant="secondary" icon={<Plus className="size-4" aria-hidden />} onClick={() => setProposing(true)}>Propor ação</Button>}
+        actions={<div className="flex flex-wrap items-center gap-3 max-md:w-full">
+          {canExport && <Button className="max-md:flex-1" variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA')}>Exportar</Button>}
+          {can('create', 'roadmap') && <Button className="max-md:flex-1" variant="secondary" icon={<Plus className="size-4" aria-hidden />} onClick={() => setProposing(true)}>Propor ação</Button>}
           {can('view', 'history') && <Button variant="link" onClick={() => setShowHistory(true)}>Histórico</Button>}
-          {!pending && can('validate', 'roadmap') && !validated && <Button icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
-        </>}
+          {!pending && !!actions.data && can('validate', 'roadmap') && !validated && <Button className="max-md:ml-auto" icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
+        </div>}
       />
 
       {pending ? null : validated ? (
         <Note>Roadmap validado {validator ? `por ${validator}` : 'pela consultora'}{status.data?.validatedAt ? ` a ${dateTime(status.data.validatedAt)}` : ''}. {consultant ? 'O cliente vê as ações e os riscos em só leitura.' : 'Pode ver as ações e os riscos, mas não os pode alterar.'}</Note>
       ) : (
         <div role="note" className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
-          <Chip tone="signal">Avaliação concluída · 14 out.</Chip>
+          <Chip tone="signal">{status.data?.assessmentCompletedAt ? `Avaliação concluída · ${shortDate(status.data.assessmentCompletedAt)}` : 'Avaliação em curso'}</Chip>
           <span className="text-[13px] text-ink-soft">O roadmap foi proposto pela IA a partir das lacunas. A prioridade final é decidida pela consultora.</span>
           <span className="ml-auto"><AIBadge /></span>
         </div>
@@ -166,13 +188,13 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       <section aria-labelledby="plan-titulo" className="flex min-w-0 flex-col gap-4">
         <div className="flex flex-col gap-3">
           <div className="flex min-w-0 flex-col gap-1">
-            <h2 id="plan-titulo" className="text-[19px] font-extrabold">{validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
+            <h2 id="plan-titulo" className="text-[19px] font-extrabold">{pending ? 'Roadmap' : validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
             {soonest && <p className="text-[13px] text-ink-soft">Próximo prazo: {shortDate(soonest.dueDate)} · {soonest.description}.</p>}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
             <p className="text-[13px] text-ink-soft" aria-live="polite">
-              {byRisk ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
+              {actions.isPending ? 'A carregar a ordem do roadmap.' : byRisk ? (linked === 0 ? 'Ainda não há ações ligadas a riscos.' : raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'}${dropped ? `, ${dropped} ${dropped === 1 ? 'desceu' : 'desceram'}` : ''} por causa dos riscos registados.` : 'Nenhuma ação mudou de posição por causa dos riscos registados.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
             </p>
           </div>
         </div>
@@ -196,18 +218,18 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
         <div className="grid gap-4 md:grid-cols-3">
           {/* Only the client has an assessment route under /org; the consultant's prefix has none, so hers stays a card. */}
           {!consultant ? (
-            <Link to={`${base}/avaliacao`} aria-label={`Ver a avaliação. Nível de maturidade ${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5.`} className="block h-full rounded-[14px]">
+            <Link to={`${base}/avaliacao`} aria-label={assessment.data ? `Ver a avaliação. Nível de maturidade ${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5.` : 'Ver a avaliação.'} className="group block h-full rounded-[14px]">
               {levelCard}
             </Link>
           ) : levelCard}
-          <Link to={`${base}/riscos`} aria-label={`Ver os riscos por resolver. ${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}.`} className="block h-full rounded-[14px]">
-            <StatCard className="h-full" label="Por resolver" value={`${summary.risksUnlinked} ${summary.risksUnlinked === 1 ? 'risco sem ação' : 'riscos sem ação'}`} caption={`${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`}>
-              <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />
+          <Link to={`${base}/riscos`} aria-label={risksReady ? `Ver os riscos por resolver. ${risksUnlinkedLabel}.` : 'Ver os riscos por resolver.'} className="group block h-full rounded-[14px]">
+            <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Por resolver" value={risksLoading ? '…' : risksFailed ? '—' : risksUnlinkedLabel} caption={risksLoading ? 'A carregar os riscos' : risksFailed ? 'Não foi possível carregar os riscos' : actionsOpenLabel}>
+              {risksReady && <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />}
             </StatCard>
           </Link>
-          <Link to={`${base}/integracoes`} aria-label={`Ver as evidências. ${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas.`} className="block h-full rounded-[14px]">
-            <StatCard className="h-full" label="Evidências" value={`${evidenceCount} de ${summary.actionsOpen + summary.actionsDone} recolhidas`} caption={`${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}, ${evidenceCount - provenCount} por resolver`}>
-              <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />
+          <Link to={`${base}/integracoes`} aria-label={evidenceReady ? `Ver as evidências. ${evidenceLabel}.` : 'Ver as evidências.'} className="group block h-full rounded-[14px]">
+            <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Evidências" value={evidenceLoading ? '…' : evidenceFailed ? '—' : evidenceLabel} caption={evidenceLoading ? 'A carregar as evidências' : evidenceFailed ? 'Não foi possível carregar as evidências' : provenLabel}>
+              {evidenceReady && <MiniList label="Ações com a prova por resolver" rows={proofRows} more={Math.max(0, unproven.length - PREVIEW_ROWS)} />}
             </StatCard>
           </Link>
         </div>
@@ -217,7 +239,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
 
       <Modal open={showHistory} onOpenChange={(o) => !o && setShowHistory(false)} chip={<Chip>Registo de alterações</Chip>} title="Histórico do plano"
         description="Quem propôs, ligou e validou o plano. Nenhum registo pode ser apagado." width={640}>
-        {!audit.data || !users.data ? <SkeletonRows rows={4} /> : <HistoryList items={roadmapHistory(audit.data, users.data)} />}
+        {audit.isError ? <ErrorState error={audit.error} onRetry={() => audit.refetch()} /> : !audit.data || !users.data ? <SkeletonRows rows={4} /> : <HistoryList items={roadmapHistory(audit.data, users.data)} />}
       </Modal>
 
       <Modal open={confirm} onOpenChange={setConfirm} chip={<Chip>Decisão da consultora</Chip>} title="Validar o roadmap?"

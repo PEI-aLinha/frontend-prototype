@@ -78,16 +78,17 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
   await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
 
-  // The links wrap their cards, so each card's own label is what has a box to measure.
+  // The links wrap their cards, and each card's label is a heading under "Resumo do plano".
   const cardBoxes = await Promise.all([
-    level.getByText('Nível de maturidade', { exact: true }).boundingBox(),
-    gaps.getByText('Por resolver', { exact: true }).boundingBox(),
-    evidence.getByText('Evidências', { exact: true }).boundingBox(),
+    level.getByRole('heading', { name: 'Nível de maturidade' }).boundingBox(),
+    gaps.getByRole('heading', { name: 'Por resolver' }).boundingBox(),
+    evidence.getByRole('heading', { name: 'Evidências' }).boundingBox(),
   ])
   expect(cardBoxes.every(Boolean)).toBeTruthy()
   const headingBox = await heading.boundingBox()
   expect(headingBox).toBeTruthy()
-  if ((page.viewportSize()?.width ?? 0) >= 768) {
+  const wide = (page.viewportSize()?.width ?? 0) >= 768
+  if (wide) {
     // One line: same top, left to right.
     expect(Math.abs(cardBoxes[0]!.y - cardBoxes[2]!.y)).toBeLessThan(2)
     expect(cardBoxes[0]!.x).toBeLessThan(cardBoxes[2]!.x)
@@ -96,23 +97,25 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   }
   expect(cardBoxes[0]!.y).toBeGreaterThan(headingBox!.y)
 
-  // The map is the overview above the list: one circle per action, in the order on screen.
-  const map = page.getByRole('list', { name: 'Progresso do plano' })
-  const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' })
-  await expect(map.locator('li')).toHaveCount(7)
-  await expect(map.getByRole('button').first()).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
-  expect((await map.boundingBox())!.y).toBeLessThan((await rows.boundingBox())!.y)
+  if (wide) {
+    // The map is the overview above the list: one circle per action, in the order on screen.
+    const map = page.getByRole('list', { name: 'Progresso do plano' })
+    const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' })
+    await expect(map.locator('li')).toHaveCount(7)
+    await expect(map.getByRole('button').first()).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
+    expect((await map.boundingBox())!.y).toBeLessThan((await rows.boundingBox())!.y)
 
-  // Bigger circles, and each one carries the action's name under it on a wide screen only.
-  const firstNode = map.getByRole('button').first()
-  const wide = (page.viewportSize()?.width ?? 0) >= 768
-  expect((await firstNode.locator('span').first().boundingBox())!.width).toBeGreaterThanOrEqual(wide ? 56 : 48)
-  if (wide) await expect(firstNode.locator('span').nth(1)).toBeVisible()
-  else await expect(firstNode.locator('span').nth(1)).toBeHidden()
+    // Each circle carries the action's name under it.
+    const firstNode = map.getByRole('button').first()
+    expect((await firstNode.locator('span').first().boundingBox())!.width).toBeGreaterThanOrEqual(56)
+    await expect(firstNode.locator('span').nth(1)).toBeVisible()
 
-  // A circle hands the keyboard to its row, so the map is a way into the plan and not just a picture.
-  await page.getByRole('button', { name: /Registar a entidade no MyCiber/ }).click()
-  await expect(page.locator('#acao-act-myciber')).toBeFocused()
+    // A circle hands the keyboard to its row, so the map is a way into the plan and not just a picture.
+    await page.getByRole('button', { name: /Registar a entidade no MyCiber/ }).click()
+    await expect(page.locator('#acao-act-myciber')).toBeFocused()
+  } else {
+    await expect(page.getByRole('list', { name: 'Progresso do plano' })).toHaveCount(0)
+  }
 })
 
 test('Scenario 3 — Rui can read the plan history and export it, but not change it', async ({ page }) => {
@@ -132,15 +135,16 @@ test('Scenario 3 — the plan follows the order switch', async ({ page }) => {
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)
   const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' }).locator('li')
-  const first = page.getByRole('list', { name: 'Progresso do plano' }).getByRole('button').first()
+  const mapFirst = page.getByRole('list', { name: 'Progresso do plano' }).getByRole('button').first()
+  const wide = (page.viewportSize()?.width ?? 0) >= 768
   await expect(page.getByRole('radio', { name: 'Priorizado pelos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Implementar autenticação multifator')
-  await expect(first).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
+  if (wide) await expect(mapFirst).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
 
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
   await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
-  await expect(first).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber\. Por iniciar\.$/)
+  if (wide) await expect(mapFirst).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber\. Por iniciar\.$/)
 })
 
 test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {

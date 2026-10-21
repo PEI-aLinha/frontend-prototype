@@ -19,14 +19,16 @@ interface StatCardProps {
   onClick?: () => void
   accent?: ReactNode
   className?: string
+  /** Heading level for the card label, when the card sits under a section heading. */
+  labelAs?: 'p' | 'h3'
 }
 
 /** Summary card: eyebrow 11 + ExtraBold 18 value + 13 caption. */
-export function StatCard({ label, value, caption, children, onClick, accent, className }: StatCardProps) {
+export function StatCard({ label, value, caption, children, onClick, accent, className, labelAs = 'p' }: StatCardProps) {
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <Eyebrow>{label}</Eyebrow>
+        <Eyebrow as={labelAs}>{label}</Eyebrow>
         {accent}
       </div>
       <p className="mt-1.5 text-[18px] font-extrabold leading-tight">{value}</p>

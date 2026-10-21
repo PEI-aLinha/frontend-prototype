@@ -8,6 +8,7 @@ const PAGES: Array<[string, 'rui' | 'pedro' | 'marta', 'c1' | 'c2' | 'c3']> = [
   [`${ORG}/tarefas/task-ativos/ativos`, 'pedro', 'c2'],
   ['/carteira', 'marta', 'c2'],
   ['/clientes/componentes-agueda/riscos', 'marta', 'c2'],
+  ['/clientes/componentes-agueda/roadmap', 'marta', 'c2'],
   ['/clientes/componentes-agueda/roadmap', 'marta', 'c3'],
   [`${ORG}/riscos`, 'rui', 'c3'],
   [`${ORG}/roadmap`, 'rui', 'c3'],
@@ -22,7 +23,7 @@ const PAGES: Array<[string, 'rui' | 'pedro' | 'marta', 'c1' | 'c2' | 'c3']> = [
 ]
 
 for (const [path, as, snap] of PAGES) {
-  test(`a11y ${as} ${path}`, async ({ page }) => {
+  test(`a11y ${as} ${path} (${snap})`, async ({ page }) => {
     await start(page, path, as, snap)
     await page.goto(`${path}?as=${as}`)
     await expect(page.locator('h1')).toBeVisible()

@@ -94,7 +94,8 @@ test('Scenario 2 — Marta gets the same numbers, and links only to the pages sh
   await expect(topRisks).toHaveCount(3)
   await expect(topRisks.first()).toContainText('Ransomware')
   await expect(page.getByRole('list', { name: 'Ações do roadmap por prioridade' }).locator('li')).toHaveCount(7)
-  await expect(page.getByRole('list', { name: 'Progresso do plano' }).locator('li')).toHaveCount(7)
+  if ((page.viewportSize()?.width ?? 0) >= 768) await expect(page.getByRole('list', { name: 'Progresso do plano' }).locator('li')).toHaveCount(7)
+  else await expect(page.getByRole('list', { name: 'Progresso do plano' })).toHaveCount(0)
 })
 
 test('Scenario 2 — the consultant adjusts the plan, and the history records it', async ({ page }) => {
@@ -125,6 +126,7 @@ test('Scenario 2 — the export follows the order on screen', async ({ page }) =
   await win.waitForLoadState('domcontentloaded')
   await expect(win).toHaveTitle(/^Resultados e roadmap — /)
   await expect(win.locator('h2')).toHaveText(['Resumo', 'Plano de ação · priorizado pelos riscos', 'Registo de riscos'])
+  await expect(win.locator('th[scope="col"]').first()).toBeVisible()
   await win.close()
 
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()

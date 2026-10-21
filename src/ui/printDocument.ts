@@ -6,7 +6,7 @@ function escapeHtml(s: string): string {
 }
 
 function table(section: PrintSection): string {
-  const head = section.headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')
+  const head = section.headers.map((h) => `<th scope="col">${escapeHtml(h)}</th>`).join('')
   const body = section.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')
   return `<h2>${escapeHtml(section.title)}</h2><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`
 }

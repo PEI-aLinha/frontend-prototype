@@ -48,7 +48,7 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
   const solid = progressPercent(items)
 
   return (
-    <div className="rounded-[16px] border border-line-soft bg-paper px-5 py-5">
+    <div className="hidden rounded-[16px] border border-line-soft bg-paper px-5 py-5 md:block">
       <p className="mb-3 flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[11px] text-ink-soft">
         <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
         <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-dashed border-brand" />Em curso</span>
