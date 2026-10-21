@@ -59,8 +59,6 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   await expect(evidence).toHaveAttribute('href', `${ORG}/integracoes`)
   await expect(evidence).toContainText('1 comprovada, 0 por resolver')
 
-  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
-
   // Each card previews three rows and says how many it left out.
   await expect(level.getByRole('list', { name: 'Secções com menos respostas' }).locator('li')).toHaveCount(3)
   await expect(level.getByText('+3')).toBeVisible()
@@ -73,10 +71,6 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
   const heading = page.getByRole('heading', { name: 'Roadmap validado' })
   await expect(heading).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Resumo do plano' })).toBeVisible()
-
-  // Only the section subtitle calls a date a deadline; the action rows phrase it as "Prazo:".
-  await expect(page.getByText('Próximo prazo: 15 nov. 2026 · Registar a entidade no MyCiber.')).toBeVisible()
-  await expect(page.getByText(/Próximo prazo/)).toHaveCount(1)
 
   // The links wrap their cards, and each card's label is a heading under "Resumo do plano".
   const cardBoxes = await Promise.all([
@@ -109,6 +103,14 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
     const firstNode = map.getByRole('button').first()
     expect((await firstNode.locator('span').first().boundingBox())!.width).toBeGreaterThanOrEqual(56)
     await expect(firstNode.locator('span').nth(1)).toBeVisible()
+
+    // Hover scales the circle up; the horizontal scroller must not clip its top edge.
+    await firstNode.hover()
+    await expect.poll(() => firstNode.evaluate((button) => {
+      const circle = button.firstElementChild as HTMLElement
+      const scroller = button.closest('.overflow-x-auto') as HTMLElement
+      return Math.round((circle.getBoundingClientRect().top - scroller.getBoundingClientRect().top) * 10) / 10
+    })).toBeGreaterThanOrEqual(0)
 
     // A circle hands the keyboard to its row, so the map is a way into the plan and not just a picture.
     await page.getByRole('button', { name: /Registar a entidade no MyCiber/ }).click()

@@ -108,7 +108,6 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
   const evidenceRows = ranked.map((r) => evidenceState(evidenceByAction.get(r.action.id) ?? NO_EVIDENCE))
   const evidenceCount = evidenceRows.filter(Boolean).length
   const provenCount = evidenceRows.filter((e) => e?.tone === 'brand').length
-  const soonest = summary.deadlines[0]
   const canExport = !pending && !!users.data && !!evidence.data && !!risks.data && ranked.length > 0
   // A failed side query gets a dash, not a false zero, and a pending one gets a placeholder.
   const risksLoading = actions.isPending || risks.isPending || riskLinks.isPending
@@ -187,10 +186,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
 
       <section aria-labelledby="plan-titulo" className="flex min-w-0 flex-col gap-4">
         <div className="flex flex-col gap-3">
-          <div className="flex min-w-0 flex-col gap-1">
-            <h2 id="plan-titulo" className="text-[19px] font-extrabold">{pending ? 'Roadmap' : validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
-            {soonest && <p className="text-[13px] text-ink-soft">Próximo prazo: {shortDate(soonest.dueDate)} · {soonest.description}.</p>}
-          </div>
+          <h2 id="plan-titulo" className="text-[19px] font-extrabold">{pending ? 'Roadmap' : validated ? 'Roadmap validado' : 'Roadmap sugerido'}</h2>
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
             <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
             <p className="text-[13px] text-ink-soft" aria-live="polite">

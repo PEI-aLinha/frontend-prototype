@@ -54,7 +54,8 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
         <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-dashed border-brand" />Em curso</span>
         <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-line" />Por iniciar</span>
       </p>
-      <div className="overflow-x-auto">
+      {/* The hover scale rises above the circles, so the scroll container needs a little room or it clips the top row. */}
+      <div className="overflow-x-auto pt-1">
         <div ref={wrap} className="relative w-max min-w-full">
           {line && (
             <svg aria-hidden viewBox={`0 0 ${line.w} ${line.h}`} className="absolute inset-0 size-full">
