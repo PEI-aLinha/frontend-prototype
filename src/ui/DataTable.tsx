@@ -95,9 +95,9 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
               )}
               {row.getVisibleCells().map((cell, i, all) => (
                 <td key={cell.id} className={cn('py-3.5 align-middle text-[14px]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
-                  {/* One real button per row, stretched over it: keyboard and screen readers get a named control, cells keep their content. */}
+                  {/* One real button per row, stretched over it (except the checkbox column, which keeps its own target). */}
                   {i === 0 && onRowClick && (
-                    <button type="button" onClick={() => onRowClick(row.original)} className="absolute inset-0 rounded-none focus-visible:outline-offset-[-2px]">
+                    <button type="button" onClick={() => onRowClick(row.original)} className={cn('absolute inset-y-0 right-0 rounded-none focus-visible:outline-offset-[-2px]', selectable ? 'left-11' : 'left-0')}>
                       <span className="sr-only">{rowLabel?.(row.original) ?? 'Abrir'}</span>
                     </button>
                   )}
