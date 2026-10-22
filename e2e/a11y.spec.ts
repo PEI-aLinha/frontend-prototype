@@ -11,6 +11,7 @@ const PAGES: Array<[string, 'rui' | 'pedro' | 'marta', 'c1' | 'c2' | 'c3']> = [
   ['/clientes/componentes-agueda/roadmap', 'marta', 'c3'],
   [`${ORG}/riscos`, 'rui', 'c3'],
   [`${ORG}/inicio`, 'rui', 'c3'],
+  [`${ORG}/avaliacao`, 'rui', 'c1'],
 ]
 
 for (const [path, as, snap] of PAGES) {
