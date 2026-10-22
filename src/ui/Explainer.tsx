@@ -11,22 +11,25 @@ interface ExplainerProps {
   footer?: ReactNode
   /** Open on the first visit, collapsed on later ones (unless the person reopens it). */
   collapseOnRevisit?: boolean
+  /** Collapsed until the person opens it (pages whose first visit already has a guided tour). */
+  startCollapsed?: boolean
 }
 
 const storageKey = (id: string) => `alinha-explainer-${id}`
 
-function readCollapsed(id: string, collapseOnRevisit: boolean): boolean {
+function readCollapsed(id: string, collapseOnRevisit: boolean, startCollapsed: boolean): boolean {
   try {
     const stored = localStorage.getItem(storageKey(id))
+    if (startCollapsed) return stored !== 'open'
     return stored === 'closed' || (collapseOnRevisit && stored === 'seen')
   } catch {
-    return false
+    return startCollapsed
   }
 }
 
 /** "How this screen works": short step-by-step explanation that can be collapsed. */
-export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps, footer, collapseOnRevisit = false }: ExplainerProps) {
-  const [collapsed, setCollapsed] = useState(() => readCollapsed(id, collapseOnRevisit))
+export function Explainer({ id, title = 'Como funciona este ecrã', intro, steps, footer, collapseOnRevisit = false, startCollapsed = false }: ExplainerProps) {
+  const [collapsed, setCollapsed] = useState(() => readCollapsed(id, collapseOnRevisit, startCollapsed))
   useEffect(() => {
     if (!collapseOnRevisit) return
     try {
