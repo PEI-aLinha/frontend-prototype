@@ -152,7 +152,7 @@ export function RisksPage() {
             <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1">
               <h2 id="risk-summary-title" className="sr-only">Resumo por nível{residual ? ' depois das ações' : ''}</h2>
               {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
-                <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)}
+                <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)} emphasis={l === 'alto'} tone={l === 'alto' && counts(l) > 0 ? 'alert' : 'default'}
                   className="max-md:px-3.5 max-md:py-3"
                   accent={<span className="max-md:hidden"><RiskLevelBadge level={l} /></span>} />
               ))}
