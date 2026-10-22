@@ -139,28 +139,28 @@ export function AssetsPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? 'Inventário preenchido pelo Rui Santos e pelo Pedro Almeida. Use-o para registar os riscos.' : undefined} actions={actions} />
-      {nextAction}
-      <Note plain>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
-      {consultant ? (
-        <Explainer id="assets-consultant" collapseOnRevisit intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
-          steps={[
-            { title: 'Reveja o inventário', text: 'Abra um ativo para ver os detalhes e deixe comentários ao cliente se faltar alguma coisa.' },
-            { title: 'Comece pelos críticos', text: 'Os ativos de criticidade Alta são os primeiros candidatos a riscos.' },
-            { title: 'Registe o risco', text: 'Use "Registar risco" na linha do ativo: o formulário abre já com o ativo escolhido.' },
-          ]} />
-      ) : (
-        <Explainer id="assets-client" collapseOnRevisit intro="O inventário é a lista do que a empresa tem de proteger. Não precisa de saber tudo: registe o que conhece e atribua o resto a quem sabe."
-          steps={[
-            { title: 'Registe o que conhece', text: <>Programas e serviços que usa todos os dias (ERP, email). Para cada um indique o <Term k="servicoCritico">serviço crítico</Term> e a <Term k="criticidade">criticidade</Term>.</> },
-            { title: 'Atribua a parte técnica', text: 'Servidores, rede e máquinas da fábrica: use "Atribuir ao Pedro". Ele recebe uma tarefa e só vê esses ativos.' },
-            { title: 'O inventário fica a trabalhar', text: 'A consultora usa-o para analisar riscos, e pode exportar a Lista de Ativos para o CNCS.' },
-          ]} />
-      )}
-
       {inv.error ? <ErrorState error={inv.error} onRetry={inv.refetch} /> : !data ? (
         <div role="status" aria-label="A carregar o inventário" className="flex flex-col gap-4"><div className="flex gap-4">{[0, 1, 2].map((i) => <div key={i} className="h-[104px] flex-1 animate-pulse rounded-[14px] bg-paper-soft" />)}</div><SkeletonRows rows={5} /></div>
       ) : (
         <>
+          {nextAction}
+          <Note plain>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
+          {consultant ? (
+            <Explainer id="assets-consultant" collapseOnRevisit intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
+              steps={[
+                { title: 'Reveja o inventário', text: 'Abra um ativo para ver os detalhes e deixe comentários ao cliente se faltar alguma coisa.' },
+                { title: 'Comece pelos críticos', text: 'Os ativos de criticidade Alta são os primeiros candidatos a riscos.' },
+                { title: 'Registe o risco', text: 'Use "Registar risco" na linha do ativo: o formulário abre já com o ativo escolhido.' },
+              ]} />
+          ) : (
+            <Explainer id="assets-client" collapseOnRevisit intro="O inventário é a lista do que a empresa tem de proteger. Não precisa de saber tudo: registe o que conhece e atribua o resto a quem sabe."
+              steps={[
+                { title: 'Registe o que conhece', text: <>Programas e serviços que usa todos os dias (ERP, email). Para cada um indique o <Term k="servicoCritico">serviço crítico</Term> e a <Term k="criticidade">criticidade</Term>.</> },
+                { title: 'Atribua a parte técnica', text: 'Servidores, rede e máquinas da fábrica: use "Atribuir ao Pedro". Ele recebe uma tarefa e só vê esses ativos.' },
+                { title: 'O inventário fica a trabalhar', text: 'A consultora usa-o para analisar riscos, e pode exportar a Lista de Ativos para o CNCS.' },
+              ]} />
+          )}
+
           <section aria-labelledby="inventory-summary-title" className="flex gap-4 max-md:flex-col">
             <h2 id="inventory-summary-title" className="sr-only">Resumo do inventário</h2>
             <StatCard label="Serviços críticos" value={data.services.length} caption={data.services.map((s) => s.name).join(' · ') || 'Ainda não definidos'} onClick={() => update({ servicos: '1' })} />
