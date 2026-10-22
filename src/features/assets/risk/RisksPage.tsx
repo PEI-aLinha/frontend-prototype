@@ -8,7 +8,7 @@ import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from 
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
 import {
-  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, useToast,
+  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, StatCard, useToast,
   type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
@@ -132,9 +132,9 @@ export function RisksPage() {
       {error ? <ErrorState error={error} onRetry={() => { risks.refetch(); links.refetch(); assets.refetch(); actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
         <>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <Card className="rounded-[16px] px-6 py-5">
-              <div className="mb-2 flex items-center justify-between">
-                <Eyebrow><Term k="matriz">Matriz de risco</Term> · {RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</Eyebrow>
+            <Card as="section" aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-[11px] font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
                 {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
               </div>
               <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -149,14 +149,14 @@ export function RisksPage() {
                 count={(p, i) => all.filter((r) => pos(r).p === p && pos(r).i === i).length}
                 selected={cell} onSelect={(c) => update({ p: c ? String(c.probability) : null, i: c ? String(c.impact) : null })} compact />
             </Card>
-            <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
+            <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1">
+              <h2 id="risk-summary-title" className="sr-only">Resumo por nível{residual ? ' depois das ações' : ''}</h2>
               {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
-                <Card key={l} className="flex items-center justify-between max-md:px-3.5 max-md:py-3">
-                  <div><Eyebrow>Risco {RISK_LEVEL_LABEL[l].toLowerCase()}</Eyebrow><p className="mt-1 text-[18px] font-extrabold">{counts(l)}</p></div>
-                  <span className="max-md:hidden"><RiskLevelBadge level={l} /></span>
-                </Card>
+                <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)}
+                  className="max-md:px-3.5 max-md:py-3"
+                  accent={<span className="max-md:hidden"><RiskLevelBadge level={l} /></span>} />
               ))}
-            </div>
+            </section>
           </div>
 
           <DataTable
