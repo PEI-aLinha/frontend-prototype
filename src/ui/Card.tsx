@@ -1,4 +1,5 @@
 import { useId, type HTMLAttributes, type ReactNode } from 'react'
+import { Link } from 'react-router'
 import { Info } from 'lucide-react'
 import { cn } from './cn'
 
@@ -15,30 +16,43 @@ interface StatCardProps {
   value: ReactNode
   caption?: ReactNode
   onClick?: () => void
+  /** Internal route: the whole card becomes a link. */
+  to?: string
   accent?: ReactNode
+  /** Larger value for the figure that matters most in a group. */
+  emphasis?: boolean
+  /** `alert`: tinted surface for a figure that needs attention (e.g. high risks). */
+  tone?: 'default' | 'alert'
+  className?: string
 }
 
-/** Summary card: eyebrow 11 + ExtraBold 18 value + 13 caption. */
-export function StatCard({ label, value, caption, onClick, accent }: StatCardProps) {
-  const body = (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <Eyebrow>{label}</Eyebrow>
-        {accent}
-      </div>
-      <p className="mt-1.5 text-[18px] font-extrabold leading-tight">{value}</p>
-      {caption && <p className="mt-1.5 text-[13px] text-ink-soft">{caption}</p>}
-    </>
-  )
-  const cls = 'flex-1 min-w-0 rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] text-left'
+const STAT_CLS = 'flex-1 min-w-0 rounded-[14px] border px-5 py-[18px] text-left'
+const STAT_TONE = { default: 'border-line-soft bg-paper', alert: 'border-risk-high-ink/25 bg-risk-high/45' } as const
+const STAT_HOVER = 'transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]'
+
+/** Summary card: eyebrow 11 + ExtraBold 18 value (28 with `emphasis`) + 13 caption. A `<dl>` unless it is a button. */
+export function StatCard({ label, value, caption, onClick, to, accent, emphasis, tone = 'default', className }: StatCardProps) {
+  const base = cn(STAT_CLS, STAT_TONE[tone])
+  const valueCls = cn('mt-1.5 font-extrabold leading-tight', emphasis ? 'text-[28px]' : 'text-[18px]', tone === 'alert' && 'text-risk-high-ink')
   if (onClick) {
+    // Buttons only take phrasing content: same layout with spans.
     return (
-      <button type="button" onClick={onClick} className={cn(cls, 'transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]')}>
-        {body}
+      <button type="button" onClick={onClick} className={cn(base, STAT_HOVER, className)}>
+        <span className="flex items-start justify-between gap-2"><Eyebrow as="span">{label}</Eyebrow>{accent}</span>
+        <span className={cn('block', valueCls)}>{value}</span>
+        {caption && <span className="mt-1.5 block text-[13px] text-ink-soft">{caption}</span>}
       </button>
     )
   }
-  return <div className={cls}>{body}</div>
+  const body = (
+    <dl className="flex flex-col">
+      <dt className="flex items-start justify-between gap-2"><span className="eyebrow text-[11px] text-muted">{label}</span>{accent}</dt>
+      <dd className={valueCls}>{value}</dd>
+      {caption && <dd className="mt-1.5 text-[13px] text-ink-soft">{caption}</dd>}
+    </dl>
+  )
+  if (to) return <Link to={to} className={cn(base, STAT_HOVER, 'block', className)}>{body}</Link>
+  return <div className={cn(base, className)}>{body}</div>
 }
 
 export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: string; title: ReactNode; children?: ReactNode; action?: ReactNode }) {
