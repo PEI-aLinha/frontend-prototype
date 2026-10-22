@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react'
+import { useId, type HTMLAttributes, type ReactNode } from 'react'
 import { Info } from 'lucide-react'
 import { cn } from './cn'
 
@@ -42,11 +42,12 @@ export function StatCard({ label, value, caption, onClick, accent }: StatCardPro
 }
 
 export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: string; title: ReactNode; children?: ReactNode; action?: ReactNode }) {
+  const id = useId()
   return (
-    <section className="flex flex-col gap-6 rounded-[20px] bg-brand-deep px-8 py-[30px] text-white md:flex-row md:items-center">
+    <section aria-labelledby={id} className="flex flex-col gap-6 rounded-[20px] bg-brand-deep px-8 py-[30px] text-white md:flex-row md:items-center max-md:px-6">
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <Eyebrow className="text-signal-soft">{eyebrow}</Eyebrow>
-        <h2 className="text-[26px] font-extrabold title-tight">{title}</h2>
+        <h2 id={id} className="text-[26px] font-extrabold title-tight max-md:text-[22px]">{title}</h2>
         {children && <div className="text-[13px] font-semibold text-brand-soft">{children}</div>}
       </div>
       {action}
