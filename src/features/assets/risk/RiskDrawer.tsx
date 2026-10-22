@@ -34,6 +34,7 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
   const [step, setStep] = useState(0)
   const isWizard = !risk
   const lastStep = step === RISK_STEPS.length - 1
+  const goTo = (i: number) => { setErrors({}); setStep(i) }
 
   const onChange = (v: typeof values) => {
     setValues(v)
@@ -73,7 +74,8 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
     <form id="risk-form" noValidate onSubmit={(e) => { e.preventDefault(); submit() }}>
       {isWizard ? (
         <>
-          <RiskWizardSteps step={step} onGo={(i) => { setErrors({}); setStep(i) }} />
+          <RiskWizardSteps step={step} onGo={goTo} />
+          {step > 0 && <IdentifySummary threat={values.threat} asset={assets.find((a) => a.id === values.assetId)?.name} onEdit={() => goTo(0)} />}
           <RiskStepFields step={step} values={values} onChange={onChange} errors={errors} assets={assets} users={users} actions={actions} />
         </>
       ) : <RiskFields values={values} onChange={onChange} errors={errors} assets={assets} users={users} actions={actions} />}
@@ -86,12 +88,26 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
       chip={risk ? <><RiskLevelBadge level={computeRiskLevel(risk.probability, risk.impact).level} /><Chip tone="neutral">{RISK_STATUS_LABEL[risk.status]}</Chip></> : undefined}
       footer={<>
         {isWizard && step > 0
-          ? <Button variant="secondary" onClick={() => { setErrors({}); setStep(step - 1) }}>Voltar</Button>
+          ? <Button variant="secondary" onClick={() => goTo(step - 1)}>Voltar</Button>
           : <Button variant="secondary" onClick={onClose}>Cancelar</Button>}
         <Button type="submit" form="risk-form" loading={save.isPending}>{risk ? 'Guardar alterações' : lastStep ? 'Registar risco' : 'Seguinte'}</Button>
       </>}>
       {risk ? <Tabs tabs={[{ value: 'risco', label: 'Risco', content: form }, { value: 'estado', label: 'Estado', content: <RiskStatusActions risk={risk} onDone={onClose} /> }, { value: 'historico', label: 'Histórico', content: <RiskHistory riskId={risk.id} users={users} /> }]} /> : form}
     </Drawer>
+  )
+}
+
+/** Steps 2 and 3 keep step 1 in view, so nobody has to remember what they described (Nielsen: recognition over recall). */
+function IdentifySummary({ threat, asset, onEdit }: { threat: string; asset?: string; onEdit: () => void }) {
+  return (
+    <div className="mb-5 flex items-start gap-3 rounded-[12px] bg-paper-soft px-4 py-3">
+      <div className="min-w-0 flex-1">
+        <p className="eyebrow text-[11px] text-muted">Risco a registar</p>
+        <p className="mt-0.5 truncate text-[14px] font-bold">{threat || '—'}</p>
+        <p className="text-[13px] text-ink-soft">{asset ?? 'Toda a empresa'}</p>
+      </div>
+      <Button variant="link" size="sm" onClick={onEdit}>Alterar</Button>
+    </div>
   )
 }
 
