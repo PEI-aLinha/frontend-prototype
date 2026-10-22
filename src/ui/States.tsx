@@ -35,10 +35,18 @@ export function EmptyState({ icon, title, children, action, className, headingLe
 }
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
-  const message = error instanceof Error ? error.message : 'Algo correu mal.'
+  const detail = error instanceof Error ? error.message : null
   return (
     <EmptyState icon={<CloudOff className="size-5" aria-hidden />} title="Não conseguimos carregar estes dados" action={onRetry && <Button variant="secondary" size="sm" onClick={onRetry}>Tentar de novo</Button>}>
-      <p role="alert">{message}</p>
+      <div role="alert" className="flex flex-col gap-2">
+        <p>Pode ser uma falha de ligação momentânea. O que já guardou não se perdeu: tente de novo dentro de instantes.</p>
+        {detail && (
+          <details className="text-[12px] text-muted">
+            <summary className="cursor-pointer">Detalhe técnico</summary>
+            <p className="mt-1">{detail}</p>
+          </details>
+        )}
+      </div>
     </EmptyState>
   )
 }
