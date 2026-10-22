@@ -1,11 +1,14 @@
 import { Link } from 'react-router'
-import { useAssets, useRisks, useRoadmapStatus, useServices, useTasks } from '../../api/queries'
+import { ArrowRight } from 'lucide-react'
+import { useAssessment, useAssets, useRisks, useRoadmapStatus, useServices, useTasks } from '../../api/queries'
 import { dateTime, RISK_LEVEL_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
-import { Button, Eyebrow, HighlightCard, NextSteps, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
+import { Eyebrow, HighlightCard, NextSteps, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
+
+const CTA_CLASS = 'inline-flex shrink-0 items-center justify-center gap-2 rounded-[10px] bg-paper px-6 py-[13px] text-[15px] font-bold text-ink hover:bg-brand-soft focus-visible:outline-paper max-md:w-full'
 
 /** Designated manager home (06 / 14), with the "Risks" card after validation (scenario 3). */
 export function HomePage() {
@@ -15,6 +18,7 @@ export function HomePage() {
   const services = useServices(org.id)
   const tasks = useTasks(org.id)
   const roadmap = useRoadmapStatus(org.id)
+  const assessment = useAssessment(org.id)
   const seeRisks = can('view', 'risk')
   const risks = useRisks(org.id, seeRisks)
 
@@ -28,6 +32,11 @@ export function HomePage() {
   const topCount = levels.filter((l) => l.level === top).length
   const topTreating = levels.filter((l) => l.level === top).every((l) => l.status === 'em_tratamento' || l.status === 'aceite')
 
+  const answered = assessment.data?.sections.reduce((n, sec) => n + sec.answered, 0) ?? 0
+  const total = assessment.data?.sections.reduce((n, sec) => n + sec.total, 0) ?? 0
+  const delegated = assessment.data?.sections.flatMap((sec) => sec.delegated).filter((d) => d.status !== 'concluida').length ?? 0
+  const delegatedText = delegated ? `${delegated} ${delegated === 1 ? 'pergunta delegada à espera de resposta' : 'perguntas delegadas à espera de resposta'}` : 'O progresso fica guardado'
+
   const base = `/org/${org.slug}`
   const subtitle = validated ? 'A Marta Ferreira validou os resultados e o roadmap.' : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : 'O questionário fica guardado. Pode continuar quando quiser.'
 
@@ -37,11 +46,16 @@ export function HomePage() {
 
       <HighlightCard
         eyebrow="Avaliação de maturidade · NIS2 + RGPD"
-        title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : '8 de 18 perguntas respondidas'}
-        action={<Button variant="inverse" disabled title="Fora deste protótipo">{validated ? 'Ver roadmap →' : 'Continuar avaliação →'}</Button>}
+        title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : assessment.data ? `${answered} de ${total} perguntas respondidas` : 'A carregar a avaliação…'}
+        action={
+          <Link to={validated ? `${base}/roadmap` : `${base}/avaliacao`} className={CTA_CLASS}>
+            {validated ? 'Ver roadmap' : 'Ver avaliação'} <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        }
       >
-        <ProgressBar value={submitted ? 18 : 8} max={18} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
-        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} pela Marta Ferreira` : submitted ? 'Submetida qua., 14 out. às 10:12 · a Marta Ferreira está a rever' : '1 pergunta atribuída a Pedro Almeida · guardado às 17:44'}
+        {/* Always rendered (empty while loading) so the card does not grow and push the page down. */}
+        <ProgressBar value={answered} max={total || 1} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
+        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} pela Marta Ferreira` : submitted ? 'Submetida qua., 14 out. às 10:12 · a Marta Ferreira está a rever' : delegatedText}
       </HighlightCard>
 
       <NextSteps steps={[
