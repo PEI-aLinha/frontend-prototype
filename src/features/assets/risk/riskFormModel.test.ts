@@ -18,6 +18,11 @@ describe('validateRisk', () => {
   it('requires both residual values when residual risk is set', () => {
     expect(validateRisk({ ...base, hasResidual: true, residualProbability: 1 }).residual).toBeDefined()
   })
+  it('rejects a residual risk higher than the current one', () => {
+    expect(validateRisk({ ...base, hasResidual: true, residualProbability: 3, residualImpact: 3 }).residual).toMatch(/não pode ser maior/)
+    expect(validateRisk({ ...base, hasResidual: true, residualProbability: 2, residualImpact: 3 }).residual).toBeUndefined()
+    expect(validateRisk({ ...base, hasResidual: true, residualProbability: 1, residualImpact: 2 }).residual).toBeUndefined()
+  })
 })
 
 describe('toRiskInput', () => {
