@@ -158,10 +158,11 @@ export function AssetsPage() {
       )}
 
       {inv.error ? <ErrorState error={inv.error} onRetry={inv.refetch} /> : !data ? (
-        <div className="flex flex-col gap-4"><div className="flex gap-4">{[0, 1, 2].map((i) => <div key={i} className="h-[104px] flex-1 animate-pulse rounded-[14px] bg-paper-soft" />)}</div><SkeletonRows rows={5} /></div>
+        <div role="status" aria-label="A carregar o inventário" className="flex flex-col gap-4"><div className="flex gap-4">{[0, 1, 2].map((i) => <div key={i} className="h-[104px] flex-1 animate-pulse rounded-[14px] bg-paper-soft" />)}</div><SkeletonRows rows={5} /></div>
       ) : (
         <>
-          <div className="flex gap-4 max-md:flex-col">
+          <section aria-labelledby="inventory-summary-title" className="flex gap-4 max-md:flex-col">
+            <h2 id="inventory-summary-title" className="sr-only">Resumo do inventário</h2>
             <StatCard label="Serviços críticos" value={data.services.length} caption={data.services.map((s) => s.name).join(' · ') || 'Ainda não definidos'} onClick={() => update({ servicos: '1' })} />
             <StatCard label="Ativos registados" value={data.assets.length} caption={byAnalyst.length && analystName ? `${byAnalyst.length} registados pelo ${analystName}` : consultant ? 'Pelo cliente' : 'Registados por si'} />
             <StatCard label="Por registar"
@@ -169,14 +170,14 @@ export function AssetsPage() {
               caption={state === 'assigned'
                 ? <><ProgressBar value={byAnalyst.length} max={task?.expectedCount ?? 4} label="Ativos registados pelo técnico" className="mb-1.5" />{task?.scope}</>
                 : state === 'done' ? 'Inventário completo' : task?.scope ?? 'Servidores, rede e sistemas de produção'} />
-          </div>
+          </section>
 
           {data.assets.length > 0 && (
             <div className="flex flex-col gap-3">
               <AssetFilters value={filters} inventory={data} shown={visible.length} total={data.assets.length}
                 onChange={(n: Partial<AssetFilterState>) => update(n as Record<string, string>)}
                 onClear={() => update(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))} />
-              <div className="flex flex-wrap items-center justify-end gap-1 text-[13px]">
+              <div role="group" aria-label="Ações do inventário" className="flex flex-wrap items-center justify-end gap-1 text-[13px]">
                 <Button variant="ghost" size="sm" icon={<Layers className="size-4" aria-hidden />} onClick={() => update({ servicos: '1' })}>Serviços críticos</Button>
                 {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
                 {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
