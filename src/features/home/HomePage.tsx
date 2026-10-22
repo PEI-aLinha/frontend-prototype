@@ -5,7 +5,7 @@ import { dateTime, RISK_LEVEL_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
-import { Eyebrow, HighlightCard, NextSteps, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
+import { HighlightCard, NextSteps, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
 
 const CTA_CLASS = 'inline-flex shrink-0 items-center justify-center gap-2 rounded-[10px] bg-paper px-6 py-[13px] text-[15px] font-bold text-ink hover:bg-brand-soft focus-visible:outline-paper max-md:w-full'
@@ -67,21 +67,18 @@ export function HomePage() {
         { label: 'Acompanhar os riscos e o plano de ação', hint: 'Comece pelos riscos altos.', done: false, to: validated ? `${base}/riscos` : undefined, cta: 'Ver riscos' },
       ]} />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3">
+        <h2 id="home-summary-title" className="sr-only">Resumo</h2>
         {seeRisks && risks.data && top ? (
-          <Link to={`${base}/riscos`} className="flex flex-col rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]">
-            <div className="flex items-start justify-between"><Eyebrow>Riscos</Eyebrow><RiskLevelBadge level={top} /></div>
-            <p className="mt-1.5 text-[18px] font-extrabold">{topCount} {topCount === 1 ? 'risco' : 'riscos'} {RISK_LEVEL_LABEL[top].toLowerCase()}{topCount === 1 ? '' : 's'} · {topTreating ? 'em tratamento' : 'por tratar'}</p>
-            <p className="mt-1.5 text-[13px] text-ink-soft">{levels.length} riscos registados pela consultora</p>
-          </Link>
+          <StatCard to={`${base}/riscos`} label="Riscos" accent={<RiskLevelBadge level={top} />}
+            value={`${topCount} ${topCount === 1 ? 'risco' : 'riscos'} ${RISK_LEVEL_LABEL[top].toLowerCase()}${topCount === 1 ? '' : 's'} · ${topTreating ? 'em tratamento' : 'por tratar'}`}
+            caption={`${levels.length} riscos registados pela consultora`} />
         ) : (
           <StatCard label="Enquadramento" value="Entidade importante" caption="Sugestão indicativa · aguarda o CNCS" />
         )}
-        <Link to={`${base}/ativos`} className="contents">
-          <StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? 2} serviços críticos · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />
-        </Link>
+        <StatCard to={`${base}/ativos`} label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? 2} serviços críticos · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />
         <StatCard label="Consultora" value="Marta Ferreira" caption={validated ? 'Acompanha as ações de risco alto' : 'Valida os resultados quando terminar'} />
-      </div>
+      </section>
     </>
   )
 }
