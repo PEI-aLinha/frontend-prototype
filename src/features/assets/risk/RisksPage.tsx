@@ -159,6 +159,8 @@ export function RisksPage() {
             </section>
           </div>
 
+          <section aria-labelledby="risk-table-title" className="flex flex-col gap-3">
+          <h2 id="risk-table-title" className="section-title">{editable ? 'Riscos registados' : 'O que pode correr mal'} <span className="font-semibold text-ink-soft">· {visible.length}</span></h2>
           <DataTable
             caption="Registo de riscos"
             data={visible}
@@ -182,6 +184,7 @@ export function RisksPage() {
               ? <EmptyState className="m-4" title="Ainda não há riscos registados" action={can('create', 'risk') && <Button onClick={() => update({ novo: '1' })}>Registar o primeiro risco</Button>}>Comece pelos ativos de criticidade alta.</EmptyState>
               : <p className="px-5 py-8 text-center text-[14px] text-ink-soft">Nenhum risco nesta célula da matriz.</p>}
           />
+          </section>
           {cell && <p className="-mt-4 text-[13px] text-ink-soft">A mostrar {visible.length} de {all.length} riscos (filtro da matriz).</p>}
           {editable && archived.length > 0 && (
             <label className="-mt-3 flex items-center gap-2 text-[13px] text-ink-soft">
