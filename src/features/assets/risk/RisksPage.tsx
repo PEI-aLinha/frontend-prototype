@@ -111,26 +111,26 @@ export function RisksPage() {
           <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[14px] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
         </div>
       )}
-      {nextAction}
-      {!editable && <Note>Registo validado pela consultora Marta Ferreira. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
-      {editable ? (
-        <Explainer id="risks-consultant" collapseOnRevisit intro="O registo de riscos segue o método da ISO/IEC 27005 em três passos. O resultado prioriza o roadmap do cliente."
-          steps={[
-            { title: 'Identificar', text: <>Escolha o <Term k="ativo" /> e descreva a <Term k="ameaca">ameaça</Term>: o que pode correr mal.</> },
-            { title: 'Avaliar', text: <>Indique a <Term k="probabilidade">probabilidade</Term> e o <Term k="impacto">impacto</Term>. O <Term k="nivelRisco">nível</Term> é calculado pelo sistema.</> },
-            { title: 'Tratar', text: <>Decida o <Term k="tratamento">tratamento</Term>. Ao mitigar, ligue ações do <Term k="roadmap" />: as ligadas a riscos altos sobem de prioridade.</> },
-          ]} />
-      ) : (
-        <Explainer id="risks-client" collapseOnRevisit title="Como ler esta página" intro="Cada linha é algo que pode correr mal à empresa. A consultora avaliou quão provável é e quão grave seria, e definiu o que fazer."
-          steps={[
-            { title: 'Nível', text: <>Alto, médio ou baixo, calculado por regra: <Term k="probabilidade">probabilidade</Term> × <Term k="impacto">impacto</Term>. Comece pelos altos.</> },
-            { title: 'O que pode acontecer', text: 'Explicado em linguagem simples. Abra a linha para ver o detalhe.' },
-            { title: 'O que está a ser feito', text: <>As ações do <Term k="roadmap" /> que reduzem o risco, com prazo e responsável.</> },
-          ]} />
-      )}
-
       {error ? <ErrorState error={error} onRetry={() => { risks.refetch(); links.refetch(); assets.refetch(); actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
         <>
+          {nextAction}
+          {!editable && <Note>Registo validado pela consultora Marta Ferreira. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
+          {editable ? (
+            <Explainer id="risks-consultant" collapseOnRevisit intro="O registo de riscos segue o método da ISO/IEC 27005 em três passos. O resultado prioriza o roadmap do cliente."
+              steps={[
+                { title: 'Identificar', text: <>Escolha o <Term k="ativo" /> e descreva a <Term k="ameaca">ameaça</Term>: o que pode correr mal.</> },
+                { title: 'Avaliar', text: <>Indique a <Term k="probabilidade">probabilidade</Term> e o <Term k="impacto">impacto</Term>. O <Term k="nivelRisco">nível</Term> é calculado pelo sistema.</> },
+                { title: 'Tratar', text: <>Decida o <Term k="tratamento">tratamento</Term>. Ao mitigar, ligue ações do <Term k="roadmap" />: as ligadas a riscos altos sobem de prioridade.</> },
+              ]} />
+          ) : (
+            <Explainer id="risks-client" collapseOnRevisit title="Como ler esta página" intro="Cada linha é algo que pode correr mal à empresa. A consultora avaliou quão provável é e quão grave seria, e definiu o que fazer."
+              steps={[
+                { title: 'Nível', text: <>Alto, médio ou baixo, calculado por regra: <Term k="probabilidade">probabilidade</Term> × <Term k="impacto">impacto</Term>. Comece pelos altos.</> },
+                { title: 'O que pode acontecer', text: 'Explicado em linguagem simples. Abra a linha para ver o detalhe.' },
+                { title: 'O que está a ser feito', text: <>As ações do <Term k="roadmap" /> que reduzem o risco, com prazo e responsável.</> },
+              ]} />
+          )}
+
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
             <Card as="section" aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5">
               <div className="mb-3 flex items-baseline justify-between gap-3">
