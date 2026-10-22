@@ -4,20 +4,12 @@ import { DesignPage } from './DesignPage'
 import { ClientLayout, ConsultantLayout } from './layouts'
 import { Root } from './Root'
 import { Guard } from './Guard'
-import { AssetsPage } from '../features/assets/AssetsPage'
-import { RegisterAssetsPage } from '../features/assets/RegisterAssetsPage'
-import { HomePage } from '../features/home/HomePage'
-import { TasksPage } from '../features/tasks/TasksPage'
 import { AnalystOnly } from './AnalystOnly'
-import { TeamPage } from '../features/team/TeamPage'
 import { ConsultantRoadmap } from './ConsultantRoadmap'
-import { RisksPage } from '../features/assets/risk/RisksPage'
-import { PortfolioPage } from '../features/portfolio/PortfolioPage'
-import { ClientOverviewPage } from '../features/portfolio/ClientOverviewPage'
-import { HistoryPage } from '../features/portfolio/HistoryPage'
-import { IntegrationsPage } from '../features/integrations/IntegrationsPage'
-import { AssessmentPage } from '../features/assessment/AssessmentPage'
-import { QuestionPage } from '../features/tasks/QuestionPage'
+import {
+  AssetsPage, RegisterAssetsPage, HomePage, TasksPage, TeamPage, RisksPage, PortfolioPage, ClientOverviewPage, HistoryPage, IntegrationsPage, AssessmentPage, QuestionPage,
+} from './pages'
+
 
 export const router = createBrowserRouter([
   {

@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
+import { Suspense, type ReactNode } from 'react'
 import { NavLink } from 'react-router'
 import type { LucideIcon } from 'lucide-react'
-import { Avatar, Logo, cn } from '../ui'
+import { Avatar, Logo, SkeletonRows, cn } from '../ui'
 import { MobileTabBar } from './MobileTabBar'
 
 export interface NavItem {
@@ -75,7 +75,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
       </header>
 
       <main id="conteudo" className="min-w-0 flex-1 px-14 pb-16 pt-11 max-lg:px-8 max-md:px-5 max-md:pb-28 max-md:pt-6">
-        <div className="mx-auto flex max-w-[1152px] flex-col gap-7">{children}</div>
+        <div className="mx-auto flex max-w-[1152px] flex-col gap-7"><Suspense fallback={<SkeletonRows rows={6} label="A carregar o ecrã…" />}>{children}</Suspense></div>
       </main>
 
       <MobileTabBar items={tabItems} />
