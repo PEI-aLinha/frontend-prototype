@@ -21,7 +21,7 @@ export function AssessmentPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title="Avaliação" subtitle="Questionário de maturidade em cibersegurança, alinhado com o Decreto-Lei 125/2025 (NIS2)." help={<PageTour id="avaliacao" ready={!!a} />} />
-      <Explainer id="assessment-client" intro={<>A avaliação mede a <Term k="maturidade">maturidade</Term> da empresa. Das respostas nascem as lacunas e o roadmap.</>}
+      <Explainer id="assessment-client" startCollapsed intro={<>A avaliação mede a <Term k="maturidade">maturidade</Term> da empresa. Das respostas nascem as lacunas e o roadmap.</>}
         steps={[
           { title: 'Responda por secções', text: 'Não precisa de fazer tudo de uma vez. O progresso fica guardado.' },
           { title: 'Delegue o técnico', text: 'Perguntas que não sabe responder podem ir para o Pedro. Ele só vê essa pergunta.' },

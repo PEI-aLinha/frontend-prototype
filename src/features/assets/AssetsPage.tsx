@@ -147,14 +147,14 @@ export function AssetsPage() {
         <>
           {nextAction}
           {consultant ? (
-            <Explainer id="assets-consultant" collapseOnRevisit intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
+            <Explainer id="assets-consultant" startCollapsed intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
               steps={[
                 { title: 'Reveja o inventário', text: 'Abra um ativo para ver os detalhes e deixe comentários ao cliente se faltar alguma coisa.' },
                 { title: 'Comece pelos críticos', text: 'Os ativos de criticidade Alta são os primeiros candidatos a riscos.' },
                 { title: 'Registe o risco', text: 'Use "Registar risco" na linha do ativo: o formulário abre já com o ativo escolhido.' },
               ]} />
           ) : (
-            <Explainer id="assets-client" collapseOnRevisit intro="O inventário é a lista do que a empresa tem de proteger. Não precisa de saber tudo: registe o que conhece e atribua o resto a quem sabe."
+            <Explainer id="assets-client" startCollapsed intro="O inventário é a lista do que a empresa tem de proteger. Não precisa de saber tudo: registe o que conhece e atribua o resto a quem sabe."
               steps={[
                 { title: 'Registe o que conhece', text: <>Programas e serviços que usa todos os dias (ERP, email). Para cada um indique o <Term k="servicoCritico">serviço crítico</Term> e a <Term k="criticidade">criticidade</Term>.</> },
                 { title: 'Atribua a parte técnica', text: 'Servidores, rede e máquinas da fábrica: use "Atribuir ao Pedro". Ele recebe uma tarefa e só vê esses ativos.' },
