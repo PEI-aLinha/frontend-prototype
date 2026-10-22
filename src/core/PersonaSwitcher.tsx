@@ -65,10 +65,11 @@ export function PersonaSwitcher() {
     <DemoGuide open={guide} onClose={() => setGuide(false)} onGo={go} />
     <Menu.Root open={open} onOpenChange={setOpen}>
       <Menu.Trigger
-        aria-label={`Demonstração: a ver como ${persona.name}. Mudar de persona (Alt+P)`}
         className="fixed bottom-[76px] left-5 z-[85] md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[12px] font-bold text-ink-soft shadow-[0_6px_20px_rgba(32,33,36,0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:left-auto max-md:right-3"
       >
         <Avatar initials={persona.initials} size={24} />
+        {/* Name from content, not aria-label, so it always contains the visible text (WCAG 2.5.3). */}
+        <span className="sr-only">Demonstração: a ver como {persona.name}. Mudar de persona (Alt+P). </span>
         <span className="max-sm:hidden">Demo · {persona.firstName}</span>
         {failing && <WifiOff className="size-3.5 text-danger" aria-label="Modo de erro ativo" />}
         <ChevronUp className="size-3.5" aria-hidden />
