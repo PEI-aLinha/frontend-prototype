@@ -26,7 +26,7 @@ export function RiskMatrix({ probability, impact, levelOf, count, selected, onSe
   return (
     <div className="flex gap-3">
       <div className="flex items-center">
-        <span className="eyebrow text-[11px] text-muted [writing-mode:vertical-rl] rotate-180">Probabilidade</span>
+        <span aria-hidden className="eyebrow text-[11px] text-muted [writing-mode:vertical-rl] rotate-180">Probabilidade</span>
       </div>
       <div className="min-w-0 flex-1">
         <table className="w-full table-fixed border-separate border-spacing-1.5">
@@ -71,13 +71,16 @@ export function RiskMatrix({ probability, impact, levelOf, count, selected, onSe
                 })}
               </tr>
             ))}
+          </tbody>
+          {/* Visible impact axis; the sr-only thead already names the columns. */}
+          <tfoot aria-hidden>
             <tr>
               <td />
               {impact.map((i) => <td key={i.value} className="pt-1 text-center text-[12px] font-semibold text-ink-soft">{i.label}</td>)}
             </tr>
-          </tbody>
+          </tfoot>
         </table>
-        <p className="eyebrow mt-1 pl-[70px] text-center text-[11px] text-muted">Impacto</p>
+        <p aria-hidden className="eyebrow mt-1 pl-[70px] text-center text-[11px] text-muted">Impacto</p>
       </div>
     </div>
   )
