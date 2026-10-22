@@ -144,7 +144,6 @@ export function AssetsPage() {
       ) : (
         <>
           {nextAction}
-          <Note plain>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
           {consultant ? (
             <Explainer id="assets-consultant" collapseOnRevisit intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
               steps={[
@@ -172,6 +171,7 @@ export function AssetsPage() {
                 : state === 'done' ? 'Inventário completo' : task?.scope ?? 'Servidores, rede e sistemas de produção'} />
           </section>
 
+          <h2 className="section-title -mb-3">Inventário <span className="font-semibold text-ink-soft">· {data.assets.length} {data.assets.length === 1 ? 'ativo' : 'ativos'}</span></h2>
           {data.assets.length > 0 && (
             <div className="flex flex-col gap-3">
               <AssetFilters value={filters} inventory={data} shown={visible.length} total={data.assets.length}
@@ -205,6 +205,7 @@ export function AssetsPage() {
             selected={picked}
             onSelectedChange={can('edit', 'asset') && !consultant ? setPicked : undefined}
           />}
+          <Note plain className="-mt-3">Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
 
           <AssetDrawer key={`new-${params.get('novo')}`} inventory={data} asset={null} mode="new" open={params.get('novo') === '1'} onClose={() => update({ novo: null })} />
           <AssetDrawer key={selected?.id ?? 'none'} inventory={data} asset={selected} mode="view" open={!!selected} onClose={() => update({ ativo: null })} />
