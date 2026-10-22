@@ -86,19 +86,21 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
           {rows.map((row) => (
             <tr
               key={row.id}
-              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-              onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row.original) } } : undefined}
-              tabIndex={onRowClick ? 0 : undefined}
-              aria-label={onRowClick && rowLabel ? rowLabel(row.original) : undefined}
-              className={cn('border-b border-line-soft last:border-b-0 transition-colors', onRowClick && 'cursor-pointer hover:bg-paper-soft focus-visible:bg-paper-soft focus-visible:outline-offset-[-2px]', (highlightId === row.id || sel.includes(row.id)) && 'bg-signal-soft/50')}
+              className={cn('relative border-b border-line-soft last:border-b-0 transition-colors', onRowClick && 'cursor-pointer hover:bg-paper-soft focus-within:bg-paper-soft', (highlightId === row.id || sel.includes(row.id)) && 'bg-signal-soft/50')}
             >
               {selectable && (
-                <td className="w-11 pl-5" onClick={(e) => e.stopPropagation()}>
-                  <input type="checkbox" className={boxCls} aria-label={`Selecionar ${rowLabel?.(row.original).replace(/^Abrir /, '') ?? row.id}`} checked={sel.includes(row.id)} onChange={() => toggle(row.id)} onKeyDown={(e) => e.stopPropagation()} />
+                <td className="w-11 pl-5">
+                  <input type="checkbox" className={cn(boxCls, 'relative z-10')} aria-label={`Selecionar ${rowLabel?.(row.original).replace(/^Abrir /, '') ?? row.id}`} checked={sel.includes(row.id)} onChange={() => toggle(row.id)} />
                 </td>
               )}
               {row.getVisibleCells().map((cell, i, all) => (
                 <td key={cell.id} className={cn('py-3.5 align-middle text-[14px]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
+                  {/* One real button per row, stretched over it: keyboard and screen readers get a named control, cells keep their content. */}
+                  {i === 0 && onRowClick && (
+                    <button type="button" onClick={() => onRowClick(row.original)} className="absolute inset-0 rounded-none focus-visible:outline-offset-[-2px]">
+                      <span className="sr-only">{rowLabel?.(row.original) ?? 'Abrir'}</span>
+                    </button>
+                  )}
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
