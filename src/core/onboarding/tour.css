@@ -1,0 +1,89 @@
+/* Intro.js themed with the app tokens. Loaded after introjs.min.css, so equal specificity wins. */
+.introjs-overlay {
+  background: var(--color-ink);
+}
+
+.introjs-helperLayer {
+  border-radius: 14px;
+  box-shadow: rgba(32, 33, 36, 0.55) 0 0 0 5000px, 0 0 0 2px var(--color-signal) !important;
+}
+
+.introjs-tooltip.alinha-tour {
+  min-width: 300px;
+  max-width: 360px;
+  border-radius: 16px;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  box-shadow: 0 24px 64px rgba(6, 54, 50, 0.22);
+}
+
+.alinha-tour .introjs-tooltip-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.alinha-tour .introjs-tooltiptext {
+  padding-top: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-ink-soft);
+}
+
+.alinha-tour .introjs-skipbutton {
+  color: var(--color-ink-soft);
+  font-weight: 400;
+}
+
+.alinha-tour .introjs-skipbutton:hover,
+.alinha-tour .introjs-skipbutton:focus-visible {
+  color: var(--color-ink);
+}
+
+.alinha-tour .introjs-progress {
+  background: var(--color-paper-deep);
+}
+
+.alinha-tour .introjs-progressbar {
+  background: var(--color-brand);
+}
+
+.alinha-tour .introjs-button {
+  padding: 9px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: 700 13px/1 var(--font-sans);
+  text-shadow: none;
+}
+
+.alinha-tour .introjs-button:hover {
+  background: var(--color-paper-soft);
+  border-color: var(--color-ink-soft);
+}
+
+.alinha-tour .introjs-button:focus,
+.alinha-tour .introjs-button:focus-visible {
+  box-shadow: none;
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
+}
+
+.alinha-tour .introjs-nextbutton,
+.alinha-tour .introjs-donebutton {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-white);
+}
+
+.alinha-tour .introjs-nextbutton:hover,
+.alinha-tour .introjs-donebutton:hover {
+  background: var(--color-brand-deep);
+  border-color: var(--color-brand-deep);
+}
+
+.alinha-tour .introjs-disabled {
+  color: var(--color-muted);
+  opacity: 0.6;
+}
