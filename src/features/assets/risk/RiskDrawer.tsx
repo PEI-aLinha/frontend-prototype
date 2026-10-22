@@ -3,7 +3,7 @@ import type { Asset, RemediationAction, Risk, RiskActionLink, User } from '../..
 import { useAudit, useSaveRisk } from '../../../api/queries'
 import { RISK_STATUS_LABEL, TREATMENT_LABEL } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
-import { Button, Chip, Drawer, HistoryList, Note, RiskLevelBadge, Tabs, useToast } from '../../../ui'
+import { Button, Chip, Drawer, HistoryList, Modal, Note, RiskLevelBadge, Tabs, useToast } from '../../../ui'
 import { toHistory } from '../history'
 import { computeRiskLevel, describeRule } from './computeRiskLevel'
 import { RiskFields, RiskStepFields } from './RiskFields'
@@ -28,12 +28,17 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
   const org = useTenant()
   const toast = useToast()
   const save = useSaveRisk(org.id)
-  const [values, setValues] = useState(() => (risk ? riskToValues(risk, links.filter((l) => l.riskId === risk.id).map((l) => l.remediationActionId)) : emptyRisk(initialAssetId)))
+  const [initial] = useState(() => (risk ? riskToValues(risk, links.filter((l) => l.riskId === risk.id).map((l) => l.remediationActionId)) : emptyRisk(initialAssetId)))
+  const [values, setValues] = useState(initial)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
   const [errors, setErrors] = useState<RiskErrors>({})
   const [touched, setTouched] = useState(false)
   const [step, setStep] = useState(0)
   const isWizard = !risk
   const lastStep = step === RISK_STEPS.length - 1
+  const dirty = JSON.stringify(values) !== JSON.stringify(initial)
+  // Closing with unsaved input asks first: the drawer is easy to dismiss by accident (Esc, overlay).
+  const requestClose = () => (dirty ? setConfirmDiscard(true) : onClose())
   const goTo = (i: number) => { setErrors({}); setStep(i) }
 
   const onChange = (v: typeof values) => {
@@ -83,17 +88,25 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
   )
 
   return (
-    <Drawer open={open} onOpenChange={(o) => !o && onClose()} width={600} eyebrow="Registo de riscos · ISO/IEC 27005" title={risk ? risk.threat : 'Novo risco'}
-      description={risk ? undefined : 'O nível é calculado pelo sistema a partir da probabilidade e do impacto.'}
-      chip={risk ? <><RiskLevelBadge level={computeRiskLevel(risk.probability, risk.impact).level} /><Chip tone="neutral">{RISK_STATUS_LABEL[risk.status]}</Chip></> : undefined}
-      footer={<>
-        {isWizard && step > 0
-          ? <Button variant="secondary" onClick={() => goTo(step - 1)}>Voltar</Button>
-          : <Button variant="secondary" onClick={onClose}>Cancelar</Button>}
-        <Button type="submit" form="risk-form" loading={save.isPending}>{risk ? 'Guardar alterações' : lastStep ? 'Registar risco' : 'Seguinte'}</Button>
-      </>}>
-      {risk ? <Tabs tabs={[{ value: 'risco', label: 'Risco', content: form }, { value: 'estado', label: 'Estado', content: <RiskStatusActions risk={risk} onDone={onClose} /> }, { value: 'historico', label: 'Histórico', content: <RiskHistory riskId={risk.id} users={users} /> }]} /> : form}
-    </Drawer>
+    <>
+      <Drawer open={open} onOpenChange={(o) => !o && requestClose()} width={600} eyebrow="Registo de riscos · ISO/IEC 27005" title={risk ? risk.threat : 'Novo risco'}
+        description={risk ? undefined : 'O nível é calculado pelo sistema a partir da probabilidade e do impacto.'}
+        chip={risk ? <><RiskLevelBadge level={computeRiskLevel(risk.probability, risk.impact).level} /><Chip tone="neutral">{RISK_STATUS_LABEL[risk.status]}</Chip></> : undefined}
+        footer={<>
+          {isWizard && step > 0
+            ? <Button variant="secondary" onClick={() => goTo(step - 1)}>Voltar</Button>
+            : <Button variant="secondary" onClick={requestClose}>Cancelar</Button>}
+          <Button type="submit" form="risk-form" loading={save.isPending}>{risk ? 'Guardar alterações' : lastStep ? 'Registar risco' : 'Seguinte'}</Button>
+        </>}>
+        {risk ? <Tabs tabs={[{ value: 'risco', label: 'Risco', content: form }, { value: 'estado', label: 'Estado', content: <RiskStatusActions risk={risk} onDone={onClose} /> }, { value: 'historico', label: 'Histórico', content: <RiskHistory riskId={risk.id} users={users} /> }]} /> : form}
+      </Drawer>
+      <Modal open={confirmDiscard} onOpenChange={setConfirmDiscard} width={440} title={risk ? 'Descartar as alterações?' : 'Descartar o novo risco?'}
+        description="O que preencheu ainda não foi guardado e perde-se ao fechar."
+        footer={<>
+          <Button variant="secondary" onClick={() => setConfirmDiscard(false)}>Continuar a editar</Button>
+          <Button variant="danger" onClick={() => { setConfirmDiscard(false); onClose() }}>Descartar</Button>
+        </>} />
+    </>
   )
 }
 
