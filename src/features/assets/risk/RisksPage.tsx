@@ -7,6 +7,7 @@ import { RISK_MATRIX } from '../../../config/riskMatrix'
 import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
+import { PageTour } from '../../../core/onboarding/PageTour'
 import {
   Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, StatCard, useToast,
   type ColumnDef,
@@ -97,10 +98,11 @@ export function RisksPage() {
         eyebrow={org.name}
         title={editable ? 'Registo de riscos' : 'Riscos'}
         subtitle={editable ? 'Segundo a ISO/IEC 27005. O nível é calculado: probabilidade × impacto.' : 'Os riscos que a consultora identificou e o que está a ser feito para os reduzir.'}
+        help={<PageTour id={editable ? 'riscos-consultor' : 'riscos-cliente'} ready={!!ready} />}
         actions={<>
-          {editable && <Button variant="secondary" icon={<FileSpreadsheet className="size-4" aria-hidden />} onClick={() => downloadRiskTemplate().catch(() => toast.show('Não foi possível gerar o template. Tente outra vez.', 'error'))}>Template Excel</Button>}
+          {editable && <Button variant="secondary" data-tour="risk-template" icon={<FileSpreadsheet className="size-4" aria-hidden />} onClick={() => downloadRiskTemplate().catch(() => toast.show('Não foi possível gerar o template. Tente outra vez.', 'error'))}>Template Excel</Button>}
           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! })}>Exportar registo</Button>}
-          {can('create', 'risk') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
+          {can('create', 'risk') && <Button data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
         </>}
       />
 
@@ -132,7 +134,7 @@ export function RisksPage() {
           )}
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <Card as="section" aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5">
+            <Card as="section" aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5" data-tour="risk-matrix">
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-[11px] font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
                 {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
@@ -149,7 +151,7 @@ export function RisksPage() {
                 count={(p, i) => all.filter((r) => pos(r).p === p && pos(r).i === i).length}
                 selected={cell} onSelect={(c) => update({ p: c ? String(c.probability) : null, i: c ? String(c.impact) : null })} compact />
             </Card>
-            <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1">
+            <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1" data-tour="risk-summary">
               <h2 id="risk-summary-title" className="sr-only">Resumo por nível{residual ? ' depois das ações' : ''}</h2>
               {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
                 <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)} emphasis={l === 'alto'} tone={l === 'alto' && counts(l) > 0 ? 'alert' : 'default'}
@@ -159,7 +161,7 @@ export function RisksPage() {
             </section>
           </div>
 
-          <section aria-labelledby="risk-table-title" className="flex flex-col gap-3">
+          <section aria-labelledby="risk-table-title" className="flex flex-col gap-3" data-tour="risk-table">
           <h2 id="risk-table-title" className="section-title">{editable ? 'Riscos registados' : 'O que pode correr mal'} <span className="font-semibold text-ink-soft">· {visible.length}</span></h2>
           <DataTable
             caption="Registo de riscos"

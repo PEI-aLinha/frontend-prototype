@@ -2,6 +2,7 @@ import { CheckCircle2, Clock, Lock } from 'lucide-react'
 import { useAssessment, useUsers } from '../../api/queries'
 import { MATURITY_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
+import { PageTour } from '../../core/onboarding/PageTour'
 import { Avatar, Card, Chip, ErrorState, Eyebrow, Explainer, NextSteps, Note, PageHeader, ProgressBar, SkeletonRows, Term } from '../../ui'
 
 const STATUS = { em_curso: 'Em curso', submetida: 'Concluída · a aguardar validação', validada: 'Validada pela consultora' } as const
@@ -19,7 +20,7 @@ export function AssessmentPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title="Avaliação" subtitle="Questionário de maturidade em cibersegurança, alinhado com o Decreto-Lei 125/2025 (NIS2)." />
+      <PageHeader eyebrow={org.name} title="Avaliação" subtitle="Questionário de maturidade em cibersegurança, alinhado com o Decreto-Lei 125/2025 (NIS2)." help={<PageTour id="avaliacao" ready={!!a} />} />
       <Explainer id="assessment-client" intro={<>A avaliação mede a <Term k="maturidade">maturidade</Term> da empresa. Das respostas nascem as lacunas e o roadmap.</>}
         steps={[
           { title: 'Responda por secções', text: 'Não precisa de fazer tudo de uma vez. O progresso fica guardado.' },
@@ -29,7 +30,7 @@ export function AssessmentPage() {
       {!a ? <SkeletonRows rows={6} /> : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-4">
-            <Card as="section" aria-labelledby="assessment-progress-title" className="flex flex-col gap-3">
+            <Card as="section" aria-labelledby="assessment-progress-title" className="flex flex-col gap-3" data-tour="assessment-progress">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Eyebrow as="h2"><span id="assessment-progress-title">Progresso</span></Eyebrow>
                 <Chip tone={a.status === 'em_curso' ? 'signal' : 'neutral'}>{STATUS[a.status]}</Chip>
@@ -38,7 +39,7 @@ export function AssessmentPage() {
               <ProgressBar value={answered} max={total} label="Progresso da avaliação" />
               {a.maturity && <p className="text-[14px]"><Term k="maturidade">Nível de maturidade</Term>: <strong>{a.maturity} de 5</strong> · {MATURITY_LABEL[a.maturity]}</p>}
             </Card>
-            <section aria-labelledby="assessment-sections-title" className="flex flex-col gap-3">
+            <section aria-labelledby="assessment-sections-title" className="flex flex-col gap-3" data-tour="assessment-sections">
               <h2 id="assessment-sections-title" className="section-title mt-2">Secções</h2>
               <ul className="flex flex-col gap-3">
                 {a.sections.map((s) => {
@@ -71,7 +72,7 @@ export function AssessmentPage() {
               </ul>
             </section>
           </div>
-          <aside aria-label="Próximos passos da avaliação" className="flex flex-col gap-4">
+          <aside aria-label="Próximos passos da avaliação" className="flex flex-col gap-4" data-tour="assessment-next">
             <NextSteps steps={[
               { label: 'Responder a todas as secções', done: a.status !== 'em_curso', hint: a.status === 'em_curso' ? `Faltam ${total - answered} perguntas.` : undefined },
               { label: 'Receber as respostas do Pedro', done: a.sections.every((s) => s.delegated.every((d) => d.status === 'concluida')) },

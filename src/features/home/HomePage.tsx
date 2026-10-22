@@ -4,6 +4,7 @@ import { useAssessment, useAssets, useRisks, useRoadmapStatus, useServices, useT
 import { dateTime, RISK_LEVEL_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
+import { PageTour } from '../../core/onboarding/PageTour'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { HighlightCard, NextSteps, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
@@ -42,7 +43,7 @@ export function HomePage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title="Olá, Rui" subtitle={subtitle} />
+      <PageHeader eyebrow={org.name} title="Olá, Rui" subtitle={subtitle} help={<PageTour id="inicio" ready={!!assets.data && !!tasks.data} />} />
 
       <HighlightCard
         eyebrow="Avaliação de maturidade · NIS2 + RGPD"
@@ -58,16 +59,18 @@ export function HomePage() {
         {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} pela Marta Ferreira` : submitted ? 'Submetida qua., 14 out. às 10:12 · a Marta Ferreira está a rever' : delegatedText}
       </HighlightCard>
 
-      <NextSteps steps={[
-        { label: 'Registar os ativos que conhece', hint: 'Programas e serviços do dia a dia: ERP, email, portáteis.', done: (assets.data?.length ?? 0) > 0, to: `${base}/ativos?novo=1`, cta: 'Adicionar ativo' },
-        { label: 'Pedir ao Pedro o registo técnico', hint: 'Servidores, rede e máquinas da fábrica. Ele recebe uma tarefa.', done: !!assetTask, to: `${base}/ativos?atribuir=1`, cta: 'Atribuir' },
-        { label: 'Esperar que o Pedro conclua o registo', hint: assetTask ? `Prazo: ${assetTask.dueDate.split('-').reverse().slice(0, 2).join('/')}. Recebe uma notificação quando ele terminar.` : undefined, done: inventoryDone, to: `${base}/ativos`, cta: 'Ver inventário' },
-        { label: 'Terminar e submeter a avaliação', hint: 'O questionário de maturidade NIS2 + RGPD.', done: submitted, to: `${base}/avaliacao`, cta: 'Continuar' },
-        { label: 'A consultora valida resultados, roadmap e riscos', hint: 'Não precisa de fazer nada: é avisado quando terminar.', done: !!validated },
-        { label: 'Acompanhar os riscos e o plano de ação', hint: 'Comece pelos riscos altos.', done: false, to: validated ? `${base}/riscos` : undefined, cta: 'Ver riscos' },
-      ]} />
+      <div data-tour="home-steps">
+        <NextSteps steps={[
+          { label: 'Registar os ativos que conhece', hint: 'Programas e serviços do dia a dia: ERP, email, portáteis.', done: (assets.data?.length ?? 0) > 0, to: `${base}/ativos?novo=1`, cta: 'Adicionar ativo' },
+          { label: 'Pedir ao Pedro o registo técnico', hint: 'Servidores, rede e máquinas da fábrica. Ele recebe uma tarefa.', done: !!assetTask, to: `${base}/ativos?atribuir=1`, cta: 'Atribuir' },
+          { label: 'Esperar que o Pedro conclua o registo', hint: assetTask ? `Prazo: ${assetTask.dueDate.split('-').reverse().slice(0, 2).join('/')}. Recebe uma notificação quando ele terminar.` : undefined, done: inventoryDone, to: `${base}/ativos`, cta: 'Ver inventário' },
+          { label: 'Terminar e submeter a avaliação', hint: 'O questionário de maturidade NIS2 + RGPD.', done: submitted, to: `${base}/avaliacao`, cta: 'Continuar' },
+          { label: 'A consultora valida resultados, roadmap e riscos', hint: 'Não precisa de fazer nada: é avisado quando terminar.', done: !!validated },
+          { label: 'Acompanhar os riscos e o plano de ação', hint: 'Comece pelos riscos altos.', done: false, to: validated ? `${base}/riscos` : undefined, cta: 'Ver riscos' },
+        ]} />
+      </div>
 
-      <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3">
+      <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3" data-tour="home-summary">
         <h2 id="home-summary-title" className="sr-only">Resumo</h2>
         {seeRisks && risks.data && top ? (
           <StatCard to={`${base}/riscos`} label="Riscos" accent={<RiskLevelBadge level={top} />}

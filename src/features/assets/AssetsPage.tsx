@@ -6,6 +6,7 @@ import { ASSET_TYPE_LABEL, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
+import { PageTour } from '../../core/onboarding/PageTour'
 import {
   Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Explainer, NextAction, Note, Term, PageHeader, PendingRow, Person, ProgressBar, RiskLevelBadge,
   Segmented, SkeletonRows, StatCard, type ColumnDef,
@@ -40,7 +41,7 @@ function columns(inv: Inventory, opts: { risks: boolean; riskLink?: (a: Asset) =
   if (opts.riskLink) {
     const href = opts.riskLink
     cols.push({ id: 'action', header: '', enableSorting: false, meta: { align: 'right' }, cell: (c) => (
-      <Link to={href(c.row.original)} aria-label={`Registar risco sobre ${c.row.original.name}`} className="relative z-10 inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-[13px] font-bold text-brand hover:bg-brand-soft">
+      <Link to={href(c.row.original)} aria-label={`Registar risco sobre ${c.row.original.name}`} data-tour="register-risk" className="relative z-10 inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-[13px] font-bold text-brand hover:bg-brand-soft">
         <ShieldPlus className="size-4" aria-hidden />Registar risco
       </Link>
     ) })
@@ -106,8 +107,8 @@ export function AssetsPage() {
     <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>
   ) : (
     <>
-      {can('assign', 'asset_task') && <Button variant="secondary" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
-      {can('create', 'asset') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1' })}>Adicionar ativo</Button>}
+      {can('assign', 'asset_task') && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
+      {can('create', 'asset') && <Button data-tour="asset-add" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1' })}>Adicionar ativo</Button>}
     </>
   )
 
@@ -138,7 +139,8 @@ export function AssetsPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? 'Inventário preenchido pelo Rui Santos e pelo Pedro Almeida. Use-o para registar os riscos.' : undefined} actions={actions} />
+      <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? 'Inventário preenchido pelo Rui Santos e pelo Pedro Almeida. Use-o para registar os riscos.' : undefined}
+        help={<PageTour id={consultant ? 'ativos-consultor' : 'ativos-cliente'} ready={!!data} />} actions={actions} />
       {inv.error ? <ErrorState error={inv.error} onRetry={inv.refetch} /> : !data ? (
         <div role="status" aria-label="A carregar o inventário" className="flex flex-col gap-4"><div className="flex gap-4">{[0, 1, 2].map((i) => <div key={i} className="h-[104px] flex-1 animate-pulse rounded-[14px] bg-paper-soft" />)}</div><SkeletonRows rows={5} /></div>
       ) : (
@@ -160,7 +162,7 @@ export function AssetsPage() {
               ]} />
           )}
 
-          <section aria-labelledby="inventory-summary-title" className="flex gap-4 max-md:flex-col">
+          <section aria-labelledby="inventory-summary-title" className="flex gap-4 max-md:flex-col" data-tour="asset-summary">
             <h2 id="inventory-summary-title" className="sr-only">Resumo do inventário</h2>
             <StatCard label="Serviços críticos" value={data.services.length} caption={data.services.map((s) => s.name).join(' · ') || 'Ainda não definidos'} onClick={() => update({ servicos: '1' })} />
             <StatCard label="Ativos registados" value={data.assets.length} caption={byAnalyst.length && analystName ? `${byAnalyst.length} registados pelo ${analystName}` : consultant ? 'Pelo cliente' : 'Registados por si'} />
@@ -173,7 +175,7 @@ export function AssetsPage() {
 
           <h2 className="section-title -mb-3">Inventário <span className="font-semibold text-ink-soft">· {data.assets.length} {data.assets.length === 1 ? 'ativo' : 'ativos'}</span></h2>
           {data.assets.length > 0 && (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3" data-tour="asset-filters">
               <AssetFilters value={filters} inventory={data} shown={visible.length} total={data.assets.length}
                 onChange={(n: Partial<AssetFilterState>) => update(n as Record<string, string>)}
                 onClear={() => update(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))} />
@@ -190,7 +192,7 @@ export function AssetsPage() {
           )}
 
           {picked.length > 0 && can('edit', 'asset') && <BulkBar ids={picked} inventory={data} onDone={() => setPicked([])} />}
-          {params.get('vista') === 'servicos' ? <ServiceMap assets={visible} inventory={data} onOpen={(a) => update({ ativo: a.id })} /> : <DataTable
+          <div data-tour="asset-table">{params.get('vista') === 'servicos' ? <ServiceMap assets={visible} inventory={data} onOpen={(a) => update({ ativo: a.id })} /> : <DataTable
             caption="Ativos da organização"
             data={visible}
             columns={columns(data, { risks: inv.seeRisks, riskLink: consultant && can('create', 'risk') ? (a) => `/clientes/${org.slug}/riscos?novo=1&ativo=${a.id}` : undefined })}
@@ -204,7 +206,7 @@ export function AssetsPage() {
               : <p className="px-5 py-8 text-center text-[14px] text-ink-soft">Nenhum ativo corresponde aos filtros.</p>}
             selected={picked}
             onSelectedChange={can('edit', 'asset') && !consultant ? setPicked : undefined}
-          />}
+          />}</div>
           <Note plain className="-mt-3">Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
 
           <AssetDrawer key={`new-${params.get('novo')}`} inventory={data} asset={null} mode="new" open={params.get('novo') === '1'} onClose={() => update({ novo: null })} />
