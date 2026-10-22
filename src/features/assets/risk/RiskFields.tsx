@@ -47,13 +47,10 @@ export function LiveLevel({ probability, impact, label = 'Nível de risco', comp
   )
 }
 
-export function RiskFields({ values: v, onChange, errors, assets, users, actions }: Props) {
-  const org = useTenant()
-  const set = <K extends keyof RiskFormValues>(k: K, val: RiskFormValues[K]) => onChange({ ...v, [k]: val })
-  const asset = assets.find((a) => a.id === v.assetId)
-  const suggested = asset ? SUGGESTED_ACTIONS[asset.type] ?? [] : []
-  const owners = users.filter((u) => u.role !== 'consultor')
+type StepProps = Props
 
+function IdentifyFields({ values: v, onChange, errors, assets }: StepProps) {
+  const set = <K extends keyof RiskFormValues>(k: K, val: RiskFormValues[K]) => onChange({ ...v, [k]: val })
   return (
     <div className="flex flex-col gap-5">
       <Field label={<><Term k="ativo">Ativo</Term> afetado</>} optional hint={v.assetId === NO_ASSET ? 'Sem ativo: o risco é sobre a organização no seu todo.' : undefined}>
@@ -65,7 +62,15 @@ export function RiskFields({ values: v, onChange, errors, assets, users, actions
       <Field label="Descrição" optional hint="O que pode acontecer e porquê. Para a equipa técnica.">
         {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} value={v.description} onChange={(e) => set('description', e.target.value)} />}
       </Field>
+    </div>
+  )
+}
 
+function AssessFields({ values: v, onChange, errors, users }: StepProps) {
+  const set = <K extends keyof RiskFormValues>(k: K, val: RiskFormValues[K]) => onChange({ ...v, [k]: val })
+  const owners = users.filter((u) => u.role !== 'consultor')
+  return (
+    <div className="flex flex-col gap-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <ScaleField label="Probabilidade" term="probabilidade" kind="probability" value={v.probability} onChange={(x) => set('probability', x)} error={errors.probability} />
         <ScaleField label="Impacto" term="impacto" kind="impact" value={v.impact} onChange={(x) => set('impact', x)} error={errors.impact} />
@@ -75,7 +80,17 @@ export function RiskFields({ values: v, onChange, errors, assets, users, actions
       <Field label="Responsável pelo risco" hint="Na empresa cliente. Recebe as ações ligadas.">
         {(p) => <Select id={p.id} aria-describedby={p.describedBy} value={v.ownerId} onChange={(x) => set('ownerId', x)} options={owners.map((u) => ({ value: u.id, label: u.name }))} />}
       </Field>
+    </div>
+  )
+}
 
+function TreatFields({ values: v, onChange, errors, assets, actions }: StepProps) {
+  const org = useTenant()
+  const set = <K extends keyof RiskFormValues>(k: K, val: RiskFormValues[K]) => onChange({ ...v, [k]: val })
+  const asset = assets.find((a) => a.id === v.assetId)
+  const suggested = asset ? SUGGESTED_ACTIONS[asset.type] ?? [] : []
+  return (
+    <div className="flex flex-col gap-5">
       <OptionGroup<Treatment> name="treatment" legend={<><Term k="tratamento">Tratamento</Term> (<Term k="iso27005">ISO/IEC 27005</Term>)</>} columns={2} value={v.treatment} onChange={(x) => set('treatment', x)}
         options={(Object.keys(TREATMENT_LABEL) as Treatment[]).map((t) => ({ value: t, label: TREATMENT_LABEL[t], hint: TREATMENT_HINT[t] }))} />
 
@@ -112,6 +127,22 @@ export function RiskFields({ values: v, onChange, errors, assets, users, actions
       <Field label="O que isto significa para a empresa" optional hint="Uma frase simples que o Rui vê depois de validar o roadmap.">
         {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} rows={2} value={v.plainLanguage} onChange={(e) => set('plainLanguage', e.target.value)} placeholder="Ex.: Um vírus pode bloquear o servidor e parar a produção durante dias." />}
       </Field>
+    </div>
+  )
+}
+
+/** One wizard step of the new-risk form. */
+export function RiskStepFields({ step, ...props }: Props & { step: number }) {
+  return step === 0 ? <IdentifyFields {...props} /> : step === 1 ? <AssessFields {...props} /> : <TreatFields {...props} />
+}
+
+/** All steps in one form (editing an existing risk). */
+export function RiskFields(props: Props) {
+  return (
+    <div className="flex flex-col gap-5">
+      <IdentifyFields {...props} />
+      <AssessFields {...props} />
+      <TreatFields {...props} />
     </div>
   )
 }

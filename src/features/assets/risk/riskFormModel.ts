@@ -54,6 +54,19 @@ export function validateRisk(v: RiskFormValues): RiskErrors {
   return e
 }
 
+/** The three ISO/IEC 27005 steps of the new-risk wizard, with the fields each one validates. */
+export const RISK_STEPS: { title: string; hint: string; fields: (keyof RiskErrors)[] }[] = [
+  { title: 'Identificar', hint: 'O que pode correr mal e a que ativo', fields: ['threat'] },
+  { title: 'Avaliar', hint: 'Quão provável e quão grave', fields: ['probability', 'impact'] },
+  { title: 'Tratar', hint: 'O que fazer e quando rever', fields: ['treatment', 'actionIds', 'acceptanceJustification', 'residual'] },
+]
+
+/** Errors of one wizard step only, so people are not blocked by fields they have not reached yet. */
+export function validateRiskStep(v: RiskFormValues, step: number): RiskErrors {
+  const all = validateRisk(v)
+  return Object.fromEntries(Object.entries(all).filter(([k]) => RISK_STEPS[step].fields.includes(k as keyof RiskErrors)))
+}
+
 export function toRiskInput(v: RiskFormValues): RiskInput {
   return {
     assetId: v.assetId === NO_ASSET ? null : v.assetId,

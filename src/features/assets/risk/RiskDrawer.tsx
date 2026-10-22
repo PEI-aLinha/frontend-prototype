@@ -6,9 +6,10 @@ import { useTenant } from '../../../core/tenant'
 import { Button, Chip, Drawer, HistoryList, Note, RiskLevelBadge, Tabs, useToast } from '../../../ui'
 import { toHistory } from '../history'
 import { computeRiskLevel, describeRule } from './computeRiskLevel'
-import { RiskFields } from './RiskFields'
+import { RiskFields, RiskStepFields } from './RiskFields'
+import { RiskWizardSteps } from './RiskWizardSteps'
 import { RiskStatusActions } from './RiskStatusActions'
-import { emptyRisk, riskToValues, toRiskInput, validateRisk, type RiskErrors } from './riskFormModel'
+import { emptyRisk, RISK_STEPS, riskToValues, toRiskInput, validateRisk, validateRiskStep, type RiskErrors } from './riskFormModel'
 
 interface Props {
   open: boolean
@@ -30,18 +31,31 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
   const [values, setValues] = useState(() => (risk ? riskToValues(risk, links.filter((l) => l.riskId === risk.id).map((l) => l.remediationActionId)) : emptyRisk(initialAssetId)))
   const [errors, setErrors] = useState<RiskErrors>({})
   const [touched, setTouched] = useState(false)
+  const [step, setStep] = useState(0)
+  const isWizard = !risk
+  const lastStep = step === RISK_STEPS.length - 1
 
   const onChange = (v: typeof values) => {
     setValues(v)
-    if (touched) setErrors(validateRisk(v))
+    if (touched) setErrors(isWizard ? validateRiskStep(v, step) : validateRisk(v))
+  }
+
+  const next = () => {
+    const e = validateRiskStep(values, step)
+    setErrors(e)
+    if (Object.keys(e).length) return
+    setTouched(false)
+    setStep(step + 1)
   }
 
   const submit = () => {
+    if (isWizard && !lastStep) return next()
     setTouched(true)
     const e = validateRisk(values)
     setErrors(e)
     if (Object.keys(e).length) {
       toast.show('Há campos por preencher', 'error')
+      if (isWizard) setStep(RISK_STEPS.findIndex((_, i) => Object.keys(validateRiskStep(values, i)).length > 0))
       return
     }
     save.mutate({ input: toRiskInput(values), id: risk?.id }, {
@@ -57,7 +71,12 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
 
   const form = (
     <form id="risk-form" noValidate onSubmit={(e) => { e.preventDefault(); submit() }}>
-      <RiskFields values={values} onChange={onChange} errors={errors} assets={assets} users={users} actions={actions} />
+      {isWizard ? (
+        <>
+          <RiskWizardSteps step={step} onGo={(i) => { setErrors({}); setStep(i) }} />
+          <RiskStepFields step={step} values={values} onChange={onChange} errors={errors} assets={assets} users={users} actions={actions} />
+        </>
+      ) : <RiskFields values={values} onChange={onChange} errors={errors} assets={assets} users={users} actions={actions} />}
     </form>
   )
 
@@ -65,7 +84,12 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
     <Drawer open={open} onOpenChange={(o) => !o && onClose()} width={600} eyebrow="Registo de riscos · ISO/IEC 27005" title={risk ? risk.threat : 'Novo risco'}
       description={risk ? undefined : 'O nível é calculado pelo sistema a partir da probabilidade e do impacto.'}
       chip={risk ? <><RiskLevelBadge level={computeRiskLevel(risk.probability, risk.impact).level} /><Chip tone="neutral">{RISK_STATUS_LABEL[risk.status]}</Chip></> : undefined}
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form="risk-form" loading={save.isPending}>{risk ? 'Guardar alterações' : 'Registar risco'}</Button></>}>
+      footer={<>
+        {isWizard && step > 0
+          ? <Button variant="secondary" onClick={() => { setErrors({}); setStep(step - 1) }}>Voltar</Button>
+          : <Button variant="secondary" onClick={onClose}>Cancelar</Button>}
+        <Button type="submit" form="risk-form" loading={save.isPending}>{risk ? 'Guardar alterações' : lastStep ? 'Registar risco' : 'Seguinte'}</Button>
+      </>}>
       {risk ? <Tabs tabs={[{ value: 'risco', label: 'Risco', content: form }, { value: 'estado', label: 'Estado', content: <RiskStatusActions risk={risk} onDone={onClose} /> }, { value: 'historico', label: 'Histórico', content: <RiskHistory riskId={risk.id} users={users} /> }]} /> : form}
     </Drawer>
   )
