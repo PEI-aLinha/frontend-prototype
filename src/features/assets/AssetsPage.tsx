@@ -116,11 +116,13 @@ export function AssetsPage() {
   const analystName = task ? data?.user(task.assigneeId)?.name : undefined
   const selected = data?.assets.find((a) => a.id === params.get('ativo')) ?? null
 
+  const assignIsNext = !!data && data.assets.length > 0 && state === 'empty' && can('create', 'asset') && can('assign', 'asset_task')
   const actions = consultant ? (
     <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>
   ) : (
     <>
-      {can('assign', 'asset_task') && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
+      {/* While the next-action banner asks for the same assignment, the header button would only repeat it. */}
+      {can('assign', 'asset_task') && !assignIsNext && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
       {can('create', 'asset') && <Button data-tour="asset-add" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1' })}>Adicionar ativo</Button>}
     </>
   )
@@ -165,7 +167,7 @@ export function AssetsPage() {
             <StatCard label="Serviços críticos" value={data.services.length} caption={data.services.map((s) => s.name).join(' · ') || 'Ainda não definidos'} onClick={() => update({ servicos: '1' })} />
             <StatCard label="Ativos registados" value={data.assets.length} caption={byAnalyst.length && analystName ? `${byAnalyst.length} registados pelo ${analystName}` : consultant ? 'Pelo cliente' : 'Registados por si'} />
             <StatCard label="Por registar"
-              value={state === 'done' ? '0' : state === 'assigned' ? `${byAnalyst.length} de ${task?.expectedCount ?? 4}` : '—'}
+              value={state === 'done' ? '0' : state === 'assigned' ? `${byAnalyst.length} de ${task?.expectedCount ?? 4}` : 'Por atribuir'}
               caption={state === 'assigned'
                 ? <><ProgressBar value={byAnalyst.length} max={task?.expectedCount ?? 4} label="Ativos registados pelo técnico" className="mb-1.5" />{task?.scope}</>
                 : state === 'done' ? 'Inventário completo' : task?.scope ?? 'Servidores, rede e sistemas de produção'} />
