@@ -73,3 +73,11 @@ test('"question not found" has an h1 and a way back to the tasks', async ({ page
   await page.getByRole('main').getByRole('link', { name: 'Voltar às tarefas' }).click()
   await expect(page).toHaveURL(/\/tarefas(\?|$)/)
 })
+
+test('registration says every field is required and marks them', async ({ page }) => {
+  await start(page, '/registo/conta', 'rui', 'c1')
+  await expect(page.getByText('Todos os campos são obrigatórios.')).toBeVisible()
+  for (const label of ['Nome completo', 'Email profissional', 'Palavra-passe', 'Repetir a palavra-passe']) {
+    await expect(page.getByLabel(label, { exact: true })).toHaveAttribute('aria-required', 'true')
+  }
+})

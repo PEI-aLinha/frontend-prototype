@@ -76,32 +76,33 @@ export function CreateAccountPage() {
       <header className="flex flex-col gap-3">
         <StepBadge>Passo 1 de 3</StepBadge>
         <h1 className="text-[1.875rem] font-extrabold title-tight">Crie a sua conta</h1>
+        <p className="text-[0.875rem] text-ink-soft">Todos os campos são obrigatórios.</p>
       </header>
 
       <form noValidate onSubmit={submit} className="flex flex-col gap-5">
           <div className="grid items-start gap-5 md:grid-cols-2">
             <Field label="Nome completo" error={errors.name}>
-              {(p) => <TextInput ref={(el) => { refs.current.name = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ex.: Rui Santos" />}
+              {(p) => <TextInput ref={(el) => { refs.current.name = el }} id={p.id} aria-required={p.required} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="name" value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="Ex.: Rui Santos" />}
             </Field>
             <Field label="Email profissional" hint="É para aqui que enviamos os avisos de prazos e incidentes." error={errors.email}>
-              {(p) => <TextInput ref={(el) => { refs.current.email = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} type="email" autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="nome@empresa.pt" />}
+              {(p) => <TextInput ref={(el) => { refs.current.email = el }} id={p.id} aria-required={p.required} aria-describedby={p.describedBy} invalid={p.invalid} type="email" autoComplete="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="nome@empresa.pt" />}
             </Field>
             <Field label="Palavra-passe" error={errors.password}>
               {(p) => (
                 <div className="flex flex-col gap-2">
-                  <PasswordInput ref={(el) => { refs.current.password = el }} id={p.id} aria-describedby={[p.describedBy, 'password-rules'].filter(Boolean).join(' ')} invalid={p.invalid} autoComplete="new-password" value={form.password} onChange={(e) => set('password', e.target.value)} />
+                  <PasswordInput ref={(el) => { refs.current.password = el }} id={p.id} aria-required={p.required} aria-describedby={[p.describedBy, 'password-rules'].filter(Boolean).join(' ')} invalid={p.invalid} autoComplete="new-password" value={form.password} onChange={(e) => set('password', e.target.value)} />
                   <PasswordChecklist id="password-rules" password={form.password} />
                 </div>
               )}
             </Field>
             <Field label="Repetir a palavra-passe" error={errors.confirm}>
-              {(p) => <PasswordInput ref={(el) => { refs.current.confirm = el }} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="new-password" value={form.confirm} onChange={(e) => set('confirm', e.target.value)} />}
+              {(p) => <PasswordInput ref={(el) => { refs.current.confirm = el }} id={p.id} aria-required={p.required} aria-describedby={p.describedBy} invalid={p.invalid} autoComplete="new-password" value={form.confirm} onChange={(e) => set('confirm', e.target.value)} />}
             </Field>
           </div>
 
           <div className="flex flex-col gap-1.5">
             <label className="flex cursor-pointer items-start gap-3 text-[0.875rem] text-ink">
-              <input ref={(el) => { refs.current.terms = el }} type="checkbox" checked={form.terms} onChange={(e) => set('terms', e.target.checked)} aria-invalid={!!errors.terms || undefined} aria-describedby={errors.terms ? 'terms-error' : undefined} className="mt-[3px] size-[18px] shrink-0 accent-brand" />
+              <input ref={(el) => { refs.current.terms = el }} type="checkbox" aria-required="true" checked={form.terms} onChange={(e) => set('terms', e.target.checked)} aria-invalid={!!errors.terms || undefined} aria-describedby={errors.terms ? 'terms-error' : undefined} className="mt-[3px] size-[18px] shrink-0 accent-brand" />
               <span>Li e aceito os termos de utilização e a política de privacidade. Os dados da empresa ficam guardados na União Europeia.</span>
             </label>
             {errors.terms && <p id="terms-error" role="alert" className="text-[0.8125rem] font-semibold text-danger">{errors.terms}</p>}

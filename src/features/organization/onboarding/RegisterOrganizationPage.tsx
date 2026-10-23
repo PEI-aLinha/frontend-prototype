@@ -80,8 +80,8 @@ export function RegisterOrganizationPage() {
     toast.show('Guardado. Pode fechar a página e continuar mais tarde a partir daqui.')
   }
 
-  const text = (key: keyof OrganizationForm, extra: Partial<Parameters<typeof TextInput>[0]> = {}) => (p: { id: string; describedBy?: string; invalid: boolean }) => (
-    <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} value={form[key]} onChange={(e) => set(key, e.target.value)} {...extra} />
+  const text = (key: keyof OrganizationForm, extra: Partial<Parameters<typeof TextInput>[0]> = {}) => (p: { id: string; describedBy?: string; invalid: boolean; required: boolean }) => (
+    <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} aria-required={p.required} value={form[key]} onChange={(e) => set(key, e.target.value)} {...extra} />
   )
 
   return (
@@ -90,6 +90,7 @@ export function RegisterOrganizationPage() {
         <StepBadge>Passo 3 de 3</StepBadge>
         <h1 className="text-[1.875rem] font-extrabold title-tight">Registe a sua organização</h1>
         <p className="text-[1rem] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
+        <p className="text-[0.875rem] text-ink-soft">Todos os campos são obrigatórios.</p>
       </header>
 
       {restored && organization && <Note>Retomámos o registo que deixou a meio. Confirme os dados e termine quando quiser.</Note>}
@@ -106,17 +107,17 @@ export function RegisterOrganizationPage() {
           <Section title="Atividade">
             <div className={row}>
               <Field label="Setor" error={errors.sector}>
-                {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={form.sector} placeholder="Escolher o setor…" onChange={(v) => setForm((f) => ({ ...f, sector: v, subsector: '' }))} options={SECTORS.map((s) => ({ value: s.id, label: s.label }))} />}
+                {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} required={p.required} value={form.sector} placeholder="Escolher o setor…" onChange={(v) => setForm((f) => ({ ...f, sector: v, subsector: '' }))} options={SECTORS.map((s) => ({ value: s.id, label: s.label }))} />}
               </Field>
               <Field label="Subsetor" hint={sector && sector.subsectors.length === 0 ? 'Este setor não tem subsetores.' : undefined} error={errors.subsector}>
-                {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={form.subsector} placeholder={sector ? (sector.subsectors.length ? 'Escolher o subsetor…' : 'Não se aplica') : 'Escolha primeiro o setor'} disabled={!sector || sector.subsectors.length === 0} onChange={(v) => set('subsector', v)} options={(sector?.subsectors ?? []).map((s) => ({ value: s.id, label: s.label }))} />}
+                {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} required={!!sector && sector.subsectors.length > 0} value={form.subsector} placeholder={sector ? (sector.subsectors.length ? 'Escolher o subsetor…' : 'Não se aplica') : 'Escolha primeiro o setor'} disabled={!sector || sector.subsectors.length === 0} onChange={(v) => set('subsector', v)} options={(sector?.subsectors ?? []).map((s) => ({ value: s.id, label: s.label }))} />}
               </Field>
             </div>
             <Field
               label={<WithHelp label="Serviços prestados" help="O que a empresa faz ou vende, e a quem." />}
               error={errors.services}
             >
-              {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} value={form.services} onChange={(e) => set('services', e.target.value)} placeholder="Ex.: Fabrico de componentes para a indústria automóvel." />}
+              {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} aria-required={p.required} value={form.services} onChange={(e) => set('services', e.target.value)} placeholder="Ex.: Fabrico de componentes para a indústria automóvel." />}
             </Field>
           </Section>
 
@@ -126,7 +127,7 @@ export function RegisterOrganizationPage() {
               <Field label={<WithHelp label="Volume de negócios anual" help="Em euros, sem cêntimos." />} error={errors.turnover}>
                 {(p) => (
                   <div className="relative">
-                    <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} inputMode="numeric" value={form.turnover} onChange={(e) => set('turnover', e.target.value)} placeholder="Ex.: 18 500 000" className="pr-10" />
+                    <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} aria-required={p.required} inputMode="numeric" value={form.turnover} onChange={(e) => set('turnover', e.target.value)} placeholder="Ex.: 18 500 000" className="pr-10" />
                     <span aria-hidden className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[0.9375rem] text-muted">€</span>
                   </div>
                 )}

@@ -9,7 +9,8 @@ interface FieldProps {
   hint?: ReactNode
   error?: string
   optional?: boolean
-  children: (props: { id: string; describedBy?: string; invalid: boolean }) => ReactNode
+  /** `required` is true unless the field is optional: pass it on as aria-required (WCAG 3.3.2). */
+  children: (props: { id: string; describedBy?: string; invalid: boolean; required: boolean }) => ReactNode
   className?: string
 }
 
@@ -25,7 +26,7 @@ export function Field({ label, hint, error, optional, children, className }: Fie
         {label}
         {optional && <span className="font-normal text-muted"> (opcional)</span>}
       </label>
-      {children({ id, describedBy, invalid: !!error })}
+      {children({ id, describedBy, invalid: !!error, required: !optional })}
       {hint && !error && <p id={hintId} className="text-[0.8125rem] text-muted">{hint}</p>}
       {error && <p id={errorId} role="alert" className="text-[0.8125rem] font-semibold text-danger">{error}</p>}
     </div>
@@ -58,9 +59,10 @@ interface SelectProps {
   ariaLabel?: string
   size?: 'md' | 'sm'
   disabled?: boolean
+  required?: boolean
 }
 
-export function Select({ id, value, onChange, options, placeholder = 'Escolher…', invalid, describedBy, ariaLabel, size = 'md', disabled }: SelectProps) {
+export function Select({ id, value, onChange, options, placeholder = 'Escolher…', invalid, describedBy, ariaLabel, size = 'md', disabled, required }: SelectProps) {
   return (
     <RSelect.Root value={value || undefined} onValueChange={onChange} disabled={disabled}>
       <RSelect.Trigger
@@ -68,6 +70,7 @@ export function Select({ id, value, onChange, options, placeholder = 'Escolher�
         aria-label={ariaLabel}
         aria-describedby={describedBy}
         aria-invalid={invalid || undefined}
+        aria-required={required || undefined}
         className={cn(controlClass(invalid, size), 'flex items-center justify-between gap-2 text-left data-[placeholder]:text-muted [&>span]:truncate')}
       >
         <RSelect.Value placeholder={placeholder} />
