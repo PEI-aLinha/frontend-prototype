@@ -115,7 +115,7 @@ export function IntegrationsPage() {
   const unused = integrations.data?.filter((c) => !c.provider.applies) ?? []
   const connected = usable.filter((c) => c.status === 'ligado').length
   const card = (c: IntegrationConnection) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />
-  const firstToConnect = isConsultant ? undefined : integrations.data?.find((c) => c.provider.applies && c.status !== 'ligado' && (isOwner || c.assignedTo === persona.userId))
+  const firstToConnect = isConsultant ? undefined : integrations.data?.find((c) => c.provider.applies && c.status !== 'ligado' && (isOwner ? c.status !== 'pedido' : c.assignedTo === persona.userId))
   const nextAction = isOwner && pending > 0
     ? <NextAction title={`Reveja ${pending} ${pending === 1 ? 'ativo encontrado' : 'ativos encontrados'}`} text="Só entram no inventário depois de decidir: acrescentar, associar a um que já existe ou ignorar." cta="Ver sugestões" onClick={() => document.getElementById('int-disc')?.scrollIntoView({ behavior: 'smooth' })} />
     : firstToConnect && <NextAction title={`Ligue ${firstToConnect.provider.name}`} text={firstToConnect.provider.description} cta="Ligar" onClick={() => setConnecting(firstToConnect.provider)} />
