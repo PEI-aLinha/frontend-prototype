@@ -37,7 +37,8 @@ function enhanceTooltip(framesLeft = ENHANCE_MAX_FRAMES) {
   primary.focus()
 }
 
-async function runTour(id: TourId, onEnd: () => void): Promise<boolean> {
+/** Runs the tour; `signal` aborts it (page left or persona changed) while loading or on screen. */
+async function runTour(id: TourId, onEnd: () => void, signal: AbortSignal): Promise<boolean> {
   const steps = resolveSteps(TOURS[id])
   if (steps.length === 0) return false
   // Loaded on demand: the tour library stays out of the initial bundle.
@@ -46,6 +47,7 @@ async function runTour(id: TourId, onEnd: () => void): Promise<boolean> {
     import('intro.js/minified/introjs.min.css'),
   ])
   await import('./tour.css')
+  if (signal.aborted) return false
   const tour = introJs.tour().setOptions({
     steps,
     nextLabel: 'Seguinte',
@@ -66,6 +68,7 @@ async function runTour(id: TourId, onEnd: () => void): Promise<boolean> {
   })
   tour.onAfterChange(() => { requestAnimationFrame(() => enhanceTooltip()) })
   tour.onExit(onEnd)
+  signal.addEventListener('abort', () => { void tour.exit(true) }, { once: true })
   await tour.start()
   return true
 }
@@ -76,17 +79,29 @@ export function PageTour({ id, ready }: { id: TourId; ready: boolean }) {
   const toast = useToast()
   const button = useRef<HTMLButtonElement>(null)
   const started = useRef(false)
+  const running = useRef<AbortController | null>(null)
+
+  // The overlay must not outlive the page that opened it.
+  useEffect(() => () => running.current?.abort(), [id])
 
   const start = useCallback(async () => {
     started.current = true
+    running.current?.abort()
+    const controller = new AbortController()
+    running.current = controller
+    const { signal } = controller
     try {
       const shown = await runTour(id, () => {
+        // Closed because the page went away: the person did not finish it here.
+        if (signal.aborted) return
         markTourSeen(id)
         // Back to the button (also shows where to reopen the tour), after Intro.js has removed its layers.
         requestAnimationFrame(() => button.current?.focus())
-      })
+      }, signal)
+      if (signal.aborted) return
       if (!shown) toast.show('Não há nada para mostrar neste ecrã de momento.', 'error')
     } catch {
+      if (signal.aborted) return
       toast.show('Não foi possível abrir a visita guiada. Tente outra vez.', 'error')
     }
   }, [id, toast])
