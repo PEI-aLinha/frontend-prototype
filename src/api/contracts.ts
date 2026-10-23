@@ -569,6 +569,10 @@ export interface ChatStoredMessage {
   error?: boolean
   createdAt: IsoDate
   table?: ChatTable
+  /** Mockup: só os metadados do ficheiro (o conteúdo iria para o armazenamento de objetos). */
+  attachments?: { id: Id; name: string; size: number; type: string }[]
+  /** Pedido de documento da consultora; `fulfilledBy` é a mensagem do cliente com o anexo. */
+  documentRequest?: { title: string; fulfilledBy?: Id }
 }
 
 export interface ChatConversation {
@@ -577,6 +581,8 @@ export interface ChatConversation {
   userId: Id
   messages: ChatStoredMessage[]
   topic?: string
+  /** Nome escolhido pelo utilizador (não é substituído pelo resumo automático). */
+  topicRenamed?: boolean
   awaitingReview: boolean
   reviewedMessageCount?: number
   createdAt: IsoDate

@@ -37,6 +37,8 @@ function toWidgetConversation(saved: ChatConversation): Conversation {
       text: message.text,
       source: message.source,
       table: message.table,
+      attachments: message.attachments,
+      documentRequest: message.documentRequest,
       error: message.error,
       createdAt: message.createdAt,
     })),
@@ -45,6 +47,7 @@ function toWidgetConversation(saved: ChatConversation): Conversation {
     unread: false,
     awaitingReview: saved.awaitingReview,
     topic: saved.topic,
+    topicRenamed: saved.topicRenamed,
     createdAt: saved.createdAt,
     serverUpdatedAt: saved.updatedAt,
     // Dono no servidor: o widget compara com o senderId para saber se a consultora está a rever um cliente
@@ -65,10 +68,13 @@ function toStoredConversation(conversation: Conversation, scopeKey: string): Cha
       text: message.text,
       source: message.source,
       table: message.table,
+      attachments: message.attachments,
+      documentRequest: message.documentRequest,
       error: message.error,
       createdAt: message.createdAt ?? timestamp,
     })),
     topic: conversation.topic,
+    topicRenamed: conversation.topicRenamed,
     awaitingReview: conversation.awaitingReview,
     createdAt: conversation.createdAt ?? timestamp,
     updatedAt: timestamp,
@@ -98,7 +104,11 @@ export function GlobalChatWidget() {
   const handleSend = useCallback((_text: string, messages: ChatMessage[]) => sendMessage({
     messages: messages
       .filter((message) => message.role !== 'notice')
-      .map(({ role, text }) => ({ role: role as 'user' | 'bot', text })),
+      // O modelo não recebe o ficheiro (mockup): só sabe que foi anexado
+      .map(({ role, text, attachments }) => ({
+        role: role as 'user' | 'bot',
+        text: [text, ...(attachments ?? []).map((a) => `[Anexo: ${a.name}]`)].filter(Boolean).join('\n'),
+      })),
   }), [sendMessage])
   const handleSave = useCallback(
     (conversation: Conversation) => saveConversation(toStoredConversation(conversation, scopeKey)).then(() => undefined),

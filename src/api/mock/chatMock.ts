@@ -49,8 +49,13 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
           const orgSlug = scopeKey.replace(/^org:/, '')
           const org = state.organizations.find((item) => item.slug === orgSlug)
           const consultant = state.users.find((user) => user.id === org?.consultantId)
+          // Resposta a um pedido de documento da consultora: a notificação fala do documento
+          const last = result.messages.filter((message) => message.role !== 'notice').at(-1)
+          const sentDocument = last?.role === 'user' && last.attachments?.length ? `«${last.attachments[0].name}»` : undefined
           return consultant && org
-            ? notify(next, { organizationId: org.id, userId: consultant.id, kind: 'chat', title: 'Resposta do assistente para rever', body: result.topic ? `Reveja a conversa: ${result.topic}.` : 'Há uma resposta do assistente à sua espera.', link: `/clientes/${orgSlug}/visao-geral?chat=${result.id}` })
+            ? notify(next, sentDocument
+              ? { organizationId: org.id, userId: consultant.id, kind: 'chat', title: 'Documento recebido', body: `O cliente enviou ${sentDocument}.`, link: `/clientes/${orgSlug}/visao-geral?chat=${result.id}` }
+              : { organizationId: org.id, userId: consultant.id, kind: 'chat', title: 'Resposta do assistente para rever', body: result.topic ? `Reveja a conversa: ${result.topic}.` : 'Há uma resposta do assistente à sua espera.', link: `/clientes/${orgSlug}/visao-geral?chat=${result.id}` })
             : next
         }
         return next
@@ -100,6 +105,13 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
     send: (organizationId: Id | undefined, messages: ChatMessageInput[]) =>
       simulate(() => {
         const latest = messages.at(-1)?.text.toLowerCase() ?? ''
+
+        const attached = [...(messages.at(-1)?.text ?? '').matchAll(/\[Anexo: (.+?)\]/g)].map((match) => match[1])
+        if (attached.length) {
+          return {
+            text: `Recebi ${attached.length === 1 ? `o documento «${attached[0]}»` : `${attached.length} documentos`}. Neste protótipo ainda não leio o conteúdo, mas fica guardado na conversa e a consultora pode consultá-lo.`,
+          }
+        }
 
         if (latest.includes('responsabilidades')) {
           return {

@@ -111,3 +111,59 @@ test('Rui pergunta pelos prazos legais e recebe uma tabela', async ({ page }) =>
   await expect(table.getByRole('row', { name: /Notificação de dados.*CNPD.*72 horas/ })).toBeVisible()
   await expect(chat.getByRole('tab', { name: /Prazos legais/ })).not.toContainText(AWAITING)
 })
+const PDF = { name: 'politica-seguranca.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 mock') }
+
+async function chooseFile(page: Page, trigger: Locator) {
+  const chooser = page.waitForEvent('filechooser')
+  await trigger.click()
+  await (await chooser).setFiles(PDF)
+}
+
+test('Documentos - Rui anexa um documento e o assistente confirma a receção', async ({ page }) => {
+  await start(page, `${ORG}/inicio`, 'rui')
+  const chat = await openChat(page, 'Assistente Alinha')
+
+  await chooseFile(page, chat.getByRole('button', { name: 'Anexar documento' }))
+  await expect(chat.getByRole('list', { name: 'Ficheiros por enviar' })).toContainText(PDF.name)
+  await chat.getByRole('button', { name: 'Enviar mensagem' }).click()
+
+  await expect(chat.getByRole('link', { name: `Abrir ${PDF.name}` })).toBeVisible()
+  await expect(chat.getByText(`Recebi o documento «${PDF.name}»`, { exact: false })).toBeVisible()
+  await chat.getByRole('button', { name: /Documentos da conversa \(1\)/ }).click()
+  await expect(chat.getByText('Cliente · ', { exact: false })).toBeVisible()
+})
+
+test('Documentos - Marta pede um documento e o Rui envia-o na conversa', async ({ page }) => {
+  // 1. Rui pede o rascunho (fica à espera de revisão)
+  await start(page, `${ORG}/inicio`, 'rui')
+  let chat = await openChat(page, 'Assistente Alinha')
+  await chat.getByRole('button', { name: DRAFT_SUGGESTION }).click()
+  await expect(chat.getByRole('tab', { name: new RegExp(DRAFT_TOPIC) })).toContainText(AWAITING)
+  await page.waitForTimeout(SAVE_SETTLE_MS)
+
+  // 2. Marta pede a política atual e marca como revisto
+  await page.goto(`${CLIENT_MARTA}?as=marta`)
+  chat = await openChat(page, 'Assistente Alinha')
+  await chat.getByRole('tab', { name: new RegExp(DRAFT_TOPIC) }).click({ timeout: 15_000 })
+  await chat.getByRole('button', { name: 'Pedir documento ao cliente' }).click()
+  await chat.getByRole('button', { name: 'Política de segurança', exact: true }).click()
+  await chat.getByRole('button', { name: 'Enviar pedido' }).click()
+  await expect(chat.getByText('A aguardar o envio pelo cliente.')).toBeVisible()
+  await chat.getByRole('button', { name: 'Marcar como revisto' }).click()
+  await expect(chat.getByText(/Conversa já revista/)).toBeVisible({ timeout: 10_000 })
+
+  // 3. Rui responde ao pedido com o ficheiro: volta para a consultora
+  await page.goto(`${ORG}/inicio?as=rui`)
+  chat = await openChat(page, 'Assistente Alinha')
+  await chooseFile(page, chat.getByRole('button', { name: 'Enviar documento' }))
+  await expect(chat.getByText(`Enviado: ${PDF.name}`)).toBeVisible()
+  await expect(chat.getByRole('tab', { name: new RegExp(DRAFT_TOPIC) })).toContainText(AWAITING)
+  await page.waitForTimeout(SAVE_SETTLE_MS)
+
+  // 4. Marta vê o documento na conversa
+  await page.goto(`${CLIENT_MARTA}?as=marta`)
+  chat = await openChat(page, 'Assistente Alinha')
+  await chat.getByRole('tab', { name: new RegExp(DRAFT_TOPIC) }).click({ timeout: 15_000 })
+  await expect(chat.getByText(`Enviado: ${PDF.name}`)).toBeVisible()
+  await expect(chat.getByRole('button', { name: /Documentos da conversa \(1\)/ })).toBeVisible()
+})

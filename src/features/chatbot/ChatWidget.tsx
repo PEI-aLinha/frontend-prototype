@@ -5,6 +5,8 @@ import { ChatExpanded } from './ChatExpanded'
 import { newChatId } from './ChatTypes'
 import { OPEN_CHAT_EVENT, type OpenChatOptions } from './ChatControl'
 import type { BotReply, BotReplyObject, ChatMessage, Conversation, Suggestion } from './ChatTypes'
+import type { SendOptions } from './ChatThread'
+import { keepAttachment } from './attachmentStore'
 import { Button, ErrorState, SkeletonRows, useToast } from '../../ui'
 
 export type { BotReply, ChatMessage, Suggestion } from './ChatTypes'
@@ -136,6 +138,8 @@ export function ChatWidget({
   const dirty = useRef<Set<string>>(new Set())
   /** Conversas fechadas localmente: a sincronização não as pode ressuscitar. */
   const closed = useRef<Set<string>>(new Set())
+  /** Saves ainda em curso por conversa: até terminarem, a versão do servidor pode estar desatualizada. */
+  const saving = useRef<Map<string, number>>(new Map())
   /** Fila de saves: chegam ao servidor pela ordem em que foram pedidos. */
   const saveQueue = useRef<Promise<unknown>>(Promise.resolve())
 
@@ -175,7 +179,7 @@ export function ChatWidget({
         if (local.serverUpdatedAt === server.serverUpdatedAt) continue
         // versão do servidor mais antiga do que a que já temos: ignorar
         if (local.serverUpdatedAt && server.serverUpdatedAt && server.serverUpdatedAt < local.serverUpdatedAt) continue
-        if (dirty.current.has(local.id) || local.typing) continue // não pisar alterações locais
+        if (dirty.current.has(local.id) || saving.current.has(local.id) || local.typing) continue // não pisar alterações locais
         const viewing = openRef.current && activeRef.current === local.id
         const merged = mergeMessages(local.messages, server.messages)
           // o aviso "Em revisão" só vale enquanto a conversa estiver à espera de revisão
@@ -186,6 +190,7 @@ export function ChatWidget({
           messages: merged,
           awaitingReview: server.awaitingReview,
           topic: server.topic ?? local.topic,
+          topicRenamed: server.topicRenamed ?? local.topicRenamed,
           createdAt: server.createdAt ?? local.createdAt,
           serverUpdatedAt: server.serverUpdatedAt,
           ownerId: server.ownerId ?? local.ownerId,
@@ -207,9 +212,15 @@ export function ChatWidget({
     conversations
       .filter((c) => ids.includes(c.id) && (!isReviewing(c, canReview, senderId) || c.awaitingReview))
       .forEach((c) => {
+        saving.current.set(c.id, (saving.current.get(c.id) ?? 0) + 1)
         saveQueue.current = saveQueue.current
           .then(() => onSaveConversation(c))
           .catch(() => toast.show('Não foi possível guardar a conversa.', 'error'))
+          .finally(() => {
+            const left = (saving.current.get(c.id) ?? 1) - 1
+            if (left > 0) saving.current.set(c.id, left)
+            else saving.current.delete(c.id)
+          })
       })
   }, [canReview, conversations, loading, onSaveConversation, ready, senderId, toast])
 
@@ -263,11 +274,12 @@ export function ChatWidget({
       awaitingReview: c.awaitingReview || awaitingReview,
     }))
 
-  const send = async (raw: string, from?: Suggestion) => {
+  const send = async (raw: string, from?: Suggestion, { files = [], answers }: SendOptions = {}) => {
     const text = raw.trim()
-    if (!text || !active || active.typing) return
+    if ((!text && files.length === 0) || !active || active.typing) return
     const id = active.id
     const reviewing = isReviewing(active, canReview, senderId)
+    const attachments = files.length ? files.map(keepAttachment) : undefined
 
     // Consultora a responder a um cliente: a mensagem é dela (lado do assistente) e a IA não é chamada.
     if (reviewing) {
@@ -276,21 +288,39 @@ export function ChatWidget({
         role: 'bot',
         authorId: senderId,
         text,
+        attachments,
         createdAt: new Date().toISOString(),
       }
-      patch(id, (c) => ({ ...c, messages: [...c.messages, consultantMsg], draft: '', topic: c.topic ?? deriveTopic(text) }))
+      patch(id, (c) => ({ ...c, messages: [...c.messages, consultantMsg], draft: '', topic: c.topic ?? deriveTopic(text || files[0].name) }))
+      return
+    }
+
+    // Resposta a um pedido de documento da consultora: vai para ela (fica à espera de revisão) e a IA não é chamada.
+    if (answers && attachments) {
+      const stamp = new Date().toISOString()
+      const userMsg: ChatMessage = { id: newChatId('msg'), role: 'user', authorId: senderId, text, attachments, createdAt: stamp }
+      const notice: ChatMessage = { id: newChatId('msg'), role: 'notice', text: 'Documento enviado à consultora. Ela vai analisá-lo e responder aqui.', createdAt: stamp }
+      patch(id, (c) => ({
+        ...c,
+        messages: [
+          ...c.messages.map((m) => m.id === answers && m.documentRequest ? { ...m, documentRequest: { ...m.documentRequest, fulfilledBy: userMsg.id } } : m),
+          userMsg,
+          notice,
+        ],
+        awaitingReview: true,
+      }))
       return
     }
 
     // Conversa própria (cliente ou consultora): és o "user" e a IA responde.
-    const userMsg: ChatMessage = { id: newChatId('msg'), role: 'user', authorId: senderId, text, createdAt: new Date().toISOString() }
+    const userMsg: ChatMessage = { id: newChatId('msg'), role: 'user', authorId: senderId, text, attachments, createdAt: new Date().toISOString() }
     const history = [...active.messages, userMsg].filter((m) => m.role !== 'notice')
     patch(id, (c) => ({
       ...c,
       messages: [...c.messages, userMsg],
       draft: '',
       typing: true,
-      topic: c.topic ?? from?.topic ?? deriveTopic(text),
+      topic: c.topic ?? from?.topic ?? deriveTopic(text || files[0].name),
     }))
     try {
       const reply = await (onSend ? onSend(text, history) : mockReply(text))
@@ -310,11 +340,11 @@ export function ChatWidget({
 
       // Resumo do tema (opcional, em segundo plano)
       const userCount = history.filter((m) => m.role === 'user').length
-      if (onSummarize && (userCount === 1 || userCount % 3 === 0)) {
+      if (onSummarize && !active.topicRenamed && (userCount === 1 || userCount % 3 === 0)) {
         onSummarize([...history, botMsg])
           .then((t) => {
             const topic = t.replace(/\s+/g, ' ').trim().slice(0, 40)
-            if (topic) patch(id, (c) => ({ ...c, topic }))
+            if (topic) patch(id, (c) => (c.topicRenamed ? c : { ...c, topic }))
           })
           .catch(() => {})
       }
@@ -324,6 +354,32 @@ export function ChatWidget({
         { id: newChatId('msg'), role: 'bot', error: true, text: 'Não consegui responder agora. Tente novamente daqui a pouco.', createdAt: new Date().toISOString() },
       ])
     }
+  }
+
+  /** Consultora a rever: pede ao cliente um documento. O pedido é uma mensagem dela com um cartão para o cliente responder. */
+  const requestDocument = (title: string, note: string) => {
+    const name = title.trim()
+    if (!active || !name) return
+    const request: ChatMessage = {
+      id: newChatId('msg'),
+      role: 'bot',
+      authorId: senderId,
+      text: [`Pode enviar-me o documento «${name}»?`, note.trim()].filter(Boolean).join('\n'),
+      documentRequest: { title: name },
+      createdAt: new Date().toISOString(),
+    }
+    patch(active.id, (c) => ({ ...c, messages: [...c.messages, request] }))
+  }
+
+  /** Muda o nome da conversa. Vazio volta ao nome automático (derivado da 1.ª pergunta). */
+  const renameConversation = (id: string, name: string) => {
+    const topic = name.replace(/\s+/g, ' ').trim().slice(0, 40)
+    patch(id, (c) => {
+      const firstQuestion = c.messages.find((m) => m.role === 'user')
+      return topic
+        ? { ...c, topic, topicRenamed: true }
+        : { ...c, topic: firstQuestion ? deriveTopic(firstQuestion.text || firstQuestion.attachments?.[0]?.name || '') || undefined : undefined, topicRenamed: false }
+    })
   }
 
   const addConversation = () => {
@@ -386,9 +442,13 @@ export function ChatWidget({
     onSelect: setActiveId,
     onAdd: addConversation,
     onClose: closeConversation,
+    onRename: renameConversation,
+    // Conversas de clientes (consultora a rever) mantêm o nome que o cliente lhes deu
+    canRename: (c: Conversation) => !isReviewing(c, canReview, senderId),
     conversation: active,
     suggestions,
     onSend: send,
+    onRequestDocument: reviewing ? requestDocument : undefined,
     onDraftChange: (text: string) => patchLocal(active.id, (c) => ({ ...c, draft: text })),
     canReview,
     reviewing,

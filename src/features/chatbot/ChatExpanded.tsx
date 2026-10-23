@@ -1,8 +1,10 @@
-import { Plus, X } from 'lucide-react'
+import { Pencil, Plus, X } from 'lucide-react'
 import { ChatThread } from './ChatThread'
 import {
   ConversationBadges,
   ConversationTabs,
+  RenameField,
+  useRename,
   useScrollActiveIntoView,
   type ChatBodyProps,
   type ConversationNavProps,
@@ -17,8 +19,11 @@ function ConversationSidebar({
   onSelect,
   onAdd,
   onClose,
+  onRename,
+  canRename,
 }: ConversationNavProps & { maxConversations: number }) {
   const ref = useScrollActiveIntoView(activeId, conversations.length)
+  const rename = useRename(onRename)
   return (
     <aside className="hidden w-[260px] flex-none flex-col gap-3 border-r border-brand-soft bg-paper p-3 md:flex">
       <button
@@ -34,6 +39,10 @@ function ConversationSidebar({
         {conversations.map((c) => {
           const selected = c.id === activeId
           const label = c.topic ?? 'Nova conversa'
+          const renamable = !!onRename && (canRename?.(c) ?? true)
+          if (rename.editingId === c.id) {
+            return <RenameField key={c.id} initial={c.topic ?? ''} onDone={rename.done(c.id, c.topic ?? '')} className="min-h-11 w-full flex-none rounded-[10px] px-3" />
+          }
           return (
             <div
               key={c.id}
@@ -45,11 +54,23 @@ function ConversationSidebar({
                 aria-selected={selected}
                 title={label}
                 onClick={() => onSelect(c.id)}
+                onDoubleClick={() => renamable && rename.start(c.id)}
                 className={`flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] pl-3 pr-1 text-left text-[13px] focus-visible:outline-2 focus-visible:outline-brand ${selected ? 'font-bold' : 'font-semibold'}`}
               >
                 <span className="truncate">{label}</span>
                 <ConversationBadges conversation={c} selected={selected} />
               </button>
+              {renamable && (
+                <button
+                  type="button"
+                  onClick={() => rename.start(c.id)}
+                  aria-label={`Mudar o nome da conversa ${label}`}
+                  title="Mudar o nome"
+                  className={`flex size-9 flex-none items-center justify-center rounded-full opacity-0 hover:bg-black/10 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-brand group-focus-within:opacity-100 group-hover:opacity-100 ${conversations.length > 1 ? '' : 'mr-1'}`}
+                >
+                  <Pencil className="size-3.5" aria-hidden />
+                </button>
+              )}
               {conversations.length > 1 && (
                 <button
                   type="button"
@@ -80,6 +101,7 @@ export function ChatExpanded({
   canReview,
   reviewing,
   onReview,
+  onRequestDocument,
   maxConversations,
   ...nav
 }: ChatBodyProps & { maxConversations: number }) {
@@ -91,6 +113,7 @@ export function ChatExpanded({
       <div className="flex min-h-0 flex-1">
         <ConversationSidebar {...nav} maxConversations={maxConversations} />
         <ChatThread
+          key={conversation.id}
           conversation={conversation}
           expanded
           suggestions={suggestions}
@@ -99,6 +122,7 @@ export function ChatExpanded({
           canReview={canReview}
           reviewing={reviewing}
           onReview={onReview}
+          onRequestDocument={onRequestDocument}
         />
       </div>
     </>

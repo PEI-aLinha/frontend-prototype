@@ -1,24 +1,146 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
-import { Check, Clock, Send, Sparkles, UserCheck } from 'lucide-react'
-import type { ChatTable, Conversation, Suggestion } from './ChatTypes'
+import { Check, ChevronDown, Clock, FilePlus2, FileText, Paperclip, Send, Sparkles, UserCheck, X } from 'lucide-react'
+import type { ChatAttachment, ChatMessage, ChatTable, Conversation, Suggestion } from './ChatTypes'
+import { ATTACHMENT_ACCEPT, MAX_ATTACHMENT_BYTES, attachmentUrl, formatSize } from './attachmentStore'
 import { Button, TextInput } from '../../ui'
+
+export type SendOptions = {
+  files?: File[]
+  /** Id da mensagem com o pedido de documento a que este envio responde. */
+  answers?: string
+}
 
 type ChatThreadProps = {
   /** Conversa ativa. */
   conversation: Conversation
   expanded: boolean
   suggestions: Suggestion[]
-  onSend: (text: string, from?: Suggestion) => void
+  onSend: (text: string, from?: Suggestion, options?: SendOptions) => void
   onDraftChange: (text: string) => void
   /** O utilizador é consultora (pode rever conversas de clientes). */
   canReview?: boolean
   /** A conversa ativa é de um cliente e a consultora está a rever/ajudar. */
   reviewing?: boolean
   onReview?: () => void
+  /** Só quando a consultora está a rever: pede um documento ao cliente. */
+  onRequestDocument?: (title: string, note: string) => void
 }
 
 const LABEL = 'font-mono text-[10px] uppercase tracking-[0.1em]'
+
+const COMMON_DOCUMENTS = ['Política de segurança', 'Plano de resposta a incidentes', 'Contrato com fornecedor', 'Plano de cópias de segurança']
+
+const UNAVAILABLE = 'Mockup: o ficheiro só fica disponível na sessão em que foi anexado.'
+
+/** Documento anexado. Abre o ficheiro se ainda estiver em memória (mockup sem armazenamento). */
+function AttachmentChip({ attachment: a, inverse }: { attachment: ChatAttachment; inverse?: boolean }) {
+  const url = attachmentUrl(a.id)
+  const box = `flex min-h-11 max-w-full items-center gap-2.5 rounded-[10px] border px-3 py-2 text-left no-underline ${
+    inverse ? 'border-white/30 bg-white/10 text-white' : 'border-brand-soft bg-white text-brand'
+  }`
+  const body = (
+    <>
+      <FileText className="size-4 flex-none" aria-hidden />
+      <span className="flex min-w-0 flex-col">
+        <span className="truncate text-[13px] font-bold">{a.name}</span>
+        <span className={`text-[11px] ${inverse ? 'text-white/70' : 'text-muted'}`}>{formatSize(a.size)}</span>
+      </span>
+    </>
+  )
+  return url
+    ? <a href={url} target="_blank" rel="noreferrer" className={`${box} hover:underline`} aria-label={`Abrir ${a.name}`}>{body}</a>
+    : <span className={box} title={UNAVAILABLE}>{body}</span>
+}
+
+/** Todos os documentos da conversa, num painel que abre e fecha. */
+function ConversationDocuments({ messages }: { messages: ChatMessage[] }) {
+  const [open, setOpen] = useState(false)
+  const docs = messages.flatMap((m) => (m.attachments ?? []).map((a) => ({ a, m })))
+  if (docs.length === 0) return null
+  return (
+    <div className="border-b border-brand-soft bg-white">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-11 w-full items-center gap-2 px-4 text-[13px] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+      >
+        <Paperclip className="size-4" aria-hidden />
+        Documentos da conversa ({docs.length})
+        <ChevronDown className={`ml-auto size-4 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {open && (
+        <ul className="flex max-h-[180px] flex-col gap-1.5 overflow-y-auto px-4 pb-3">
+          {docs.map(({ a, m }) => (
+            <li key={a.id} className="flex items-center gap-2">
+              <div className="min-w-0 flex-1"><AttachmentChip attachment={a} /></div>
+              <span className={`flex-none text-muted ${LABEL}`}>
+                {m.role === 'user' ? 'Cliente' : 'Consultora'}
+                {m.createdAt && ` · ${new Date(m.createdAt).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/** Cartão do pedido de documento da consultora. O cliente responde anexando o ficheiro. */
+function DocumentRequestCard({ message, messages, onAnswer }: { message: ChatMessage; messages: ChatMessage[]; onAnswer?: () => void }) {
+  const request = message.documentRequest!
+  const sent = request.fulfilledBy ? messages.find((m) => m.id === request.fulfilledBy)?.attachments?.[0] : undefined
+  return (
+    <div className="flex max-w-[85%] flex-col gap-2 self-start rounded-[12px] border border-brand-soft bg-paper px-3.5 py-3">
+      <span className={`flex items-center gap-1.5 text-muted ${LABEL}`}>
+        <FilePlus2 className="size-3" aria-hidden />Documento pedido
+      </span>
+      <strong className="text-[14px] font-extrabold text-brand">{request.title}</strong>
+      {request.fulfilledBy ? (
+        <span className="flex items-center gap-1.5 text-[13px] font-bold text-brand">
+          <Check className="size-4" aria-hidden />Enviado{sent && `: ${sent.name}`}
+        </span>
+      ) : onAnswer ? (
+        <Button size="sm" icon={<Paperclip className="size-4" aria-hidden />} onClick={onAnswer} className="self-start">
+          Enviar documento
+        </Button>
+      ) : (
+        <span className="text-[13px] text-ink-soft">A aguardar o envio pelo cliente.</span>
+      )}
+    </div>
+  )
+}
+
+/** Consultora: formulário curto para pedir um documento ao cliente. */
+function RequestDocumentForm({ onSubmit, onCancel }: { onSubmit: (title: string, note: string) => void; onCancel: () => void }) {
+  const [title, setTitle] = useState('')
+  const [note, setNote] = useState('')
+  return (
+    <form
+      noValidate
+      aria-label="Pedir documento ao cliente"
+      className="flex flex-col gap-2 rounded-[12px] border border-brand-soft bg-paper p-3"
+      onSubmit={(e) => { e.preventDefault(); if (title.trim()) onSubmit(title, note) }}
+    >
+      <span className={`text-muted ${LABEL}`}>Pedir documento ao cliente</span>
+      <div className="flex flex-wrap gap-1.5">
+        {COMMON_DOCUMENTS.map((d) => (
+          <button key={d} type="button" aria-pressed={title === d} onClick={() => setTitle(d)}
+            className={`min-h-9 rounded-full border px-3 text-[12px] font-bold ${title === d ? 'border-brand bg-brand text-white' : 'border-brand-soft bg-white text-brand hover:bg-paper-soft'}`}>
+            {d}
+          </button>
+        ))}
+      </div>
+      <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Que documento?" aria-label="Que documento?" maxLength={120} autoFocus />
+      <TextInput value={note} onChange={(e) => setNote(e.target.value)} placeholder="Nota para o cliente (opcional)" aria-label="Nota para o cliente" maxLength={300} />
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="secondary" size="sm" onClick={onCancel}>Cancelar</Button>
+        <Button type="submit" size="sm" disabled={!title.trim()}>Enviar pedido</Button>
+      </div>
+    </form>
+  )
+}
 
 /** Tabela de resposta do assistente (ex.: prazos legais). O texto das células quebra linha, por isso não precisa de scroll. */
 function MessageTable({ table }: { table: ChatTable }) {
@@ -49,9 +171,43 @@ function MessageTable({ table }: { table: ChatTable }) {
 }
 
 /** Mensagens da conversa ativa + campo de escrita. */
-export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, reviewing, onReview }: ChatThreadProps) {
+export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, reviewing, onReview, onRequestDocument }: ChatThreadProps) {
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  /** Ficheiros escolhidos e ainda não enviados (o ChatThread é remontado ao trocar de conversa). */
+  const [pending, setPending] = useState<File[]>([])
+  const [fileError, setFileError] = useState('')
+  /** Pedido de documento a que o próximo ficheiro escolhido responde (envia logo). */
+  const answering = useRef<string | undefined>(undefined)
+  const [requesting, setRequesting] = useState(false)
+
+  const pickFiles = (answers?: string) => {
+    answering.current = answers
+    fileRef.current?.click()
+  }
+
+  const onFiles = (list: FileList | null) => {
+    const files = [...(list ?? [])]
+    if (fileRef.current) fileRef.current.value = ''
+    const tooBig = files.filter((f) => f.size > MAX_ATTACHMENT_BYTES)
+    const ok = files.filter((f) => f.size <= MAX_ATTACHMENT_BYTES)
+    setFileError(tooBig.length ? `${tooBig.map((f) => f.name).join(', ')}: máximo de ${formatSize(MAX_ATTACHMENT_BYTES)} por ficheiro.` : '')
+    if (ok.length === 0) return
+    if (answering.current) {
+      onSend('', undefined, { files: ok.slice(0, 1), answers: answering.current })
+      answering.current = undefined
+      return
+    }
+    setPending((prev) => [...prev, ...ok])
+  }
+
+  const submit = () => {
+    if (!active.draft.trim() && pending.length === 0) return
+    onSend(active.draft, undefined, { files: pending })
+    setPending([])
+    setFileError('')
+  }
 
   // Só é "readOnly" se for uma conversa de cliente que já veio do servidor e já não está à espera de revisão
   const readOnly = !!reviewing && !!active.serverUpdatedAt && !active.awaitingReview
@@ -70,6 +226,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
   }, [active.id])
 
   const placeholder = reviewing ? 'Escreva a sua resposta ao cliente…' : 'Pergunte sobre riscos, ativos ou roadmap…'
+  const iconBtn = 'flex size-[46px] flex-none items-center justify-center rounded-[12px] border border-brand-soft bg-white text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40'
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
@@ -81,6 +238,8 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
           </p>
         </div>
       )}
+
+      <ConversationDocuments messages={active.messages} />
 
       <div
         ref={listRef}
@@ -129,7 +288,19 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                 {reviewing && m.role === 'user' && (
                   <span className={`self-end text-muted ${LABEL}`}>Cliente</span>
                 )}
-                <div className={bubble}>{m.text}</div>
+                {m.text && <div className={bubble}>{m.text}</div>}
+                {m.attachments && m.attachments.length > 0 && (
+                  <ul aria-label="Documentos anexados" className={`flex max-w-[85%] flex-col gap-1.5 ${m.role === 'user' ? 'self-end' : 'self-start'}`}>
+                    {m.attachments.map((a) => <li key={a.id}><AttachmentChip attachment={a} inverse={m.role === 'user'} /></li>)}
+                  </ul>
+                )}
+                {m.documentRequest && (
+                  <DocumentRequestCard
+                    message={m}
+                    messages={active.messages}
+                    onAnswer={!reviewing && !canReview && !active.typing ? () => pickFiles(m.id) : undefined}
+                  />
+                )}
                 {m.table && <MessageTable table={m.table} />}
                 {m.source && (
                   <Link to={m.source.to} className="flex max-w-[85%] flex-col gap-1.5 self-start rounded-[12px] border border-brand-soft bg-paper px-3.5 py-3 text-brand no-underline hover:underline">
@@ -169,6 +340,29 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
               Marcar como revisto
             </Button>
           )}
+          {requesting && onRequestDocument && (
+            <RequestDocumentForm
+              onCancel={() => setRequesting(false)}
+              onSubmit={(title, note) => { onRequestDocument(title, note); setRequesting(false) }}
+            />
+          )}
+          {pending.length > 0 && (
+            <ul aria-label="Ficheiros por enviar" className="flex flex-wrap gap-1.5">
+              {pending.map((f, i) => (
+                <li key={`${f.name}-${i}`} className="flex max-w-full items-center gap-1.5 rounded-full border border-brand-soft bg-paper py-1 pl-3 pr-1 text-[12px] font-bold text-brand">
+                  <FileText className="size-3.5 flex-none" aria-hidden />
+                  <span className="truncate">{f.name}</span>
+                  <span className="flex-none font-normal text-muted">{formatSize(f.size)}</span>
+                  <button type="button" aria-label={`Remover ${f.name}`} onClick={() => setPending((prev) => prev.filter((_, j) => j !== i))}
+                    className="flex size-7 flex-none items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-brand">
+                    <X className="size-3.5" aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {fileError && <p role="alert" className="text-[12px] text-red-700">{fileError}</p>}
+          <input ref={fileRef} type="file" multiple accept={ATTACHMENT_ACCEPT} className="hidden" tabIndex={-1} aria-hidden onChange={(e) => onFiles(e.target.files)} />
           {readOnly ? (
             <p className="rounded-[12px] bg-paper-soft px-3.5 py-3 text-center text-[13px] text-ink-soft">
               Conversa já revista. Só pode ver as mensagens até ao momento da revisão.
@@ -177,8 +371,16 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
             <form
               noValidate
               className="flex items-center gap-2"
-              onSubmit={(e) => { e.preventDefault(); onSend(active.draft) }}
+              onSubmit={(e) => { e.preventDefault(); submit() }}
             >
+              <button type="button" onClick={() => pickFiles()} disabled={active.typing} aria-label="Anexar documento" title="Anexar documento" className={iconBtn}>
+                <Paperclip className="size-[18px]" aria-hidden />
+              </button>
+              {onRequestDocument && (
+                <button type="button" onClick={() => setRequesting((v) => !v)} aria-pressed={requesting} aria-label="Pedir documento ao cliente" title="Pedir documento ao cliente" className={iconBtn}>
+                  <FilePlus2 className="size-[18px]" aria-hidden />
+                </button>
+              )}
               <TextInput
                 ref={inputRef}
                 value={active.draft}
@@ -190,7 +392,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
               />
               <Button
                 type="submit"
-                disabled={!active.draft.trim() || active.typing}
+                disabled={(!active.draft.trim() && pending.length === 0) || active.typing}
                 aria-label="Enviar mensagem"
                 className="size-[46px] flex-none !rounded-[12px] !p-0 disabled:cursor-not-allowed disabled:opacity-40"
                 icon={<Send className="size-[18px]" aria-hidden />}
