@@ -240,7 +240,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
           ) : levelCard}
           <Link to={`${base}/riscos`} aria-label={risksReady ? `Ver os riscos em aberto. ${risksUnlinkedLabel}.` : 'Ver os riscos em aberto.'} className="group block h-full rounded-[14px]">
             <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Riscos em aberto" value={risksLoading ? '…' : risksFailed ? '—' : `${summary.openRisks} ${summary.openRisks === 1 ? 'risco' : 'riscos'}`} caption={risksLoading ? 'A carregar os riscos' : risksFailed ? 'Não foi possível carregar os riscos' : `${risksUnlinkedLabel} · ${actionsOpenLabel}`}>
-              {risksReady && <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.openRisks - PREVIEW_ROWS)} />}
+              {risksReady && <MiniList label="Riscos mais graves" rows={riskRows} more={Math.max(0, summary.allRisks - PREVIEW_ROWS)} />}
             </StatCard>
           </Link>
           <Link to={`${base}/integracoes`} aria-label={evidenceReady ? `Ver as evidências. ${evidenceLabel}.` : 'Ver as evidências.'} className="group block h-full rounded-[14px]">

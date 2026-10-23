@@ -22,7 +22,7 @@ const empty = planSummary({ actions: [], assessment: undefined, risks: [], links
 
 describe('planSummary', () => {
   it('is empty without data', () => {
-    expect(empty).toEqual({ maturity: null, targetMaturity: null, sections: [], topSections: [], topRisks: [], openRisks: 0, actionsOpen: 0, actionsDone: 0, risksUnlinked: 0 })
+    expect(empty).toEqual({ maturity: null, targetMaturity: null, sections: [], topSections: [], topRisks: [], openRisks: 0, allRisks: 0, actionsOpen: 0, actionsDone: 0, risksUnlinked: 0 })
   })
 
   it('counts the actions by status', () => {
@@ -50,16 +50,18 @@ describe('planSummary', () => {
     })
     expect(result.risksUnlinked).toBe(0)
     expect(result.openRisks).toBe(3)
+    expect(result.allRisks).toBe(3)
     expect(planSummary({ actions: [], assessment: undefined, risks: [risk('rsk-a'), risk('rsk-b')], links: [link('lnk-1', 'rsk-a', 'act-mfa')] }).risksUnlinked).toBe(1)
   })
 
-  it('does not count accepted or treated risks as open', () => {
+  it('does not count accepted or treated risks as open, but still ranks them', () => {
     const result = planSummary({
       actions: [], assessment: undefined,
       risks: [risk('rsk-a'), risk('rsk-b', { status: 'aceite' }), risk('rsk-c', { status: 'tratado' })],
       links: [],
     })
     expect(result.openRisks).toBe(1)
+    expect(result.allRisks).toBe(3)
     expect(result.risksUnlinked).toBe(1)
   })
 
@@ -80,7 +82,7 @@ describe('planSummary', () => {
     expect(result.sections.map((s) => s.id)).toEqual(['a', 'b', 'c', 'd'])
   })
 
-  it('previews the worst open risks by score, not by level', () => {
+  it('previews the worst non-archived risks by score, not by level', () => {
     const result = planSummary({
       actions: [], assessment: undefined,
       risks: [risk('baixo', { probability: 1, impact: 1 }), risk('medio', { probability: 2, impact: 2 }), risk('alto-leve', { probability: 2, impact: 3 }), risk('alto', { probability: 3, impact: 3 }), risk('velho', { probability: 3, impact: 3, status: 'arquivado' })],
@@ -90,6 +92,7 @@ describe('planSummary', () => {
     expect(result.topRisks.map((r) => r.risk.id)).toEqual(['alto', 'alto-leve', 'medio'])
     expect(result.topRisks.map((r) => r.level)).toEqual(['alto', 'alto', 'medio'])
     expect(result.openRisks).toBe(4)
+    expect(result.allRisks).toBe(4)
   })
 
 })

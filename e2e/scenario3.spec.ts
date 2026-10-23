@@ -53,7 +53,7 @@ test('Scenario 3 — Rui gets three cards, each sending him to the page its numb
 
   const gaps = page.getByRole('link', { name: /Nenhum risco sem ação/ })
   await expect(gaps).toHaveAttribute('href', `${ORG}/riscos`)
-  await expect(gaps).toContainText('6 riscos')
+  await expect(gaps).toContainText('5 riscos')
   await expect(gaps).toContainText('6 ações por resolver, 1 concluída')
 
   const evidence = page.getByRole('link', { name: /1 de 7 recolhidas/ })

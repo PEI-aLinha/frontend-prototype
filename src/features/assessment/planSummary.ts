@@ -26,10 +26,12 @@ export interface PlanSummary {
   sections: PlanSection[]
   /** The weakest sections first, cut to PREVIEW_ROWS. These are what is holding maturity down. */
   topSections: PlanSection[]
-  /** Open risks (por_tratar or em_tratamento), worst first, cut to PREVIEW_ROWS. */
+  /** All non-archived risks, worst first, cut to PREVIEW_ROWS. */
   topRisks: PlanRisk[]
-  /** Open risks before the cut, so a card can say how many it left out. */
+  /** Open risks (por_tratar or em_tratamento): what the card headline counts. */
   openRisks: number
+  /** Non-archived risks before the cut, so a card preview can say how many it left out. */
+  allRisks: number
   /** status !== 'concluida' */
   actionsOpen: number
   /** status === 'concluida' */
@@ -53,7 +55,8 @@ export function planSummary(input: {
   const linked = new Set(links.map((l) => l.riskId))
   const sections = (assessment?.sections ?? []).map(({ id, name, answered, total }) => ({ id, name, answered, total }))
   const openRisks = risks.filter((r) => r.status === 'por_tratar' || r.status === 'em_tratamento')
-  const topRisks = openRisks
+  const allRisks = risks.filter((r) => r.status !== 'arquivado')
+  const topRisks = allRisks
     // Worst first. Level alone is too coarse, so the score behind it decides.
     .map((risk) => ({ risk, level: computeRiskLevel(risk.probability, risk.impact).level }))
     .sort((a, b) => computeRiskLevel(b.risk.probability, b.risk.impact).score - computeRiskLevel(a.risk.probability, a.risk.impact).score)
@@ -63,7 +66,8 @@ export function planSummary(input: {
     sections,
     topSections: [...sections].sort((a, b) => a.answered / a.total - b.answered / b.total).slice(0, PREVIEW_ROWS),
     topRisks: topRisks.slice(0, PREVIEW_ROWS),
-    openRisks: topRisks.length,
+    openRisks: openRisks.length,
+    allRisks: allRisks.length,
     actionsOpen: actions.length - actionsDone,
     actionsDone,
     risksUnlinked: openRisks.filter((r) => !linked.has(r.id)).length,
