@@ -49,7 +49,7 @@ export function NotificationBell({ compact }: { compact?: boolean }) {
                       <span className="min-w-0 flex-1">
                         <span className="flex items-start gap-2">
                           <span className={cn('flex-1 text-[0.875rem]', n.read ? 'font-semibold' : 'font-extrabold')}>{n.title}</span>
-                          {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand" aria-label="Por ler" />}
+                          {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand forced-colors:bg-[CanvasText]" aria-label="Por ler" />}
                         </span>
                         <span className="mt-0.5 block text-[0.8125rem] text-ink-soft">{n.body}</span>
                         <span className="mt-1 flex items-center gap-1.5 text-[0.7188rem] text-muted">

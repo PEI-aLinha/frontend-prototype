@@ -37,7 +37,7 @@ export function OptionGroup<T extends string>({ name, value, onChange, options, 
             >
               <input type="radio" name={name} value={o.value} checked={selected} onChange={() => onChange(o.value)} className="sr-only" />
               <span aria-hidden className={cn('mt-[3px] grid size-[18px] shrink-0 place-items-center rounded-full border-2', selected ? 'border-brand' : 'border-line')}>
-                {selected && <span className="size-2 rounded-full bg-brand" />}
+                {selected && <span className="size-2 rounded-full bg-brand forced-colors:bg-[CanvasText]" />}
               </span>
               <span className="min-w-0">
                 <span className={cn('block text-[0.9375rem]', selected ? 'font-bold text-brand' : 'text-ink')}>{o.label}</span>

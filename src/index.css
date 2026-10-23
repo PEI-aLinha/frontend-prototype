@@ -112,6 +112,33 @@
   line-height: 1.18;
 }
 
+/*
+ * Windows high contrast / forced colors: backgrounds and box-shadows are dropped, so every state that
+ * relied on them (current page, selected tab/option/toggle, filled buttons, progress) gets a system
+ * colour or a border instead.
+ */
+@media (forced-colors: active) {
+  [aria-current='page'],
+  [role='tab'][aria-selected='true'],
+  [role='radio'][aria-checked='true'],
+  [aria-pressed='true'] {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+  label:has(> input.sr-only:checked) {
+    outline: 3px solid Highlight;
+    outline-offset: -1px;
+  }
+  [role='progressbar'] {
+    border: 1px solid CanvasText;
+  }
+  [role='progressbar'] > * {
+    forced-color-adjust: none;
+    background: Highlight;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
