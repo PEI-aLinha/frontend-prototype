@@ -8,21 +8,23 @@ test('first visit opens the guided tour, Esc closes it, the button reopens it', 
   const tour = page.getByRole('dialog', { name: 'Registe o que conhece' })
   await expect(tour).toBeVisible()
   await expect(tour.getByRole('button', { name: 'Seguinte' })).toBeFocused()
+  // Contrast is measured on the settled popover, not halfway through its fade-in.
+  await tour.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)))
 
-  const axe = await new AxeBuilder({ page }).include('.introjs-tooltip').withTags(['wcag2a', 'wcag2aa']).analyze()
+  const axe = await new AxeBuilder({ page }).include('.driver-popover').withTags(['wcag2a', 'wcag2aa']).analyze()
   expect(axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.html).join(' | ')}`)).toEqual([])
 
   await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('dialog', { name: 'Delegue a parte técnica' })).toBeVisible()
   await page.keyboard.press('Escape')
-  await expect(page.locator('.introjs-tooltip')).toHaveCount(0)
+  await expect(page.locator('.driver-popover')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Visita guiada' })).toBeFocused()
   expect(await page.evaluate(() => localStorage.getItem('alinha-tour-ativos-cliente'))).toBe('done')
 
   await page.getByRole('button', { name: 'Visita guiada' }).click()
   await expect(page.getByRole('dialog', { name: 'Registe o que conhece' })).toBeVisible()
   await page.getByRole('button', { name: 'Fechar visita guiada' }).click()
-  await expect(page.locator('.introjs-tooltip')).toHaveCount(0)
+  await expect(page.locator('.driver-popover')).toHaveCount(0)
 })
 
 test('consultant tour walks the risk register to the end', async ({ page }) => {
@@ -34,5 +36,5 @@ test('consultant tour walks the risk register to the end', async ({ page }) => {
   }
   await page.getByRole('button', { name: 'Seguinte' }).click()
   await page.getByRole('button', { name: 'Concluir' }).click()
-  await expect(page.locator('.introjs-tooltip')).toHaveCount(0)
+  await expect(page.locator('.driver-popover')).toHaveCount(0)
 })

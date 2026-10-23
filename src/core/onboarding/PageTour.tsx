@@ -4,37 +4,25 @@ import { Compass } from 'lucide-react'
 import { Button, useToast } from '../../ui'
 import { markTourSeen, resolveSteps, shouldAutoStart } from './tourState'
 import { TOURS, type TourId } from './tours'
+import type { PopoverDOM } from 'driver.js'
 
 /** Lets the page settle (fonts, drawers closing) before measuring anchors. */
 const AUTO_START_DELAY_MS = 400
-/** ~0.5 s at 60 fps. */
-const ENHANCE_MAX_FRAMES = 30
 
-/** Intro.js leaves the dialog and close icon unnamed and focus on the page: fix the semantics and move focus into it. */
-function enhanceTooltip(framesLeft = ENHANCE_MAX_FRAMES) {
-  const tooltip = document.querySelector<HTMLElement>('.introjs-tooltip')
-  const primary = tooltip?.querySelector<HTMLElement>('.introjs-nextbutton, .introjs-donebutton')
-  // Intro.js renders asynchronously: wait for the step's buttons before patching.
-  if (!tooltip || !primary) {
-    if (framesLeft > 0) requestAnimationFrame(() => enhanceTooltip(framesLeft - 1))
-    return
-  }
-  const title = tooltip.querySelector<HTMLElement>('.introjs-tooltip-title')
-  if (title) {
-    title.id = 'alinha-tour-title'
-    tooltip.setAttribute('aria-labelledby', title.id)
-  }
-  const text = tooltip.querySelector<HTMLElement>('.introjs-tooltiptext')
-  if (text) {
-    text.id = 'alinha-tour-text'
-    tooltip.setAttribute('aria-describedby', text.id)
-  }
-  tooltip.querySelector('.introjs-skipbutton')?.setAttribute('aria-label', 'Fechar visita guiada')
-  // Intro.js ships role="progress", which is not an ARIA role.
-  const progress = tooltip.querySelector('.introjs-progressbar')
-  progress?.setAttribute('role', 'progressbar')
-  progress?.setAttribute('aria-label', 'Progresso da visita guiada')
-  primary.focus()
+/** Driver.js writes titles and descriptions with innerHTML: tour text goes in as plain text only. */
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
+}
+
+/** Driver.js already renders a labelled dialog and traps Tab; finish the semantics and lead with the primary button. */
+function enhancePopover({ wrapper, title, footer, nextButton }: PopoverDOM) {
+  wrapper.setAttribute('aria-modal', 'true')
+  // <header> and <footer> outside a section would read as page landmarks.
+  title.setAttribute('role', 'heading')
+  title.setAttribute('aria-level', '2')
+  footer.setAttribute('role', 'none')
+  // Driver.js focuses the first control (the close icon) after this hook runs.
+  requestAnimationFrame(() => nextButton.focus())
 }
 
 /** Runs the tour; `signal` aborts it (page left or persona changed) while loading or on screen. */
@@ -42,34 +30,35 @@ async function runTour(id: TourId, onEnd: () => void, signal: AbortSignal): Prom
   const steps = resolveSteps(TOURS[id])
   if (steps.length === 0) return false
   // Loaded on demand: the tour library stays out of the initial bundle.
-  const [{ default: introJs }] = await Promise.all([
-    import('intro.js'),
-    import('intro.js/minified/introjs.min.css'),
+  const [{ driver }] = await Promise.all([
+    import('driver.js'),
+    import('driver.js/dist/driver.css'),
   ])
   await import('./tour.css')
   if (signal.aborted) return false
-  const tour = introJs.tour().setOptions({
-    steps,
-    nextLabel: 'Seguinte',
-    prevLabel: 'Anterior',
-    doneLabel: 'Concluir',
-    skipLabel: '×',
-    stepNumbersOfLabel: 'de',
+  const tour = driver({
+    steps: steps.map((st) => ({ element: st.element, popover: { title: escapeHtml(st.title), description: escapeHtml(st.intro) } })),
+    nextBtnText: 'Seguinte',
+    prevBtnText: 'Anterior',
+    doneBtnText: 'Concluir',
+    closeBtnLabel: 'Fechar visita guiada',
+    progressText: '{{current}} de {{total}}',
     showProgress: true,
-    showBullets: false,
-    exitOnOverlayClick: false,
-    exitOnEsc: true,
-    keyboardNavigation: true,
-    scrollToElement: true,
-    disableInteraction: true,
-    // Plain text only: titles and descriptions never go through innerHTML.
-    tooltipRenderAsHtml: false,
-    tooltipClass: 'alinha-tour',
+    allowClose: true,
+    allowKeyboardControl: true,
+    overlayClickBehavior: 'none',
+    disableActiveInteraction: true,
+    animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    overlayColor: 'var(--color-ink)',
+    overlayOpacity: 0.55,
+    stagePadding: 6,
+    stageRadius: 14,
+    popoverClass: 'alinha-tour',
+    onPopoverRender: enhancePopover,
+    onDestroyed: onEnd,
   })
-  tour.onAfterChange(() => { requestAnimationFrame(() => enhanceTooltip()) })
-  tour.onExit(onEnd)
-  signal.addEventListener('abort', () => { void tour.exit(true) }, { once: true })
-  await tour.start()
+  signal.addEventListener('abort', () => tour.destroy(), { once: true })
+  tour.drive()
   return true
 }
 
@@ -95,7 +84,7 @@ export function PageTour({ id, ready }: { id: TourId; ready: boolean }) {
         // Closed because the page went away: the person did not finish it here.
         if (signal.aborted) return
         markTourSeen(id)
-        // Back to the button (also shows where to reopen the tour), after Intro.js has removed its layers.
+        // Back to the button (also shows where to reopen the tour), after Driver.js has removed its layers.
         requestAnimationFrame(() => button.current?.focus())
       }, signal)
       if (signal.aborted) return

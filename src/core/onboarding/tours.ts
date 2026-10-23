@@ -1,4 +1,4 @@
-/** Guided tours (Intro.js) per screen and persona. Targets are `data-tour="…"` anchors, never styling classes. */
+/** Guided tours (Driver.js) per screen and persona. Targets are `data-tour="…"` anchors, never styling classes. */
 
 export interface TourStepDef {
   /** `data-tour` anchor; omit for a centred step with no highlighted element. */
