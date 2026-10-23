@@ -39,9 +39,15 @@ function deny(): never {
   throw new ApiError('Não tem permissão para esta ação.', 403)
 }
 
-/** Single source of truth for permissions: the same matrix the UI uses (core/rbac.ts). */
+/** Tenant scoping: an active member of the organization, or the consultant assigned to it. */
+function belongsTo(s: Readonly<DemoState>, me: User, org: Id): boolean {
+  if (me.role === 'consultor') return s.organizations.some((o) => o.id === org && o.consultantId === me.id)
+  return s.members.some((m) => m.organizationId === org && m.userId === me.id && m.status === 'ativo')
+}
+
+/** Single source of truth for permissions: the same matrix the UI uses (core/rbac.ts), within the caller's organizations. */
 function can(s: Readonly<DemoState>, me: User, org: Id, action: Action, resource: Resource): boolean {
-  return canRole(me.role, action, resource, { roadmapValidated: roadmapValidated(s, org) })
+  return belongsTo(s, me, org) && canRole(me.role, action, resource, { roadmapValidated: roadmapValidated(s, org) })
 }
 
 function assertCan(s: Readonly<DemoState>, me: User, org: Id, action: Action, resource: Resource): void {
@@ -82,6 +88,11 @@ function validateRisk(input: RiskInput): void {
   if (!input.threat.trim()) throw new ApiError('Indique a ameaça.', 422)
   if (input.treatment === 'mitigar' && input.actionIds.length === 0) throw new ApiError('Para mitigar, ligue pelo menos uma ação do roadmap.', 422)
   if (input.treatment === 'aceitar' && !input.acceptanceJustification?.trim()) throw new ApiError('Para aceitar o risco, escreva uma justificação.', 422)
+  const { residualProbability: rp, residualImpact: ri } = input
+  if ((rp === undefined) !== (ri === undefined)) throw new ApiError('Indique a probabilidade e o impacto previstos depois do tratamento.', 422)
+  if (rp !== undefined && ri !== undefined && rp * ri > input.probability * input.impact) {
+    throw new ApiError('O risco residual não pode ser maior do que o risco atual: o tratamento só o mantém ou reduz.', 422)
+  }
 }
 
 function riskStatus(input: RiskInput): Risk['status'] {
@@ -198,8 +209,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       importAssets: (org, inputs) => simulate(() => {
-        assertCan(getState(), actor(), org, 'create', 'asset')
-        if (actor().role === 'analista') deny()
+        assertCan(getState(), actor(), org, 'import', 'asset')
         if (inputs.length === 0) throw new ApiError('O ficheiro não tem ativos válidos.', 422)
         inputs.forEach(validateAsset)
         let created: Asset[] = []
@@ -213,8 +223,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       bulkUpdateAssets: (org, ids, change) => simulate(() => {
-        assertCan(getState(), actor(), org, 'edit', 'asset')
-        if (actor().role === 'analista') deny()
+        assertCan(getState(), actor(), org, 'bulk_edit', 'asset')
         write((s, me) => {
           const stamp = now()
           const entries: AuditEntry[] = []
@@ -349,8 +358,7 @@ export function createMockApi(getActor: ActorProvider): Api {
         validateRisk(input)
         let saved!: Risk
         write((s, me) => {
-          const before = id ? s.risks.find((x) => x.id === id) : undefined
-          if (id && !before) throw new ApiError('Risco não encontrado', 404)
+          const before = id ? inOrg(s.risks.find((x) => x.id === id), org, 'Risco não encontrado') : undefined
           const { actionIds, ...fields } = input
           const stamp = now()
           saved = before

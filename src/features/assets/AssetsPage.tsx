@@ -42,7 +42,7 @@ function columns(inv: Inventory, opts: { risks: boolean; riskLink?: (a: Asset) =
   if (opts.riskLink) {
     const href = opts.riskLink
     cols.push({ id: 'action', header: () => <span className="sr-only">Ações</span>, enableSorting: false, meta: { align: 'right' }, cell: (c) => (
-      <Link to={href(c.row.original)} aria-label={`Registar risco sobre ${c.row.original.name}`} data-tour="register-risk" className="relative z-10 inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-[0.8125rem] font-bold text-brand hover:bg-brand-soft">
+      <Link to={href(c.row.original)} aria-label={`Registar risco sobre ${c.row.original.name}`} data-tour="register-risk" className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-[0.8125rem] font-bold text-brand hover:bg-brand-soft">
         <ShieldPlus className="size-4" aria-hidden />Registar risco
       </Link>
     ) })
@@ -183,7 +183,7 @@ export function AssetsPage() {
               <div role="group" aria-label="Ações do inventário" className="flex flex-wrap items-center justify-end gap-1 text-[0.8125rem]">
                 <Button variant="ghost" size="sm" icon={<Layers className="size-4" aria-hidden />} onClick={() => update({ servicos: '1' })}>Serviços críticos</Button>
                 {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
-                {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
+                {can('import', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
                 <span className="ml-2 max-md:ml-0 max-md:w-full">
                   <Segmented ariaLabel="Vista" value={params.get('vista') === 'servicos' ? 'servicos' : 'tabela'} onChange={(v) => update({ vista: v === 'tabela' ? null : v })}
                     options={[{ value: 'tabela', label: 'Tabela' }, { value: 'servicos', label: 'Por serviço' }]} />
@@ -192,7 +192,7 @@ export function AssetsPage() {
             </div>
           )}
 
-          {picked.length > 0 && can('edit', 'asset') && <BulkBar ids={picked} inventory={data} onDone={() => setPicked([])} />}
+          {picked.length > 0 && can('bulk_edit', 'asset') && <BulkBar ids={picked} inventory={data} onDone={() => setPicked([])} />}
           <div data-tour="asset-table">{params.get('vista') === 'servicos' ? <ServiceMap assets={visible} inventory={data} onOpen={(a) => update({ ativo: a.id })} /> : <DataTable
             caption="Ativos da organização"
             data={visible}
@@ -206,14 +206,14 @@ export function AssetsPage() {
               ? <EmptyState className="m-4" title="Ainda não há ativos registados" action={can('create', 'asset') && <Button onClick={() => update({ novo: '1' })}>Adicionar o primeiro ativo</Button>}>Comece pelos sistemas sem os quais a empresa para: faturação, produção, email.</EmptyState>
               : <p className="px-5 py-8 text-center text-[0.875rem] text-ink-soft">Nenhum ativo corresponde aos filtros.</p>}
             selected={picked}
-            onSelectedChange={can('edit', 'asset') && !consultant ? setPicked : undefined}
+            onSelectedChange={can('bulk_edit', 'asset') ? setPicked : undefined}
           />}</div>
           <Note plain className="-mt-3">Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
 
           <AssetDrawer key={`new-${params.get('novo')}`} inventory={data} asset={null} mode="new" open={params.get('novo') === '1'} onClose={() => update({ novo: null })} />
           <AssetDrawer key={selected?.id ?? 'none'} inventory={data} asset={selected} mode="view" open={!!selected} onClose={() => update({ ativo: null })} />
           <ServicesDrawer open={params.get('servicos') === '1'} onClose={() => update({ servicos: null })} inventory={data} />
-          {can('create', 'asset') && <ImportModal key={String(params.get('importar'))} open={params.get('importar') === '1'} onClose={() => update({ importar: null })} inventory={data} />}
+          {can('import', 'asset') && <ImportModal key={String(params.get('importar'))} open={params.get('importar') === '1'} onClose={() => update({ importar: null })} inventory={data} />}
           <ExportModal open={params.get('exportar') === '1'} onClose={() => update({ exportar: null })} inventory={data} />
           {can('assign', 'asset_task') && <AssignTaskModal key={String(params.get('atribuir'))} open={params.get('atribuir') === '1'} onClose={() => update({ atribuir: null })} analysts={analysts} />}
         </>

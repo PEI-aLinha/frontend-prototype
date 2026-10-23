@@ -51,6 +51,14 @@ describe('mock API permissions', () => {
     expect((await api.audit.list(ORG_ID)).length).toBe(before + 1)
   })
 
+  it('rejects a residual risk higher than the current risk', async () => {
+    who = MARTA
+    const base = { assetId: 'ast-servidor', threat: 'Ransomware', description: '', ownerId: RUI, probability: 2, impact: 3, treatment: null, actionIds: [] }
+    await expect(api.assets.saveRisk(ORG_ID, { ...base, residualProbability: 3, residualImpact: 3 })).rejects.toMatchObject({ status: 422 })
+    await expect(api.assets.saveRisk(ORG_ID, { ...base, residualProbability: 1 })).rejects.toMatchObject({ status: 422 })
+    expect(await api.assets.saveRisk(ORG_ID, { ...base, residualProbability: 1, residualImpact: 3 })).toMatchObject({ residualProbability: 1 })
+  })
+
   it('denies consultants editing assets', async () => {
     who = MARTA
     await expect(api.assets.saveAsset(ORG_ID, { name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' })).rejects.toMatchObject({ status: 403 })
@@ -76,6 +84,18 @@ describe('mock API permissions', () => {
       await expect(api.assets.saveAsset(ORG_ID, { name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' }, 'ast-x')).rejects.toMatchObject({ status: 404 })
       await api.assets.bulkDeleteAssets(ORG_ID, ['ast-x'])
       expect(getState().assets.some((a) => a.id === 'ast-x')).toBe(true)
+    })
+
+    it('denies writes in an organisation the caller does not belong to', async () => {
+      foreign()
+      setState((st) => ({ ...st, organizations: st.organizations.map((o) => (o.id === OTHER ? { ...o, consultantId: 'u-outra' } : o)), roadmap: { ...st.roadmap, [OTHER]: { ...st.roadmap[ORG_ID], validated: false } } }))
+      who = RUI
+      await expect(api.assets.saveAsset(OTHER, { name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' })).rejects.toMatchObject({ status: 403 })
+      await expect(api.assets.saveService(OTHER, { name: 'S', ownerId: RUI, criticality: 'alto' })).rejects.toMatchObject({ status: 403 })
+      await expect(api.assets.importAssets(OTHER, [{ name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' }])).rejects.toMatchObject({ status: 403 })
+      who = MARTA
+      await expect(api.assets.saveRisk(OTHER, { assetId: null, threat: 'T', description: '', ownerId: null, probability: 1, impact: 1, treatment: null, actionIds: [] })).rejects.toMatchObject({ status: 403 })
+      await expect(api.assessment.validateRoadmap(OTHER)).rejects.toMatchObject({ status: 403 })
     })
 
     it('lists only the users of the organisation plus consultancy staff', async () => {
