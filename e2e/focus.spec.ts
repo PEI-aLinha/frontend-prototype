@@ -48,3 +48,15 @@ test('scroll padding keeps focused fields clear of the mobile bars', async ({ pa
   expect(padding.bottom).toBeGreaterThanOrEqual(bar.height)
   expect(padding.top).toBeGreaterThanOrEqual(header.height)
 })
+
+test('each route has its own title and navigation moves focus to the new h1', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'side navigation is desktop only')
+  await start(page, `${ORG}/inicio`, 'rui', 'c3')
+  await expect(page).toHaveTitle('Início · aLinha')
+  for (const [link, title, heading] of [['Ativos', 'Ativos · aLinha', /Ativos/], ['Riscos', 'Riscos · aLinha', /Riscos/], ['Avaliação', 'Avaliação · aLinha', /Avaliação/]] as const) {
+    await page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('link', { name: link, exact: true }).click()
+    await expect(page).toHaveTitle(title)
+    await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading)
+  }
+})

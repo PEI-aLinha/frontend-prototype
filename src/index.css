@@ -78,6 +78,8 @@
     outline: 2px solid var(--color-signal);
     outline-offset: 2px;
   }
+  /* Headings get focus after navigation only so screen readers announce them; no ring needed. */
+  h1[tabindex='-1']:focus { outline: none; }
   button { cursor: pointer; }
   button:disabled { cursor: not-allowed; }
 }
