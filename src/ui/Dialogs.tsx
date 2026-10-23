@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, type ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { cn } from './cn'
@@ -13,13 +13,33 @@ interface BaseProps {
   footer?: ReactNode
 }
 
+/**
+ * The dialogs are controlled (no Dialog.Trigger), so Radix has nowhere to send focus on close and
+ * it lands on <body>. Remember what had focus when the dialog opened and give it back (WCAG 2.4.3).
+ */
+function useReturnFocus(open: boolean) {
+  const opener = useRef<HTMLElement | null>(null)
+  useLayoutEffect(() => {
+    if (open && document.activeElement instanceof HTMLElement && document.activeElement !== document.body) opener.current = document.activeElement
+  }, [open])
+  return (e: Event) => {
+    const el = opener.current
+    opener.current = null
+    if (!el?.isConnected) return
+    e.preventDefault()
+    el.focus()
+  }
+}
+
 /** Modal: ink 45% overlay, white window radius 20, padding 28/32, gap 18, width 540. */
 export function Modal({ open, onOpenChange, title, description, chip, children, footer, width = 540 }: BaseProps & { width?: number }) {
+  const returnFocus = useReturnFocus(open)
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/45 animate-fade-in" />
         <Dialog.Content
+          onCloseAutoFocus={returnFocus}
           style={{ maxWidth: width }}
           className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-[18px] overflow-y-auto rounded-[20px] bg-paper px-8 py-7 shadow-[0_24px_64px_rgba(6,54,50,0.22)] animate-pop-in max-sm:px-5 max-sm:py-6"
         >
@@ -39,11 +59,13 @@ export function Modal({ open, onOpenChange, title, description, chip, children, 
 
 /** Side panel for detail and editing (full screen on mobile, sliding up from the bottom). */
 export function Drawer({ open, onOpenChange, title, description, chip, children, footer, width = 520, eyebrow }: BaseProps & { width?: number; eyebrow?: ReactNode }) {
+  const returnFocus = useReturnFocus(open)
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/30 animate-fade-in" />
         <Dialog.Content
+          onCloseAutoFocus={returnFocus}
           style={{ ['--drawer-w' as string]: `${width}px` }}
           className={cn(
             'fixed z-50 flex flex-col bg-paper shadow-[-16px_0_48px_rgba(6,54,50,0.16)]',
