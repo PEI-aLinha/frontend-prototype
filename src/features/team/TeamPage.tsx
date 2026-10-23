@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { BellRing, CalendarClock, ClipboardPlus, ExternalLink, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
 import type { Task, TeamMember } from '../../api/contracts'
@@ -9,7 +9,7 @@ import { useSession } from '../../core/session'
 import { AssignWorkModal } from '../organization/public'
 import { useTenant } from '../../core/tenant'
 import {
-  Avatar, Button, Chip, ErrorState, Explainer, Eyebrow, Field, Modal, PageHeader, Select, SkeletonRows, TextInput, Tooltip, cn, useToast,
+  Avatar, Button, Chip, DataTable, ErrorState, Eyebrow, Field, Modal, PageHeader, Select, SkeletonRows, TextInput, Tooltip, cn, useToast, type ColumnDef,
 } from '../../ui'
 
 const initialsOf = (name: string) => {
@@ -35,39 +35,46 @@ function TaskCountCell({ c }: { c?: TaskCount }) {
   )
 }
 
-function MemberRow({ m, isMe, tasks, onConfirm, onAssign }: { m: TeamMember; isMe: boolean; tasks?: TaskCount; onConfirm: () => void; onAssign: () => void }) {
+function MemberName({ m, isMe }: { m: TeamMember; isMe: boolean }) {
+  const pending = m.status === 'convite_pendente'
+  return (
+    <span className="flex min-w-0 items-center gap-3">
+      <Avatar initials={initialsOf(m.name)} size={36} tone={pending ? 'soft' : 'dark'} />
+      <span className={cn('truncate font-bold', pending && 'text-ink-soft')}>{m.name}{isMe && <span className="font-normal text-muted"> (você)</span>}</span>
+    </span>
+  )
+}
+
+function MemberStatus({ m }: { m: TeamMember }) {
+  const pending = m.status === 'convite_pendente'
+  return (
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      {pending ? <Chip tone="neutral">Convite pendente</Chip> : <Chip tone="signal">Ativo</Chip>}
+      {pending && m.invitedAt && <span className="text-[12px] text-muted">enviado a <time dateTime={m.invitedAt}>{shortDate(m.invitedAt)}</time></span>}
+    </span>
+  )
+}
+
+function MemberActions({ m, onConfirm, onAssign }: { m: TeamMember; onConfirm: () => void; onAssign: () => void }) {
   const org = useTenant()
   const toast = useToast()
   const resend = useResendInvite(org.id)
   const pending = m.status === 'convite_pendente'
   return (
-    <li className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] items-center gap-4 border-b border-line-soft px-5 py-3.5 last:border-b-0 max-md:grid-cols-1 max-md:gap-1.5">
-      <span className="flex min-w-0 items-center gap-3">
-        <Avatar initials={initialsOf(m.name)} size={36} tone={pending ? 'soft' : 'dark'} />
-        <span className={cn('truncate font-bold', pending && 'text-ink-soft')}>{m.name}{isMe && <span className="font-normal text-muted"> (você)</span>}</span>
-      </span>
-      <span className="truncate text-[14px] text-ink-soft">{m.email}</span>
-      <span><Chip tone={m.role === 'responsavel' ? 'dark' : 'outline'}>{ROLE_LABEL[m.role]}</Chip></span>
-      <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        {pending ? <Chip tone="neutral">Convite pendente</Chip> : <Chip tone="signal">Ativo</Chip>}
-        {pending && m.invitedAt && <span className="text-[12px] text-muted">enviado a {shortDate(m.invitedAt)}</span>}
-      </span>
-      <TaskCountCell c={tasks} />
-      <span className="flex flex-wrap justify-end gap-1 max-md:justify-start">
-        {pending && (
-          <Button variant="ghost" size="sm" icon={<Send className="size-4" aria-hidden />} loading={resend.isPending}
-            onClick={() => resend.mutate(m.id, { onSuccess: () => toast.show(`Convite reenviado para ${m.email}`), onError: (e) => toast.show(e.message, 'error') })}>Reenviar</Button>
-        )}
-        {pending && <Button variant="ghost" size="sm" icon={<XCircle className="size-4" aria-hidden />} onClick={onConfirm}>Cancelar convite</Button>}
-        {pending && (
-          <Tooltip content="Só no protótipo: abre o link que o analista recebe por email.">
-            <Link to={`/convite/${m.id}`} className="inline-flex items-center gap-1.5 rounded-[9px] px-3.5 py-2 text-[13px] font-bold text-brand hover:bg-paper-soft"><ExternalLink className="size-4" aria-hidden />Abrir convite</Link>
-          </Tooltip>
-        )}
-        {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<ClipboardPlus className="size-4" aria-hidden />} onClick={onAssign}>Atribuir</Button>}
-        {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<UserMinus className="size-4" aria-hidden />} onClick={onConfirm}>Remover</Button>}
-      </span>
-    </li>
+    <span className="flex flex-wrap justify-end gap-1 max-md:justify-start">
+      {pending && (
+        <Button variant="ghost" size="sm" icon={<Send className="size-4" aria-hidden />} loading={resend.isPending}
+          onClick={() => resend.mutate(m.id, { onSuccess: () => toast.show(`Convite reenviado para ${m.email}`), onError: (e) => toast.show(e.message, 'error') })}>Reenviar</Button>
+      )}
+      {pending && <Button variant="ghost" size="sm" icon={<XCircle className="size-4" aria-hidden />} onClick={onConfirm}>Cancelar convite</Button>}
+      {pending && (
+        <Tooltip content="Só no protótipo: abre o link que o analista recebe por email.">
+          <Link to={`/convite/${m.id}`} className="inline-flex items-center gap-1.5 rounded-[9px] px-3.5 py-2 text-[13px] font-bold text-brand hover:bg-paper-soft"><ExternalLink className="size-4" aria-hidden />Abrir convite</Link>
+        </Tooltip>
+      )}
+      {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<ClipboardPlus className="size-4" aria-hidden />} onClick={onAssign}>Atribuir</Button>}
+      {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<UserMinus className="size-4" aria-hidden />} onClick={onConfirm}>Remover</Button>}
+    </span>
   )
 }
 
@@ -93,6 +100,17 @@ export function TeamPage() {
     return { open: open.length, late: open.filter((t) => t.dueDate && today.data && t.dueDate < today.data).length, done: mine.filter((t) => t.status === 'concluida').length }
   }
   const [editing, setEditing] = useState<Task | null>(null)
+  const isMe = (m: TeamMember) => m.userId === persona.userId
+  const tasksOf = (m: TeamMember) => (m.role === 'analista' && m.status === 'ativo' ? countFor(m.userId!) : undefined)
+  const actions = (m: TeamMember) => <MemberActions m={m} onConfirm={() => setConfirming(m)} onAssign={() => setAssigning({ to: m.userId! })} />
+  const columns: ColumnDef<TeamMember, unknown>[] = [
+    { id: 'nome', header: 'Nome', enableSorting: false, meta: { width: 200 }, cell: ({ row }) => <MemberName m={row.original} isMe={isMe(row.original)} /> },
+    { id: 'email', header: 'Email', enableSorting: false, cell: ({ row }) => <span className="block truncate text-[14px] text-ink-soft">{row.original.email}</span> },
+    { id: 'papel', header: 'Papel', enableSorting: false, meta: { width: 185 }, cell: ({ row }) => <Chip tone={row.original.role === 'responsavel' ? 'dark' : 'outline'}>{ROLE_LABEL[row.original.role]}</Chip> },
+    { id: 'estado', header: 'Estado', enableSorting: false, meta: { width: 160 }, cell: ({ row }) => <MemberStatus m={row.original} /> },
+    { id: 'tarefas', header: 'Tarefas', enableSorting: false, meta: { width: 120 }, cell: ({ row }) => <TaskCountCell c={tasksOf(row.original)} /> },
+    { id: 'acoes', header: () => <span className="sr-only">Ações</span>, enableSorting: false, meta: { width: 220, align: 'right' }, cell: ({ row }) => actions(row.original) },
+  ]
 
   if (users.isError || tasks.isError) return <ErrorState error={users.error ?? tasks.error} onRetry={() => { users.refetch(); tasks.refetch() }} />
   const list = tasks.data ?? []
@@ -102,22 +120,21 @@ export function TeamPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title="Equipa" subtitle="Quem trabalha consigo no aLinha e o que pediu a cada pessoa." actions={<><Button variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} onClick={() => setInvite(true)}>Convidar analista</Button><Button icon={<ClipboardPlus className="size-4" aria-hidden />} disabled={analysts.length === 0} title={analysts.length === 0 ? 'Convide primeiro um analista' : undefined} onClick={() => setAssigning({})}>Atribuir tarefa</Button></>} />
-      <Explainer id="team"
-        steps={[
-          { title: 'Convide', text: 'O analista recebe um email, cria a conta e ativa a autenticação em dois passos.' },
-          { title: 'Atribua tarefas', text: 'Perguntas técnicas, evidências ou o registo de ativos, com ou sem prazo.' },
-          { title: 'Acompanhe', text: 'Aqui vê o estado de cada tarefa, pode enviar um lembrete ou mudar o prazo.' },
-        ]} />
 
       <section aria-labelledby="members" className="flex flex-col gap-3">
         <h2 id="members" className="text-[18px] font-extrabold">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
         {members.isError ? <ErrorState error={members.error} onRetry={() => members.refetch()} /> : !members.data ? <SkeletonRows rows={3} /> : (
-          <ul className="overflow-hidden rounded-[16px] border border-line-soft bg-paper" aria-label="Membros da organização">
-            <li aria-hidden className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
-              {['Nome', 'Email', 'Papel', 'Estado', 'Tarefas', ''].map((h, i) => <span key={i} className="eyebrow text-[11px] text-muted">{h}</span>)}
-            </li>
-            {members.data.map((m) => <MemberRow key={m.id} m={m} isMe={m.userId === persona.userId} tasks={m.role === 'analista' && m.status === 'ativo' ? countFor(m.userId!) : undefined} onConfirm={() => setConfirming(m)} onAssign={() => setAssigning({ to: m.userId! })} />)}
-          </ul>
+          <DataTable caption="Membros da organização" data={members.data} columns={columns} getRowId={(m) => m.id}
+            renderCard={(m) => (
+              <div className="flex flex-col gap-1.5">
+                <MemberName m={m} isMe={isMe(m)} />
+                <span className="truncate text-[14px] text-ink-soft">{m.email}</span>
+                <span><Chip tone={m.role === 'responsavel' ? 'dark' : 'outline'}>{ROLE_LABEL[m.role]}</Chip></span>
+                <MemberStatus m={m} />
+                <TaskCountCell c={tasksOf(m)} />
+                {actions(m)}
+              </div>
+            )} />
         )}
       </section>
 
@@ -125,18 +142,24 @@ export function TeamPage() {
         <h2 id="assigned" className="text-[18px] font-extrabold">Tarefas atribuídas</h2>
         {!tasks.data || !today.data ? <SkeletonRows rows={3} /> : pending.length === 0 ? (
           <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[14px] text-ink-soft">Não há tarefas por fazer. Atribua o registo de ativos em <Link className="font-bold text-brand hover:underline" to={`/org/${org.slug}/ativos?atribuir=1`}>Ativos</Link>.</p>
-        ) : pending.map((t) => <TaskRow key={t.id} task={t} today={today.data} assignee={users.data?.find((u) => u.id === t.assigneeId)?.name ?? '—'} onEdit={() => setEditing(t)} />)}
+        ) : (
+          <ul aria-label="Tarefas por fazer" className="flex flex-col gap-3">
+            {pending.map((t) => <li key={t.id}><TaskRow task={t} today={today.data} assignee={users.data?.find((u) => u.id === t.assigneeId)?.name ?? '—'} onEdit={() => setEditing(t)} /></li>)}
+          </ul>
+        )}
         {closed.length > 0 && (
-          <>
-            <Eyebrow className="mt-2">Concluídas ou canceladas</Eyebrow>
-            {closed.map((t) => (
-              <div key={t.id} className="flex items-center gap-3 rounded-[14px] bg-paper-soft px-5 py-3 text-[14px]">
-                <span className="flex-1 text-ink-soft">{t.title}</span>
-                <span className="text-[13px] text-muted">{users.data?.find((u) => u.id === t.assigneeId)?.name}</span>
-                <Chip tone="neutral">{t.status === 'concluida' ? 'Concluída' : 'Cancelada'}</Chip>
-              </div>
-            ))}
-          </>
+          <section aria-labelledby="closed" className="mt-2 flex flex-col gap-3">
+            <Eyebrow as="h3"><span id="closed">Concluídas ou canceladas</span></Eyebrow>
+            <ul className="flex flex-col gap-3">
+              {closed.map((t) => (
+                <li key={t.id} className="flex items-center gap-3 rounded-[14px] bg-paper-soft px-5 py-3 text-[14px]">
+                  <span className="flex-1 text-ink-soft">{t.title}</span>
+                  <span className="text-[13px] text-muted">{users.data?.find((u) => u.id === t.assigneeId)?.name}</span>
+                  <Chip tone="neutral">{t.status === 'concluida' ? 'Concluída' : 'Cancelada'}</Chip>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </section>
 
@@ -155,14 +178,14 @@ function TaskRow({ task, today, assignee, onEdit }: { task: Task; today: string;
   const update = useUpdateTask(org.id)
   const due = task.dueDate ? dueStatus(task.dueDate, today) : null
   return (
-    <article className="flex flex-wrap items-center gap-4 rounded-[16px] border border-line-soft bg-paper px-5 py-4">
+    <article aria-labelledby={`tarefa-${task.id}`} className="flex flex-wrap items-center gap-4 rounded-[16px] border border-line-soft bg-paper px-5 py-4">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Chip>{KIND_LABEL[task.kind]}</Chip>
           {due ? <span className={cn('rounded-full px-2.5 py-1 text-[12px] font-bold', TONE_CLASS[due.tone])}>{due.label}</span> : <Chip tone="neutral">Sem prazo</Chip>}
         </div>
-        <h3 className="mt-2 text-[16px] font-bold">{task.title}</h3>
-        <p className="text-[13px] text-muted">Para {assignee} · {task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}</p>
+        <h3 id={`tarefa-${task.id}`} className="mt-2 text-[16px] font-bold">{task.title}</h3>
+        <p className="text-[13px] text-muted">Para {assignee} · {task.dueDate ? <>até <time dateTime={task.dueDate}>{shortDay(task.dueDate)}</time></> : 'sem prazo'}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" size="sm" icon={<BellRing className="size-4" aria-hidden />} loading={remind.isPending} onClick={() => remind.mutate(task.id, { onSuccess: () => toast.show(`Lembrete enviado a ${assignee}`), onError: (e) => toast.show(e.message, 'error') })}>Lembrar</Button>
@@ -180,10 +203,17 @@ function DueModal({ task, today, onClose }: { task: Task; today: string; onClose
   const toast = useToast()
   const update = useUpdateTask(org.id)
   const [due, setDue] = useState(DUE_OPTIONS.find((d) => d >= today && d !== task.dueDate) ?? DUE_OPTIONS.at(-1)!)
+  const formId = useId()
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    update.mutate({ id: task.id, change: { dueDate: due } }, { onSuccess: () => { toast.show('Prazo alterado'); onClose() }, onError: (e) => toast.show(e.message, 'error') })
+  }
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} chip={<Chip>Tarefa</Chip>} title="Mudar o prazo" description={`${task.title}. O analista é avisado do novo prazo.`}
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button loading={update.isPending} onClick={() => update.mutate({ id: task.id, change: { dueDate: due } }, { onSuccess: () => { toast.show('Prazo alterado'); onClose() }, onError: (e) => toast.show(e.message, 'error') })}>Guardar prazo</Button></>}>
-      <Field label="Novo prazo">{(p) => <Select id={p.id} value={due} onChange={setDue} options={DUE_OPTIONS.filter((d) => d >= today).map((d) => ({ value: d, label: longDay(d) }))} />}</Field>
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form={formId} loading={update.isPending}>Guardar prazo</Button></>}>
+      <form id={formId} onSubmit={submit}>
+        <Field label="Novo prazo">{(p) => <Select id={p.id} value={due} onChange={setDue} options={DUE_OPTIONS.filter((d) => d >= today).map((d) => ({ value: d, label: longDay(d) }))} />}</Field>
+      </form>
     </Modal>
   )
 }
@@ -199,7 +229,9 @@ function InviteModal({ onClose }: { onClose: () => void }) {
     name: submitted && !name.trim() ? 'Indique o nome do analista.' : undefined,
     email: !submitted ? undefined : !email.trim() ? 'Indique o email do analista.' : !isValidEmail(email.trim()) ? 'Este email não parece válido. Exemplo: nome@empresa.pt' : undefined,
   }
-  const submit = () => {
+  const formId = useId()
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
     setSubmitted(true)
     if (!name.trim() || !isValidEmail(email.trim())) return
     invite.mutate({ name: name.trim(), email: email.trim() }, {
@@ -208,11 +240,13 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   }
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} chip={<Chip>Equipa</Chip>} title="Convidar analista" description="O analista só vê as tarefas que lhe atribuir. Pode ser um técnico externo."
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit} loading={invite.isPending}>Enviar convite</Button></>}>
-      <Field label="Nome" error={errors.name}>{(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Pedro Almeida" autoFocus />}</Field>
-      <Field label="Email" error={errors.email}>{(p) => <TextInput id={p.id} type="email" invalid={p.invalid} aria-describedby={p.describedBy} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nome@empresa.pt" />}</Field>
-      {invite.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{invite.error.message}</p>}
-      <p className="text-[13px] text-muted">O convite é válido durante 7 dias. Neste protótipo, o email não é enviado.</p>
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form={formId} loading={invite.isPending}>Enviar convite</Button></>}>
+      <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-[18px]">
+        <Field label="Nome" error={errors.name}>{(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Pedro Almeida" autoFocus />}</Field>
+        <Field label="Email" error={errors.email}>{(p) => <TextInput id={p.id} type="email" invalid={p.invalid} aria-describedby={p.describedBy} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nome@empresa.pt" />}</Field>
+        {invite.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{invite.error.message}</p>}
+        <p className="text-[13px] text-muted">O convite é válido durante 7 dias. Neste protótipo, o email não é enviado.</p>
+      </form>
     </Modal>
   )
 }
