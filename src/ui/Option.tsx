@@ -32,7 +32,7 @@ export function OptionGroup<T extends string>({ name, value, onChange, options, 
               className={cn(
                 'flex cursor-pointer items-start gap-3 rounded-[12px] border px-4 py-3.5 transition-colors duration-150',
                 'has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-signal',
-                selected ? 'border-brand bg-brand-soft' : 'border-line-soft bg-paper hover:border-line',
+                selected ? 'border-brand bg-brand-soft' : 'border-line bg-paper hover:border-ink-soft',
               )}
             >
               <input type="radio" name={name} value={o.value} checked={selected} onChange={() => onChange(o.value)} className="sr-only" />

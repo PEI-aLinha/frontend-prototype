@@ -48,7 +48,7 @@ function AiUseGroup({ value, onChange, error }: { value: AiUse[]; onChange: (v: 
         {AI_USES.map((o) => {
           const on = value.includes(o.value)
           return (
-            <label key={o.value} className={cn('flex cursor-pointer items-start gap-3 rounded-[12px] border px-4 py-3.5 transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-signal', on ? 'border-brand bg-brand-soft' : 'border-line-soft bg-paper hover:border-line')}>
+            <label key={o.value} className={cn('flex cursor-pointer items-start gap-3 rounded-[12px] border px-4 py-3.5 transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-signal', on ? 'border-brand bg-brand-soft' : 'border-line bg-paper hover:border-ink-soft')}>
               <input type="checkbox" checked={on} onChange={() => toggle(o.value)} className="sr-only" />
               <span aria-hidden className={cn('mt-[3px] grid size-[18px] shrink-0 place-items-center rounded-[5px] border-2', on ? 'border-brand bg-brand text-white' : 'border-line')}>
                 {on && <Check className="size-3" strokeWidth={3} />}
