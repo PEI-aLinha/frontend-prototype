@@ -1,5 +1,14 @@
-import { expect, test } from '@playwright/test'
-import { ORG, pickOption, start, startEmpty } from './helpers'
+import { expect, test, type Page } from '@playwright/test'
+import { ORG, pickOption, start } from './helpers'
+
+async function startEmpty(page: Page) {
+  await page.goto('/_design')
+  await page.evaluate(() => localStorage.clear())
+  await page.goto('/?as=marta')
+  await page.getByRole('button', { name: /Demonstração: a ver como/ }).click()
+  await page.getByRole('menuitem', { name: /Adesão · empresa por registar/ }).click()
+  await expect(page).toHaveURL(/\/registo\/conta/)
+}
 
 test('Onboarding — Rui creates the account, sets up MFA, registers the company and answers the scope questions', async ({ page }) => {
   await startEmpty(page)

@@ -34,7 +34,7 @@ No menu de persona (canto inferior, Alt+P) escolha **Guião da demonstração**:
 
 ## Rotas por cenário
 
-A ordem do roadmap e o histórico abrem por parâmetro de URL, por isso esses estados são partilháveis. Os formulários de propor e validar ficam locais.
+Os painéis e modais abrem por parâmetro de URL, por isso todos os estados são partilháveis.
 
 **Cenário 1 — Inventário (Rui → Pedro)** · dados: *Cenário 1 · início*
 | Ecrã | Rota |

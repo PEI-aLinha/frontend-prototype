@@ -160,7 +160,7 @@ export function useProposeAction(org: Id) {
 
 export function useValidateRoadmap(org: Id) {
   const invalidate = useInvalidate()
-  return useMutation({ mutationFn: () => api.assessment.validateRoadmap(org), onSuccess: () => invalidate('roadmap', 'portfolio', 'audit', 'risks', 'links', 'assessment') })
+  return useMutation({ mutationFn: () => api.assessment.validateRoadmap(org), onSuccess: () => invalidate('roadmap', 'portfolio', 'audit', 'risks', 'links') })
 }
 
 export const useNotifications = () => useQuery({ queryKey: keys.notifications(), queryFn: () => api.notifications.list() })
