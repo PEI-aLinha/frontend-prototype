@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { CheckCircle2, Clock } from 'lucide-react'
 import { useAssessment, useSubmitAssessment, useUsers } from '../../api/queries'
 import { useTenant } from '../../core/tenant'
-import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Explainer, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term, useToast } from '../../ui'
+import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, useToast } from '../../ui'
 
 const STATUS = { em_curso: 'Em curso', submetida: 'Concluída · a aguardar validação', validada: 'Validada pela consultora' } as const
 

@@ -70,7 +70,7 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} width={640} chip={<Chip>Tarefa para analista</Chip>} title="Atribuir tarefa"
       description="O analista recebe um email e vê a tarefa na sua lista."
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form={formId} loading={assign.isPending}>Atribuir</Button></>}>
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form={formId} loading={assign.isPending || delegate.isPending}>Atribuir</Button></>}>
       <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-[18px]">
         <Field label="Analista" error={errors.assignee}>
           {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={assignee} placeholder="Escolher o analista…" onChange={setAssignee} options={analysts.map((a) => ({ value: a.userId!, label: a.name, hint: a.email }))} />}
@@ -93,7 +93,7 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
           {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}
         </Field>
 
-        {assign.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{assign.error.message}</p>}
+        {failure && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{failure.message}</p>}
       </form>
     </Modal>
   )
