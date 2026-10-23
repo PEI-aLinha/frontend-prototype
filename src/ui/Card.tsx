@@ -14,23 +14,29 @@ interface StatCardProps {
   label: string
   value: ReactNode
   caption?: ReactNode
+  /** Optional short preview under the caption, e.g. the first three rows of a longer list. */
+  children?: ReactNode
   onClick?: () => void
   accent?: ReactNode
+  className?: string
+  /** Heading level for the card label, when the card sits under a section heading. */
+  labelAs?: 'p' | 'h3'
 }
 
 /** Summary card: eyebrow 11 + ExtraBold 18 value + 13 caption. */
-export function StatCard({ label, value, caption, onClick, accent }: StatCardProps) {
+export function StatCard({ label, value, caption, children, onClick, accent, className, labelAs = 'p' }: StatCardProps) {
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <Eyebrow>{label}</Eyebrow>
+        <Eyebrow as={labelAs}>{label}</Eyebrow>
         {accent}
       </div>
       <p className="mt-1.5 text-[18px] font-extrabold leading-tight">{value}</p>
       {caption && <p className="mt-1.5 text-[13px] text-ink-soft">{caption}</p>}
+      {children && <div className="mt-3">{children}</div>}
     </>
   )
-  const cls = 'flex-1 min-w-0 rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] text-left'
+  const cls = cn('flex-1 min-w-0 rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] text-left', className)
   if (onClick) {
     return (
       <button type="button" onClick={onClick} className={cn(cls, 'transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]')}>

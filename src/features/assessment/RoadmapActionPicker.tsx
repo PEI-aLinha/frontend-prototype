@@ -55,7 +55,7 @@ export function RoadmapActionPicker({ orgId, actions, selected, onChange, error,
                 <span className="min-w-0 flex-1">
                   <span className={cn('block text-[14px]', on ? 'font-bold text-brand' : 'font-semibold')}>{a.description}</span>
                   <span className="mt-0.5 block text-[12px] text-muted">
-                    #{a.priority} no roadmap · {a.controlCode !== '—' ? `${a.controlCode} · ` : ''}{a.dueDate ? `até ${shortDate(a.dueDate)}` : 'sem prazo'}
+                    prioridade base #{a.priority} · {a.controlCode !== '—' ? `${a.controlCode} · ` : ''}{a.dueDate ? `até ${shortDate(a.dueDate)}` : 'sem prazo'}
                     {suggested.includes(a.id) && <span className="font-bold text-brand"> · sugerida para este ativo</span>}
                   </span>
                   {a.aiOutputId && <span className="mt-1.5 block"><AIBadge /></span>}

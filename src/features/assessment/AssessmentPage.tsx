@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { CheckCircle2, Clock } from 'lucide-react'
 import { useAssessment, useSubmitAssessment, useUsers } from '../../api/queries'
+import { MATURITY_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Explainer, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term, useToast } from '../../ui'
 
@@ -38,7 +39,7 @@ export function AssessmentPage() {
               </div>
               <p className="text-[28px] font-extrabold">{answered} <span className="text-[16px] font-semibold text-ink-soft">de {total} perguntas respondidas</span></p>
               <ProgressBar value={answered} max={total} label="Progresso da avaliação" />
-              {a.maturity && <p className="text-[14px]">Nível de maturidade: <strong>{a.maturity} de 5</strong> · Básico</p>}
+              {a.maturity && <p className="text-[14px]">Nível de maturidade: <strong>{a.maturity} de 5</strong> · {MATURITY_LABEL[a.maturity]}</p>}
             </Card>
             {a.status === 'em_curso' && total > 0 && answered === total && (
               <Card className="flex flex-col items-start gap-3 border-brand">

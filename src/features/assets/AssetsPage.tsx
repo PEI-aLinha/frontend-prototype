@@ -3,7 +3,8 @@ import { Link, Navigate, useSearchParams } from 'react-router'
 import { Boxes, Download, FileUp, Layers, Plus, ShieldPlus } from 'lucide-react'
 import { useTasks } from '../../api/queries'
 import type { Asset, Task } from '../../api/contracts'
-import { ASSET_TYPE_LABEL, shortDay } from '../../config/labels'
+import { ASSET_TYPE_LABEL, authorNames, shortDay } from '../../config/labels'
+import { LEVEL_ORDER } from '../../config/riskMatrix'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
@@ -22,8 +23,6 @@ import { BulkBar } from './BulkBar'
 import { ImportModal } from './import/ImportModal'
 import { useInventory, type Inventory } from './useInventory'
 
-const LEVEL_SORT = { alto: 3, medio: 2, baixo: 1 } as const
-
 function columns(inv: Inventory, opts: { risks: boolean; riskLink?: (a: Asset) => string }): ColumnDef<Asset, unknown>[] {
   const compact = opts.risks || !!opts.riskLink
   // Consultant sees both the risk column and the "Registar risco" link: tightest layout.
@@ -33,10 +32,10 @@ function columns(inv: Inventory, opts: { risks: boolean; riskLink?: (a: Asset) =
     { id: 'type', accessorFn: (a) => ASSET_TYPE_LABEL[a.type], header: 'Tipo', cell: (c) => <span className="text-ink-soft">{c.getValue() as string}</span>, meta: { width: dense ? 150 : compact ? 170 : 190 } },
     { id: 'service', accessorFn: (a) => inv.serviceName(a.criticalServiceId), header: 'Serviço crítico', cell: (c) => <span className="text-ink-soft">{c.getValue() as string}</span>, meta: { width: dense ? 180 : compact ? 200 : 230 } },
     { id: 'owner', accessorFn: (a) => inv.user(a.ownerId)?.name ?? '', header: 'Responsável', cell: (c) => { const u = inv.user(c.row.original.ownerId); return u ? <Person initials={u.initials} name={u.name} /> : '—' }, meta: { width: dense ? 160 : compact ? 180 : 210 } },
-    { id: 'crit', accessorFn: (a) => LEVEL_SORT[a.criticality], header: 'Criticidade', cell: (c) => <CriticalityChip level={c.row.original.criticality} />, meta: compact ? { width: dense ? 110 : 120 } : undefined },
+    { id: 'crit', accessorFn: (a) => LEVEL_ORDER[a.criticality], header: 'Criticidade', cell: (c) => <CriticalityChip level={c.row.original.criticality} />, meta: compact ? { width: dense ? 110 : 120 } : undefined },
   ]
   if (opts.risks) {
-    cols.push({ id: 'risk', accessorFn: (a) => (inv.topRisk(a.id) ? LEVEL_SORT[inv.topRisk(a.id)!] : 0), header: 'Risco', cell: (c) => { const l = inv.topRisk(c.row.original.id); const n = inv.risksByAsset.get(c.row.original.id)?.length ?? 0; return l ? <span className="inline-flex items-center gap-2"><RiskLevelBadge level={l} /><span className="text-[12px] text-muted">{n}</span></span> : <span className="text-[13px] text-muted">Sem riscos</span> }, meta: dense ? { width: 130 } : undefined })
+    cols.push({ id: 'risk', accessorFn: (a) => (inv.topRisk(a.id) ? LEVEL_ORDER[inv.topRisk(a.id)!] : 0), header: 'Risco', cell: (c) => { const l = inv.topRisk(c.row.original.id); const n = inv.risksByAsset.get(c.row.original.id)?.length ?? 0; return l ? <span className="inline-flex items-center gap-2"><RiskLevelBadge level={l} /><span className="text-[12px] text-muted">{n}</span></span> : <span className="text-[13px] text-muted">Sem riscos</span> }, meta: dense ? { width: 130 } : undefined })
   }
   if (opts.riskLink) {
     const href = opts.riskLink
@@ -94,6 +93,7 @@ export function AssetsPage() {
 
   const data = inv.data
   const visible = useMemo(() => (data ? applyFilters(data.assets, filters, data) : []), [data, filters])
+  const authors = authorNames(data?.assets ?? [], data?.users ?? [])
 
   if (persona.role === 'analista') {
     // The analyst only works on the assets of their own registration task.
@@ -139,7 +139,7 @@ export function AssetsPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? 'Inventário preenchido pelo Rui Santos e pelo Pedro Almeida. Use-o para registar os riscos.' : undefined} actions={actions} />
+      <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? `Inventário preenchido${authors ? ` por ${authors}` : ''}. Use-o para registar os riscos.` : undefined} actions={actions} />
       <Note>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
       {consultant ? (
         <Explainer id="assets-consultant" intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."
