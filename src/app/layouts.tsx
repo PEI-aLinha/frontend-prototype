@@ -87,7 +87,7 @@ export function ConsultantLayout() {
         const base = `/clientes/${org}`
         const client: NavItem[] = [
           { to: `${base}/visao-geral`, label: 'Visão geral', shortLabel: 'Geral', icon: LayoutDashboard },
-          { to: `${base}/roadmap`, label: 'Avaliação e roadmap', shortLabel: 'Roadmap', icon: ClipboardList },
+          { to: `${base}/roadmap`, label: 'Resultados e roadmap', shortLabel: 'Resultados', icon: ClipboardList },
           { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
           { to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert },
           { to: `${base}/integracoes`, label: 'Evidências automáticas', shortLabel: 'Evidências', icon: Plug },

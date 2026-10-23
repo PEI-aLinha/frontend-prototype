@@ -19,6 +19,16 @@ export async function switchSnapshot(page: Page, snapshot: 'c1' | 'c2' | 'c3') {
   await page.getByRole('menuitem', { name: new RegExp(labels[snapshot]) }).click()
 }
 
+/** Starts with the adhesion snapshot: no company registered yet, so the demo follows Rui's registration. */
+export async function startEmpty(page: Page) {
+  await page.goto('/_design')
+  await page.evaluate(() => localStorage.clear())
+  await page.goto('/?as=marta')
+  await page.getByRole('button', { name: /Demonstração: a ver como/ }).click()
+  await page.getByRole('menuitem', { name: /Adesão · empresa por registar/ }).click()
+  await expect(page).toHaveURL(/\/registo\/conta/)
+}
+
 export async function switchPersona(page: Page, name: 'Rui Santos' | 'Pedro Almeida' | 'Marta Ferreira') {
   await page.getByRole('button', { name: /Demonstração: a ver como/ }).click()
   await page.getByRole('menuitem', { name: new RegExp(name) }).click()

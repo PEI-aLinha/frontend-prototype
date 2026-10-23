@@ -55,4 +55,31 @@ describe('mock API permissions', () => {
     who = MARTA
     await expect(api.assets.saveAsset(ORG_ID, { name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' })).rejects.toMatchObject({ status: 403 })
   })
+
+  it('lets the consultant add an action last, and the client not', async () => {
+    const before = await api.assessment.listActions(ORG_ID)
+    who = MARTA
+    const added = await api.assessment.proposeAction(ORG_ID, { description: 'Rever a política de acessos', legalObligation: 'NIS2, art. 21.º', requiredEvidence: 'Política aprovada', dueDate: '2027-03-15', findingTitle: 'Proposta da consultora ao validar o plano' })
+    expect(added).toMatchObject({ description: 'Rever a política de acessos', proposedBy: MARTA, status: 'por_iniciar', assignedTo: null, findingTitle: 'Proposta da consultora ao validar o plano', dueDate: '2027-03-15' })
+    expect(added.priority).toBeGreaterThan(Math.max(...before.map((a) => a.priority)))
+    expect((await api.assessment.listActions(ORG_ID)).map((a) => a.id)).toContain(added.id)
+
+    who = RUI
+    await expect(api.assessment.proposeAction(ORG_ID, { description: 'Rever a política de acessos', legalObligation: '', requiredEvidence: '', dueDate: null })).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('refuses an empty action', async () => {
+    who = MARTA
+    await expect(api.assessment.proposeAction(ORG_ID, { description: '  ', legalObligation: '', requiredEvidence: '', dueDate: null })).rejects.toMatchObject({ status: 422 })
+  })
+
+  it('refuses a past due date and validates the roadmap once', async () => {
+    who = MARTA
+    await expect(api.assessment.proposeAction(ORG_ID, { description: 'Rever acessos', legalObligation: '', requiredEvidence: '', dueDate: '2026-10-08' })).rejects.toMatchObject({ status: 422 })
+
+    const first = await api.assessment.validateRoadmap(ORG_ID)
+    const before = (await api.audit.list(ORG_ID)).length
+    expect(await api.assessment.validateRoadmap(ORG_ID)).toEqual(first)
+    expect((await api.audit.list(ORG_ID)).length).toBe(before)
+  })
 })

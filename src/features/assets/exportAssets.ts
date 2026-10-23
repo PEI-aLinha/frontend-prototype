@@ -1,5 +1,6 @@
 import type { Asset } from '../../api/contracts'
 import { ASSET_TYPE_LABEL, CRITICALITY_LABEL } from '../../config/labels'
+import { printDocument } from '../../ui/printDocument'
 import type { Inventory } from './useInventory'
 
 const HEADERS = ['Ativo', 'Tipo', 'Serviço crítico', 'Localização', 'Responsável', 'Criticidade']
@@ -43,19 +44,14 @@ export function downloadCsv(filename: string, csv: string): void {
   URL.revokeObjectURL(url)
 }
 
-const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
-
 /** Simulated "PDF": opens a printable version to print/save as PDF. */
 export function printList(orgName: string, services: string[][], rows: string[][]): void {
-  const w = window.open('', '_blank', 'noopener=no')
-  if (!w) return
-  const table = (headers: string[], data: string[][]) =>
-    `<table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${data.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-  w.document.write(`<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><title>Lista de Ativos — ${escapeHtml(orgName)}</title>
-<style>body{font-family:'Nunito Sans',system-ui,sans-serif;color:#202124;margin:40px}h1{font-size:22px}h2{font-size:15px;margin-top:28px}p{color:#555a5f;font-size:13px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border-bottom:1px solid #d9dde0;padding:8px;text-align:left}th{background:#f7f7f8;font-family:monospace;text-transform:uppercase;font-size:10px;color:#646a6f}</style></head>
-<body><h1>Lista de Ativos — ${escapeHtml(orgName)}</h1><p>Regulamento n.º 756/2026 · gerado pelo aLinha (protótipo). A submissão ao CNCS é feita fora da plataforma.</p>
-<h2>Serviços críticos</h2>${table(SERVICE_HEADERS, services)}<h2>Ativos</h2>${table(HEADERS, rows)}</body></html>`)
-  w.document.close()
-  w.focus()
-  w.print()
+  printDocument({
+    title: `Lista de Ativos — ${orgName}`,
+    intro: 'Regulamento n.º 756/2026 · gerado pelo aLinha (protótipo). A submissão ao CNCS é feita fora da plataforma.',
+    sections: [
+      { title: 'Serviços críticos', headers: SERVICE_HEADERS, rows: services },
+      { title: 'Ativos', headers: HEADERS, rows },
+    ],
+  })
 }
