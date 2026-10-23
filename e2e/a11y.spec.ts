@@ -19,6 +19,7 @@ const PAGES: Array<[string, 'rui' | 'pedro' | 'marta', 'c1' | 'c2' | 'c3']> = [
   ['/convite/mbr-ana', 'rui', 'c1'],
   ['/registo/conta', 'rui', 'c1'],
   [`${ORG}/avaliacao`, 'rui', 'c1'],
+  [`${ORG}/integracoes`, 'rui', 'c2'],
   [`${ORG}/avaliacao/sec-acessos`, 'rui', 'c1'],
   [`${ORG}/avaliacao/sec-acessos/q-acessos-wifi`, 'rui', 'c1'],
 ]

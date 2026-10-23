@@ -30,7 +30,7 @@ export function PortfolioPage() {
             const active = !!c.organization.profile || i === 0
             const sector = c.sector || sectorById(c.organization.profile?.sector ?? '')?.label || '—'
             const row = (
-              <div className={cn('grid w-full grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.3fr)_120px] items-center gap-4 px-5 py-3.5 text-left max-md:grid-cols-1 max-md:gap-1.5', active ? 'hover:bg-paper-soft' : 'opacity-70')}>
+              <div className={cn('grid w-full grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.3fr)_120px] items-center gap-4 px-5 py-3.5 text-left max-md:grid-cols-1 max-md:gap-1.5', active ? 'hover:bg-paper-soft' : 'bg-paper-soft text-ink-soft')}>
                 <span className="min-w-0">
                   <span className="flex min-w-0 items-center gap-2">
                     <span className="truncate font-bold">{c.organization.name}</span>

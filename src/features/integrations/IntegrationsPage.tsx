@@ -33,7 +33,8 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
 
   return (
     <li>
-      <Card className={cn('flex h-full flex-col gap-3', !c.provider.applies && 'opacity-70')}>
+      {/* Providers the organization does not use: quieter surface, but text keeps AA contrast (no opacity). */}
+      <Card className={cn('flex h-full flex-col gap-3', !c.provider.applies && 'border-dashed bg-paper-soft shadow-none')}>
         <div className="flex items-start justify-between gap-2">
           <div>
             <Eyebrow>{c.provider.category}</Eyebrow>
@@ -41,7 +42,7 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
           </div>
           {c.provider.applies ? <Chip tone={on ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
         </div>
-        <p className="text-[13px] text-ink-soft">{c.provider.description}</p>
+        <p className={cn('text-[13px]', c.provider.applies ? 'text-ink-soft' : 'text-muted')}>{c.provider.description}</p>
         {on && <p className="text-[12px] text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
         {c.status === 'pedido' && assignee && <p className="text-[12px] text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
         {c.provider.applies && (
