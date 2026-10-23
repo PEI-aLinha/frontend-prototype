@@ -16,7 +16,7 @@ export function PortfolioPage() {
     <>
       <PageHeader eyebrow="Marta Ferreira · consultora aLinha" title="Carteira de clientes" subtitle={`${list.length || 12} PME atribuídas. Comece pelas que esperam por si.`} />
       <div className="flex gap-4 max-md:flex-col">
-        <StatCard label="À espera da consultora" value={pending} caption="Avaliações por validar" />
+        <StatCard label="À espera da consultora" value={pending} caption="Avaliações por validar" emphasis={pending > 0} />
         <StatCard label="Roadmaps em curso" value={list.filter((c) => /Roadmap/.test(c.stage)).length} caption="Ações a acompanhar" />
         <StatCard label="Incidentes abertos" value={list.filter((c) => c.stageTone === 'dark').length} caption="Fora deste protótipo" />
       </div>
@@ -44,7 +44,8 @@ export function PortfolioPage() {
               </div>
             )
             return (
-              <li key={c.organization.id} className="border-b border-line-soft last:border-b-0">
+              // Clients waiting on the consultant keep a signal edge even when dimmed as out of the prototype.
+              <li key={c.organization.id} className={cn('border-b border-line-soft last:border-b-0', c.stageTone === 'signal' && 'shadow-[inset_3px_0_0_var(--color-signal)]')}>
                 {active ? (
                   <button type="button" className="block w-full" onClick={() => navigate(`/clientes/${c.organization.slug}/visao-geral`)} aria-label={`Abrir ${c.organization.name}`}>{row}</button>
                 ) : (
