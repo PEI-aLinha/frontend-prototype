@@ -1,13 +1,20 @@
 import { useState } from 'react'
 import { CheckCircle2, CircleAlert, Plug, RefreshCw, ShieldCheck, Unplug, UserPlus } from 'lucide-react'
-import type { CollectedEvidence, IntegrationConnection, ProviderInfo } from '../../api/contracts'
+import type { CollectedEvidence, EvidenceStrength, IntegrationConnection, ProviderInfo } from '../../api/contracts'
 import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveries, useEvidence, useIntegrations, useServices, useSyncIntegration, useUsers } from '../../api/queries'
-import { dateTime, EVIDENCE_STRENGTH_LABEL } from '../../config/labels'
+import { dateTime } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { Button, Card, Chip, ErrorState, Eyebrow, Explainer, Note, PageHeader, SkeletonRows, Term, cn, useToast } from '../../ui'
 import { ConnectModal } from './ConnectModal'
 import { DiscoveryList } from './DiscoveryList'
+
+const STRENGTH: Record<EvidenceStrength, string> = {
+  autodeclarada: 'Autodeclarada',
+  documento_verificado: 'Documento verificado',
+  tecnicamente_verificada: 'Verificada tecnicamente',
+  continuamente_verificada: 'Verificada continuamente',
+}
 
 const STATUS: Record<IntegrationConnection['status'], string> = { disponivel: 'Por ligar', pedido: 'Pedido enviado', ligado: 'Ligado', erro: 'Erro' }
 
@@ -73,7 +80,7 @@ function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; pro
           <div className="min-w-0 flex-1">
             <p className="text-[14px] font-bold">{e.title}</p>
             <p className="text-[13px] text-ink-soft">{e.result}</p>
-            <p className="mt-1 text-[12px] text-muted">{providerName(e.provider)} · {EVIDENCE_STRENGTH_LABEL[e.strength]} · {dateTime(e.collectedAt)}</p>
+            <p className="mt-1 text-[12px] text-muted">{providerName(e.provider)} · {STRENGTH[e.strength]} · {dateTime(e.collectedAt)}</p>
           </div>
         </li>
       ))}

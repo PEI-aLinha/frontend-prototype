@@ -25,14 +25,6 @@ const QUESTIONS = catalog as QuestionDef[]
 
 const CHOICE_LABEL = { sim: 'Sim', parcial: 'Em parte', nao: 'Não', nao_sei: 'Não sei' } as const
 
-/**
- * Level the applicable law expects (RF10). Prototype stand-in: NIS2 raises the bar one level over
- * the base. A real implementation derives it from the questionnaire and the applicable obligations.
- */
-function targetMaturity(frameworks: readonly string[]): number {
-  return frameworks.some((f) => f.includes('NIS2')) ? 3 : 2
-}
-
 /** Latest analyst task for a question, unless it was cancelled. */
 const delegation = (s: DemoState, questionId: Id) => s.tasks.findLast((t) => t.questionId === questionId && t.status !== 'cancelada')
 
@@ -60,7 +52,6 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
       if (role(s) === 'analista') throw new ApiError('Não tem permissão para ver a avaliação.', 403)
       const roadmap = s.roadmap[org]
       const done = !!roadmap?.assessmentCompletedAt
-      const company = s.organizations.find((o) => o.id === org)
       const sections = SECTIONS.map((sec) => {
         const questions = QUESTIONS.filter((x) => x.sectionId === sec.id).map((x) => withAnswer(s, org, x))
         const tasks = questions.map((x) => delegation(s, x.id)).filter((t): t is Task => !!t)
@@ -73,12 +64,8 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
       })
       // Questions waiting for an analyst are skipped: the designated manager continues with the rest.
       const next = done ? undefined : QUESTIONS.find((x) => { const question = withAnswer(s, org, x); return !question.answer && !question.delegatedTaskId })
-      // shortcut: the computed level is still the fixed 2 stand-in; upgrade when the scoring model lands.
-      // The consultant sees it once the answers are complete; the client only after validation.
-      const maturity = roadmap?.validated || (done && role(s) === 'consultor') ? 2 : null
       return {
-        status: roadmap?.validated ? 'validada' : done ? 'submetida' : 'em_curso', sections, maturity,
-        targetMaturity: targetMaturity(company?.frameworks ?? []),
+        status: roadmap?.validated ? 'validada' : done ? 'submetida' : 'em_curso', sections, maturity: roadmap?.validated ? 2 : null,
         nextQuestion: next ? { sectionId: next.sectionId, questionId: next.id } : null,
         savedAt: s.audit.findLast((e) => e.organizationId === org && e.entityType === 'assessment')?.createdAt ?? null,
       }

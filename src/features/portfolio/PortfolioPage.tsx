@@ -2,21 +2,19 @@ import { useNavigate } from 'react-router'
 import { ArrowRight, Sparkles } from 'lucide-react'
 import { usePortfolio } from '../../api/queries'
 import { dateTime } from '../../config/labels'
-import { useSession } from '../../core/session'
 import { Chip, ErrorState, PageHeader, SkeletonRows, StatCard, Tooltip, cn } from '../../ui'
 import { sectorById } from '../organization/public'
 
 /** Consultant's client portfolio. Only organizations registered in the prototype (with registration data) can be opened. */
 export function PortfolioPage() {
   const navigate = useNavigate()
-  const { persona } = useSession()
   const portfolio = usePortfolio()
   const list = portfolio.data ?? []
   const pending = list.filter((c) => c.stageTone === 'signal').length
 
   return (
     <>
-      <PageHeader eyebrow={`${persona.name} · ${persona.subtitle}`} title="Carteira de clientes" subtitle={`${list.length || 12} PME atribuídas. Comece pelas que esperam por si.`} />
+      <PageHeader eyebrow="Marta Ferreira · consultora aLinha" title="Carteira de clientes" subtitle={`${list.length || 12} PME atribuídas. Comece pelas que esperam por si.`} />
       <div className="flex gap-4 max-md:flex-col">
         <StatCard label="À espera da consultora" value={pending} caption="Avaliações por validar" />
         <StatCard label="Roadmaps em curso" value={list.filter((c) => /Roadmap/.test(c.stage)).length} caption="Ações a acompanhar" />
@@ -27,9 +25,9 @@ export function PortfolioPage() {
           <li aria-hidden className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.3fr)_120px] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
             {['Cliente', 'Fase', 'Próximo passo', 'Atualizado'].map((h) => <span key={h} className="eyebrow text-[11px] text-muted">{h}</span>)}
           </li>
-          {list.map((c) => {
+          {list.map((c, i) => {
             // Only organizations with registration data exist in this prototype; the others are illustrative.
-            const active = !!c.organization.profile
+            const active = !!c.organization.profile || i === 0
             const sector = c.sector || sectorById(c.organization.profile?.sector ?? '')?.label || '—'
             const row = (
               <div className={cn('grid w-full grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.3fr)_120px] items-center gap-4 px-5 py-3.5 text-left max-md:grid-cols-1 max-md:gap-1.5', active ? 'hover:bg-paper-soft' : 'opacity-70')}>

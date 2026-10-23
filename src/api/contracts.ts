@@ -334,8 +334,6 @@ export interface RemediationAction {
   findingTitle: string
   controlCode: string
   proposedBy: Id | null
-  /** What the measure means for the company, in plain language. Shown to the client. */
-  plainLanguage?: string
 }
 
 export interface RoadmapStatus {
@@ -350,9 +348,6 @@ export interface ProposeActionInput {
   legalObligation: string
   requiredEvidence: string
   dueDate: IsoDate | null
-  /** Where the action came from. Defaults to the risk register, which is where the picker proposes from. */
-  findingTitle?: string
-  controlCode?: string
 }
 
 export interface PortfolioClient {
@@ -382,14 +377,12 @@ export interface AssessmentSection {
 export interface AssessmentSummary {
   status: 'em_curso' | 'submetida' | 'validada'
   sections: AssessmentSection[]
-  /** Maturity level (1–5): visible to the consultant once the assessment is complete, to the client only after validation. */
+  /** Maturity level (1–5), only after validation. */
   maturity: number | null
   /** First question still to answer (not answered nor waiting for an analyst); null once there is none or after submission. */
   nextQuestion: { sectionId: Id; questionId: Id } | null
   /** When the designated manager last saved an answer; null before the first save. */
   savedAt: IsoDate | null
-  /** Level the applicable law expects (RF10). It follows the frameworks, so it is known before validation. */
-  targetMaturity: number
 }
 
 /** One question of the maturity questionnaire, with the designated manager's answer. */

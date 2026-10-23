@@ -14,8 +14,6 @@ export function useRiskSignals(): RiskSignal[] {
   const links = useRiskLinks(org.id, on)
   return useMemo(() => (links.data ?? []).flatMap((l) => {
     const r = risks.data?.find((x) => x.id === l.riskId)
-    return r && r.status !== 'arquivado'
-      ? [{ actionId: l.remediationActionId, level: computeRiskLevel(r.probability, r.impact).level, riskLabel: r.threat, plainLabel: r.plainLanguage ?? r.threat }]
-      : []
+    return r ? [{ actionId: l.remediationActionId, level: computeRiskLevel(r.probability, r.impact).level, riskLabel: r.threat }] : []
   }), [links.data, risks.data])
 }
