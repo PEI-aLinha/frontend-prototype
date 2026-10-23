@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Clock, Pencil, Plus, X } from 'lucide-react'
 import { ChatThread } from './ChatThread'
 import type { SendOptions } from './ChatThread'
@@ -29,6 +29,8 @@ export type ChatBodyProps = ConversationNavProps & {
   onReview?: () => void
   /** Só quando a consultora está a rever: pede um documento ao cliente. */
   onRequestDocument?: (title: string, note: string) => void
+  /** Só quando a consultora está a rever: contexto da empresa do cliente. */
+  context?: ReactNode
 }
 
 /** Ícone de "à espera de aprovação" e ponto de "mensagens novas". Partilhado com a barra lateral do modo expandido. */
@@ -170,7 +172,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
 }
 
 /** Versão normal (painel pequeno): separadores no topo e conversa por baixo. */
-export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, canReview, reviewing, onReview, onRequestDocument, ...nav }: ChatBodyProps) {
+export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, canReview, reviewing, onReview, onRequestDocument, context, ...nav }: ChatBodyProps) {
   return (
     <>
       <ConversationTabs {...nav} />
@@ -186,6 +188,7 @@ export function ChatCompact({ conversation, suggestions, onSend, onDraftChange, 
           reviewing={reviewing}
           onReview={onReview}
           onRequestDocument={onRequestDocument}
+          context={context}
         />
       </div>
     </>

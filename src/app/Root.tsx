@@ -1,12 +1,17 @@
-import { Outlet, ScrollRestoration } from 'react-router'
+import { Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { PersonaSwitcher } from '../core/PersonaSwitcher'
 import { GlobalChatWidget } from './GlobalChatWidget'
 
+/** Rotas sem sessão (registo, convite, página de design): o assistente não aparece. */
+const NO_CHAT = ['/registo', '/convite', '/_design']
+
 export function Root() {
+  const { pathname } = useLocation()
+  const showChat = !NO_CHAT.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
   return (
     <>
       <Outlet />
-      <GlobalChatWidget />
+      {showChat && <GlobalChatWidget />}
       <PersonaSwitcher />
       <ScrollRestoration />
     </>

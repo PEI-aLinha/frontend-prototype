@@ -4,6 +4,7 @@ import { useChatHistory, useDeleteChatConversation, useReviewChatConversation, u
 import type { ChatConversation } from '../api/contracts'
 import { useSession } from '../core/session'
 import { ChatWidget } from '../features/chatbot/ChatWidget'
+import { ChatClientContext } from './ChatClientContext'
 import type { ChatMessage, Conversation, Suggestion } from '../features/chatbot/ChatTypes'
 
 const PERSONA_SUGGESTIONS: Record<string, Suggestion[]> = {
@@ -139,6 +140,7 @@ export function GlobalChatWidget() {
       canReview={isConsultant}
       onReview={handleReview}
       senderId={persona.userId}
+      reviewContext={isConsultant && scopeKey.startsWith('org:') ? (ownerId) => <ChatClientContext orgSlug={scopeKey.slice(4)} ownerId={ownerId} /> : undefined}
     />
   )
 }

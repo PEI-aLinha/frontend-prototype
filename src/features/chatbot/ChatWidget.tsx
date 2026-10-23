@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Maximize2, Minimize2, Minus, Sparkles } from 'lucide-react'
 import { ChatCompact } from './ChatCompact'
 import { ChatExpanded } from './ChatExpanded'
@@ -37,6 +37,8 @@ type ChatWidgetProps = {
   /** Id do utilizador atual. Necessário para distinguir conversas próprias de conversas de clientes. */
   senderId?: string
   initialConversationId?: string
+  /** Consultora a rever: contexto do cliente mostrado ao lado da conversa (recebe o dono da conversa). */
+  reviewContext?: (ownerId?: string) => ReactNode
 }
 
 const GREETING =
@@ -117,6 +119,7 @@ export function ChatWidget({
   onReview,
   senderId,
   initialConversationId,
+  reviewContext,
 }: ChatWidgetProps) {
   const toast = useToast()
   const [boot] = useState(() => {
@@ -449,6 +452,7 @@ export function ChatWidget({
     suggestions,
     onSend: send,
     onRequestDocument: reviewing ? requestDocument : undefined,
+    context: reviewing ? reviewContext?.(active.ownerId) : undefined,
     onDraftChange: (text: string) => patchLocal(active.id, (c) => ({ ...c, draft: text })),
     canReview,
     reviewing,

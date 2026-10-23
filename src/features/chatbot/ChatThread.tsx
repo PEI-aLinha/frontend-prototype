@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Check, ChevronDown, Clock, FilePlus2, FileText, Paperclip, Send, Sparkles, UserCheck, X } from 'lucide-react'
+import { Building2, Check, ChevronDown, Clock, FilePlus2, FileText, Paperclip, Send, Sparkles, UserCheck, X } from 'lucide-react'
 import type { ChatAttachment, ChatMessage, ChatTable, Conversation, Suggestion } from './ChatTypes'
 import { ATTACHMENT_ACCEPT, MAX_ATTACHMENT_BYTES, attachmentUrl, formatSize } from './attachmentStore'
 import { Button, TextInput } from '../../ui'
@@ -25,6 +25,8 @@ type ChatThreadProps = {
   onReview?: () => void
   /** Só quando a consultora está a rever: pede um documento ao cliente. */
   onRequestDocument?: (title: string, note: string) => void
+  /** Contexto da empresa do cliente (consultora a rever). No modo expandido em ecrã largo vai para a coluna da direita. */
+  context?: ReactNode
 }
 
 const LABEL = 'font-mono text-[10px] uppercase tracking-[0.1em]'
@@ -83,6 +85,26 @@ function ConversationDocuments({ messages }: { messages: ChatMessage[] }) {
           ))}
         </ul>
       )}
+    </div>
+  )
+}
+
+/** Contexto do cliente numa faixa que abre e fecha (painel normal e ecrãs mais estreitos). */
+function ClientContextStrip({ children, expanded }: { children: ReactNode; expanded: boolean }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className={`border-b border-brand-soft bg-white ${expanded ? 'xl:hidden' : ''}`}>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-11 w-full items-center gap-2 px-4 text-[13px] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+      >
+        <Building2 className="size-4" aria-hidden />
+        Contexto do cliente
+        <ChevronDown className={`ml-auto size-4 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+      </button>
+      {open && <div className="max-h-[min(190px,28vh)] overflow-y-auto px-4 pb-4">{children}</div>}
     </div>
   )
 }
@@ -171,7 +193,7 @@ function MessageTable({ table }: { table: ChatTable }) {
 }
 
 /** Mensagens da conversa ativa + campo de escrita. */
-export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, reviewing, onReview, onRequestDocument }: ChatThreadProps) {
+export function ChatThread({ conversation: active, expanded, suggestions, onSend, onDraftChange, canReview, reviewing, onReview, onRequestDocument, context }: ChatThreadProps) {
   const listRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -239,6 +261,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
         </div>
       )}
 
+      {context && <ClientContextStrip expanded={expanded}>{context}</ClientContextStrip>}
       <ConversationDocuments messages={active.messages} />
 
       <div

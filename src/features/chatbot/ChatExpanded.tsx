@@ -102,6 +102,7 @@ export function ChatExpanded({
   reviewing,
   onReview,
   onRequestDocument,
+  context,
   maxConversations,
   ...nav
 }: ChatBodyProps & { maxConversations: number }) {
@@ -123,7 +124,14 @@ export function ChatExpanded({
           reviewing={reviewing}
           onReview={onReview}
           onRequestDocument={onRequestDocument}
+          context={context}
         />
+        {context && (
+          <aside aria-label="Contexto do cliente" className="hidden w-[280px] flex-none flex-col gap-3 overflow-y-auto border-l border-brand-soft bg-white p-4 xl:flex">
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">Contexto do cliente</span>
+            {context}
+          </aside>
+        )}
       </div>
     </>
   )

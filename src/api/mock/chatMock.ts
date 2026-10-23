@@ -1,11 +1,26 @@
 import { ApiError, type ChatApi, type ChatConversation, type ChatMessageInput, type DemoActor, type Id } from '../contracts'
 import { getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
+import type { DemoState } from './seed'
+
+/** RNF03: as conversas de uma organização só são acessíveis à consultora atribuída e aos membros ativos. */
+function requireScopeAccess(state: Readonly<DemoState>, actorId: Id, scopeKey: string) {
+  if (!scopeKey.startsWith('org:')) return // ex.: 'carteira', sem organização
+  const org = state.organizations.find((o) => o.slug === scopeKey.slice(4))
+  if (!org) throw new ApiError('Organização não encontrada', 404)
+  const me = state.users.find((u) => u.id === actorId)
+  if (me?.role === 'consultor') {
+    if (org.consultantId !== me.id) throw new ApiError('Esta organização não está atribuída a si.', 403)
+  } else if (!state.members.some((m) => m.organizationId === org.id && m.userId === actorId && m.status === 'ativo')) {
+    throw new ApiError('Não tem acesso a esta organização.', 403)
+  }
+}
 
 export function createChatMock(getActor: () => DemoActor): ChatApi {
   return {
     list: (scopeKey) => simulate(() => {
       const actorId = getActor().userId
+      requireScopeAccess(getState(), actorId, scopeKey)
       const isConsultant = getState().users.find((user) => user.id === actorId)?.role === 'consultor'
       return getState().chat
         // Cada utilizador vê as suas próprias conversas; a consultora vê também as de clientes em revisão ou já revistas
@@ -25,6 +40,7 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
       let result!: ChatConversation
       setState((state) => {
         const actorId = getActor().userId
+        requireScopeAccess(state, actorId, scopeKey)
         const me = state.users.find((user) => user.id === actorId)
         const before = state.chat.find((item) => item.id === conversation.id)
         // A consultora "a rever" = conversa existente que pertence a outro utilizador
@@ -80,6 +96,7 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
     review: (scopeKey, conversationId) => simulate(() => {
       const me = getState().users.find((user) => user.id === getActor().userId)
       if (me?.role !== 'consultor') throw new ApiError('Só a consultora pode rever conversas.', 403)
+      requireScopeAccess(getState(), me.id, scopeKey)
       let reviewed!: ChatConversation
       setState((state) => {
         const current = state.chat.find((item) => item.id === conversationId && item.scopeKey === scopeKey && item.awaitingReview)
