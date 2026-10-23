@@ -20,7 +20,7 @@ export function ProposeActionModal({ open, onClose }: { open: boolean; onClose: 
   const close = () => { reset(); onClose() }
 
   const submit = () => {
-    if (description.trim().length < MIN_LENGTH) { setError('Descreva a ação em pelo menos 5 caracteres.'); return }
+    if (description.trim().length < MIN_LENGTH) { setError(`Descreva a ação em pelo menos ${MIN_LENGTH} caracteres.`); return }
     propose.mutate({
       description: description.trim(),
       requiredEvidence: evidence.trim() || 'A definir pela consultora',

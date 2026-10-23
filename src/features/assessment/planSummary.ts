@@ -26,7 +26,7 @@ export interface PlanSummary {
   sections: PlanSection[]
   /** The weakest sections first, cut to PREVIEW_ROWS. These are what is holding maturity down. */
   topSections: PlanSection[]
-  /** Open risks, worst first, cut to PREVIEW_ROWS. */
+  /** Open risks (por_tratar or em_tratamento), worst first, cut to PREVIEW_ROWS. */
   topRisks: PlanRisk[]
   /** Open risks before the cut, so a card can say how many it left out. */
   openRisks: number
@@ -52,8 +52,7 @@ export function planSummary(input: {
   const actionsDone = actions.filter((a) => a.status === 'concluida').length
   const linked = new Set(links.map((l) => l.riskId))
   const sections = (assessment?.sections ?? []).map(({ id, name, answered, total }) => ({ id, name, answered, total }))
-  const openRisks = risks.filter((r) => r.status !== 'arquivado')
-  const needsAction = openRisks.filter((r) => r.status === 'por_tratar' || r.status === 'em_tratamento')
+  const openRisks = risks.filter((r) => r.status === 'por_tratar' || r.status === 'em_tratamento')
   const topRisks = openRisks
     // Worst first. Level alone is too coarse, so the score behind it decides.
     .map((risk) => ({ risk, level: computeRiskLevel(risk.probability, risk.impact).level }))
@@ -67,7 +66,7 @@ export function planSummary(input: {
     openRisks: topRisks.length,
     actionsOpen: actions.length - actionsDone,
     actionsDone,
-    risksUnlinked: needsAction.filter((r) => !linked.has(r.id)).length,
+    risksUnlinked: openRisks.filter((r) => !linked.has(r.id)).length,
   }
 }
 

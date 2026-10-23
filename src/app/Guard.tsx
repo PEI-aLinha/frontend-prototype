@@ -14,7 +14,7 @@ export function Guard({ resource, action = 'view', children, reason }: { resourc
   const can = useCan()
   const { persona } = useSession()
   const org = useOptionalTenant()
-  const status = useRoadmapStatus(org?.id)
+  const status = useRoadmapStatus(resource === 'risk' ? org?.id : undefined)
   // The risk screen depends on the roadmap validation. Pending is not the same as denied.
   if (resource === 'risk') {
     if (status.isPending) return <SkeletonRows rows={6} />

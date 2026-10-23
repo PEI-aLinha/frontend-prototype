@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pathThrough, progressPercent } from './roadmapMap'
+import { pathThrough, progressPercent } from './roadmapPath'
 
 type Status = 'por_iniciar' | 'em_curso' | 'concluida'
 const statuses = (list: Status[]) => list.map((status) => ({ status }))

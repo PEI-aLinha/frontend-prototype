@@ -43,7 +43,7 @@ describe('planRows', () => {
     const r = risk('rsk-a', 'Ransomware')
     const rows = planRows({ ranked: prioritizeRoadmap([action('a')], [{ actionId: 'a', level: 'alto', riskLabel: r.threat, plainLabel: 'Um vírus pode parar a produção' }]), users, evidence: new Map(), risks: [r] }, 'consultant')
     expect(rows[0][8]).toBe('CA.03 · Lacuna')
-    expect(rows[0][9]).toBe('alto · Ransomware')
+    expect(rows[0][9]).toBe('Alto · Ransomware')
   })
 
   it('drops the consultant-only columns and uses plain language for the client', () => {
@@ -51,7 +51,7 @@ describe('planRows', () => {
     const rows = planRows({ ranked: prioritizeRoadmap([action('a')], [{ actionId: 'a', level: 'alto', riskLabel: r.threat, plainLabel: r.plainLanguage }]), users, evidence: new Map(), risks: [r] }, 'client')
     expect(rows[0]).toHaveLength(8)
     expect(rows[0]).not.toContain('NIS2, art. 21.º')
-    expect(rows[0][7]).toBe('alto · Um vírus pode parar a produção')
+    expect(rows[0][7]).toBe('Alto · Um vírus pode parar a produção')
   })
 
   it('says no when the action has no date', () => {
@@ -87,7 +87,7 @@ describe('printResults', () => {
 describe('riskRows', () => {
   it('carries the threat, the computed level, the status and the review date', () => {
     const rows = riskRows([risk('rsk-a', 'Ransomware no servidor'), { ...risk('rsk-b', 'Phishing'), reviewDate: '2026-12-01' }], 'consultant')
-    expect(rows[0]).toEqual(['Ransomware no servidor', 'alto', 'Em tratamento', ''])
+    expect(rows[0]).toEqual(['Ransomware no servidor', 'Alto', 'Em tratamento', ''])
     expect(rows[1][3]).toBe('1 dez. 2026')
   })
 
@@ -96,6 +96,6 @@ describe('riskRows', () => {
       { ...risk('rsk-a', 'Ransomware'), plainLanguage: 'Um vírus pode parar a produção' },
       { ...risk('rsk-b', 'Phishing'), status: 'arquivado' },
     ], 'client')
-    expect(rows).toEqual([['Um vírus pode parar a produção', 'alto', 'Em tratamento', '']])
+    expect(rows).toEqual([['Um vírus pode parar a produção', 'Alto', 'Em tratamento', '']])
   })
 })

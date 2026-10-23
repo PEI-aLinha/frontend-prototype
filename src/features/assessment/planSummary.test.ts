@@ -53,13 +53,13 @@ describe('planSummary', () => {
     expect(planSummary({ actions: [], assessment: undefined, risks: [risk('rsk-a'), risk('rsk-b')], links: [link('lnk-1', 'rsk-a', 'act-mfa')] }).risksUnlinked).toBe(1)
   })
 
-  it('does not count accepted or treated risks as needing an action', () => {
+  it('does not count accepted or treated risks as open', () => {
     const result = planSummary({
       actions: [], assessment: undefined,
       risks: [risk('rsk-a'), risk('rsk-b', { status: 'aceite' }), risk('rsk-c', { status: 'tratado' })],
       links: [],
     })
-    expect(result.openRisks).toBe(3)
+    expect(result.openRisks).toBe(1)
     expect(result.risksUnlinked).toBe(1)
   })
 

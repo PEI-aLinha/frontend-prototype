@@ -1,5 +1,5 @@
 import type { CollectedEvidence, RemediationAction, Risk, User } from '../../api/contracts'
-import { ACTION_STATUS_LABEL, dateTime, MATURITY_LABEL, RISK_STATUS_LABEL, shortDate } from '../../config/labels'
+import { ACTION_STATUS_LABEL, dateTime, MATURITY_LABEL, RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate } from '../../config/labels'
 import { printDocument } from '../../ui/printDocument'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { evidenceState } from './evidenceState'
@@ -60,8 +60,8 @@ export function planRows({ ranked, users, evidence }: ResultsCtx, audience: Audi
       // No evidence is a normal state, not a warning, so it reads as absent rather than failed.
       ev ? ev.label.replace('Estado: ', '') : 'Sem prova recolhida',
     ]
-    if (audience === 'client') return [...row, topRisk ? `${topRisk.level} · ${topRisk.plainLabel}` : '']
-    return [...row, a.legalObligation, `${a.controlCode} · ${a.findingTitle}`, topRisk ? `${topRisk.level} · ${topRisk.riskLabel}` : '']
+    if (audience === 'client') return [...row, topRisk ? `${RISK_LEVEL_LABEL[topRisk.level]} · ${topRisk.plainLabel}` : '']
+    return [...row, a.legalObligation, `${a.controlCode} · ${a.findingTitle}`, topRisk ? `${RISK_LEVEL_LABEL[topRisk.level]} · ${topRisk.riskLabel}` : '']
   })
 }
 
@@ -75,7 +75,7 @@ export function gapRows(ranked: PrioritizedAction<RemediationAction>[], audience
 export function riskRows(risks: Risk[], audience: Audience): string[][] {
   return risks
     .filter((r) => r.status !== 'arquivado')
-    .map((r) => [audience === 'client' ? r.plainLanguage ?? r.threat : r.threat, computeRiskLevel(r.probability, r.impact).level, RISK_STATUS_LABEL[r.status], r.reviewDate ? shortDate(r.reviewDate) : ''])
+    .map((r) => [audience === 'client' ? r.plainLanguage ?? r.threat : r.threat, RISK_LEVEL_LABEL[computeRiskLevel(r.probability, r.impact).level], RISK_STATUS_LABEL[r.status], r.reviewDate ? shortDate(r.reviewDate) : ''])
 }
 
 /** RF12/US17: prints the results, which the browser saves as PDF. Exports what the reader sees. */

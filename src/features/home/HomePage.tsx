@@ -71,7 +71,11 @@ export function HomePage() {
       <HighlightCard
         eyebrow="Avaliação de maturidade · NIS2 + RGPD"
         title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : notStarted ? 'Avaliação por começar' : assessment.data ? `${answered} de ${total} perguntas respondidas` : '…'}
-        action={<Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{validated ? 'Ver roadmap →' : submitted ? 'Ver avaliação →' : notStarted ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>}
+        action={validated ? (
+          <Link to={`${base}/roadmap`}><Button variant="inverse" tabIndex={-1}>Ver roadmap →</Button></Link>
+        ) : (
+          <Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{submitted ? 'Ver avaliação →' : notStarted ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>
+        )}
       >
         <ProgressBar value={answered} max={total || 1} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
         {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} por ${consultant}` : submitted ? `Submetida qua., 14 out. às 10:12 · ${consultant} está a rever` : notStarted ? 'Ainda sem respostas · o progresso fica guardado' : [...pending, 'o progresso fica guardado'].join(' · ')}

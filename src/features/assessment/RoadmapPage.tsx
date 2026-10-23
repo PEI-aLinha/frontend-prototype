@@ -142,7 +142,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   const levelCard = assessment.isError
     ? <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value="—" caption="Não foi possível carregar a avaliação" />
     : assessment.data
-      ? <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${MATURITY_LABEL[summary.targetMaturity ?? 2]} · ${answered} de ${sectionTotal} perguntas respondidas`}>
+      ? <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value={`${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'} de 5`} caption={`${summary.targetMaturity ? `Objetivo: ${MATURITY_LABEL[summary.targetMaturity]} · ` : ''}${answered} de ${sectionTotal} perguntas respondidas`}>
         {allAnswered
           ? <MiniList label="Lacunas identificadas" rows={gapPreview} more={Math.max(0, gaps.length - PREVIEW_ROWS)} />
           : <MiniList label="Secções com menos respostas" rows={summary.topSections.map((s) => ({ key: s.id, label: s.name, meta: `${s.answered}/${s.total}` }))} more={Math.max(0, summary.sections.length - PREVIEW_ROWS)} />}

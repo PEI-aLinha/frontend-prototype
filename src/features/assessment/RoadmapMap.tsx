@@ -3,7 +3,7 @@ import { Check } from 'lucide-react'
 import type { ActionStatus, Id } from '../../api/contracts'
 import { ACTION_STATUS_LABEL } from '../../config/labels'
 import { cn } from '../../ui'
-import { pathThrough, progressPercent, type Pt } from './roadmapMap'
+import { pathThrough, progressPercent, type Pt } from './roadmapPath'
 
 export interface MapNode { id: Id; description: string; status: ActionStatus }
 
