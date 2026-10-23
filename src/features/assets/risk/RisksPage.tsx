@@ -102,7 +102,8 @@ export function RisksPage() {
         actions={<>
           {editable && <Button variant="secondary" data-tour="risk-template" icon={<FileSpreadsheet className="size-4" aria-hidden />} onClick={() => downloadRiskTemplate().catch(() => toast.show('Não foi possível gerar o template. Tente outra vez.', 'error'))}>Template Excel</Button>}
           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! })}>Exportar registo</Button>}
-          {can('create', 'risk') && <Button data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
+          {/* With no risks yet, the empty state's button is the primary action; this one steps back. */}
+          {can('create', 'risk') && <Button variant={ready && all.length === 0 ? 'secondary' : 'primary'} data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
         </>}
       />
 
@@ -139,7 +140,7 @@ export function RisksPage() {
             <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1" data-tour="risk-summary">
               <h2 id="risk-summary-title" className="sr-only">Resumo por nível{residual ? ' depois das ações' : ''}</h2>
               {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
-                <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)} emphasis={l === 'alto'} tone={l === 'alto' && counts(l) > 0 ? 'alert' : 'default'}
+                <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)} emphasis={l === 'alto' && counts(l) > 0} tone={l === 'alto' && counts(l) > 0 ? 'alert' : 'default'}
                   className="max-md:px-3.5 max-md:py-3"
                   accent={<span className="max-md:hidden"><RiskLevelBadge level={l} /></span>} />
               ))}
