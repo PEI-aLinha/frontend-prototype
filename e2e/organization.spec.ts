@@ -58,18 +58,20 @@ test('Assign work — Rui gives Pedro a technical question, a duplicate is refus
   await page.getByRole('button', { name: 'Atribuir tarefa' }).click()
   const dialog = page.getByRole('dialog')
   await dialog.getByText('Pergunta técnica', { exact: true }).click()
-  await pickOption(page, 'Pergunta', /^Os servidores recebem as atualizações/)
+  await pickOption(page, 'Pergunta', /^O acesso remoto à rede da empresa/)
   await dialog.getByRole('button', { name: 'Atribuir', exact: true }).click()
   await expect(page.getByText('Tarefa enviada a Pedro Almeida')).toBeVisible()
 
   // The same question again is refused.
   await page.getByRole('button', { name: 'Atribuir tarefa' }).click()
   await dialog.getByText('Pergunta técnica', { exact: true }).click()
-  await pickOption(page, 'Pergunta', /^Os servidores recebem as atualizações/)
+  await pickOption(page, 'Pergunta', /^O acesso remoto à rede da empresa/)
   await dialog.getByRole('button', { name: 'Atribuir', exact: true }).click()
-  await expect(dialog.getByRole('alert')).toHaveText('Pedro Almeida já tem esta tarefa por fazer.')
+  await expect(dialog.getByRole('alert')).toHaveText('Esta pergunta já foi delegada e está à espera de resposta.')
   await dialog.getByRole('button', { name: 'Cancelar' }).click()
 
+  // The task is linked to the assessment question, so Pedro gets its AI help.
   await page.goto(`${ORG}/tarefas?as=pedro`)
-  await expect(page.getByText(/Os servidores recebem as atualizações de segurança/)).toBeVisible()
+  await page.getByRole('article').filter({ hasText: /O acesso remoto à rede da empresa/ }).getByRole('button', { name: 'Responder' }).click()
+  await expect(page.getByRole('region', { name: 'Ajuda' }).getByText(/Quem trabalha de fora, incluindo os fornecedores/)).toBeVisible()
 })
