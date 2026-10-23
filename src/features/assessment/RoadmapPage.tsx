@@ -88,11 +88,10 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
   const owner = users.find((u) => u.id === a.assignedTo)
-  const { data: status } = useRoadmapStatus(a.organizationId)
   return (
     <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
-        <span className={cn('grid size-9 place-items-center rounded-[10px] text-[15px] font-extrabold', reason ? 'bg-brand text-white' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
+        <span className={cn('grid size-9 place-items-center rounded-[10px] text-[15px] font-extrabold', reason ? 'bg-brand text-white' : rank === 1 ? 'bg-signal-soft text-brand' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
         {moved > 0 && (
           <span className="mt-0.5 flex flex-col text-[11px] font-bold leading-tight text-brand" aria-label={`Subiu ${moved} posições: era a ${baseRank}.ª`}>
             <span className="inline-flex items-center"><ArrowUp className="size-3.5" aria-hidden />{moved}</span>
@@ -120,7 +119,6 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
             <ShieldAlert className="size-4" aria-hidden />{reason}
           </p>
         )}
-        {a.aiOutputId && !status?.validated && <div className="mt-2"><AIBadge /></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}
       </div>
     </li>
