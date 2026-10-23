@@ -107,6 +107,14 @@
   line-height: 1.25;
 }
 
+/* DataTable cell: links, buttons and fields stay above the row's stretched open button, so they keep their own click. */
+@utility row-cell {
+  & :is(a, button, input, select, textarea, summary, [tabindex]):not([data-row-open]) {
+    position: relative;
+    z-index: 10;
+  }
+}
+
 @utility title-tight {
   letter-spacing: -0.015em;
   line-height: 1.18;

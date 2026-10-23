@@ -89,15 +89,15 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
               className={cn('relative border-b border-line-soft last:border-b-0 transition-colors', onRowClick && 'cursor-pointer hover:bg-paper-soft focus-within:bg-paper-soft', (highlightId === row.id || sel.includes(row.id)) && 'bg-signal-soft/50')}
             >
               {selectable && (
-                <td className="w-11 pl-5">
-                  <input type="checkbox" className={cn(boxCls, 'relative z-10')} aria-label={`Selecionar ${rowLabel?.(row.original).replace(/^Abrir /, '') ?? row.id}`} checked={sel.includes(row.id)} onChange={() => toggle(row.id)} />
+                <td className="relative z-10 w-11 pl-5">
+                  <input type="checkbox" className={boxCls} aria-label={`Selecionar ${rowLabel?.(row.original).replace(/^Abrir /, '') ?? row.id}`} checked={sel.includes(row.id)} onChange={() => toggle(row.id)} />
                 </td>
               )}
               {row.getVisibleCells().map((cell, i, all) => (
-                <td key={cell.id} className={cn('py-3.5 align-middle text-[0.875rem]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
-                  {/* One real button per row, stretched over it (except the checkbox column, which keeps its own target). */}
+                <td key={cell.id} className={cn('row-cell py-3.5 align-middle text-[0.875rem]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
+                  {/* One real button per row, stretched over it; row-cell keeps links, buttons and fields in the cells above it. */}
                   {i === 0 && onRowClick && (
-                    <button type="button" onClick={() => onRowClick(row.original)} className={cn('absolute inset-y-0 right-0 rounded-none focus-visible:outline-offset-[-2px]', selectable ? 'left-11' : 'left-0')}>
+                    <button type="button" data-row-open onClick={() => onRowClick(row.original)} className="absolute inset-0 rounded-none focus-visible:outline-offset-[-2px]">
                       <span className="sr-only">{rowLabel?.(row.original) ?? 'Abrir'}</span>
                     </button>
                   )}
