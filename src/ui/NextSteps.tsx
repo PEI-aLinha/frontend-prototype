@@ -17,7 +17,7 @@ export function NextSteps({ title = 'O que fazer a seguir', steps }: { title?: s
   return (
     <section aria-label={title} className="rounded-[16px] border border-line-soft bg-paper">
       <header className="flex items-center justify-between border-b border-line-soft px-5 py-3.5">
-        <h2 className="text-[16px] font-extrabold">{title}</h2>
+        <h2 className="section-title">{title}</h2>
         <span className="text-[13px] font-semibold text-ink-soft">{done} de {steps.length} feitos</span>
       </header>
       <ol>
@@ -32,8 +32,9 @@ export function NextSteps({ title = 'O que fazer a seguir', steps }: { title?: s
                 <p className={cn('text-[14px]', s.done ? 'text-ink-soft line-through decoration-line' : 'font-bold')}>{s.label}</p>
                 {s.hint && !s.done && <p className="text-[13px] text-ink-soft">{s.hint}</p>}
               </div>
+              {/* Outlined: the step is already marked by its tint and filled number; the page's primary action lives elsewhere. */}
               {current && s.to && (
-                <Link to={s.to} className="inline-flex shrink-0 items-center gap-1 rounded-[9px] bg-brand px-3.5 py-2 text-[13px] font-bold text-white hover:bg-brand-deep">
+                <Link to={s.to} className="inline-flex shrink-0 items-center gap-1 rounded-[9px] border border-brand bg-paper px-3.5 py-2 text-[13px] font-bold text-brand hover:bg-signal-soft">
                   {s.cta ?? 'Ir'} <ArrowRight className="size-4" aria-hidden />
                 </Link>
               )}
