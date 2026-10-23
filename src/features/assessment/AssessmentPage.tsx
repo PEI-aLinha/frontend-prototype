@@ -5,7 +5,7 @@ import { useAssessment, useSubmitAssessment, useUsers } from '../../api/queries'
 import { MATURITY_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { PageTour } from '../../core/onboarding/PageTour'
-import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Explainer, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term, useToast } from '../../ui'
+import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Explainer, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term, cn, useToast } from '../../ui'
 
 const STATUS = { em_curso: 'Em curso', submetida: 'Concluída · a aguardar validação', validada: 'Validada pela consultora' } as const
 
@@ -54,7 +54,8 @@ export function AssessmentPage() {
                 const complete = s.answered === s.total
                 return (
                   <li key={s.id}>
-                    <Card className="flex flex-col gap-2.5">
+                    {/* Finished sections step back (soft, no bar) so the eye lands on what is still open. */}
+                    <Card soft={complete} className={cn('flex flex-col gap-2.5', complete && 'py-3.5')}>
                       <div className="flex items-start justify-between gap-3">
                         <h2 className="flex items-center gap-2 text-[15px] font-bold">
                           {complete ? <CheckCircle2 className="size-4 text-brand" role="img" aria-label="Completa" /> : <Clock className="size-4 text-muted" role="img" aria-label="Por completar" />}
@@ -62,7 +63,7 @@ export function AssessmentPage() {
                         </h2>
                         <span className="shrink-0 text-[13px] text-ink-soft">{s.answered}/{s.total}</span>
                       </div>
-                      <ProgressBar value={s.answered} max={s.total} label={`Progresso de ${s.name}`} />
+                      {!complete && <ProgressBar value={s.answered} max={s.total} label={`Progresso de ${s.name}`} />}
                       {s.delegated.map((d) => {
                         const u = name(d.assigneeId)
                         return (
@@ -72,7 +73,7 @@ export function AssessmentPage() {
                           </p>
                         )
                       })}
-                      <Link to={s.id} className="self-start text-[14px] font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span> <span aria-hidden>→</span></Link>
+                      <Link to={s.id} className={cn('self-start text-[14px] font-bold hover:underline', complete ? 'text-ink-soft' : 'text-brand')}>{complete ? 'Rever respostas' : 'Ver perguntas'}<span className="sr-only"> de {s.name}</span> <span aria-hidden>→</span></Link>
                     </Card>
                   </li>
                 )
