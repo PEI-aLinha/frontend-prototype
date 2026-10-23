@@ -32,3 +32,19 @@ test('focus returns to the import button after closing the import dialog', async
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(opener).toBeFocused()
 })
+
+// Chromium centres the focused element, Safari scrolls it just into view, so instead of reproducing
+// the scroll, check that the page reserves room for the fixed bars (WCAG 2.4.11).
+test('scroll padding keeps focused fields clear of the mobile bars', async ({ page }, info) => {
+  test.skip(info.project.name !== 'mobile', 'the tab bar only exists on mobile')
+  await start(page, `${ORG}/tarefas/task-pergunta-mfa/pergunta`, 'pedro', 'c1')
+  await expect(page.locator('h1')).toBeVisible()
+  const bar = (await page.getByRole('navigation', { name: 'Navegação principal (mobile)' }).boundingBox())!
+  const header = (await page.getByRole('banner').first().boundingBox())!
+  const padding = await page.evaluate(() => {
+    const cs = getComputedStyle(document.documentElement)
+    return { top: parseFloat(cs.scrollPaddingTop), bottom: parseFloat(cs.scrollPaddingBottom) }
+  })
+  expect(padding.bottom).toBeGreaterThanOrEqual(bar.height)
+  expect(padding.top).toBeGreaterThanOrEqual(header.height)
+})

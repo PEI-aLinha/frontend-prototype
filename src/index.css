@@ -57,6 +57,13 @@
   html {
     color-scheme: light;
   }
+  /* Keep the focused field clear of the sticky header (56 px) and the fixed tab bar (WCAG 2.4.11). */
+  @media (width < 48rem) {
+    html {
+      scroll-padding-top: 64px;
+      scroll-padding-bottom: 88px;
+    }
+  }
   body {
     margin: 0;
     background: var(--color-paper);
