@@ -20,7 +20,7 @@ for entry in "${ROUTES[@]}"; do
   path="${entry#*:}"
   for factor in desktop mobile; do
     preset=()
-    [ "$factor" = desktop ] && preset=(--preset=desktop)
+    [[ "$factor" = desktop ]] && preset=(--preset=desktop)
     lighthouse "$BASE$path&tour=0" ${preset[@]+"${preset[@]}"} \
       --chrome-flags="--headless=new" --quiet \
       --output=json --output=html --output-path="$OUT/$name-$factor" >/dev/null

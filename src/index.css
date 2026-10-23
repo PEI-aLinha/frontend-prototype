@@ -61,7 +61,7 @@
   @supports (-webkit-touch-callout: none) {
     html {
       font: -apple-system-body;
-      font-family: var(--font-sans);
+      font-family: var(--font-sans), sans-serif;
     }
   }
   /* Keep the focused field clear of the sticky header (56 px) and the fixed tab bar (WCAG 2.4.11). */
@@ -108,8 +108,8 @@
 }
 
 /* DataTable cell: links, buttons and fields stay above the row's stretched open button, so they keep their own click. */
-@utility row-cell {
-  & :is(a, button, input, select, textarea, summary, [tabindex]):not([data-row-open]) {
+@layer components {
+  .row-cell :is(a, button, input, select, textarea, summary, [tabindex]):not([data-row-open]) {
     position: relative;
     z-index: 10;
   }
