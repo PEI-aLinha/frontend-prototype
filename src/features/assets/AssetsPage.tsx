@@ -160,7 +160,8 @@ export function AssetsPage() {
         <div role="status" aria-label="A carregar o inventário" className="flex flex-col gap-4"><div className="flex gap-4">{[0, 1, 2].map((i) => <div key={i} className="h-[104px] flex-1 animate-pulse rounded-[14px] bg-paper-soft" />)}</div><SkeletonRows rows={5} /></div>
       ) : (
         <>
-          {nextAction}
+          {/* The guided tour's "delegate" step points at whichever control asks for the assignment. */}
+          {assignIsNext ? <div data-tour="asset-assign">{nextAction}</div> : nextAction}
 
           <section aria-labelledby="inventory-summary-title" className="flex gap-4 max-md:flex-col" data-tour="asset-summary">
             <h2 id="inventory-summary-title" className="sr-only">Resumo do inventário</h2>
