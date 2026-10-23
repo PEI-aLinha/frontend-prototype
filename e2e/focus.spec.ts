@@ -81,3 +81,12 @@ test('registration says every field is required and marks them', async ({ page }
     await expect(page.getByLabel(label, { exact: true })).toHaveAttribute('aria-required', 'true')
   }
 })
+
+test('when the opener is gone after closing, focus goes to the page heading', async ({ page }) => {
+  await start(page, `${ORG}/avaliacao/sec-acessos/q-acessos-wifi`, 'rui', 'c1')
+  await page.getByRole('button', { name: /^Delegar a/ }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Enviar' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Delegar a/ })).toHaveCount(0)
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+})

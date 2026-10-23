@@ -23,10 +23,13 @@ function useReturnFocus(open: boolean) {
     if (open && document.activeElement instanceof HTMLElement && document.activeElement !== document.body) opener.current = document.activeElement
   }, [open])
   return (e: Event) => {
-    const el = opener.current
+    // The opener can be gone by now (e.g. "Delegar" is replaced once the question is delegated):
+    // fall back to the page heading rather than <body>.
+    const el = opener.current?.isConnected ? opener.current : document.querySelector<HTMLElement>('main h1')
     opener.current = null
-    if (!el?.isConnected) return
+    if (!el) return
     e.preventDefault()
+    if (el.tagName === 'H1' && !el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1')
     el.focus()
   }
 }
