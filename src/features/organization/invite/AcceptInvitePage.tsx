@@ -55,7 +55,7 @@ export function AcceptInvitePage() {
       <>
         <Stepper steps={['Conta', 'Segurança']} current={step} label="Passos para aceitar o convite" />
         <header className="flex flex-col gap-2">
-          <Eyebrow className="text-[12px]">Convite de {inv.invitedByName} · {shortDate(inv.invitedAt)}</Eyebrow>
+          <Eyebrow className="text-[12px]">Convite de {inv.invitedByName} · <time dateTime={inv.invitedAt}>{shortDate(inv.invitedAt)}</time></Eyebrow>
           <h1 className="text-[30px] font-extrabold title-tight">{step === 0 ? `Junte-se à equipa da ${inv.organizationName}` : 'Proteja a sua conta'}</h1>
           {step === 0 && <p className="text-[16px] text-ink-soft">Como analista, vai ver só as tarefas que lhe forem atribuídas.</p>}
         </header>
@@ -98,9 +98,9 @@ export function AcceptInvitePage() {
           <>
             <MfaSetup email={inv.email} submitLabel="Ativar e entrar" onVerified={finish} />
             {accept.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{accept.error.message}</p>}
-            <div className="-mt-4 flex justify-center">
+            <p className="-mt-4 flex justify-center">
               <Button variant="link" size="sm" className="!text-ink-soft" onClick={() => setStep(0)}>Voltar ao passo anterior</Button>
-            </div>
+            </p>
           </>
         )}
       </>
@@ -109,10 +109,12 @@ export function AcceptInvitePage() {
 
   return (
     <div className="min-h-dvh bg-paper-soft px-5 pb-28 pt-10 max-md:pt-6">
-      <main id="conteudo" className="mx-auto flex max-w-[760px] flex-col gap-7">
-        <Logo />
-        {content}
-      </main>
+      <div className="mx-auto flex max-w-[760px] flex-col gap-7">
+        <header><Logo /></header>
+        <main id="conteudo" className="flex flex-col gap-7">
+          {content}
+        </main>
+      </div>
     </div>
   )
 }

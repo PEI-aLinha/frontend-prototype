@@ -1,9 +1,9 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router'
 import { Info, Save } from 'lucide-react'
 import { useRegisterOrganization } from '../../../api/queries'
 import { useSession } from '../../../core/session'
-import { Button, Field, Note, Select, TextArea, TextInput, Tooltip, useToast } from '../../../ui'
+import { Button, Field, Note, Select, TextArea, TextInput, Tooltip, buttonClass, useToast } from '../../../ui'
 import { StepBadge } from './OnboardingLayout'
 import { SECTORS, sectorById } from '../sectors'
 import { EMPTY_ORGANIZATION, EXAMPLE_ORGANIZATION, toOrganizationInput, validateOrganization, type OrganizationForm } from './organizationForm'
@@ -22,14 +22,16 @@ function WithHelp({ label, help }: { label: string; help: string }) {
 }
 
 function Section({ title, description, help, children }: { title: string; description?: string; help?: string; children: ReactNode }) {
+  const descriptionId = useId()
+  // The legend must be the fieldset's first child to name the group; the divider lives on the wrapper so it does not cut through the legend.
   return (
-    <fieldset className="flex min-w-0 flex-col gap-4 border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
-      <div className="flex flex-col gap-1">
-        <legend className="text-[16px] font-bold">{help ? <WithHelp label={title} help={help} /> : title}</legend>
-        {description && <p className="text-[13px] text-ink-soft">{description}</p>}
-      </div>
-      {children}
-    </fieldset>
+    <div className="border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
+      <fieldset aria-describedby={description ? descriptionId : undefined} className="flex min-w-0 flex-col gap-4">
+        <legend className={description ? 'mb-1 text-[16px] font-bold' : 'mb-4 text-[16px] font-bold'}>{help ? <WithHelp label={title} help={help} /> : title}</legend>
+        {description && <p id={descriptionId} className="text-[13px] text-ink-soft">{description}</p>}
+        {children}
+      </fieldset>
+    </div>
   )
 }
 
@@ -172,7 +174,7 @@ export function RegisterOrganizationPage() {
       <div className="flex flex-col items-start gap-1">
         <Button variant="link" size="sm" onClick={() => { setForm(EXAMPLE_ORGANIZATION); setSubmitted(false) }}>Preencher com o exemplo da Componentes Águeda</Button>
         <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
-        <Button variant="link" size="sm" className="mt-2 !text-ink-soft" onClick={() => navigate('/registo/seguranca')}>Voltar ao passo anterior</Button>
+        <Link to="/registo/seguranca" className={buttonClass({ variant: 'link', size: 'sm', className: 'mt-2 !text-ink-soft' })}>Voltar ao passo anterior</Link>
       </div>
     </>
   )
