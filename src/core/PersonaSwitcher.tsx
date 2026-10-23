@@ -8,6 +8,7 @@ import { Avatar, cn, useToast } from '../ui'
 import { homePath, PERSONAS, type PersonaKey } from './personas'
 import { useSession } from './session'
 import { DemoGuide, type GuideStep } from './DemoGuide'
+import { clearRegistrationDraft } from '../features/organization/public'
 
 const itemCls = 'flex cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] outline-none data-[highlighted]:bg-paper-soft'
 
@@ -39,10 +40,18 @@ export function PersonaSwitcher() {
 
   const jump = (id: SnapshotId) => {
     resetDemo(id)
+    clearRegistrationDraft()
     qc.clear()
-    const target: PersonaKey = id === 'c2' ? 'marta' : 'rui'
-    setPersona(target)
-    navigate(homePath(target))
+    if (id === 'c0') {
+      // No account exists yet: drop any identity from the previous run (e.g. an accepted invite), keeping the
+      // current persona so its layout does not redirect before reaching the registration.
+      setPersona(persona.key)
+      navigate('/registo/conta')
+    } else {
+      const target: PersonaKey = id === 'c2' ? 'marta' : 'rui'
+      setPersona(target)
+      navigate(homePath(target))
+    }
     toast.show(`Dados repostos: ${SNAPSHOTS.find((s) => s.id === id)?.label}`)
   }
 
@@ -92,7 +101,6 @@ export function PersonaSwitcher() {
             <BookOpen className="size-4 text-brand" aria-hidden />
             <span className="font-bold text-brand">Guião da demonstração</span>
           </Menu.Item>
-          <Menu.Separator className="my-1.5 h-px bg-line-soft" />
           <Menu.Label className="eyebrow px-2.5 pb-1 pt-1 text-[10.5px] text-muted">Saltar para</Menu.Label>
           {SNAPSHOTS.map((s) => (
             <Menu.Item key={s.id} onSelect={() => jump(s.id)} className={itemCls}>

@@ -13,3 +13,5 @@ export const HistoryPage = lazy(() => import('../features/portfolio/HistoryPage'
 export const IntegrationsPage = lazy(() => import('../features/integrations/IntegrationsPage').then((m) => ({ default: m.IntegrationsPage })))
 export const AssessmentPage = lazy(() => import('../features/assessment/AssessmentPage').then((m) => ({ default: m.AssessmentPage })))
 export const QuestionPage = lazy(() => import('../features/tasks/QuestionPage').then((m) => ({ default: m.QuestionPage })))
+export const SectionPage = lazy(() => import('../features/assessment/SectionPage').then((m) => ({ default: m.SectionPage })))
+export const AssessmentQuestionPage = lazy(() => import('../features/assessment/AssessmentQuestionPage').then((m) => ({ default: m.AssessmentQuestionPage })))

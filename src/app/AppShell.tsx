@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from 'react'
-import { NavLink } from 'react-router'
+import { Link, matchPath, useLocation } from 'react-router'
 import type { LucideIcon } from 'lucide-react'
 import { Avatar, Logo, SkeletonRows, cn } from '../ui'
 import { MobileTabBar } from './MobileTabBar'
@@ -10,6 +10,14 @@ export interface NavItem {
   shortLabel?: string
   icon: LucideIcon
   end?: boolean
+  /** Overrides the default matching, e.g. when a section lives under another one's URL. */
+  isActive?: (pathname: string) => boolean
+}
+
+/** Whether a navigation entry is the current one (its own rule, or its URL prefix). */
+// eslint-disable-next-line react-refresh/only-export-components
+export function navActive(item: NavItem, pathname: string): boolean {
+  return item.isActive ? item.isActive(pathname) : !!matchPath({ path: item.to, end: !!item.end }, pathname)
 }
 
 export interface NavSection {
@@ -29,6 +37,7 @@ interface AppShellProps {
 
 /** 232 px side navigation on desktop; top bar + tab bar on mobile (390). */
 export function AppShell({ sections, user, tabs, tools, children }: AppShellProps) {
+  const { pathname } = useLocation()
   const tabItems = tabs ?? sections.flatMap((s) => s.items)
   return (
     <div className="min-h-dvh bg-paper md:flex">
@@ -43,19 +52,17 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
             <div key={i} className="flex flex-col gap-1">
               {s.heading && <p className="eyebrow mb-1 truncate px-3 text-[10.5px] text-muted">{s.heading}</p>}
               {s.items.map((item) => (
-                <NavLink
+                <Link
                   key={item.to}
                   to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    cn(
-                      'flex h-10 items-center rounded-[10px] px-3 text-[14px] transition-colors duration-150',
-                      isActive ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink-soft hover:bg-paper-deep/60 hover:text-ink',
-                    )
-                  }
+                  aria-current={navActive(item, pathname) ? 'page' : undefined}
+                  className={cn(
+                    'flex h-10 items-center rounded-[10px] px-3 text-[14px] transition-colors duration-150',
+                    navActive(item, pathname) ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink-soft hover:bg-paper-deep/60 hover:text-ink',
+                  )}
                 >
                   {item.label}
-                </NavLink>
+                </Link>
               ))}
             </div>
           ))}

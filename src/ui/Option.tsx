@@ -13,7 +13,7 @@ interface OptionGroupProps<T extends string> {
   onChange: (value: T) => void
   options: OptionItem<T>[]
   legend: ReactNode
-  columns?: 1 | 2
+  columns?: 1 | 2 | 3
   error?: string
 }
 
@@ -23,7 +23,7 @@ export function OptionGroup<T extends string>({ name, value, onChange, options, 
   return (
     <fieldset className="flex min-w-0 flex-col gap-1.5" aria-describedby={error ? `${id}-err` : undefined}>
       <legend className="mb-1.5 text-[13px] font-semibold text-ink-soft">{legend}</legend>
-      <div className={cn('grid gap-2.5', columns === 2 && 'sm:grid-cols-2')}>
+      <div className={cn('grid gap-2.5', columns === 2 && 'sm:grid-cols-2', columns === 3 && 'sm:grid-cols-3')}>
         {options.map((o) => {
           const selected = value === o.value
           return (

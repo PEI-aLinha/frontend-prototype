@@ -2,7 +2,7 @@ import { useAudit, useUsers } from '../../api/queries'
 import { useTenant } from '../../core/tenant'
 import { ErrorState, HistoryList, PageHeader, SkeletonRows } from '../../ui'
 
-const CONTEXT: Record<string, string> = { asset: 'Ativos', critical_service: 'Serviços críticos', risk: 'Riscos', risk_action: 'Riscos ↔ roadmap', task: 'Tarefas', remediation_action: 'Roadmap', roadmap: 'Roadmap', comment: 'Comentários' }
+const CONTEXT: Record<string, string> = { asset: 'Ativos', critical_service: 'Serviços críticos', risk: 'Riscos', risk_action: 'Riscos ↔ roadmap', task: 'Tarefas', remediation_action: 'Roadmap', roadmap: 'Roadmap', comment: 'Comentários', assessment: 'Avaliação' }
 
 /** Organization's change history (RF29): who, when, what. */
 export function HistoryPage() {

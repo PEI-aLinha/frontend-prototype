@@ -132,7 +132,7 @@ export function IntegrationsPage() {
     <>
       <PageHeader eyebrow={org.name} title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
       {!isConsultant && (
-        <Explainer id={`integrations-${persona.role}`} collapseOnRevisit intro={<>Uma <Term k="integracao">integração</Term> lê dados de um sistema que já usam (ex.: Microsoft 365). Nunca altera nada.</>}
+        <Explainer id={`integrations-${persona.role}`} intro={<>Uma <Term k="integracao">integração</Term> lê dados de um sistema que já usam (ex.: Microsoft 365). Nunca altera nada.</>}
           steps={persona.role === 'analista' ? [
             { title: 'Autorize o acesso', text: 'O Rui pediu-lhe para ligar um sistema. Clique em "Ligar" e siga os três passos.' },
             { title: 'Primeira leitura', text: 'O aLinha lê os dados e prepara sugestões de ativos.' },

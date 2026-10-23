@@ -82,7 +82,7 @@ export function RegisterAssetsPage() {
       <button type="button" onClick={() => navigate(`/org/${org.slug}/tarefas`)} className="-mb-3 inline-flex items-center gap-1.5 self-start text-[13px] font-bold text-brand hover:underline">
         <ArrowLeft className="size-4" aria-hidden />As minhas tarefas
       </button>
-      <PageHeader eyebrow="Tarefa · Inventário de ativos" title="Registar ativos técnicos" subtitle={`Atribuída por Rui Santos · até ${shortDay(task.dueDate)}`} actions={meta} />
+      <PageHeader eyebrow="Tarefa · Inventário de ativos" title="Registar ativos técnicos" subtitle={`Atribuída por Rui Santos · ${task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}`} actions={meta} />
       {done && <Note>Tarefa concluída. Pode ainda corrigir os ativos que registou; o Rui vê as alterações no histórico.</Note>}
 
       <div className="flex items-start gap-7 max-lg:flex-col-reverse">

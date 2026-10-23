@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { NavLink, matchPath, useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { Ellipsis } from 'lucide-react'
 import { Drawer, cn } from '../ui'
-import type { NavItem } from './AppShell'
+import { navActive, type NavItem } from './AppShell'
 
 /** More than this and the last slot becomes "Mais" (design-spec: the tab bar keeps every navigation entry). */
 const MAX_TABS = 5
@@ -26,14 +26,14 @@ export function MobileTabBar({ items }: { items: NavItem[] }) {
   const overflow = items.length > MAX_TABS
   const visible = overflow ? items.slice(0, MAX_TABS - 1) : items
   const more = overflow ? items.slice(MAX_TABS - 1) : []
-  const moreActive = more.some((i) => matchPath({ path: i.to, end: !!i.end }, pathname))
+  const moreActive = more.some((i) => navActive(i, pathname))
 
   return (
     <nav aria-label="Navegação principal (mobile)" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line-soft bg-paper/95 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur md:hidden">
       {visible.map((item) => (
-        <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => tabClass(isActive)}>
-          {({ isActive }) => <TabFace icon={item.icon} label={item.shortLabel ?? item.label} isActive={isActive} />}
-        </NavLink>
+        <Link key={item.to} to={item.to} aria-current={navActive(item, pathname) ? 'page' : undefined} className={tabClass(navActive(item, pathname))}>
+          <TabFace icon={item.icon} label={item.shortLabel ?? item.label} isActive={navActive(item, pathname)} />
+        </Link>
       ))}
       {overflow && (
         <>
@@ -44,11 +44,11 @@ export function MobileTabBar({ items }: { items: NavItem[] }) {
             <ul className="flex flex-col gap-1">
               {more.map((item) => (
                 <li key={item.to}>
-                  <NavLink to={item.to} end={item.end} onClick={() => setMoreOpen(false)}
-                    className={({ isActive }) => cn('flex h-12 items-center gap-3 rounded-[12px] px-3 text-[15px]', isActive ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink hover:bg-paper-soft')}>
+                  <Link to={item.to} onClick={() => setMoreOpen(false)} aria-current={navActive(item, pathname) ? 'page' : undefined}
+                    className={cn('flex h-12 items-center gap-3 rounded-[12px] px-3 text-[15px]', navActive(item, pathname) ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink hover:bg-paper-soft')}>
                     <item.icon className="size-5" aria-hidden />
                     {item.label}
-                  </NavLink>
+                  </Link>
                 </li>
               ))}
             </ul>

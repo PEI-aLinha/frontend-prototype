@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router'
-import { Download, FileUp, Layers, Plus, ShieldPlus } from 'lucide-react'
+import { Boxes, Download, FileUp, Layers, Plus, ShieldPlus } from 'lucide-react'
+import { useTasks } from '../../api/queries'
 import type { Asset, Task } from '../../api/contracts'
 import { ASSET_TYPE_LABEL, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
@@ -79,6 +80,7 @@ export function AssetsPage() {
   const { persona } = useSession()
   const [params, setParams] = useSearchParams()
   const inv = useInventory()
+  const myTasks = useTasks(org.id)
   const [picked, setPicked] = useState<string[]>([])
   const filters = readFilters(params)
 
@@ -94,7 +96,18 @@ export function AssetsPage() {
   const data = inv.data
   const visible = useMemo(() => (data ? applyFilters(data.assets, filters, data) : []), [data, filters])
 
-  if (persona.role === 'analista') return <Navigate to={`/org/${org.slug}/tarefas/task-ativos/ativos`} replace />
+  if (persona.role === 'analista') {
+    // The analyst only works on the assets of their own registration task.
+    if (!myTasks.data) return <SkeletonRows rows={3} />
+    const mine = myTasks.data.find((t) => t.kind === 'ativos' && t.status !== 'cancelada')
+    if (mine) return <Navigate to={`/org/${org.slug}/tarefas/${mine.id}/ativos`} replace />
+    return (
+      <>
+        <PageHeader eyebrow={org.name} title="Ativos" />
+        <EmptyState icon={<Boxes className="size-5" aria-hidden />} title="Ainda não tem ativos para registar">Quando o Responsável designado lhe pedir o registo de ativos, aparece aqui e na sua lista de tarefas.</EmptyState>
+      </>
+    )
+  }
 
   const consultant = persona.role === 'consultor'
   const { task, state } = taskState(inv.tasks)
@@ -120,7 +133,7 @@ export function AssetsPage() {
         ? `Registo atribuído ao ${analystName}. ${byAnalyst.length ? `${byAnalyst.length} de ${task?.expectedCount ?? 4} já registados.` : 'Aparece aqui quando ele os registar.'}`
         : 'Ainda não registados. O Pedro conhece estes sistemas: atribua-lhe o registo.'}
       action={state === 'assigned' && task
-        ? <Chip>Atribuído · até {shortDay(task.dueDate)}</Chip>
+        ? <Chip>Atribuído{task.dueDate ? ` · até ${shortDay(task.dueDate)}` : ''}</Chip>
         : <Button variant="secondary" onClick={() => update({ atribuir: '1' })}>Atribuir ao Pedro</Button>}
     />
   )

@@ -1,9 +1,11 @@
-import { CheckCircle2, Clock, Lock } from 'lucide-react'
-import { useAssessment, useUsers } from '../../api/queries'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { CheckCircle2, Clock } from 'lucide-react'
+import { useAssessment, useSubmitAssessment, useUsers } from '../../api/queries'
 import { MATURITY_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { PageTour } from '../../core/onboarding/PageTour'
-import { Avatar, Card, Chip, ErrorState, Eyebrow, Explainer, NextSteps, Note, PageHeader, ProgressBar, SkeletonRows, Term } from '../../ui'
+import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Explainer, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term, useToast } from '../../ui'
 
 const STATUS = { em_curso: 'Em curso', submetida: 'Concluída · a aguardar validação', validada: 'Validada pela consultora' } as const
 
@@ -12,6 +14,7 @@ export function AssessmentPage() {
   const org = useTenant()
   const assessment = useAssessment(org.id)
   const users = useUsers(org.id)
+  const [confirming, setConfirming] = useState(false)
   if (assessment.error) return <ErrorState error={assessment.error} onRetry={assessment.refetch} />
   const a = assessment.data
   const answered = a?.sections.reduce((n, s) => n + s.answered, 0) ?? 0
@@ -21,7 +24,7 @@ export function AssessmentPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title="Avaliação" subtitle="Questionário de maturidade em cibersegurança, alinhado com o Decreto-Lei 125/2025 (NIS2)." help={<PageTour id="avaliacao" ready={!!a} />} />
-      <Explainer id="assessment-client" startCollapsed intro={<>A avaliação mede a <Term k="maturidade">maturidade</Term> da empresa. Das respostas nascem as lacunas e o roadmap.</>}
+      <Explainer id="assessment-client" intro={<>A avaliação mede a <Term k="maturidade">maturidade</Term> da empresa. Das respostas nascem as lacunas e o roadmap.</>}
         steps={[
           { title: 'Responda por secções', text: 'Não precisa de fazer tudo de uma vez. O progresso fica guardado.' },
           { title: 'Delegue o técnico', text: 'Perguntas que não sabe responder podem ir para o Pedro. Ele só vê essa pergunta.' },
@@ -39,38 +42,42 @@ export function AssessmentPage() {
               <ProgressBar value={answered} max={total} label="Progresso da avaliação" />
               {a.maturity && <p className="text-[14px]"><Term k="maturidade">Nível de maturidade</Term>: <strong>{a.maturity} de 5</strong> · {MATURITY_LABEL[a.maturity]}</p>}
             </Card>
-            <section aria-labelledby="assessment-sections-title" className="flex flex-col gap-3" data-tour="assessment-sections">
-              <h2 id="assessment-sections-title" className="section-title mt-2">Secções</h2>
-              <ul className="flex flex-col gap-3">
-                {a.sections.map((s) => {
-                  const complete = s.answered === s.total
-                  return (
-                    <li key={s.id}>
-                      <Card className="flex flex-col gap-2.5">
-                        <div className="flex items-start justify-between gap-3">
-                          <h3 className="flex items-center gap-2 text-[15px] font-bold">
-                            {complete ? <CheckCircle2 className="size-4 text-brand" aria-hidden /> : <Clock className="size-4 text-muted" aria-hidden />}
-                            {s.name}
-                            <span className="sr-only">({complete ? 'completa' : 'por completar'})</span>
-                          </h3>
-                          <span className="shrink-0 text-[13px] text-ink-soft">{s.answered}/{s.total}<span className="sr-only"> perguntas respondidas</span></span>
-                        </div>
-                        <ProgressBar value={s.answered} max={s.total} label={`Progresso de ${s.name}`} />
-                        {s.delegated.map((d) => {
-                          const u = name(d.assigneeId)
-                          return (
-                            <p key={d.taskId} className="flex items-center gap-2 text-[13px] text-ink-soft">
-                              {u && <Avatar initials={u.initials} size={24} />}
-                              <span>1 pergunta delegada {u ? `ao ${u.name}` : ''}: <strong className={d.status === 'concluida' ? 'text-brand' : 'text-ink'}>{d.status === 'concluida' ? 'respondida' : 'à espera de resposta'}</strong></span>
-                            </p>
-                          )
-                        })}
-                      </Card>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
+            {a.status === 'em_curso' && total > 0 && answered === total && (
+              <Card className="flex flex-col items-start gap-3 border-brand">
+                <h2 className="text-[17px] font-extrabold">Avaliação completa</h2>
+                <p className="text-[14px] text-ink-soft">Respondeu a todas as perguntas. Quando submeter, a consultora revê as respostas e valida o roadmap.</p>
+                <Button onClick={() => setConfirming(true)}>Submeter avaliação</Button>
+              </Card>
+            )}
+            <ul className="flex flex-col gap-3" aria-label="Secções da avaliação" data-tour="assessment-sections">
+              {a.sections.map((s) => {
+                const complete = s.answered === s.total
+                return (
+                  <li key={s.id}>
+                    <Card className="flex flex-col gap-2.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <h2 className="flex items-center gap-2 text-[15px] font-bold">
+                          {complete ? <CheckCircle2 className="size-4 text-brand" role="img" aria-label="Completa" /> : <Clock className="size-4 text-muted" role="img" aria-label="Por completar" />}
+                          {s.name}
+                        </h2>
+                        <span className="shrink-0 text-[13px] text-ink-soft">{s.answered}/{s.total}</span>
+                      </div>
+                      <ProgressBar value={s.answered} max={s.total} label={`Progresso de ${s.name}`} />
+                      {s.delegated.map((d) => {
+                        const u = name(d.assigneeId)
+                        return (
+                          <p key={d.taskId} className="flex items-center gap-2 text-[13px] text-ink-soft">
+                            {u && <Avatar initials={u.initials} size={24} />}
+                            <span>1 pergunta delegada {u ? `ao ${u.name}` : ''}: <strong className={d.status === 'concluida' ? 'text-brand' : 'text-ink'}>{d.status === 'concluida' ? 'respondida' : 'à espera de resposta'}</strong></span>
+                          </p>
+                        )
+                      })}
+                      <Link to={s.id} className="self-start text-[14px] font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span> <span aria-hidden>→</span></Link>
+                    </Card>
+                  </li>
+                )
+              })}
+            </ul>
           </div>
           <aside aria-label="Próximos passos da avaliação" className="flex flex-col gap-4" data-tour="assessment-next">
             <NextSteps steps={[
@@ -79,10 +86,29 @@ export function AssessmentPage() {
               { label: 'Validação pela consultora', done: a.status === 'validada', hint: 'A Marta revê as respostas e valida o roadmap.' },
               { label: 'Ver resultados e roadmap', done: false, to: a.status === 'validada' ? `/org/${org.slug}/roadmap` : undefined, cta: 'Abrir' },
             ]} />
-            <Note><Lock className="mr-1 inline size-3.5 align-[-2px]" aria-hidden />O questionário completo faz parte do plugin Avaliação e não está incluído neste protótipo de Riscos e Ativos.</Note>
           </aside>
         </div>
       )}
+      {confirming && <SubmitModal onClose={() => setConfirming(false)} />}
     </>
+  )
+}
+
+/** Confirms the submission: afterwards the answers are read-only. */
+function SubmitModal({ onClose }: { onClose: () => void }) {
+  const org = useTenant()
+  const toast = useToast()
+  const submit = useSubmitAssessment(org.id)
+  const confirm = () => {
+    submit.mutateAsync()
+      .then(() => { toast.show('Avaliação submetida. A consultora vai rever as respostas.'); onClose() })
+      .catch(() => {}) // The error is shown in the dialog (submit.isError).
+  }
+  return (
+    <Modal open onOpenChange={(o) => !o && onClose()} title="Submeter a avaliação?"
+      description="Depois de submeter, as respostas deixam de poder ser alteradas. A consultora vai revê-las e validar o roadmap."
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={confirm} loading={submit.isPending}>Submeter</Button></>}>
+      {submit.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{submit.error.message}</p>}
+    </Modal>
   )
 }

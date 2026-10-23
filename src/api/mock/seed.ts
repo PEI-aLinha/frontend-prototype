@@ -1,13 +1,21 @@
 // Demo data (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Dates in October 2026.
 import type {
-  AppNotification, Asset, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
-  Risk, RiskActionLink, RoadmapStatus, Task, User,
+  AppNotification, Asset, Consultant, TeamMember, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
+  Risk, RiskActionLink, RoadmapStatus, Task, User, AnswerChoice, QuestionAnswer,
 } from '../contracts'
 
-export type SnapshotId = 'c1' | 'c2' | 'c3'
+export type SnapshotId = 'c0' | 'c1' | 'c2' | 'c3'
+
+/** aLinha consultants. Marta's active clients are her portfolio; the others only have a count. */
+export interface ConsultantRecord extends Consultant {
+  /** Active clients outside the prototype (Marta's are counted from the portfolio). */
+  otherActiveClients: number
+}
 
 export interface DemoState {
   version: number
+  consultants: ConsultantRecord[]
+  members: TeamMember[]
   snapshot: SnapshotId
   users: User[]
   organizations: Organization[]
@@ -19,6 +27,8 @@ export interface DemoState {
   comments: AssetComment[]
   actions: RemediationAction[]
   roadmap: Record<string, RoadmapStatus>
+  /** Designated manager's answers in the maturity questionnaire, per organization and question. */
+  answers: Record<string, Record<string, QuestionAnswer>>
   portfolio: PortfolioClient[]
   audit: AuditEntry[]
   notifications: AppNotification[]
@@ -28,7 +38,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 6
+export const STATE_VERSION = 11
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -44,6 +54,17 @@ const USERS: User[] = [
   { id: MARTA, name: 'Marta Ferreira', initials: 'MF', role: 'consultor', organizationId: null, title: 'Consultora aLinha', email: 'marta.ferreira@alinha.pt' },
 ]
 
+const CONSULTANTS: ConsultantRecord[] = [
+  { id: MARTA, name: 'Marta Ferreira', initials: 'MF', heading: 'A sua consultora', email: 'marta.ferreira@alinha.pt', phone: '913456210', otherActiveClients: 0 },
+  { id: 'u-joao', name: 'João Pereira', initials: 'JP', heading: 'O seu consultor', email: 'joao.pereira@alinha.pt', phone: '913456211', otherActiveClients: 14 },
+]
+
+const MEMBERS: TeamMember[] = [
+  { id: 'mbr-rui', organizationId: ORG_ID, userId: RUI, name: 'Rui Santos', email: 'rui.santos@compagueda.pt', role: 'responsavel', status: 'ativo', invitedAt: null, invitedBy: null, joinedAt: '2026-10-09T09:20:00' },
+  { id: 'mbr-pedro', organizationId: ORG_ID, userId: PEDRO, name: 'Pedro Almeida', email: 'pedro.almeida@tiagueda.pt', role: 'analista', status: 'ativo', invitedAt: '2026-10-09T10:30:00', invitedBy: RUI, joinedAt: '2026-10-09T18:05:00' },
+  { id: 'mbr-ana', organizationId: ORG_ID, userId: null, name: 'Ana Costa', email: 'ana.costa@compagueda.pt', role: 'analista', status: 'convite_pendente', invitedAt: '2026-10-12T11:00:00', invitedBy: RUI, joinedAt: null },
+]
+
 const ORG: Organization = {
   id: ORG_ID,
   slug: ORG_SLUG,
@@ -52,6 +73,23 @@ const ORG: Organization = {
   classification: 'Entidade importante (sugestão indicativa)',
   frameworks: ['NIS2 / RJC', 'RGPD'],
   consultantId: MARTA,
+  consultantAssignedAt: '2026-10-09T09:20:00',
+  profile: {
+    nif: '509180027',
+    cae: '29320',
+    sector: 'industria',
+    subsector: 'automoveis',
+    services: 'Fabrico de componentes metálicos e plásticos para a indústria automóvel, para fabricantes em Portugal e no resto da Europa.',
+    employees: 120,
+    turnover: 18_500_000,
+    address: { street: 'Rua da Zona Industrial do Casarão, 45', postalCode: '3750-750', city: 'Águeda' },
+    contacts: { phone: '234600120', email: 'geral@compagueda.pt' },
+    permanentContact: { name: 'Rui Santos', phone: '912345678' },
+  },
+  registeredBy: RUI,
+  registeredAt: '2026-10-09T09:20:00',
+  // Scenario 1 of the report: personal data of employees and customers, no AI systems.
+  scope: { employeeData: 'sim', customerData: 'sim', usesAi: 'nao', aiUses: [], answeredBy: RUI, answeredAt: '2026-10-09T09:31:00' },
 }
 
 const SERVICES: CriticalService[] = [
@@ -80,19 +118,43 @@ const ASSETS_PEDRO: Asset[] = [
 ]
 
 const QUESTION_TASK: Task = {
-  id: 'task-pergunta-backups', organizationId: ORG_ID, kind: 'pergunta',
+  id: 'task-pergunta-backups', organizationId: ORG_ID, kind: 'pergunta', questionId: 'q-backups',
   title: 'As cópias de segurança dos sistemas críticos são feitas regularmente e a reposição é testada?',
   context: 'Avaliação de maturidade · Continuidade do negócio', assigneeId: PEDRO, assignedBy: RUI,
   dueDate: '2026-10-13', status: 'concluida', createdAt: at(12),
+  answer: { choice: 'parcial', note: 'Sim, mas a reposição nunca foi testada.' },
 }
 
 const MFA_QUESTION: Task = {
-  id: 'task-pergunta-mfa', organizationId: ORG_ID, kind: 'pergunta',
+  id: 'task-pergunta-mfa', organizationId: ORG_ID, kind: 'pergunta', questionId: 'q-mfa',
   title: 'As contas de administrador usam autenticação multifator (MFA)?',
   context: 'Avaliação de maturidade · Controlo de acessos', assigneeId: PEDRO, assignedBy: RUI,
   dueDate: '2026-10-16', status: 'pendente', createdAt: at(13, '09:10'),
   aiHelp: 'MFA significa pedir uma segunda prova além da senha, por exemplo um código no telemóvel. Para verificar no Microsoft 365: Centro de administração › Utilizadores › Autenticação multifator. Responda "Em parte" se só algumas contas de administrador a tiverem.',
 }
+
+/** Rui's answers in the maturity questionnaire (scenario 1). Delegated questions are answered through the analyst's task. */
+const RUI_ANSWERS: Record<string, AnswerChoice> = {
+  'q-gov-politica': 'sim', 'q-gov-responsavel': 'sim', 'q-gov-gerencia': 'parcial', 'q-gov-formacao-gerencia': 'nao',
+  'q-gov-formacao': 'parcial', 'q-gov-riscos': 'nao', 'q-gov-funcoes': 'parcial', 'q-gov-revisao': 'nao',
+  'q-ativos-inventario': 'parcial', 'q-ativos-dono': 'sim', 'q-ativos-criticidade': 'parcial', 'q-ativos-dados': 'sim',
+  'q-ativos-abate': 'nao', 'q-ativos-software': 'parcial',
+  'q-acessos-contas': 'sim', 'q-acessos-saidas': 'parcial', 'q-acessos-minimo': 'parcial', 'q-acessos-revisao': 'nao',
+  'q-acessos-senhas': 'sim', 'q-acessos-admin': 'parcial', 'q-acessos-remoto': 'sim',
+  'q-cont-copia-fora': 'nao', 'q-cont-plano': 'nao', 'q-cont-tempo': 'parcial', 'q-cont-energia': 'sim',
+  'q-cont-contactos': 'sim', 'q-cont-teste': 'nao',
+  'q-inc-procedimento': 'nao', 'q-inc-reportar': 'parcial', 'q-inc-cncs': 'sim', 'q-inc-registo': 'nao',
+  'q-forn-lista': 'sim', 'q-forn-contratos': 'parcial',
+}
+
+/** All answers at submission (scenarios 2 and 3; the MFA question is no longer delegated there). */
+const RUI_ANSWERS_SUBMITTED: Record<string, AnswerChoice> = {
+  ...RUI_ANSWERS, 'q-mfa': 'parcial', 'q-acessos-wifi': 'sim', 'q-inc-antivirus': 'sim', 'q-inc-registos': 'parcial',
+  'q-forn-acessos': 'parcial', 'q-forn-avaliacao': 'nao', 'q-forn-cloud': 'sim',
+}
+
+const answers = (choices: Record<string, AnswerChoice>): Record<string, QuestionAnswer> =>
+  Object.fromEntries(Object.entries(choices).map(([id, choice]) => [id, { choice }]))
 
 const ASSET_TASK: Task = {
   id: ASSET_TASK_ID, organizationId: ORG_ID, kind: 'ativos',
@@ -175,7 +237,7 @@ function portfolio(snapshot: SnapshotId): PortfolioClient[] {
     organization: { id: `org-${i}`, slug: `cliente-${i}`, name, description: sector, classification: '', frameworks: ['NIS2 / RJC', 'RGPD'], consultantId: MARTA },
     sector, employees, stage, stageTone, nextStep, updatedAt: at(Math.max(1, 15 - i), '17:00'),
   }))
-  return [ca, ...others]
+  return snapshot === 'c0' ? others : [ca, ...others]
 }
 
 let auditSeq = 0
@@ -192,7 +254,17 @@ function baseAudit(): AuditEntry[] {
   ]
 }
 
+/** "Adesão": the company is not registered yet; only Marta and her other clients exist. */
+function emptySnapshot(): DemoState {
+  return {
+    version: STATE_VERSION, consultants: CONSULTANTS, members: [], snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
+    risks: [], links: [], comments: [], actions: [], roadmap: {}, answers: {}, portfolio: portfolio('c0'), audit: [], notifications: [], today: '2026-10-09',
+    connections: {}, discoveries: [], evidence: [],
+  }
+}
+
 export function buildSnapshot(snapshot: SnapshotId): DemoState {
+  if (snapshot === 'c0') return emptySnapshot()
   auditSeq = 0
   const c1 = snapshot === 'c1'
   const entries = baseAudit()
@@ -246,6 +318,8 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
 
   return {
     version: STATE_VERSION,
+    consultants: CONSULTANTS,
+    members: MEMBERS,
     snapshot,
     users: USERS,
     organizations: [ORG],
@@ -257,6 +331,7 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
     comments,
     actions,
     roadmap: { [ORG_ID]: roadmap },
+    answers: { [ORG_ID]: answers(c1 ? RUI_ANSWERS : RUI_ANSWERS_SUBMITTED) },
     portfolio: portfolio(snapshot),
     audit: entries,
     notifications: seedNotifications(snapshot),
@@ -289,6 +364,7 @@ function seedNotifications(snapshot: SnapshotId): AppNotification[] {
 }
 
 export const SNAPSHOTS: Array<{ id: SnapshotId; label: string; hint: string }> = [
+  { id: 'c0', label: 'Adesão · empresa por registar', hint: 'Rui cria a conta e regista a Componentes Águeda' },
   { id: 'c1', label: 'Cenário 1 · início', hint: 'Rui com 3 ativos; registo técnico por atribuir' },
   { id: 'c2', label: 'Cenário 2 · início', hint: 'Inventário completo; Marta a registar riscos' },
   { id: 'c3', label: 'Cenário 3 · roadmap validado', hint: 'Rui vê os riscos em só leitura' },

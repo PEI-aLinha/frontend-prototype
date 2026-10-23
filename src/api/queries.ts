@@ -1,7 +1,7 @@
 // TanStack Query hooks on top of the contracts. Components use only these, never the mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { AssetBulkChange, AssetInput, QuestionAnswer, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, RiskInput, TaskInput } from './contracts'
+import type { AssetBulkChange, AssetInput, QuestionAnswer, DelegateQuestionInput, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, QualificationInput, RegistrationInput, RiskInput, ScopeInput, TaskInput, WorkAssignmentInput } from './contracts'
 
 export const keys = {
   org: (slug: string) => ['org', slug] as const,
@@ -49,6 +49,59 @@ export const useAssessment = (org?: Id) => useQuery({ queryKey: keys.assessment(
 function useInvalidate() {
   const qc = useQueryClient()
   return (...prefixes: string[]) => Promise.all([...prefixes, 'notifications'].map((p) => qc.invalidateQueries({ queryKey: [p] })))
+}
+
+export const useMembers = (org?: Id) => useQuery({ queryKey: ['members', org], queryFn: () => api.organization.listMembers(org!), ...enabled(org) })
+export const useConsultant = (org?: Id) => useQuery({ queryKey: ['consultant', org], queryFn: () => api.organization.getConsultant(org!), ...enabled(org) })
+
+export function useInviteAnalyst(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (input: { name: string; email: string }) => api.organization.inviteAnalyst(org, input), onSuccess: () => invalidate('members', 'audit') })
+}
+
+export function useResendInvite(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (memberId: Id) => api.organization.resendInvite(org, memberId), onSuccess: () => invalidate('members', 'audit') })
+}
+
+export function useCancelInvite(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (memberId: Id) => api.organization.cancelInvite(org, memberId), onSuccess: () => invalidate('members', 'audit') })
+}
+
+export function useAssignWork(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (input: WorkAssignmentInput) => api.organization.assignWork(org, input), onSuccess: () => invalidate('tasks', 'audit') })
+}
+
+export function useRemoveMember(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (memberId: Id) => api.organization.removeMember(org, memberId), onSuccess: () => invalidate('members', 'tasks', 'audit') })
+}
+
+export const useInvite = (token: Id) => useQuery({ queryKey: ['invite', token], queryFn: () => api.organization.getInvite(token), retry: false })
+
+export function useAcceptInvite() {
+  return useMutation({ mutationFn: (token: Id) => api.organization.acceptInvite(token) })
+}
+
+export function useCheckEmail() {
+  return useMutation({ mutationFn: (email: string) => api.organization.isEmailAvailable(email) })
+}
+
+export function useRegisterOrganization() {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (input: RegistrationInput) => api.organization.register(input), onSuccess: () => invalidate('org', 'users', 'portfolio', 'audit') })
+}
+
+export function useSaveScope(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (input: ScopeInput) => api.organization.saveScope(org, input), onSuccess: () => invalidate('org', 'audit') })
+}
+
+export function useRegisterQualification(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (input: QualificationInput) => api.organization.registerQualification(org, input), onSuccess: () => invalidate('org', 'audit') })
 }
 
 export function useSaveAsset(org: Id) {
@@ -183,4 +236,23 @@ export function useDecideDiscovery(org: Id) {
 export function useAnswerQuestion(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({ mutationFn: ({ taskId, answer }: { taskId: Id; answer: QuestionAnswer }) => api.assessment.answerQuestion(org, taskId, answer), onSuccess: () => invalidate('tasks', 'assessment', 'audit') })
+}
+
+// Under the 'assessment' key, so anything that refreshes the summary also refreshes the questions.
+export const useAssessmentQuestions = (org: Id | undefined, sectionId: Id) =>
+  useQuery({ queryKey: ['assessment', org, 'questions', sectionId], queryFn: () => api.assessment.listQuestions(org!, sectionId), ...enabled(org) })
+
+export function useSaveAnswer(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: ({ questionId, answer }: { questionId: Id; answer: QuestionAnswer }) => api.assessment.saveAnswer(org, questionId, answer), onSuccess: () => invalidate('assessment', 'audit') })
+}
+
+export function useDelegateQuestion(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: ({ questionId, input }: { questionId: Id; input: DelegateQuestionInput }) => api.assessment.delegateQuestion(org, questionId, input), onSuccess: () => invalidate('assessment', 'tasks', 'audit') })
+}
+
+export function useSubmitAssessment(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: () => api.assessment.submitAssessment(org), onSuccess: () => invalidate('assessment', 'roadmap', 'portfolio', 'audit') })
 }
