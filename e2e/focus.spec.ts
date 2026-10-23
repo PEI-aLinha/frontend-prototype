@@ -60,3 +60,9 @@ test('each route has its own title and navigation moves focus to the new h1', as
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(heading)
   }
 })
+
+test('the demo button name starts with its visible text', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'the visible label is hidden on small screens')
+  await start(page, `${ORG}/inicio`, 'rui', 'c3')
+  await expect(page.getByRole('button', { name: /^Demo · Rui/ })).toBeVisible()
+})

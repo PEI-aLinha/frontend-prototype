@@ -77,9 +77,9 @@ export function PersonaSwitcher() {
         className="fixed bottom-[76px] left-5 z-[85] md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[0.75rem] font-bold text-ink-soft shadow-[0_6px_20px_rgba(32,33,36,0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:left-auto max-md:right-3"
       >
         <Avatar initials={persona.initials} size={24} />
-        {/* Name from content, not aria-label, so it always contains the visible text (WCAG 2.5.3). */}
-        <span className="sr-only">Demonstração: a ver como {persona.name}. Mudar de persona (Alt+P). </span>
+        {/* Name from content, starting with the visible text so voice control finds it (WCAG 2.5.3). */}
         <span className="max-sm:hidden">Demo · {persona.firstName}</span>
+        <span className="sr-only"> — Demonstração: a ver como {persona.name}. Mudar de persona (Alt+P).</span>
         {failing && <WifiOff className="size-3.5 text-danger" aria-label="Modo de erro ativo" />}
         <ChevronUp className="size-3.5" aria-hidden />
       </Menu.Trigger>
