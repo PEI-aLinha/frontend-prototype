@@ -27,7 +27,8 @@ export function ClientOverviewPage() {
     { label: 'Ligar os riscos altos a ações do roadmap', hint: 'As ações ligadas sobem de prioridade.', done: highRisks.length > 0 && highRisks.every((r) => links.data?.some((l) => l.riskId === r.id)), to: `${base}/riscos`, cta: 'Abrir riscos' },
     { label: 'Validar o roadmap', hint: 'Depois disto o Rui vê o plano e os riscos em só leitura.', done: !!validated, to: `${base}/roadmap`, cta: 'Rever roadmap' },
   ]
-  const uncovered = !!risks.data && covered < criticalAssets.length
+  const missing = criticalAssets.length - covered
+  const uncovered = !!risks.data && missing > 0
   // The hero carries the current step's action, so the page has one primary target.
   const currentStep = steps.find((s) => !s.done)
   const heroAction = currentStep?.to && currentStep.cta ? { to: currentStep.to, cta: currentStep.cta } : validated ? { to: `${base}/riscos`, cta: 'Abrir riscos' } : null
@@ -61,7 +62,7 @@ export function ClientOverviewPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         <Link to={`${base}/ativos`} className="contents"><StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? '…'} serviços críticos · preenchido pelo Rui e pelo Pedro`} /></Link>
-        <Link to={`${base}/riscos`} className="contents"><StatCard label="Riscos" value={risks.data ? `${risks.data.length} registados` : '…'} caption={uncovered ? `${criticalAssets.length - covered} ativos críticos sem riscos` : 'Registo segundo a ISO/IEC 27005'} tone={uncovered ? 'alert' : 'default'} /></Link>
+        <Link to={`${base}/riscos`} className="contents"><StatCard label="Riscos" value={risks.data ? `${risks.data.length} registados` : '…'} caption={uncovered ? `${missing} ${missing === 1 ? 'ativo crítico' : 'ativos críticos'} sem riscos` : 'Registo segundo a ISO/IEC 27005'} tone={uncovered ? 'alert' : 'default'} /></Link>
         <Link to={`${base}/roadmap`} className="contents"><StatCard label="Roadmap" value={validated ? 'Validado' : 'Por validar'} caption={validated ? 'Visível para o cliente' : 'Proposto pela IA a partir das lacunas'} /></Link>
       </div>
     </>
