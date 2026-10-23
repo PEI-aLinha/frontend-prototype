@@ -77,9 +77,9 @@ export function TasksPage() {
                   Quando o Responsável designado lhe atribuir uma pergunta técnica, uma evidência ou outra tarefa, aparece aqui com o prazo. Também recebe um email.
                 </EmptyState>
               )}
-              {open.length > 0 && <h2 className="text-[16px] font-bold">Por fazer</h2>}
+              {open.length > 0 && <h2 className="section-title">Por fazer</h2>}
               {open.map(card)}
-              {done.length > 0 && <h2 className={cn('text-[16px] font-bold', open.length > 0 && 'mt-3')}>Concluídas</h2>}
+              {done.length > 0 && <h2 className={cn('section-title', open.length > 0 && 'mt-3')}>Concluídas</h2>}
               {done.map(card)}
             </>
           )}

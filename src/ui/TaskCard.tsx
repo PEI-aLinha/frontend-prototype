@@ -24,7 +24,7 @@ export function TaskCard({ type, due, title, meta, done, state, late, action }: 
           <Chip>{type}</Chip>
           {done ? <Chip tone="neutral">Concluída</Chip> : <>{state}{due && <span className={cn('text-[13px] font-bold', late ? 'text-risk-high-ink' : 'text-brand')}>{due}</span>}</>}
         </div>
-        <h3 className={cn('text-[17px] font-bold', done && 'text-ink-soft')}>{title}</h3>
+        <h3 className={cn('text-[16px] font-bold', done && 'text-ink-soft')}>{title}</h3>
         <p className="text-[13px] text-muted">{meta}</p>
       </div>
       {done ? <span className="text-[14px] font-bold text-brand"><span aria-hidden className="text-signal">✓</span> Feito</span> : action}

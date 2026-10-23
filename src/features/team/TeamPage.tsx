@@ -110,7 +110,7 @@ export function TeamPage() {
         ]} />
 
       <section aria-labelledby="members" className="flex flex-col gap-3">
-        <h2 id="members" className="text-[18px] font-extrabold">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
+        <h2 id="members" className="section-title">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
         {members.isError ? <ErrorState error={members.error} onRetry={() => members.refetch()} /> : !members.data ? <SkeletonRows rows={3} /> : (
           <ul className="overflow-hidden rounded-[16px] border border-line-soft bg-paper" aria-label="Membros da organização">
             <li aria-hidden className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
@@ -122,7 +122,7 @@ export function TeamPage() {
       </section>
 
       <section aria-labelledby="assigned" className="flex flex-col gap-3">
-        <h2 id="assigned" className="text-[18px] font-extrabold">Tarefas atribuídas</h2>
+        <h2 id="assigned" className="section-title">Tarefas atribuídas</h2>
         {!tasks.data || !today.data ? <SkeletonRows rows={3} /> : pending.length === 0 ? (
           <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[14px] text-ink-soft">Não há tarefas por fazer. Atribua o registo de ativos em <Link className="font-bold text-brand hover:underline" to={`/org/${org.slug}/ativos?atribuir=1`}>Ativos</Link>.</p>
         ) : pending.map((t) => <TaskRow key={t.id} task={t} today={today.data} assignee={users.data?.find((u) => u.id === t.assigneeId)?.name ?? '—'} onEdit={() => setEditing(t)} />)}

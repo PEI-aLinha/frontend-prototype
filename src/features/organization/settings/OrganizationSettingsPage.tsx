@@ -56,7 +56,7 @@ export function OrganizationSettingsPage() {
 
       <Card className="flex flex-col gap-4 px-6 py-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className="text-[18px] font-extrabold">Qualificação NIS2</h2>
+          <h2 className="section-title">Qualificação NIS2</h2>
           {canEdit && suggested && suggested !== 'nao_abrangida' && !official && today.data && (
             <Button icon={<BadgeCheck className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Registar qualificação oficial</Button>
           )}
@@ -96,7 +96,7 @@ export function OrganizationSettingsPage() {
 
       {p && (
         <Card className="flex flex-col gap-4 px-6 py-6">
-          <h2 className="text-[18px] font-extrabold">Dados da organização</h2>
+          <h2 className="section-title">Dados da organização</h2>
           <DataList rows={[
             ['Denominação', org.name],
             ['NIF', formatNif(p.nif)],

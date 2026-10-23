@@ -60,7 +60,7 @@ export function FramingPage() {
       )}
 
       <Card className="flex flex-col gap-3 px-6 py-6">
-        <h2 className="text-[18px] font-extrabold">O que isto significa</h2>
+        <h2 className="section-title">O que isto significa</h2>
         <Bullets items={NIS2_MEANING[status.classification]} />
       </Card>
 

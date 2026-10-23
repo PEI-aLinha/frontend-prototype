@@ -44,7 +44,7 @@ export function AssessmentPage() {
             </Card>
             {a.status === 'em_curso' && total > 0 && answered === total && (
               <Card className="flex flex-col items-start gap-3 border-brand">
-                <h2 className="text-[17px] font-extrabold">Avaliação completa</h2>
+                <h2 className="section-title">Avaliação completa</h2>
                 <p className="text-[14px] text-ink-soft">Respondeu a todas as perguntas. Quando submeter, a consultora revê as respostas e valida o roadmap.</p>
                 <Button onClick={() => setConfirming(true)}>Submeter avaliação</Button>
               </Card>

@@ -84,7 +84,7 @@ export function RegisterAssetsPage() {
 
       <div className="flex items-start gap-7 max-lg:flex-col-reverse">
         <section aria-labelledby="registered" className="flex min-w-0 flex-1 flex-col gap-3 max-lg:w-full">
-          <h2 id="registered" className="text-[16px] font-bold">Já registados</h2>
+          <h2 id="registered" className="section-title">Já registados</h2>
           {mine.length === 0 && <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[14px] text-ink-soft">Ainda não registou nenhum ativo. Comece pelo servidor de produção.</p>}
           {mine.map((a) => (
             <button key={a.id} type="button" onClick={() => { setEditing(a); form.reset(valuesFromAsset(a)) }}
