@@ -55,7 +55,8 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
               </>
             ) : (
               <>
-                {canConnect && <Button size="sm" icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>Ligar</Button>}
+                {/* Secondary: the page's next-action banner already carries the one connection to start with. */}
+                {canConnect && <Button size="sm" variant="secondary" icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>Ligar</Button>}
                 {isOwner && analyst && c.status !== 'pedido' && <Button size="sm" variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} loading={assign.isPending} onClick={() => assign.mutate({ provider: c.provider.id, userId: analyst.id }, { onSuccess: () => toast.show(`Pedido enviado ao ${analyst.name}`), onError: fail })}>Pedir ao {analyst.name.split(' ')[0]}</Button>}
               </>
             )}
@@ -66,18 +67,6 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   )
 }
 
-const UNUSED_GROUP = 'Não usa'
-
-/** One group per category, in catalog order; providers the company doesn't use go last. */
-function groupByCategory(items: IntegrationConnection[]): { category: string; items: IntegrationConnection[] }[] {
-  const groups = new Map<string, IntegrationConnection[]>()
-  for (const c of items) {
-    const key = c.provider.applies ? c.provider.category : UNUSED_GROUP
-    groups.set(key, [...(groups.get(key) ?? []), c])
-  }
-  const entries = [...groups].map(([category, list]) => ({ category, items: list }))
-  return [...entries.filter((g) => g.category !== UNUSED_GROUP), ...entries.filter((g) => g.category === UNUSED_GROUP)]
-}
 
 function Lock() {
   return <ShieldCheck className="inline size-3.5 align-[-2px]" aria-hidden />
@@ -122,7 +111,9 @@ export function IntegrationsPage() {
   const providerName = (id: string) => integrations.data?.find((c) => c.provider.id === id)?.provider.name ?? id
   const pending = discoveries.data?.filter((d) => d.status === 'proposto').length ?? 0
   const usable = integrations.data?.filter((c) => c.provider.applies) ?? []
+  const unused = integrations.data?.filter((c) => !c.provider.applies) ?? []
   const connected = usable.filter((c) => c.status === 'ligado').length
+  const card = (c: IntegrationConnection) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />
   const firstToConnect = isConsultant ? undefined : integrations.data?.find((c) => c.provider.applies && c.status !== 'ligado' && (isOwner || c.assignedTo === persona.userId))
   const nextAction = isOwner && pending > 0
     ? <NextAction title={`Reveja ${pending} ${pending === 1 ? 'ativo encontrado' : 'ativos encontrados'}`} text="Só entram no inventário depois de decidir: acrescentar, associar a um que já existe ou ignorar." cta="Ver sugestões" onClick={() => document.getElementById('int-disc')?.scrollIntoView({ behavior: 'smooth' })} />
@@ -148,7 +139,7 @@ export function IntegrationsPage() {
         <>
           {!isConsultant && (
             <section aria-labelledby="int-catalog" className="flex flex-col gap-3">
-              <h2 id="int-catalog" className="text-[18px] font-extrabold">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
+              <h2 id="int-catalog" className="section-title">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
               {usable.length > 0 && (
                 <div className="flex flex-col gap-1.5">
                   <p className="text-[13px] font-semibold text-ink-soft">{connected} de {usable.length} sistemas ligados</p>
@@ -157,23 +148,27 @@ export function IntegrationsPage() {
               )}
               {integrations.data.length === 0
                 ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Não tem integrações para ligar.</p>
-                : groupByCategory(integrations.data).map(({ category, items }) => (
-                  <div key={category} className="flex flex-col gap-2">
-                    <h3 className="text-[13px] font-extrabold uppercase tracking-wide text-muted">{category}</h3>
-                    <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>
-                  </div>
-                ))}
+                : <>
+                  {/* One continuous grid: each card already names its category, so per-category rows only left gaps. */}
+                  {usable.length > 0 && <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{usable.map(card)}</ul>}
+                  {unused.length > 0 && (
+                    <div className="mt-2 flex flex-col gap-2">
+                      <Eyebrow as="h3">Não usa</Eyebrow>
+                      <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{unused.map(card)}</ul>
+                    </div>
+                  )}
+                </>}
             </section>
           )}
           {isOwner && (
             <section aria-labelledby="int-disc" className="flex flex-col gap-3">
-              <h2 id="int-disc" className="flex items-center gap-2 text-[18px] font-extrabold">Ativos encontrados {pending > 0 && <Chip>{pending} por rever</Chip>}</h2>
+              <h2 id="int-disc" className="section-title flex items-center gap-2">Ativos encontrados {pending > 0 && <Chip>{pending} por rever</Chip>}</h2>
               <DiscoveryList items={discoveries.data ?? []} assets={assets.data ?? []} services={services.data ?? []} providerName={providerName} canDecide={isOwner} />
             </section>
           )}
           {persona.role !== 'analista' && (
             <section aria-labelledby="int-ev" className="flex flex-col gap-3">
-              <h2 id="int-ev" className="text-[18px] font-extrabold">Evidências recolhidas</h2>
+              <h2 id="int-ev" className="section-title">Evidências recolhidas</h2>
               <EvidenceList items={evidence.data ?? []} providerName={providerName} />
             </section>
           )}
