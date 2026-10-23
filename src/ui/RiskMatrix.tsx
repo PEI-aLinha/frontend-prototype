@@ -26,7 +26,7 @@ export function RiskMatrix({ probability, impact, levelOf, count, selected, onSe
   return (
     <div className="flex gap-3">
       <div className="flex items-center">
-        <span aria-hidden className="eyebrow text-[11px] text-muted [writing-mode:vertical-rl] rotate-180">Probabilidade</span>
+        <span aria-hidden className="eyebrow text-[0.6875rem] text-muted [writing-mode:vertical-rl] rotate-180">Probabilidade</span>
       </div>
       <div className="min-w-0 flex-1">
         <table className="w-full table-fixed border-separate border-spacing-1.5">
@@ -40,7 +40,7 @@ export function RiskMatrix({ probability, impact, levelOf, count, selected, onSe
           <tbody>
             {rows.map((p) => (
               <tr key={p.value}>
-                <th scope="row" className="w-16 pr-1 text-right text-[12px] font-semibold text-ink-soft">{p.label}</th>
+                <th scope="row" className="w-16 pr-1 text-right text-[0.75rem] font-semibold text-ink-soft">{p.label}</th>
                 {impact.map((i) => {
                   const level = levelOf(p.value, i.value)
                   const n = count(p.value, i.value)
@@ -63,8 +63,8 @@ export function RiskMatrix({ probability, impact, levelOf, count, selected, onSe
                           n === 0 && 'opacity-55',
                         )}
                       >
-                        <span className={cn('font-extrabold leading-none', compact ? 'text-[18px]' : 'text-[22px]')}>{n}</span>
-                        {!compact && <span className="mt-1 text-[11px] font-bold opacity-80">{RISK_LEVEL_LABEL[level]}</span>}
+                        <span className={cn('font-extrabold leading-none', compact ? 'text-[1.125rem]' : 'text-[1.375rem]')}>{n}</span>
+                        {!compact && <span className="mt-1 text-[0.6875rem] font-bold opacity-80">{RISK_LEVEL_LABEL[level]}</span>}
                       </button>
                     </td>
                   )
@@ -76,11 +76,11 @@ export function RiskMatrix({ probability, impact, levelOf, count, selected, onSe
           <tfoot aria-hidden>
             <tr>
               <td />
-              {impact.map((i) => <td key={i.value} className="pt-1 text-center text-[12px] font-semibold text-ink-soft">{i.label}</td>)}
+              {impact.map((i) => <td key={i.value} className="pt-1 text-center text-[0.75rem] font-semibold text-ink-soft">{i.label}</td>)}
             </tr>
           </tfoot>
         </table>
-        <p aria-hidden className="eyebrow mt-1 pl-[70px] text-center text-[11px] text-muted">Impacto</p>
+        <p aria-hidden className="eyebrow mt-1 pl-[70px] text-center text-[0.6875rem] text-muted">Impacto</p>
       </div>
     </div>
   )

@@ -8,7 +8,7 @@ export function Card({ className, soft, as: Tag = 'div', ...rest }: HTMLAttribut
 }
 
 export function Eyebrow({ children, className, as: Tag = 'p' }: { children: ReactNode; className?: string; as?: 'p' | 'span' | 'h2' | 'h3' }) {
-  return <Tag className={cn('eyebrow text-[11px] text-muted', className)}>{children}</Tag>
+  return <Tag className={cn('eyebrow text-[0.6875rem] text-muted', className)}>{children}</Tag>
 }
 
 interface StatCardProps {
@@ -33,22 +33,22 @@ const STAT_HOVER = 'transition-[border-color,box-shadow] hover:border-line hover
 /** Summary card: eyebrow 11 + ExtraBold 18 value (28 with `emphasis`) + 13 caption. A `<dl>` unless it is a button. */
 export function StatCard({ label, value, caption, onClick, to, accent, emphasis, tone = 'default', className }: StatCardProps) {
   const base = cn(STAT_CLS, STAT_TONE[tone])
-  const valueCls = cn('mt-1.5 font-extrabold leading-tight', emphasis ? 'text-[28px]' : 'text-[18px]', tone === 'alert' && 'text-risk-high-ink')
+  const valueCls = cn('mt-1.5 font-extrabold leading-tight', emphasis ? 'text-[1.75rem]' : 'text-[1.125rem]', tone === 'alert' && 'text-risk-high-ink')
   if (onClick) {
     // Buttons only take phrasing content: same layout with spans.
     return (
       <button type="button" onClick={onClick} className={cn(base, STAT_HOVER, className)}>
         <span className="flex items-start justify-between gap-2"><Eyebrow as="span">{label}</Eyebrow>{accent}</span>
         <span className={cn('block', valueCls)}>{value}</span>
-        {caption && <span className="mt-1.5 block text-[13px] text-ink-soft">{caption}</span>}
+        {caption && <span className="mt-1.5 block text-[0.8125rem] text-ink-soft">{caption}</span>}
       </button>
     )
   }
   const body = (
     <dl className="flex flex-col">
-      <dt className="flex items-start justify-between gap-2"><span className="eyebrow text-[11px] text-muted">{label}</span>{accent}</dt>
+      <dt className="flex items-start justify-between gap-2"><span className="eyebrow text-[0.6875rem] text-muted">{label}</span>{accent}</dt>
       <dd className={valueCls}>{value}</dd>
-      {caption && <dd className="mt-1.5 text-[13px] text-ink-soft">{caption}</dd>}
+      {caption && <dd className="mt-1.5 text-[0.8125rem] text-ink-soft">{caption}</dd>}
     </dl>
   )
   if (to) return <Link to={to} className={cn(base, STAT_HOVER, 'block', className)}>{body}</Link>
@@ -61,8 +61,8 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
     <section aria-labelledby={id} className="flex flex-col gap-6 rounded-[20px] bg-brand-deep px-8 py-[30px] text-white md:flex-row md:items-center max-md:px-6">
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <Eyebrow className="text-signal-soft">{eyebrow}</Eyebrow>
-        <h2 id={id} className="text-[26px] font-extrabold title-tight max-md:text-[22px]">{title}</h2>
-        {children && <div className="text-[13px] font-semibold text-brand-soft">{children}</div>}
+        <h2 id={id} className="text-[1.625rem] font-extrabold title-tight max-md:text-[1.375rem]">{title}</h2>
+        {children && <div className="text-[0.8125rem] font-semibold text-brand-soft">{children}</div>}
       </div>
       {action}
     </section>
@@ -72,7 +72,7 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
 /** Aviso: fundo signal-soft, texto brand SemiBold 13, a toda a largura. */
 export function Note({ children, icon = true, plain = false, className }: { children: ReactNode; icon?: boolean; plain?: boolean; className?: string }) {
   return (
-    <div role="note" className={cn('flex items-start gap-2.5 text-[13px]', plain ? 'text-ink-soft' : 'rounded-[10px] bg-signal-soft px-3.5 py-2.5 font-semibold text-brand', className)}>
+    <div role="note" className={cn('flex items-start gap-2.5 text-[0.8125rem]', plain ? 'text-ink-soft' : 'rounded-[10px] bg-signal-soft px-3.5 py-2.5 font-semibold text-brand', className)}>
       {icon && <Info className="mt-[2px] size-4 shrink-0" aria-hidden />}
       <div className="min-w-0">{children}</div>
     </div>

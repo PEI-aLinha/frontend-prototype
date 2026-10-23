@@ -75,7 +75,7 @@ export function CreateAccountPage() {
     <>
       <header className="flex flex-col gap-3">
         <StepBadge>Passo 1 de 3</StepBadge>
-        <h1 className="text-[30px] font-extrabold title-tight">Crie a sua conta</h1>
+        <h1 className="text-[1.875rem] font-extrabold title-tight">Crie a sua conta</h1>
       </header>
 
       <form noValidate onSubmit={submit} className="flex flex-col gap-5">
@@ -100,14 +100,14 @@ export function CreateAccountPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="flex cursor-pointer items-start gap-3 text-[14px] text-ink">
+            <label className="flex cursor-pointer items-start gap-3 text-[0.875rem] text-ink">
               <input ref={(el) => { refs.current.terms = el }} type="checkbox" checked={form.terms} onChange={(e) => set('terms', e.target.checked)} aria-invalid={!!errors.terms || undefined} aria-describedby={errors.terms ? 'terms-error' : undefined} className="mt-[3px] size-[18px] shrink-0 accent-brand" />
               <span>Li e aceito os termos de utilização e a política de privacidade. Os dados da empresa ficam guardados na União Europeia.</span>
             </label>
-            {errors.terms && <p id="terms-error" role="alert" className="text-[13px] font-semibold text-danger">{errors.terms}</p>}
+            {errors.terms && <p id="terms-error" role="alert" className="text-[0.8125rem] font-semibold text-danger">{errors.terms}</p>}
           </div>
 
-          {checkEmail.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{checkEmail.error.message}</p>}
+          {checkEmail.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">{checkEmail.error.message}</p>}
           <Button type="submit" className="w-fit max-sm:w-full" loading={checkEmail.isPending}>Criar conta e continuar</Button>
         </form>
 
@@ -117,7 +117,7 @@ export function CreateAccountPage() {
 
       <div className="flex flex-col items-start gap-1">
         <Button variant="link" size="sm" onClick={() => { const example = examplePassword(); setForm({ ...EXAMPLE, password: example, confirm: example }); setSubmitted(false) }}>Preencher com o exemplo do Rui Santos</Button>
-        <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
+        <p className="text-[0.75rem] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
       </div>
     </>
   )

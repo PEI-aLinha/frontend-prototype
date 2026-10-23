@@ -22,8 +22,8 @@ function DataList({ rows }: { rows: Array<[string, ReactNode]> }) {
     <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[200px_1fr]">
       {rows.map(([label, value]) => (
         <div key={label} className="contents">
-          <dt className="text-[13px] font-semibold text-ink-soft">{label}</dt>
-          <dd className="text-[15px] text-ink max-sm:-mt-2">{value}</dd>
+          <dt className="text-[0.8125rem] font-semibold text-ink-soft">{label}</dt>
+          <dd className="text-[0.9375rem] text-ink max-sm:-mt-2">{value}</dd>
         </div>
       ))}
     </dl>
@@ -78,10 +78,10 @@ export function OrganizationSettingsPage() {
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[15px] font-bold">{suggested ? NIS2_LABEL[suggested] : '—'}</span>
+              <span className="text-[0.9375rem] font-bold">{suggested ? NIS2_LABEL[suggested] : '—'}</span>
               <Nis2Badge official={false} />
             </div>
-            <p className="text-[14px] text-ink-soft">
+            <p className="text-[0.875rem] text-ink-soft">
               {suggested === 'nao_abrangida'
                 ? 'Pela sugestão do aLinha, a empresa não está abrangida, por isso não deve receber um Ato de Qualificação.'
                 : 'É a sugestão do aLinha. Quando receber o Ato de Qualificação do CNCS, registe aqui a classificação oficial.'}{' '}
@@ -90,7 +90,7 @@ export function OrganizationSettingsPage() {
           </>
         )}
         {official && (
-          <p className="flex items-center gap-2 text-[13px] text-muted"><FileText className="size-4" aria-hidden />Registada a {shortDate(official.registeredAt)}</p>
+          <p className="flex items-center gap-2 text-[0.8125rem] text-muted"><FileText className="size-4" aria-hidden />Registada a {shortDate(official.registeredAt)}</p>
         )}
       </Card>
 

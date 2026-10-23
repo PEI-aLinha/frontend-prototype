@@ -65,19 +65,19 @@ export function RisksPage() {
 
   const columns: ColumnDef<Risk, unknown>[] = editable ? [
     { id: 'level', accessorFn: (r) => computeRiskLevel(r.probability, r.impact).score, header: 'Nível', cell: (c) => <RiskLevelBadge level={levelOf(c.row.original.probability, c.row.original.impact)} />, meta: { width: 110 } },
-    { id: 'threat', accessorFn: (r) => r.threat, header: 'Risco', cell: (c) => <div><p className="font-bold">{c.row.original.threat}</p><p className="text-[13px] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 330 } },
+    { id: 'threat', accessorFn: (r) => r.threat, header: 'Risco', cell: (c) => <div><p className="font-bold">{c.row.original.threat}</p><p className="text-[0.8125rem] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 330 } },
     { id: 'treatment', accessorFn: (r) => r.treatment ?? '', header: 'Tratamento', cell: (c) => (c.row.original.treatment ? <span className="font-semibold">{TREATMENT_LABEL[c.row.original.treatment]}</span> : <span className="text-muted">—</span>), meta: { width: 120 } },
-    { id: 'actions', accessorFn: (r) => linkedActions(r).length, header: 'Ações ligadas', cell: (c) => { const n = linkedActions(c.row.original).length; return n ? <Chip>{n} {n === 1 ? 'ação' : 'ações'}</Chip> : <span className="text-[13px] text-muted">Nenhuma</span> }, meta: { width: 130 } },
+    { id: 'actions', accessorFn: (r) => linkedActions(r).length, header: 'Ações ligadas', cell: (c) => { const n = linkedActions(c.row.original).length; return n ? <Chip>{n} {n === 1 ? 'ação' : 'ações'}</Chip> : <span className="text-[0.8125rem] text-muted">Nenhuma</span> }, meta: { width: 130 } },
     { id: 'status', accessorFn: (r) => r.status, header: 'Estado', cell: (c) => {
       const r = c.row.original
       const late = r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado'
-      return <div><p className="text-[13px] text-ink-soft">{RISK_STATUS_LABEL[r.status]}</p>{r.reviewDate && <p className={late ? 'text-[12px] font-bold text-risk-high-ink' : 'text-[12px] text-muted'}>{late ? 'Revisão atrasada' : `Rever a ${shortDate(r.reviewDate)}`}</p>}</div>
+      return <div><p className="text-[0.8125rem] text-ink-soft">{RISK_STATUS_LABEL[r.status]}</p>{r.reviewDate && <p className={late ? 'text-[0.75rem] font-bold text-risk-high-ink' : 'text-[0.75rem] text-muted'}>{late ? 'Revisão atrasada' : `Rever a ${shortDate(r.reviewDate)}`}</p>}</div>
     }, meta: { width: 150 } },
     { id: 'owner', accessorFn: (r) => owner(r.ownerId)?.name ?? '', header: 'Responsável', cell: (c) => { const u = owner(c.row.original.ownerId); return u ? <Person initials={u.initials} name={u.name} /> : '—' } },
   ] : [
     { id: 'level', accessorFn: (r) => computeRiskLevel(r.probability, r.impact).score, header: 'Nível', cell: (c) => <RiskLevelBadge level={levelOf(c.row.original.probability, c.row.original.impact)} />, meta: { width: 110 } },
-    { id: 'plain', accessorFn: (r) => r.threat, header: 'O que pode acontecer', cell: (c) => <div><p className="font-bold">{c.row.original.plainLanguage ?? c.row.original.threat}</p><p className="text-[13px] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 460 } },
-    { id: 'doing', accessorFn: (r) => r.treatment ?? '', header: 'O que está a ser feito', cell: (c) => { const r = c.row.original; const n = linkedActions(r).length; return <span className="text-[13px]">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Por decidir'}{n ? ` · ${n} ${n === 1 ? 'ação' : 'ações'} no roadmap` : ''}</span> } },
+    { id: 'plain', accessorFn: (r) => r.threat, header: 'O que pode acontecer', cell: (c) => <div><p className="font-bold">{c.row.original.plainLanguage ?? c.row.original.threat}</p><p className="text-[0.8125rem] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 460 } },
+    { id: 'doing', accessorFn: (r) => r.treatment ?? '', header: 'O que está a ser feito', cell: (c) => { const r = c.row.original; const n = linkedActions(r).length; return <span className="text-[0.8125rem]">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Por decidir'}{n ? ` · ${n} ${n === 1 ? 'ação' : 'ações'} no roadmap` : ''}</span> } },
   ]
 
   const selected = all.find((r) => r.id === params.get('risco')) ?? null
@@ -110,8 +110,8 @@ export function RisksPage() {
       {raisedBy && (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-brand/30 bg-signal-soft px-4 py-3 animate-pop-in" role="status">
           <ShieldCheck className="size-5 text-brand" aria-hidden />
-          <p className="flex-1 text-[14px] font-semibold text-brand">As ações ligadas ao risco "{raisedBy}" subiram no roadmap.</p>
-          <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[14px] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
+          <p className="flex-1 text-[0.875rem] font-semibold text-brand">As ações ligadas ao risco "{raisedBy}" subiram no roadmap.</p>
+          <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[0.875rem] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
         </div>
       )}
       {error ? <ErrorState error={error} onRetry={() => { risks.refetch(); links.refetch(); assets.refetch(); actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
@@ -122,15 +122,15 @@ export function RisksPage() {
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
             <Card as="section" aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5" data-tour="risk-matrix">
               <div className="mb-3 flex items-baseline justify-between gap-3">
-                <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-[11px] font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
+                <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-[0.6875rem] font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
                 {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
               </div>
               <div className="mb-3 flex flex-wrap items-center gap-3">
                 <Segmented ariaLabel="Mostrar risco" value={residual ? 'residual' : 'inerente'} onChange={(v) => update({ matriz: v === 'residual' ? 'residual' : null, p: null, i: null })}
                   options={[{ value: 'inerente', label: 'Risco atual' }, { value: 'residual', label: 'Depois das ações' }]} />
-                <span className="text-[12px] text-muted">{residual ? <>Mostra o <Term k="riscoResidual">risco residual</Term> previsto. Riscos sem previsão ficam na posição atual.</> : 'Mostra o risco hoje, antes das ações.'}</span>
+                <span className="text-[0.75rem] text-muted">{residual ? <>Mostra o <Term k="riscoResidual">risco residual</Term> previsto. Riscos sem previsão ficam na posição atual.</> : 'Mostra o risco hoje, antes das ações.'}</span>
               </div>
-              <p className="mb-3 text-[13px] text-ink-soft">
+              <p className="mb-3 text-[0.8125rem] text-ink-soft">
                 Cada quadrado conta os riscos com essa <Term k="probabilidade">probabilidade</Term> (linhas) e esse <Term k="impacto">impacto</Term> (colunas). Quanto mais acima e à direita, mais grave. Clique num quadrado para filtrar a tabela.
               </p>
               <RiskMatrix probability={RISK_MATRIX.probability} impact={RISK_MATRIX.impact} levelOf={levelOf}
@@ -161,21 +161,21 @@ export function RisksPage() {
               <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{editable ? r.threat : r.plainLanguage ?? r.threat}</p>
-                  <p className="text-[13px] text-ink-soft">{assetName(r.assetId)}</p>
-                  <p className="mt-1 text-[12px] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} ações</p>
-                  {editable && r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado' && <p className="text-[12px] font-bold text-risk-high-ink">Revisão atrasada</p>}
+                  <p className="text-[0.8125rem] text-ink-soft">{assetName(r.assetId)}</p>
+                  <p className="mt-1 text-[0.75rem] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} ações</p>
+                  {editable && r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado' && <p className="text-[0.75rem] font-bold text-risk-high-ink">Revisão atrasada</p>}
                 </div>
                 <RiskLevelBadge level={levelOf(r.probability, r.impact)} />
               </div>
             )}
             empty={all.length === 0
               ? <EmptyState className="m-4" title="Ainda não há riscos registados" action={can('create', 'risk') && <Button onClick={() => update({ novo: '1' })}>Registar o primeiro risco</Button>}>Comece pelos ativos de criticidade alta.</EmptyState>
-              : <p className="px-5 py-8 text-center text-[14px] text-ink-soft">Nenhum risco nesta célula da matriz.</p>}
+              : <p className="px-5 py-8 text-center text-[0.875rem] text-ink-soft">Nenhum risco nesta célula da matriz.</p>}
           />
           </section>
-          {cell && <p className="-mt-4 text-[13px] text-ink-soft">A mostrar {visible.length} de {all.length} riscos (filtro da matriz).</p>}
+          {cell && <p className="-mt-4 text-[0.8125rem] text-ink-soft">A mostrar {visible.length} de {all.length} riscos (filtro da matriz).</p>}
           {editable && archived.length > 0 && (
-            <label className="-mt-3 flex items-center gap-2 text-[13px] text-ink-soft">
+            <label className="-mt-3 flex items-center gap-2 text-[0.8125rem] text-ink-soft">
               <input type="checkbox" className="size-4 accent-[var(--color-brand)]" checked={showArchived} onChange={(e) => update({ arquivados: e.target.checked ? '1' : null })} />
               Mostrar riscos arquivados ({archived.length})
             </label>

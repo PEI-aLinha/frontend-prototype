@@ -104,7 +104,7 @@ function ReadOnlyDetail({ asset, inventory }: { asset: Asset; inventory: Invento
     ['Registado por', `${inventory.user(asset.createdBy)?.name ?? '—'} · ${dateTime(asset.createdAt)}`],
   ]
   return (
-    <dl className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-[14px]">
+    <dl className="grid grid-cols-[140px_1fr] gap-x-4 gap-y-3 text-[0.875rem]">
       {rows.map(([k, v]) => <div key={k} className="contents"><dt className="text-ink-soft">{k}</dt><dd className="font-semibold">{v}</dd></div>)}
     </dl>
   )
@@ -116,7 +116,7 @@ function AssetRisks({ asset, inventory }: { asset: Asset; inventory: Inventory }
   const risks = inventory.risksByAsset.get(asset.id) ?? []
   return (
     <div className="flex flex-col gap-3">
-      {risks.length === 0 && <p className="text-[14px] text-ink-soft">Ainda não há riscos registados sobre este ativo.</p>}
+      {risks.length === 0 && <p className="text-[0.875rem] text-ink-soft">Ainda não há riscos registados sobre este ativo.</p>}
       {risks.map((r) => {
         const { level } = computeRiskLevel(r.probability, r.impact)
         const body = (
@@ -125,15 +125,15 @@ function AssetRisks({ asset, inventory }: { asset: Asset; inventory: Inventory }
               <p className="font-bold">{r.threat}</p>
               <RiskLevelBadge level={level} />
             </div>
-            <p className="mt-1 text-[13px] text-ink-soft">{can('edit', 'risk') ? r.description : r.plainLanguage ?? r.description}</p>
-            <p className="mt-2 text-[12px] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {RISK_STATUS_LABEL[r.status]}</p>
+            <p className="mt-1 text-[0.8125rem] text-ink-soft">{can('edit', 'risk') ? r.description : r.plainLanguage ?? r.description}</p>
+            <p className="mt-2 text-[0.75rem] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {RISK_STATUS_LABEL[r.status]}</p>
           </>
         )
         const to = can('edit', 'risk') ? `/clientes/${org.slug}/riscos?risco=${r.id}` : `/org/${org.slug}/riscos?risco=${r.id}`
         return <Link key={r.id} to={to} className="block rounded-[12px] border border-line-soft p-4 hover:border-line">{body}</Link>
       })}
       {can('create', 'risk') && (
-        <Link to={`/clientes/${org.slug}/riscos?novo=1&ativo=${asset.id}`} className="inline-flex items-center gap-2 self-start text-[14px] font-bold text-brand hover:underline">
+        <Link to={`/clientes/${org.slug}/riscos?novo=1&ativo=${asset.id}`} className="inline-flex items-center gap-2 self-start text-[0.875rem] font-bold text-brand hover:underline">
           <ShieldPlus className="size-4" aria-hidden />Registar risco sobre este ativo
         </Link>
       )}
@@ -152,15 +152,15 @@ function Comments({ asset, inventory }: { asset: Asset; inventory: Inventory }) 
   const [error, setError] = useState<string>()
   return (
     <div className="flex flex-col gap-4">
-      {comments.data?.length === 0 && <p className="text-[14px] text-ink-soft">Sem comentários.</p>}
+      {comments.data?.length === 0 && <p className="text-[0.875rem] text-ink-soft">Sem comentários.</p>}
       {comments.data?.map((c) => {
         const u = inventory.user(c.authorId)
         return (
           <div key={c.id} className="flex gap-3">
             <Avatar initials={u?.initials ?? '?'} size={28} />
             <div className="min-w-0 flex-1 rounded-[12px] bg-paper-soft px-3.5 py-2.5">
-              <p className="text-[13px]"><span className="font-bold">{u?.name}</span> <span className="text-muted">· {dateTime(c.createdAt)}</span></p>
-              <p className="mt-1 text-[14px]">{c.body}</p>
+              <p className="text-[0.8125rem]"><span className="font-bold">{u?.name}</span> <span className="text-muted">· {dateTime(c.createdAt)}</span></p>
+              <p className="mt-1 text-[0.875rem]">{c.body}</p>
             </div>
           </div>
         )
@@ -182,5 +182,5 @@ function Comments({ asset, inventory }: { asset: Asset; inventory: Inventory }) 
 function AssetHistory({ asset, inventory }: { asset: Asset; inventory: Inventory }) {
   const org = useTenant()
   const audit = useAudit(org.id, asset.id)
-  return audit.data ? <HistoryList items={toHistory(audit.data, inventory.users)} /> : <p className="text-[14px] text-muted">A carregar…</p>
+  return audit.data ? <HistoryList items={toHistory(audit.data, inventory.users)} /> : <p className="text-[0.875rem] text-muted">A carregar…</p>
 }

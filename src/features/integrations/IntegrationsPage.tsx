@@ -38,13 +38,13 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
         <div className="flex items-start justify-between gap-2">
           <div>
             <Eyebrow>{c.provider.category}</Eyebrow>
-            <h3 className="mt-1 text-[16px] font-extrabold">{c.provider.name}</h3>
+            <h3 className="mt-1 text-[1rem] font-extrabold">{c.provider.name}</h3>
           </div>
           {c.provider.applies ? <Chip tone={on ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
         </div>
-        <p className={cn('text-[13px]', c.provider.applies ? 'text-ink-soft' : 'text-muted')}>{c.provider.description}</p>
-        {on && <p className="text-[12px] text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
-        {c.status === 'pedido' && assignee && <p className="text-[12px] text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
+        <p className={cn('text-[0.8125rem]', c.provider.applies ? 'text-ink-soft' : 'text-muted')}>{c.provider.description}</p>
+        {on && <p className="text-[0.75rem] text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
+        {c.status === 'pedido' && assignee && <p className="text-[0.75rem] text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
         {c.provider.applies && (
           <div className="mt-auto flex flex-wrap gap-2 pt-1">
             {on ? (
@@ -74,20 +74,20 @@ function Lock() {
 }
 
 function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; providerName: (p: CollectedEvidence['provider']) => string }) {
-  if (!items.length) return <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Ainda não há evidências recolhidas. Ligue uma integração para começar.</p>
+  if (!items.length) return <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[0.875rem] text-ink-soft">Ainda não há evidências recolhidas. Ligue uma integração para começar.</p>
   const newestFirst = [...items].sort((a, b) => b.collectedAt.localeCompare(a.collectedAt))
   return (
     <ol className="ml-2 flex flex-col border-l-2 border-line-soft">
       {newestFirst.map((e) => (
         <li key={e.id} className="relative pb-4 pl-6 last:pb-0">
           <span aria-hidden className={cn('absolute -left-[7px] top-1 size-3 rounded-full ring-4 ring-paper', e.ok ? 'bg-brand' : 'bg-risk-high-ink')} />
-          <p className="text-[12px] font-semibold text-muted">{dateTime(e.collectedAt)} · {providerName(e.provider)}</p>
+          <p className="text-[0.75rem] font-semibold text-muted">{dateTime(e.collectedAt)} · {providerName(e.provider)}</p>
           <div className="mt-1 flex items-start gap-2 rounded-[12px] border border-line-soft px-4 py-3">
             {e.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" aria-label="Cumpre" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-risk-high-ink" aria-label="Não cumpre" />}
             <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-bold">{e.title}</p>
-              <p className="text-[13px] text-ink-soft">{e.result}</p>
-              <p className="mt-1 text-[12px] text-muted">{STRENGTH[e.strength]}</p>
+              <p className="text-[0.875rem] font-bold">{e.title}</p>
+              <p className="text-[0.8125rem] text-ink-soft">{e.result}</p>
+              <p className="mt-1 text-[0.75rem] text-muted">{STRENGTH[e.strength]}</p>
             </div>
           </div>
         </li>
@@ -143,12 +143,12 @@ export function IntegrationsPage() {
               <h2 id="int-catalog" className="section-title">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
               {usable.length > 0 && (
                 <div className="flex flex-col gap-1.5">
-                  <p className="text-[13px] font-semibold text-ink-soft">{connected} de {usable.length} sistemas ligados</p>
+                  <p className="text-[0.8125rem] font-semibold text-ink-soft">{connected} de {usable.length} sistemas ligados</p>
                   <ProgressBar value={connected} max={usable.length} label="Sistemas ligados" />
                 </div>
               )}
               {integrations.data.length === 0
-                ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Não tem integrações para ligar.</p>
+                ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[0.875rem] text-ink-soft">Não tem integrações para ligar.</p>
                 : <>
                   {/* One continuous grid: each card already names its category, so per-category rows only left gaps. */}
                   {usable.length > 0 && <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{usable.map(card)}</ul>}

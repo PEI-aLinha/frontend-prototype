@@ -25,8 +25,8 @@ function Section({ title, description, help, children }: { title: string; descri
   return (
     <fieldset className="flex min-w-0 flex-col gap-4 border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
       <div className="flex flex-col gap-1">
-        <legend className="text-[16px] font-bold">{help ? <WithHelp label={title} help={help} /> : title}</legend>
-        {description && <p className="text-[13px] text-ink-soft">{description}</p>}
+        <legend className="text-[1rem] font-bold">{help ? <WithHelp label={title} help={help} /> : title}</legend>
+        {description && <p className="text-[0.8125rem] text-ink-soft">{description}</p>}
       </div>
       {children}
     </fieldset>
@@ -88,8 +88,8 @@ export function RegisterOrganizationPage() {
     <>
       <header className="flex flex-col gap-3">
         <StepBadge>Passo 3 de 3</StepBadge>
-        <h1 className="text-[30px] font-extrabold title-tight">Registe a sua organização</h1>
-        <p className="text-[16px] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
+        <h1 className="text-[1.875rem] font-extrabold title-tight">Registe a sua organização</h1>
+        <p className="text-[1rem] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
       </header>
 
       {restored && organization && <Note>Retomámos o registo que deixou a meio. Confirme os dados e termine quando quiser.</Note>}
@@ -127,7 +127,7 @@ export function RegisterOrganizationPage() {
                 {(p) => (
                   <div className="relative">
                     <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} inputMode="numeric" value={form.turnover} onChange={(e) => set('turnover', e.target.value)} placeholder="Ex.: 18 500 000" className="pr-10" />
-                    <span aria-hidden className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[15px] text-muted">€</span>
+                    <span aria-hidden className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[0.9375rem] text-muted">€</span>
                   </div>
                 )}
               </Field>
@@ -158,7 +158,7 @@ export function RegisterOrganizationPage() {
           </Section>
 
           {register.isError && (
-            <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">
+            <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">
               <span>{register.error.message}</span>
               {/email/i.test(register.error.message) && <Button variant="link" size="sm" onClick={() => navigate('/registo/conta')}>Voltar ao primeiro passo</Button>}
             </div>
@@ -171,7 +171,7 @@ export function RegisterOrganizationPage() {
 
       <div className="flex flex-col items-start gap-1">
         <Button variant="link" size="sm" onClick={() => { setForm(EXAMPLE_ORGANIZATION); setSubmitted(false) }}>Preencher com o exemplo da Componentes Águeda</Button>
-        <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
+        <p className="text-[0.75rem] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
         <Button variant="link" size="sm" className="mt-2 !text-ink-soft" onClick={() => navigate('/registo/seguranca')}>Voltar ao passo anterior</Button>
       </div>
     </>

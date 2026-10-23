@@ -24,9 +24,9 @@ function ScaleField({ label, kind, value, onChange, error, term }: { label: stri
   const current = steps.find((s) => s.value === value)
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <p id={id} className="text-[13px] font-semibold text-ink-soft">{term ? <Term k={term}>{label}</Term> : label}</p>
+      <p id={id} className="text-[0.8125rem] font-semibold text-ink-soft">{term ? <Term k={term}>{label}</Term> : label}</p>
       <Segmented labelledBy={id} block invalid={!!error} value={value === null ? null : String(value)} onChange={(v) => onChange(Number(v))} options={steps.map((s) => ({ value: String(s.value), label: s.label }))} />
-      <p className={cn('min-h-[38px] text-[13px]', error ? 'font-semibold text-danger' : 'text-muted')} role={error ? 'alert' : undefined}>{error ?? current?.hint ?? 'Escolha um nível. Cada um tem uma explicação curta.'}</p>
+      <p className={cn('min-h-[38px] text-[0.8125rem]', error ? 'font-semibold text-danger' : 'text-muted')} role={error ? 'alert' : undefined}>{error ?? current?.hint ?? 'Escolha um nível. Cada um tem uma explicação curta.'}</p>
     </div>
   )
 }
@@ -38,11 +38,11 @@ export function LiveLevel({ probability, impact, label = 'Nível de risco', comp
   return (
     <div aria-live="polite" className={cn('flex items-center justify-between gap-3 rounded-[14px] border border-dashed border-line px-4', compact ? 'py-2.5' : 'py-3.5')}>
       <div>
-        <p className="eyebrow text-[11px] text-muted">{label} · calculado pelo sistema</p>
-        <p className="mt-0.5 text-[14px] font-semibold">{ready ? describeRule(probability, impact) : 'Escolha a probabilidade e o impacto'}</p>
-        {result && !compact && <p className="text-[12px] text-muted">Regra: probabilidade × impacto = {probability} × {impact} = {result.score}</p>}
+        <p className="eyebrow text-[0.6875rem] text-muted">{label} · calculado pelo sistema</p>
+        <p className="mt-0.5 text-[0.875rem] font-semibold">{ready ? describeRule(probability, impact) : 'Escolha a probabilidade e o impacto'}</p>
+        {result && !compact && <p className="text-[0.75rem] text-muted">Regra: probabilidade × impacto = {probability} × {impact} = {result.score}</p>}
       </div>
-      {result ? <RiskLevelBadge level={result.level} size="lg" /> : <span className="text-[13px] text-muted">—</span>}
+      {result ? <RiskLevelBadge level={result.level} size="lg" /> : <span className="text-[0.8125rem] text-muted">—</span>}
     </div>
   )
 }
@@ -104,7 +104,7 @@ function TreatFields({ values: v, onChange, errors, assets, actions }: StepProps
       )}
 
       <div className="flex flex-col gap-3 rounded-[14px] bg-paper-soft p-4">
-        <label className="flex cursor-pointer items-center gap-2.5 text-[14px] font-semibold">
+        <label className="flex cursor-pointer items-center gap-2.5 text-[0.875rem] font-semibold">
           <input type="checkbox" checked={v.hasResidual} onChange={(e) => set('hasResidual', e.target.checked)} className="size-4 accent-[var(--color-brand)]" />
           Indicar o <Term k="riscoResidual">risco residual</Term> previsto <span className="font-normal text-muted">(opcional)</span>
         </label>
@@ -114,7 +114,7 @@ function TreatFields({ values: v, onChange, errors, assets, actions }: StepProps
               <ScaleField label="Probabilidade depois do tratamento" kind="probability" value={v.residualProbability} onChange={(x) => set('residualProbability', x)} />
               <ScaleField label="Impacto depois do tratamento" kind="impact" value={v.residualImpact} onChange={(x) => set('residualImpact', x)} />
             </div>
-            {errors.residual && <p role="alert" className="text-[13px] font-semibold text-danger">{errors.residual}</p>}
+            {errors.residual && <p role="alert" className="text-[0.8125rem] font-semibold text-danger">{errors.residual}</p>}
             <LiveLevel probability={v.residualProbability} impact={v.residualImpact} label="Risco residual" compact />
           </>
         )}

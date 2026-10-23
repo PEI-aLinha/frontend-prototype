@@ -91,7 +91,7 @@ export function TasksPage() {
               <span className={cn('mt-px grid size-5 shrink-0 place-items-center rounded-full', on ? 'bg-signal-soft text-brand' : 'bg-paper-deep text-ink-soft')}>
                 {on ? <Check className="size-3" strokeWidth={3} aria-label="Sim" /> : <Minus className="size-3" strokeWidth={3} aria-label="Não" />}
               </span>
-              <span className={cn('text-[13px]', on ? 'text-ink' : 'text-ink-soft')}>{s}</span>
+              <span className={cn('text-[0.8125rem]', on ? 'text-ink' : 'text-ink-soft')}>{s}</span>
             </div>
           ))}
         </Card>

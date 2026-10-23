@@ -21,13 +21,13 @@ export function Field({ label, hint, error, optional, children, className }: Fie
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined
   return (
     <div className={cn('flex min-w-0 flex-col gap-1.5', className)}>
-      <label htmlFor={id} className="text-[13px] font-semibold text-ink-soft">
+      <label htmlFor={id} className="text-[0.8125rem] font-semibold text-ink-soft">
         {label}
         {optional && <span className="font-normal text-muted"> (opcional)</span>}
       </label>
       {children({ id, describedBy, invalid: !!error })}
-      {hint && !error && <p id={hintId} className="text-[13px] text-muted">{hint}</p>}
-      {error && <p id={errorId} role="alert" className="text-[13px] font-semibold text-danger">{error}</p>}
+      {hint && !error && <p id={hintId} className="text-[0.8125rem] text-muted">{hint}</p>}
+      {error && <p id={errorId} role="alert" className="text-[0.8125rem] font-semibold text-danger">{error}</p>}
     </div>
   )
 }
@@ -79,10 +79,10 @@ export function Select({ id, value, onChange, options, placeholder = 'Escolherâ€
         <RSelect.Content position="popper" sideOffset={6} className="z-[80] max-h-[320px] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[12px] border border-line-soft bg-paper shadow-[0_12px_32px_rgba(32,33,36,0.14)] animate-pop-in">
           <RSelect.Viewport className="p-1.5">
             {options.map((o) => (
-              <RSelect.Item key={o.value} value={o.value} className="flex cursor-pointer items-start gap-2 rounded-[8px] px-3 py-2 text-[14px] text-ink outline-none data-[highlighted]:bg-paper-soft data-[state=checked]:font-bold data-[state=checked]:text-brand">
+              <RSelect.Item key={o.value} value={o.value} className="flex cursor-pointer items-start gap-2 rounded-[8px] px-3 py-2 text-[0.875rem] text-ink outline-none data-[highlighted]:bg-paper-soft data-[state=checked]:font-bold data-[state=checked]:text-brand">
                 <span className="flex-1">
                   <RSelect.ItemText>{o.label}</RSelect.ItemText>
-                  {o.hint && <span className="block text-[12px] font-normal text-muted">{o.hint}</span>}
+                  {o.hint && <span className="block text-[0.75rem] font-normal text-muted">{o.hint}</span>}
                 </span>
                 <RSelect.ItemIndicator>
                   <Check className="mt-0.5 size-4" aria-hidden />

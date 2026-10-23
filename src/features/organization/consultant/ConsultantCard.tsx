@@ -14,7 +14,7 @@ export function ConsultantCard({ orgId, className }: { orgId: Id; className?: st
     return (
       <Card className={cn('flex flex-col gap-1.5', className)}>
         <Eyebrow>Acompanhamento aLinha</Eyebrow>
-        <p className="text-[14px] text-ink-soft">A atribuir. Recebe um email quando houver alguém atribuído.</p>
+        <p className="text-[0.875rem] text-ink-soft">A atribuir. Recebe um email quando houver alguém atribuído.</p>
       </Card>
     )
   }
@@ -24,11 +24,11 @@ export function ConsultantCard({ orgId, className }: { orgId: Id; className?: st
       <div className="flex items-center gap-3">
         <Avatar initials={c.initials} size={40} tone="dark" />
         <div className="min-w-0">
-          <p className="truncate text-[18px] font-extrabold leading-tight">{c.name}</p>
-          <p className="text-[13px] text-ink-soft">Consultoria aLinha</p>
+          <p className="truncate text-[1.125rem] font-extrabold leading-tight">{c.name}</p>
+          <p className="text-[0.8125rem] text-ink-soft">Consultoria aLinha</p>
         </div>
       </div>
-      <div className="flex flex-col gap-1.5 text-[14px]">
+      <div className="flex flex-col gap-1.5 text-[0.875rem]">
         <a href={`mailto:${c.email}`} className="flex items-center gap-2 font-semibold text-brand hover:underline"><Mail className="size-4 shrink-0" aria-hidden /><span className="truncate">{c.email}</span></a>
         <a href={`tel:+351${c.phone}`} className="flex items-center gap-2 font-semibold text-brand hover:underline"><Phone className="size-4 shrink-0" aria-hidden />{formatPhone(c.phone)}<span className="font-normal text-ink-soft">· também para emergências</span></a>
       </div>    </Card>

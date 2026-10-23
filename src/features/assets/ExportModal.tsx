@@ -22,13 +22,13 @@ function Readiness({ inventory, base }: { inventory: Inventory; base: string }) 
   const ok = total === 0 && inventory.services.length > 0
   return (
     <section aria-label="Verificação da lista" className="flex flex-col gap-2 rounded-[14px] border border-line-soft p-4">
-      <p className="flex items-center gap-2 text-[14px] font-bold">
+      <p className="flex items-center gap-2 text-[0.875rem] font-bold">
         {ok ? <CheckCircle2 className="size-4 text-brand" aria-hidden /> : <TriangleAlert className="size-4 text-risk-medium-ink" aria-hidden />}
         {ok ? 'A lista está completa' : total === 0 ? 'Registe pelo menos um serviço crítico' : `${total} ${total === 1 ? 'registo tem' : 'registos têm'} informação em falta`}
       </p>
-      <p className="text-[13px] text-ink-soft">O CNCS pede o responsável de cada serviço crítico e, para cada ativo, o responsável, o serviço que suporta e onde está. Pode exportar na mesma, mas complete antes de comunicar.</p>
+      <p className="text-[0.8125rem] text-ink-soft">O CNCS pede o responsável de cada serviço crítico e, para cada ativo, o responsável, o serviço que suporta e onde está. Pode exportar na mesma, mas complete antes de comunicar.</p>
       {total > 0 && (
-        <ul className="flex max-h-[140px] flex-col gap-1 overflow-y-auto text-[13px]">
+        <ul className="flex max-h-[140px] flex-col gap-1 overflow-y-auto text-[0.8125rem]">
           {serviceGaps.map((s) => (
             <li key={s.id} className="flex items-center justify-between gap-2 rounded-[8px] bg-paper-soft px-2.5 py-1.5">
               <span><span className="font-semibold">{s.name}</span> <span className="text-muted">· serviço sem responsável</span></span>
@@ -62,13 +62,13 @@ export function ExportModal({ open, onClose, inventory }: { open: boolean; onClo
           className="flex flex-col items-start gap-2 rounded-[14px] border border-line-soft p-4 text-left transition-colors hover:border-brand hover:bg-brand-soft/40">
           <FileSpreadsheet className="size-5 text-brand" aria-hidden />
           <span className="font-bold">CSV</span>
-          <span className="text-[13px] text-ink-soft">Para abrir no Excel ou copiar para o formulário.</span>
+          <span className="text-[0.8125rem] text-ink-soft">Para abrir no Excel ou copiar para o formulário.</span>
         </button>
         <button type="button" onClick={() => printList(org.name, services, rows)}
           className="flex flex-col items-start gap-2 rounded-[14px] border border-line-soft p-4 text-left transition-colors hover:border-brand hover:bg-brand-soft/40">
           <FileText className="size-5 text-brand" aria-hidden />
           <span className="font-bold">PDF</span>
-          <span className="text-[13px] text-ink-soft">Versão para imprimir ou guardar como PDF.</span>
+          <span className="text-[0.8125rem] text-ink-soft">Versão para imprimir ou guardar como PDF.</span>
         </button>
       </div>
       <Note>A submissão ao CNCS é feita fora do aLinha, no portal do CNCS. O aLinha só prepara a lista.</Note>

@@ -27,8 +27,8 @@ export function EmptyState({ icon, title, children, action, className, headingLe
   return (
     <div className={cn('flex flex-col items-center gap-3 rounded-[16px] border border-dashed border-line px-6 py-12 text-center', className)}>
       {icon && <div className="grid size-11 place-items-center rounded-full bg-paper-soft text-ink-soft">{icon}</div>}
-      <Heading className="text-[17px] font-bold">{title}</Heading>
-      {children && <div className="max-w-[440px] text-[14px] text-ink-soft">{children}</div>}
+      <Heading className="text-[1.0625rem] font-bold">{title}</Heading>
+      {children && <div className="max-w-[440px] text-[0.875rem] text-ink-soft">{children}</div>}
       {action && <div className="mt-1">{action}</div>}
     </div>
   )
@@ -41,7 +41,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
       <div role="alert" className="flex flex-col gap-2">
         <p>Pode ser uma falha de ligação momentânea. O que já guardou não se perdeu: tente de novo dentro de instantes.</p>
         {detail && (
-          <details className="text-[12px] text-muted">
+          <details className="text-[0.75rem] text-muted">
             <summary className="cursor-pointer">Detalhe técnico</summary>
             <p className="mt-1">{detail}</p>
           </details>

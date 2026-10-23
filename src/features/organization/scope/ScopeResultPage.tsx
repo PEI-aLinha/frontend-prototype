@@ -20,18 +20,18 @@ function FrameworkCard({ r, framingLink, official }: { r: FrameworkResult; frami
     <Card soft={!applies} className={cn('flex flex-col gap-4 rounded-[16px] px-6 py-6', applies && 'border-brand/30')}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className={cn('text-[22px] font-extrabold title-tight', !applies && 'text-ink-soft')}>{r.name}</h2>
-          <p className="mt-1 text-[13px] text-ink-soft">{r.fullName}</p>
+          <h2 className={cn('text-[1.375rem] font-extrabold title-tight', !applies && 'text-ink-soft')}>{r.name}</h2>
+          <p className="mt-1 text-[0.8125rem] text-ink-soft">{r.fullName}</p>
         </div>
         <Chip tone={st.tone} icon={<Icon className="size-3.5" strokeWidth={2.5} aria-hidden />}>{st.label}</Chip>
       </div>
-      <p className={cn('text-[14px]', applies ? 'font-semibold text-ink' : 'text-ink-soft')}>{applies ? r.reason : <><span className="font-bold">Motivo: </span>{r.reason}</>}</p>
+      <p className={cn('text-[0.875rem]', applies ? 'font-semibold text-ink' : 'text-ink-soft')}>{applies ? r.reason : <><span className="font-bold">Motivo: </span>{r.reason}</>}</p>
       {r.implications.length > 0 && (
         <div className="flex flex-col gap-2 border-t border-line-soft pt-4">
-          <p className="eyebrow text-[11px] text-muted">{applies ? 'O que implica' : 'O que fazer'}</p>
+          <p className="eyebrow text-[0.6875rem] text-muted">{applies ? 'O que implica' : 'O que fazer'}</p>
           <ul className="flex flex-col gap-2">
             {r.implications.map((t) => (
-              <li key={t} className="flex items-start gap-2.5 text-[14px] text-ink">
+              <li key={t} className="flex items-start gap-2.5 text-[0.875rem] text-ink">
                 <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-signal" />
                 <span>{t}</span>
               </li>
@@ -41,8 +41,8 @@ function FrameworkCard({ r, framingLink, official }: { r: FrameworkResult; frami
       )}
       {framingLink && (
         <Link to={framingLink} className="group mt-auto flex flex-col gap-0.5 rounded-[12px] bg-brand-soft px-4 py-3 text-brand transition-colors hover:bg-signal-soft">
-          <span className="text-[12px] font-semibold">{official ? 'Enquadramento oficial · CNCS' : 'Enquadramento sugerido · indicativo'}</span>
-          <span className="inline-flex items-center gap-1.5 text-[14px] font-bold group-hover:underline">Ver o enquadramento NIS2 <ArrowRight className="size-4" aria-hidden /></span>
+          <span className="text-[0.75rem] font-semibold">{official ? 'Enquadramento oficial · CNCS' : 'Enquadramento sugerido · indicativo'}</span>
+          <span className="inline-flex items-center gap-1.5 text-[0.875rem] font-bold group-hover:underline">Ver o enquadramento NIS2 <ArrowRight className="size-4" aria-hidden /></span>
         </Link>
       )}
     </Card>

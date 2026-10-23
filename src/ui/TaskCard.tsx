@@ -22,12 +22,12 @@ export function TaskCard({ type, due, title, meta, done, state, late, action }: 
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <Chip>{type}</Chip>
-          {done ? <Chip tone="neutral">Concluída</Chip> : <>{state}{due && <span className={cn('text-[13px] font-bold', late ? 'text-risk-high-ink' : 'text-brand')}>{due}</span>}</>}
+          {done ? <Chip tone="neutral">Concluída</Chip> : <>{state}{due && <span className={cn('text-[0.8125rem] font-bold', late ? 'text-risk-high-ink' : 'text-brand')}>{due}</span>}</>}
         </div>
-        <h3 className={cn('text-[16px] font-bold', done && 'text-ink-soft')}>{title}</h3>
-        <p className="text-[13px] text-muted">{meta}</p>
+        <h3 className={cn('text-[1rem] font-bold', done && 'text-ink-soft')}>{title}</h3>
+        <p className="text-[0.8125rem] text-muted">{meta}</p>
       </div>
-      {done ? <span className="text-[14px] font-bold text-brand"><span aria-hidden className="text-signal">✓</span> Feito</span> : action}
+      {done ? <span className="text-[0.875rem] font-bold text-brand"><span aria-hidden className="text-signal">✓</span> Feito</span> : action}
     </article>
   )
 }

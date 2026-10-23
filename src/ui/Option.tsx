@@ -22,7 +22,7 @@ export function OptionGroup<T extends string>({ name, value, onChange, options, 
   const id = useId()
   return (
     <fieldset className="flex min-w-0 flex-col gap-1.5" aria-describedby={error ? `${id}-err` : undefined}>
-      <legend className="mb-1.5 text-[13px] font-semibold text-ink-soft">{legend}</legend>
+      <legend className="mb-1.5 text-[0.8125rem] font-semibold text-ink-soft">{legend}</legend>
       <div className={cn('grid gap-2.5', columns === 2 && 'sm:grid-cols-2', columns === 3 && 'sm:grid-cols-3')}>
         {options.map((o) => {
           const selected = value === o.value
@@ -40,14 +40,14 @@ export function OptionGroup<T extends string>({ name, value, onChange, options, 
                 {selected && <span className="size-2 rounded-full bg-brand" />}
               </span>
               <span className="min-w-0">
-                <span className={cn('block text-[15px]', selected ? 'font-bold text-brand' : 'text-ink')}>{o.label}</span>
-                {o.hint && <span className="mt-0.5 block text-[13px] text-ink-soft">{o.hint}</span>}
+                <span className={cn('block text-[0.9375rem]', selected ? 'font-bold text-brand' : 'text-ink')}>{o.label}</span>
+                {o.hint && <span className="mt-0.5 block text-[0.8125rem] text-ink-soft">{o.hint}</span>}
               </span>
             </label>
           )
         })}
       </div>
-      {error && <p id={`${id}-err`} role="alert" className="text-[13px] font-semibold text-danger">{error}</p>}
+      {error && <p id={`${id}-err`} role="alert" className="text-[0.8125rem] font-semibold text-danger">{error}</p>}
     </fieldset>
   )
 }

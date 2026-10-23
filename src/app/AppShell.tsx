@@ -50,14 +50,14 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
         <nav aria-label="Navegação principal" data-tour="nav" className="mt-9 flex flex-1 flex-col gap-5 overflow-y-auto">
           {sections.map((s, i) => (
             <div key={i} className="flex flex-col gap-1">
-              {s.heading && <p className="eyebrow mb-1 truncate px-3 text-[10.5px] text-muted">{s.heading}</p>}
+              {s.heading && <p className="eyebrow mb-1 truncate px-3 text-[0.6563rem] text-muted">{s.heading}</p>}
               {s.items.map((item) => (
                 <Link
                   key={item.to}
                   to={item.to}
                   aria-current={navActive(item, pathname) ? 'page' : undefined}
                   className={cn(
-                    'flex h-10 items-center rounded-[10px] px-3 text-[14px] transition-colors duration-150',
+                    'flex h-10 items-center rounded-[10px] px-3 text-[0.875rem] transition-colors duration-150',
                     navActive(item, pathname) ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink-soft hover:bg-paper-deep/60 hover:text-ink',
                   )}
                 >
@@ -70,8 +70,8 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
         <div className="flex items-center gap-2.5 pt-4">
           <Avatar initials={user.initials} size={36} />
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-bold">{user.name}</p>
-            <p className="truncate text-[12px] text-muted">{user.subtitle}</p>
+            <p className="truncate text-[0.8125rem] font-bold">{user.name}</p>
+            <p className="truncate text-[0.75rem] text-muted">{user.subtitle}</p>
           </div>
         </div>
       </aside>

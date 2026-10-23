@@ -10,7 +10,7 @@ import { useSession } from './session'
 import { DemoGuide, type GuideStep } from './DemoGuide'
 import { clearRegistrationDraft } from '../features/organization/public'
 
-const itemCls = 'flex cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[13px] outline-none data-[highlighted]:bg-paper-soft'
+const itemCls = 'flex cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-[0.8125rem] outline-none data-[highlighted]:bg-paper-soft'
 
 /** Unobtrusive persona switcher for the demo (bottom-right corner, or ⌥P / Alt+P). */
 export function PersonaSwitcher() {
@@ -74,7 +74,7 @@ export function PersonaSwitcher() {
     <DemoGuide open={guide} onClose={() => setGuide(false)} onGo={go} />
     <Menu.Root open={open} onOpenChange={setOpen}>
       <Menu.Trigger
-        className="fixed bottom-[76px] left-5 z-[85] md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[12px] font-bold text-ink-soft shadow-[0_6px_20px_rgba(32,33,36,0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:left-auto max-md:right-3"
+        className="fixed bottom-[76px] left-5 z-[85] md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[0.75rem] font-bold text-ink-soft shadow-[0_6px_20px_rgba(32,33,36,0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:left-auto max-md:right-3"
       >
         <Avatar initials={persona.initials} size={24} />
         {/* Name from content, not aria-label, so it always contains the visible text (WCAG 2.5.3). */}
@@ -85,13 +85,13 @@ export function PersonaSwitcher() {
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Content side="top" align="start" sideOffset={8} className="z-[95] w-[300px] rounded-[14px] border border-line-soft bg-paper p-1.5 shadow-[0_16px_48px_rgba(32,33,36,0.18)] animate-pop-in">
-          <Menu.Label className="eyebrow px-2.5 pb-1 pt-2 text-[10.5px] text-muted">Ver como</Menu.Label>
+          <Menu.Label className="eyebrow px-2.5 pb-1 pt-2 text-[0.6563rem] text-muted">Ver como</Menu.Label>
           {Object.values(PERSONAS).map((p) => (
             <Menu.Item key={p.key} onSelect={() => switchTo(p.key)} className={itemCls}>
               <Avatar initials={p.initials} size={28} />
               <span className="min-w-0 flex-1">
                 <span className="block font-bold">{p.name}</span>
-                <span className="block truncate text-[12px] text-muted">{p.description}</span>
+                <span className="block truncate text-[0.75rem] text-muted">{p.description}</span>
               </span>
               {p.key === persona.key && <Check className="size-4 text-brand" aria-label="atual" />}
             </Menu.Item>
@@ -101,13 +101,13 @@ export function PersonaSwitcher() {
             <BookOpen className="size-4 text-brand" aria-hidden />
             <span className="font-bold text-brand">Guião da demonstração</span>
           </Menu.Item>
-          <Menu.Label className="eyebrow px-2.5 pb-1 pt-1 text-[10.5px] text-muted">Saltar para</Menu.Label>
+          <Menu.Label className="eyebrow px-2.5 pb-1 pt-1 text-[0.6563rem] text-muted">Saltar para</Menu.Label>
           {SNAPSHOTS.map((s) => (
             <Menu.Item key={s.id} onSelect={() => jump(s.id)} className={itemCls}>
               <FlaskConical className="size-4 shrink-0 text-ink-soft" aria-hidden />
               <span className="min-w-0">
                 <span className="block font-semibold">{s.label}</span>
-                <span className="block truncate text-[12px] text-muted">{s.hint}</span>
+                <span className="block truncate text-[0.75rem] text-muted">{s.hint}</span>
               </span>
             </Menu.Item>
           ))}
@@ -121,7 +121,7 @@ export function PersonaSwitcher() {
             <span className="flex-1 font-semibold">Simular falha de ligação</span>
             <Menu.ItemIndicator><Check className="size-4" aria-hidden /></Menu.ItemIndicator>
           </Menu.CheckboxItem>
-          <p className="px-2.5 pb-1.5 pt-2 text-[11px] text-muted">Atalho: Alt+P. Só existe no protótipo.</p>
+          <p className="px-2.5 pb-1.5 pt-2 text-[0.6875rem] text-muted">Atalho: Alt+P. Só existe no protótipo.</p>
         </Menu.Content>
       </Menu.Portal>
     </Menu.Root>

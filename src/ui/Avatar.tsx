@@ -16,7 +16,7 @@ export function Avatar({ initials, size = 36, tone = 'soft', label }: AvatarProp
       style={{ width: size, height: size }}
       className={cn(
         'inline-flex shrink-0 items-center justify-center rounded-full font-extrabold leading-none',
-        size >= 40 ? 'text-[15px]' : size <= 28 ? 'text-[11px]' : 'text-[12px]',
+        size >= 40 ? 'text-[0.9375rem]' : size <= 28 ? 'text-[0.6875rem]' : 'text-[0.75rem]',
         tone === 'dark' ? 'bg-brand-deep text-white' : 'bg-brand-soft text-brand',
       )}
     >
@@ -29,7 +29,7 @@ export function Person({ initials, name }: { initials: string; name: string }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-2">
       <Avatar initials={initials} size={24} />
-      <span className="truncate text-[14px]">{name}</span>
+      <span className="truncate text-[0.875rem]">{name}</span>
     </span>
   )
 }

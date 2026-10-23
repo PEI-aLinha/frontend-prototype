@@ -69,12 +69,12 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
                     className={cn('py-3 text-left font-normal', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === hg.headers.length - 1 ? 'pr-5' : 'pr-3', h.column.columnDef.meta?.align === 'right' && 'text-right')}
                   >
                     {canSort ? (
-                      <button type="button" onClick={h.column.getToggleSortingHandler()} className="eyebrow group inline-flex items-center gap-1 text-[11px] text-muted hover:text-ink">
+                      <button type="button" onClick={h.column.getToggleSortingHandler()} className="eyebrow group inline-flex items-center gap-1 text-[0.6875rem] text-muted hover:text-ink">
                         {flexRender(h.column.columnDef.header, h.getContext())}
                         {sorted === 'asc' ? <ArrowUp className="size-3" aria-hidden /> : sorted === 'desc' ? <ArrowDown className="size-3" aria-hidden /> : <ChevronsUpDown className="size-3 opacity-0 group-hover:opacity-60" aria-hidden />}
                       </button>
                     ) : (
-                      <span className="eyebrow text-[11px] text-muted">{flexRender(h.column.columnDef.header, h.getContext())}</span>
+                      <span className="eyebrow text-[0.6875rem] text-muted">{flexRender(h.column.columnDef.header, h.getContext())}</span>
                     )}
                   </th>
                 )
@@ -94,7 +94,7 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
                 </td>
               )}
               {row.getVisibleCells().map((cell, i, all) => (
-                <td key={cell.id} className={cn('py-3.5 align-middle text-[14px]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
+                <td key={cell.id} className={cn('py-3.5 align-middle text-[0.875rem]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
                   {/* One real button per row, stretched over it (except the checkbox column, which keeps its own target). */}
                   {i === 0 && onRowClick && (
                     <button type="button" onClick={() => onRowClick(row.original)} className={cn('absolute inset-y-0 right-0 rounded-none focus-visible:outline-offset-[-2px]', selectable ? 'left-11' : 'left-0')}>

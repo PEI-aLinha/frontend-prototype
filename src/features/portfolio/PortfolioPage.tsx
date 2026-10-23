@@ -23,7 +23,7 @@ export function PortfolioPage() {
       {portfolio.isError ? <ErrorState error={portfolio.error} onRetry={() => portfolio.refetch()} /> : !portfolio.data ? <SkeletonRows rows={8} /> : (
         <ul className="overflow-hidden rounded-[16px] border border-line-soft bg-paper" aria-label="Clientes">
           <li aria-hidden className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.3fr)_120px] gap-4 border-b border-line-soft bg-paper-soft px-5 py-3 max-md:hidden">
-            {['Cliente', 'Fase', 'Próximo passo', 'Atualizado'].map((h) => <span key={h} className="eyebrow text-[11px] text-muted">{h}</span>)}
+            {['Cliente', 'Fase', 'Próximo passo', 'Atualizado'].map((h) => <span key={h} className="eyebrow text-[0.6875rem] text-muted">{h}</span>)}
           </li>
           {list.map((c, i) => {
             // Only organizations with registration data exist in this prototype; the others are illustrative.
@@ -36,11 +36,11 @@ export function PortfolioPage() {
                     <span className="truncate font-bold">{c.organization.name}</span>
                     {c.isNew && <Chip tone="signal" icon={<Sparkles className="size-3.5" aria-hidden />} className="shrink-0">Novo cliente</Chip>}
                   </span>
-                  <span className="block truncate text-[13px] text-ink-soft">{sector} · {c.employees} trabalhadores</span>
+                  <span className="block truncate text-[0.8125rem] text-ink-soft">{sector} · {c.employees} trabalhadores</span>
                 </span>
                 <span><Chip tone={c.stageTone}>{c.stage}</Chip></span>
-                <span className="flex items-center gap-2 text-[13px] text-ink-soft">{c.nextStep}{active && <ArrowRight className="size-4 text-brand" aria-hidden />}</span>
-                <span className="text-[12px] text-muted">{dateTime(c.updatedAt)}</span>
+                <span className="flex items-center gap-2 text-[0.8125rem] text-ink-soft">{c.nextStep}{active && <ArrowRight className="size-4 text-brand" aria-hidden />}</span>
+                <span className="text-[0.75rem] text-muted">{dateTime(c.updatedAt)}</span>
               </div>
             )
             return (

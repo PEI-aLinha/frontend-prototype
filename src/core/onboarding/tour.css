@@ -18,14 +18,14 @@
 }
 
 .alinha-tour .introjs-tooltip-title {
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 800;
   letter-spacing: -0.01em;
 }
 
 .alinha-tour .introjs-tooltiptext {
   padding-top: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.45;
   color: var(--color-ink-soft);
 }

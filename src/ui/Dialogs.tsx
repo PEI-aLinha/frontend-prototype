@@ -44,8 +44,8 @@ export function Modal({ open, onOpenChange, title, description, chip, children, 
           className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-[18px] overflow-y-auto rounded-[20px] bg-paper px-8 py-7 shadow-[0_24px_64px_rgba(6,54,50,0.22)] animate-pop-in max-sm:px-5 max-sm:py-6"
         >
           {chip && <div>{chip}</div>}
-          <Dialog.Title className="text-[26px] font-extrabold title-tight">{title}</Dialog.Title>
-          {description ? <Dialog.Description className="-mt-1 text-[15px] text-ink-soft">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
+          <Dialog.Title className="text-[1.625rem] font-extrabold title-tight">{title}</Dialog.Title>
+          {description ? <Dialog.Description className="-mt-1 text-[0.9375rem] text-ink-soft">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
           {children}
           {footer && <div className="mt-1 flex flex-wrap justify-end gap-3 max-sm:[&>*]:flex-1">{footer}</div>}
           <Dialog.Close className="absolute right-4 top-4 rounded-full p-2 text-muted hover:bg-paper-soft hover:text-ink" aria-label="Fechar">
@@ -75,10 +75,10 @@ export function Drawer({ open, onOpenChange, title, description, chip, children,
         >
           <header className="flex items-start gap-3 border-b border-line-soft px-7 pb-5 pt-6 max-md:px-5">
             <div className="flex min-w-0 flex-1 flex-col gap-2">
-              {eyebrow && <div className="eyebrow text-[11px] text-muted">{eyebrow}</div>}
+              {eyebrow && <div className="eyebrow text-[0.6875rem] text-muted">{eyebrow}</div>}
               {chip && <div className="flex flex-wrap gap-2">{chip}</div>}
-              <Dialog.Title className="text-[22px] font-extrabold title-tight">{title}</Dialog.Title>
-              {description ? <Dialog.Description className="text-[14px] text-ink-soft">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
+              <Dialog.Title className="text-[1.375rem] font-extrabold title-tight">{title}</Dialog.Title>
+              {description ? <Dialog.Description className="text-[0.875rem] text-ink-soft">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
             </div>
             <Dialog.Close className="-mr-2 rounded-full p-2 text-muted hover:bg-paper-soft hover:text-ink" aria-label="Fechar painel">
               <X className="size-5" aria-hidden />

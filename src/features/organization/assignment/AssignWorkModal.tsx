@@ -90,7 +90,7 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
         {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}
       </Field>
 
-      {failure && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{failure.message}</p>}
+      {failure && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">{failure.message}</p>}
     </Modal>
   )
 }

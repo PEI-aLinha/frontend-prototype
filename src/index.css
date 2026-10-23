@@ -57,6 +57,13 @@
   html {
     color-scheme: light;
   }
+  /* iOS only: follow the system text size (Dynamic Type). Every size is in rem, so the whole UI scales. */
+  @supports (-webkit-touch-callout: none) {
+    html {
+      font: -apple-system-body;
+      font-family: var(--font-sans);
+    }
+  }
   /* Keep the focused field clear of the sticky header (56 px) and the fixed tab bar (WCAG 2.4.11). */
   @media (width < 48rem) {
     html {
@@ -69,7 +76,7 @@
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -94,7 +101,7 @@
 
 /* Section heading (h2 inside a page): sits between the 30 px page title and the 11 px eyebrows. */
 @utility section-title {
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 800;
   letter-spacing: -0.01em;
   line-height: 1.25;

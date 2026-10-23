@@ -43,16 +43,16 @@ export function QuestionPage() {
 
   return (
     <>
-      <Link to={`/org/${org.slug}/tarefas`} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden />As minhas tarefas</Link>
+      <Link to={`/org/${org.slug}/tarefas`} className="-mb-4 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden />As minhas tarefas</Link>
       <PageHeader eyebrow={task.context} title="Pergunta técnica" subtitle={`Pedida por ${from} · ${task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}`} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="flex flex-col gap-5 px-7 py-6 max-md:px-5">
-          <p className="text-[20px] font-extrabold leading-snug">{task.title}</p>
+          <p className="text-[1.25rem] font-extrabold leading-snug">{task.title}</p>
           {answered ? (
             <div className="rounded-[14px] bg-paper-soft p-4">
               <Eyebrow>A sua resposta</Eyebrow>
-              <p className="mt-1 text-[16px] font-bold">{CHOICES.find((c) => c.value === task.answer?.choice)?.label ?? '—'}</p>
-              {task.answer?.note && <p className="mt-1 text-[14px] text-ink-soft">"{task.answer.note}"</p>}
+              <p className="mt-1 text-[1rem] font-bold">{CHOICES.find((c) => c.value === task.answer?.choice)?.label ?? '—'}</p>
+              {task.answer?.note && <p className="mt-1 text-[0.875rem] text-ink-soft">"{task.answer.note}"</p>}
             </div>
           ) : (
             <form noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); submit() }}>
@@ -71,9 +71,9 @@ export function QuestionPage() {
           {task.aiHelp && (
             <section aria-label="Ajuda" className="flex flex-col gap-2.5 rounded-[16px] border border-brand-soft bg-paper p-5">
               <AIBadge kind="info" />
-              <h2 className="text-[15px] font-extrabold">O que esta pergunta quer saber</h2>
-              <p className="text-[14px] leading-relaxed text-ink-soft">{task.aiHelp}</p>
-              <p className="text-[12px] text-muted">Esta explicação não responde por si. A resposta é sua.</p>
+              <h2 className="text-[0.9375rem] font-extrabold">O que esta pergunta quer saber</h2>
+              <p className="text-[0.875rem] leading-relaxed text-ink-soft">{task.aiHelp}</p>
+              <p className="text-[0.75rem] text-muted">Esta explicação não responde por si. A resposta é sua.</p>
             </section>
           )}
           <Note>Só vê esta pergunta. O resto da avaliação continua com o {from}.</Note>
