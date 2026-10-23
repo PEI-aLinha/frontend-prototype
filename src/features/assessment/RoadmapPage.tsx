@@ -101,7 +101,7 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <h3 className="text-[0.9375rem] font-bold">{a.description}</h3>
+          <h2 className="text-[0.9375rem] font-bold">{a.description}</h2>
           <div className="flex flex-wrap gap-1.5">
             {topRisk && <RiskLevelBadge level={topRisk.level} prefix="Risco " />}
             <Chip tone={a.status === 'em_curso' ? 'signal' : 'neutral'}>{ACTION_STATUS_LABEL[a.status]}</Chip>

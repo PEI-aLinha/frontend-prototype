@@ -34,3 +34,15 @@ for (const [path, as, snap] of PAGES) {
     expect(result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(', ')}`)).toEqual([])
   })
 }
+
+// Headings never skip a level (h1 → h3), WCAG 1.3.1.
+for (const [path, as, snap] of [...PAGES, [`${ORG}/ativos?vista=servicos`, 'rui', 'c1'] as const]) {
+  test(`heading order ${as} ${path}`, async ({ page }) => {
+    await start(page, path, as, snap)
+    await expect(page.locator('h1')).toBeVisible()
+    await page.waitForTimeout(400)
+    const levels = await page.locator('h1, h2, h3, h4, h5, h6').evaluateAll((hs) => hs.map((h) => `${Number(h.tagName[1])} ${h.textContent?.trim().slice(0, 40)}`))
+    const skips = levels.filter((l, i) => i > 0 && Number(l[0]) > Number(levels[i - 1][0]) + 1)
+    expect(skips).toEqual([])
+  })
+}
