@@ -85,7 +85,7 @@ export function HomePage() {
       ]} />
       </div>
 
-      <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3" data-tour="home-summary">
+      <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3 md:items-start" data-tour="home-summary">
         <h2 id="home-summary-title" className="sr-only">Resumo</h2>
         {seeRisks && risks.data && top ? (
           <StatCard to={`${base}/riscos`} label="Riscos" accent={<RiskLevelBadge level={top} />}
