@@ -38,7 +38,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 11
+export const STATE_VERSION = 12
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
