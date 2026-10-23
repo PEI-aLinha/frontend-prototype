@@ -66,3 +66,10 @@ test('the demo button name starts with its visible text', async ({ page }, info)
   await start(page, `${ORG}/inicio`, 'rui', 'c3')
   await expect(page.getByRole('button', { name: /^Demo · Rui/ })).toBeVisible()
 })
+
+test('"question not found" has an h1 and a way back to the tasks', async ({ page }) => {
+  await start(page, `${ORG}/tarefas/nao-existe/pergunta`, 'pedro', 'c1')
+  await expect(page.getByRole('heading', { level: 1, name: 'Pergunta não encontrada' })).toBeVisible()
+  await page.getByRole('main').getByRole('link', { name: 'Voltar às tarefas' }).click()
+  await expect(page).toHaveURL(/\/tarefas(\?|$)/)
+})

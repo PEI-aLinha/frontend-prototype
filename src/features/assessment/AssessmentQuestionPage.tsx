@@ -47,7 +47,7 @@ export function AssessmentQuestionPage() {
   const section = sections[at]
   const index = questions.data.findIndex((q) => q.id === questionId)
   const question = questions.data[index]
-  if (!section || !question) return <EmptyState title="Pergunta não encontrada"><Link to={base} className="font-bold text-brand hover:underline">Voltar à avaliação</Link></EmptyState>
+  if (!section || !question) return <EmptyState headingLevel={1} title="Pergunta não encontrada"><Link to={base} className="font-bold text-brand hover:underline">Voltar à avaliação</Link></EmptyState>
 
   const before = questions.data[index - 1] ?? prevQuestions.data?.at(-1)
   const after = questions.data[index + 1] ?? nextQuestions.data?.[0]

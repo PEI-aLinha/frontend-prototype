@@ -22,8 +22,9 @@ export function SkeletonRows({ rows = 4, label = 'A carregar…' }: { rows?: num
   )
 }
 
-export function EmptyState({ icon, title, children, action, className, headingLevel = 3 }: { icon?: ReactNode; title: string; children?: ReactNode; action?: ReactNode; className?: string; headingLevel?: 2 | 3 }) {
-  const Heading = headingLevel === 2 ? 'h2' : 'h3'
+export function EmptyState({ icon, title, children, action, className, headingLevel = 3 }: { icon?: ReactNode; title: string; children?: ReactNode; action?: ReactNode; className?: string; headingLevel?: 1 | 2 | 3 }) {
+  // Level 1 when the empty state is the whole page (e.g. "not found"), so the page still has an h1.
+  const Heading = (['h1', 'h2', 'h3'] as const)[headingLevel - 1]
   return (
     <div className={cn('flex flex-col items-center gap-3 rounded-[16px] border border-dashed border-line px-6 py-12 text-center', className)}>
       {icon && <div className="grid size-11 place-items-center rounded-full bg-paper-soft text-ink-soft">{icon}</div>}

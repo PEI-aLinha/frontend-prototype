@@ -29,7 +29,7 @@ export function QuestionPage() {
 
   if (!tasks.data) return <SkeletonRows rows={4} />
   const task = tasks.data.find((t) => t.id === taskId && t.kind === 'pergunta')
-  if (!task) return <EmptyState title="Pergunta não encontrada">Volte às suas tarefas.</EmptyState>
+  if (!task) return <EmptyState headingLevel={1} title="Pergunta não encontrada" action={<Link to={`/org/${org.slug}/tarefas`} className="font-bold text-brand hover:underline">Voltar às tarefas</Link>}>Pode já ter sido respondida ou removida.</EmptyState>
   const from = users.data?.find((u) => u.id === task.assignedBy)?.name ?? 'Rui Santos'
   const answered = task.status === 'concluida'
 

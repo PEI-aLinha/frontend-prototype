@@ -20,7 +20,7 @@ export function SectionPage() {
   if (error) return <>{back}<ErrorState error={error} onRetry={() => { assessment.refetch(); questions.refetch() }} /></>
   if (!assessment.data || !questions.data) return <SkeletonRows rows={6} />
   const section = assessment.data.sections.find((s) => s.id === sectionId)
-  if (!section) return <>{back}<EmptyState title="Secção não encontrada">Volte à avaliação e escolha uma secção.</EmptyState></>
+  if (!section) return <>{back}<EmptyState headingLevel={1} title="Secção não encontrada">Volte à avaliação e escolha uma secção.</EmptyState></>
 
   return (
     <>
