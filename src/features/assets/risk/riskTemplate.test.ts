@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { RISK_MATRIX, type RiskMatrixConfig } from '../../../config/riskMatrix'
+import { matrix5x5 } from './matrix5x5.fixture'
 import { buildRiskTemplate, REGISTER_ROWS } from './riskTemplate'
 
 const sheet = (name: string, config: RiskMatrixConfig = RISK_MATRIX) => {
@@ -39,8 +40,7 @@ describe('buildRiskTemplate', () => {
   })
 
   it('follows a 5×5 config without code changes', () => {
-    const steps = [1, 2, 3, 4, 5].map((v) => ({ value: v, label: `N${v}`, hint: '' }))
-    const config: RiskMatrixConfig = { probability: steps, impact: steps, bands: [{ level: 'baixo', min: 1, max: 6 }, { level: 'medio', min: 7, max: 14 }, { level: 'alto', min: 15, max: 25 }] }
+    const config = matrix5x5((v) => `N${v}`)
     expect(sheet('Escalas', config).data.map((r) => value(r[1]))).toContain('N5')
     expect(sheet('Níveis', config).data[3].map(value)).toEqual(['Alto', 15, 25])
   })

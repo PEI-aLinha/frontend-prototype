@@ -45,6 +45,11 @@ export function RegisterAssetsPage() {
   const done = task.status === 'concluida'
   const owners = inv.data.users.filter((u) => u.role !== 'consultor')
 
+  const finishWithoutNew = () => complete.mutate(task.id, {
+    onSuccess: () => { toast.show('Tarefa concluída · o Rui foi notificado'); navigate(`/org/${org.slug}/tarefas`) },
+    onError: (e) => toast.show(e.message, 'error'),
+  })
+
   const persist = (then: 'another' | 'finish') => {
     if (!form.check()) return
     save.mutate({ input: toInput(form.values, task.id), id: editing?.id }, {
@@ -56,19 +61,11 @@ export function RegisterAssetsPage() {
           document.getElementById('asset-name-focus')?.focus()
           return
         }
-        complete.mutate(task.id, {
-          onSuccess: () => { toast.show('Tarefa concluída · o Rui foi notificado'); navigate(`/org/${org.slug}/tarefas`) },
-          onError: (e) => toast.show(e.message, 'error'),
-        })
+        finishWithoutNew()
       },
       onError: (e) => toast.show(e.message, 'error'),
     })
   }
-
-  const finishWithoutNew = () => complete.mutate(task.id, {
-    onSuccess: () => { toast.show('Tarefa concluída · o Rui foi notificado'); navigate(`/org/${org.slug}/tarefas`) },
-    onError: (e) => toast.show(e.message, 'error'),
-  })
 
   const meta = (
     <div className="flex w-[260px] flex-col items-end gap-2 max-md:w-full max-md:items-stretch">

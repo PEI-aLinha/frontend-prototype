@@ -288,8 +288,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       completeTask: (org, id) => simulate(() => {
         let task!: Task
         write((s, me) => {
-          const t = s.tasks.find((x) => x.id === id)
-          if (!t) throw new ApiError('Tarefa não encontrada', 404)
+          const t = inOrg(s.tasks.find((x) => x.id === id), org, 'Tarefa não encontrada')
           if (me.role === 'analista' && t.assigneeId !== me.id) deny()
           task = { ...t, status: 'concluida' }
           const count = s.assets.filter((a) => a.taskId === id).length
@@ -310,8 +309,7 @@ export function createMockApi(getActor: ActorProvider): Api {
         assertCan(getState(), actor(), org, 'assign', 'asset_task')
         let task!: Task
         write((s, me) => {
-          const t = s.tasks.find((x) => x.id === id)
-          if (!t) throw new ApiError('Tarefa não encontrada', 404)
+          const t = inOrg(s.tasks.find((x) => x.id === id), org, 'Tarefa não encontrada')
           if (t.status !== 'pendente') throw new ApiError('Só pode alterar tarefas pendentes.', 409)
           if (change.dueDate && change.dueDate < s.today) throw new ApiError('O novo prazo não pode ser no passado.', 422)
           task = { ...t, ...change }
@@ -327,8 +325,8 @@ export function createMockApi(getActor: ActorProvider): Api {
       remindTask: (org, id) => simulate(() => {
         assertCan(getState(), actor(), org, 'assign', 'asset_task')
         write((s, me) => {
-          const t = s.tasks.find((x) => x.id === id)
-          if (!t || t.status !== 'pendente') throw new ApiError('Só pode lembrar tarefas pendentes.', 409)
+          const t = inOrg(s.tasks.find((x) => x.id === id), org, 'Tarefa não encontrada')
+          if (t.status !== 'pendente') throw new ApiError('Só pode lembrar tarefas pendentes.', 409)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'remind', entityType: 'task', entityId: id, summary: `Enviou um lembrete da tarefa "${t.title}"`, before: null, after: null })
           return notify({ ...s, audit: [...s.audit, entry] }, { organizationId: org, userId: t.assigneeId, kind: 'lembrete', title: `Lembrete de ${me.name.split(' ')[0]}`, body: `${t.title}${t.dueDate ? ` · até ${shortDayPt(t.dueDate)}` : ''}`, link: t.kind === 'ativos' ? `${orgPath(s, org)}/tarefas/${t.id}/ativos` : `${orgPath(s, org)}/tarefas` })
         })

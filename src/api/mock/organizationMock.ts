@@ -94,7 +94,7 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       const { name, ...profile } = input.organization
       const at = now()
       const consultant = pickConsultant(s)
-      const user: User = { id: userId, name: input.account.name.trim(), initials: initials(input.account.name), role: 'responsavel', title: 'Responsável designado', email }
+      const user: User = { id: userId, name: input.account.name.trim(), initials: initials(input.account.name), role: 'responsavel', organizationId: orgId, title: 'Responsável designado', email }
       const organization: Organization = {
         id: orgId,
         slug,
@@ -233,7 +233,7 @@ export function createOrganizationMock(getActor: () => DemoActor): OrganizationA
       // The demo persona "Pedro Almeida" is the analyst invited by Rui; anyone else gets a new account.
       const existing = s.users.find((u) => u.email.toLowerCase() === m.email.toLowerCase())
       const userId = existing?.id ?? (m.email === 'pedro.almeida@tiagueda.pt' && !s.users.some((u) => u.id === PEDRO) ? PEDRO : newId('u'))
-      const user: User = existing ?? { id: userId, name: m.name, initials: initials(m.name), role: 'analista', title: 'Analista', email: m.email }
+      const user: User = existing ?? { id: userId, name: m.name, initials: initials(m.name), role: 'analista', organizationId: org.id, title: 'Analista', email: m.email }
       const at = now()
       const entry = auditEntry({ organizationId: org.id, userId, action: 'accept', entityType: 'member', entityId: m.id, summary: `${m.name} aceitou o convite e entrou na equipa como analista`, before: null, after: { email: m.email } })
       setState((st) => notify({
