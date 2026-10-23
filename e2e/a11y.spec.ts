@@ -46,3 +46,14 @@ for (const [path, as, snap] of [...PAGES, [`${ORG}/ativos?vista=servicos`, 'rui'
     expect(skips).toEqual([])
   })
 }
+
+// Best-practice rules the audit flagged: landmarks (region, landmark-unique) and empty table headers.
+for (const [path, as, snap] of [[`${ORG}/avaliacao`, 'rui', 'c1'], ['/clientes/componentes-agueda/ativos', 'marta', 'c2'], ['/registo/conta', 'rui', 'c1']] as const) {
+  test(`landmarks and table headers ${as} ${path}`, async ({ page }) => {
+    await start(page, path, as, snap)
+    await expect(page.locator('h1')).toBeVisible()
+    await page.waitForTimeout(600)
+    const result = await new AxeBuilder({ page }).withRules(['region', 'landmark-unique', 'landmark-no-duplicate-banner', 'landmark-complementary-is-top-level', 'empty-table-header']).analyze()
+    expect(result.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).slice(0, 3).join(', ')}`)).toEqual([])
+  })
+}

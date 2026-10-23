@@ -41,7 +41,7 @@ function columns(inv: Inventory, opts: { risks: boolean; riskLink?: (a: Asset) =
   }
   if (opts.riskLink) {
     const href = opts.riskLink
-    cols.push({ id: 'action', header: '', enableSorting: false, meta: { align: 'right' }, cell: (c) => (
+    cols.push({ id: 'action', header: () => <span className="sr-only">Ações</span>, enableSorting: false, meta: { align: 'right' }, cell: (c) => (
       <Link to={href(c.row.original)} aria-label={`Registar risco sobre ${c.row.original.name}`} data-tour="register-risk" className="relative z-10 inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-[0.8125rem] font-bold text-brand hover:bg-brand-soft">
         <ShieldPlus className="size-4" aria-hidden />Registar risco
       </Link>
