@@ -6,6 +6,7 @@ set -euo pipefail
 OUT="${1:?usage: scripts/lighthouse.sh <out-dir> [base-url]}"
 BASE="${2:-http://localhost:4173}"
 mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 
 ROUTES=(
   "inicio:/org/componentes-agueda/inicio?as=rui"
@@ -28,6 +29,6 @@ for entry in "${ROUTES[@]}"; do
       const s = (k) => Math.round(c[k].score * 100);
       console.log([process.argv[2], s("performance"), s("accessibility"), s("best-practices"), s("seo"),
         a["largest-contentful-paint"].displayValue, a["cumulative-layout-shift"].displayValue, a["total-blocking-time"].displayValue].join("\t"))
-    ' "$PWD/$OUT/$name-$factor.report.json" "$name-$factor" | tee -a "$OUT/summary.tsv"
+    ' "$OUT/$name-$factor.report.json" "$name-$factor" | tee -a "$OUT/summary.tsv"
   done
 done
