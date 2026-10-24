@@ -50,6 +50,8 @@ Os painéis e modais abrem por parâmetro de URL, por isso todos os estados são
 | 11 Registar ativos técnicos (Pedro) | `/org/componentes-agueda/tarefas/task-ativos/ativos` |
 | 10 Pergunta técnica com ajuda da IA (Pedro) | `/org/componentes-agueda/tarefas/task-pergunta-mfa/pergunta` |
 | Avaliação: progresso por secção (Rui) | `/org/componentes-agueda/avaliacao` |
+| Avaliação: perguntas de uma secção | `/org/componentes-agueda/avaliacao/sec-acessos` |
+| Avaliação: responder, guardar ou delegar ao Pedro | `/org/componentes-agueda/avaliacao/sec-acessos/q-acessos-wifi` |
 | Equipa: lembrar, mudar prazo, cancelar | `/org/componentes-agueda/equipa` |
 | Importar de Excel (CSV) · vista por serviço | `…/ativos?importar=1` · `…/ativos?vista=servicos` |
 | Integrações (Rui pede ao Pedro, Pedro liga) | `/org/componentes-agueda/integracoes` |
@@ -136,6 +138,7 @@ src/
 │   ├── assessment/ roadmap mínimo e prioritizeRoadmap (plugin Avaliação)
 │   ├── assessment/ também o resumo da avaliação (ecrã do Rui)
 │   ├── chatbot/    assistente flutuante, conversas por organização, fluxo de revisão pela consultora (US18/US03), respostas com tabela, modo ecrã inteiro e chatControl
+│   ├── assessment/ também o questionário do Rui: resumo, secções, perguntas e delegação ao analista
 │   ├── integrations/ catálogo só de leitura, sugestões de ativos, evidências (RF37)
 │   ├── home/  portfolio/  tasks/  team/
 ├── ui/             design system (tokens em src/index.css)
@@ -161,6 +164,7 @@ src/
   - `asset.depends_on` (dependências entre ativos) e `asset.source` (`manual | importacao | integracao`).
   - `risk.review_date`, estado `arquivado` com `archived_reason` (nunca se apaga; fica na auditoria) e risco sem ativo (toda a empresa).
   - `task.kind` += `integracao`; `task.answer` e `task.ai_help` na pergunta técnica; estado `cancelada`.
+  - Respostas do Responsável designado ao questionário (`assessment_answer`: pergunta, resposta `sim | parcial | nao | nao_sei` e comentário) e `task.question_id` na pergunta delegada, para ligar a resposta do analista à pergunta.
   - Notificações (`notification`), ligações de integração (`integration_connection` com referência ao segredo no OpenBao), `discovered_asset` e `collected_evidence`.
 - **Desvio visual:** o texto "✓ Feito" e outros textos a `signal` (#168C80) não passavam AA sobre branco; passaram a `brand`, com o visto em `signal`.
 - **Tokens de risco novos:** `risk-low/medium/high` (+ `-ink`), sóbrios e com contraste AA testado; os níveis têm sempre ícone e texto.

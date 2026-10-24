@@ -1,7 +1,7 @@
 // Demo data (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Dates in October 2026.
 import type {
   AppNotification, Asset, ChatConversation, Consultant, TeamMember, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
-  Risk, RiskActionLink, RoadmapStatus, Task, User,
+  Risk, RiskActionLink, RoadmapStatus, Task, User, AnswerChoice, QuestionAnswer,
 } from '../contracts'
 
 export type SnapshotId = 'c0' | 'c1' | 'c2' | 'c3'
@@ -27,6 +27,8 @@ export interface DemoState {
   comments: AssetComment[]
   actions: RemediationAction[]
   roadmap: Record<string, RoadmapStatus>
+  /** Designated manager's answers in the maturity questionnaire, per organization and question. */
+  answers: Record<string, Record<string, QuestionAnswer>>
   portfolio: PortfolioClient[]
   audit: AuditEntry[]
   notifications: AppNotification[]
@@ -37,7 +39,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 11
+export const STATE_VERSION = 12
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -117,19 +119,43 @@ const ASSETS_PEDRO: Asset[] = [
 ]
 
 const QUESTION_TASK: Task = {
-  id: 'task-pergunta-backups', organizationId: ORG_ID, kind: 'pergunta',
+  id: 'task-pergunta-backups', organizationId: ORG_ID, kind: 'pergunta', questionId: 'q-backups',
   title: 'As cópias de segurança dos sistemas críticos são feitas regularmente e a reposição é testada?',
   context: 'Avaliação de maturidade · Continuidade do negócio', assigneeId: PEDRO, assignedBy: RUI,
   dueDate: '2026-10-13', status: 'concluida', createdAt: at(12),
+  answer: { choice: 'parcial', note: 'Sim, mas a reposição nunca foi testada.' },
 }
 
 const MFA_QUESTION: Task = {
-  id: 'task-pergunta-mfa', organizationId: ORG_ID, kind: 'pergunta',
+  id: 'task-pergunta-mfa', organizationId: ORG_ID, kind: 'pergunta', questionId: 'q-mfa',
   title: 'As contas de administrador usam autenticação multifator (MFA)?',
   context: 'Avaliação de maturidade · Controlo de acessos', assigneeId: PEDRO, assignedBy: RUI,
   dueDate: '2026-10-16', status: 'pendente', createdAt: at(13, '09:10'),
   aiHelp: 'MFA significa pedir uma segunda prova além da senha, por exemplo um código no telemóvel. Para verificar no Microsoft 365: Centro de administração › Utilizadores › Autenticação multifator. Responda "Em parte" se só algumas contas de administrador a tiverem.',
 }
+
+/** Rui's answers in the maturity questionnaire (scenario 1). Delegated questions are answered through the analyst's task. */
+const RUI_ANSWERS: Record<string, AnswerChoice> = {
+  'q-gov-politica': 'sim', 'q-gov-responsavel': 'sim', 'q-gov-gerencia': 'parcial', 'q-gov-formacao-gerencia': 'nao',
+  'q-gov-formacao': 'parcial', 'q-gov-riscos': 'nao', 'q-gov-funcoes': 'parcial', 'q-gov-revisao': 'nao',
+  'q-ativos-inventario': 'parcial', 'q-ativos-dono': 'sim', 'q-ativos-criticidade': 'parcial', 'q-ativos-dados': 'sim',
+  'q-ativos-abate': 'nao', 'q-ativos-software': 'parcial',
+  'q-acessos-contas': 'sim', 'q-acessos-saidas': 'parcial', 'q-acessos-minimo': 'parcial', 'q-acessos-revisao': 'nao',
+  'q-acessos-senhas': 'sim', 'q-acessos-admin': 'parcial', 'q-acessos-remoto': 'sim',
+  'q-cont-copia-fora': 'nao', 'q-cont-plano': 'nao', 'q-cont-tempo': 'parcial', 'q-cont-energia': 'sim',
+  'q-cont-contactos': 'sim', 'q-cont-teste': 'nao',
+  'q-inc-procedimento': 'nao', 'q-inc-reportar': 'parcial', 'q-inc-cncs': 'sim', 'q-inc-registo': 'nao',
+  'q-forn-lista': 'sim', 'q-forn-contratos': 'parcial',
+}
+
+/** All answers at submission (scenarios 2 and 3; the MFA question is no longer delegated there). */
+const RUI_ANSWERS_SUBMITTED: Record<string, AnswerChoice> = {
+  ...RUI_ANSWERS, 'q-mfa': 'parcial', 'q-acessos-wifi': 'sim', 'q-inc-antivirus': 'sim', 'q-inc-registos': 'parcial',
+  'q-forn-acessos': 'parcial', 'q-forn-avaliacao': 'nao', 'q-forn-cloud': 'sim',
+}
+
+const answers = (choices: Record<string, AnswerChoice>): Record<string, QuestionAnswer> =>
+  Object.fromEntries(Object.entries(choices).map(([id, choice]) => [id, { choice }]))
 
 const ASSET_TASK: Task = {
   id: ASSET_TASK_ID, organizationId: ORG_ID, kind: 'ativos',
@@ -233,7 +259,7 @@ function baseAudit(): AuditEntry[] {
 function emptySnapshot(): DemoState {
   return {
     version: STATE_VERSION, consultants: CONSULTANTS, members: [], snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
-    risks: [], links: [], comments: [], actions: [], roadmap: {}, portfolio: portfolio('c0'), audit: [], notifications: [], chat: [], today: '2026-10-09',
+    risks: [], links: [], comments: [], actions: [], roadmap: {}, answers: {}, portfolio: portfolio('c0'), audit: [], notifications: [], chat: [], today: '2026-10-09',
     connections: {}, discoveries: [], evidence: [],
   }
 }
@@ -306,6 +332,7 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
     comments,
     actions,
     roadmap: { [ORG_ID]: roadmap },
+    answers: { [ORG_ID]: answers(c1 ? RUI_ANSWERS : RUI_ANSWERS_SUBMITTED) },
     portfolio: portfolio(snapshot),
     audit: entries,
     notifications: seedNotifications(snapshot),

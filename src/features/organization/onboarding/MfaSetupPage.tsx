@@ -1,5 +1,6 @@
 import { Navigate, useNavigate } from 'react-router'
-import { Button, Eyebrow } from '../../../ui'
+import { Button } from '../../../ui'
+import { StepBadge } from './OnboardingLayout'
 import { MfaSetup } from './MfaSetup'
 import { useRegistration } from './registration'
 
@@ -11,13 +12,13 @@ export function MfaSetupPage() {
 
   return (
     <>
-      <header className="flex flex-col gap-2">
-        <Eyebrow className="text-[12px]">Passo 2 de 3 · Segurança</Eyebrow>
+      <header className="flex flex-col gap-3">
+        <StepBadge>Passo 2 de 3</StepBadge>
         <h1 className="text-[30px] font-extrabold title-tight">Proteja a sua conta</h1>
         <p className="text-[16px] text-ink-soft">Além da palavra-passe, vai entrar com um código do seu telemóvel. Assim, mesmo que alguém descubra a palavra-passe, não consegue entrar.</p>
       </header>
       <MfaSetup email={account.email} onVerified={() => { setMfaVerified(true); navigate('/registo/organizacao') }} />
-      <div className="-mt-4 flex justify-center">
+      <div className="-mt-4 flex">
         <Button variant="link" size="sm" className="!text-ink-soft" onClick={() => navigate('/registo/conta')}>Voltar ao passo anterior</Button>
       </div>
     </>
