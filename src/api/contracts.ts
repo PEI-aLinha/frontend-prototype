@@ -473,7 +473,7 @@ export interface DirectoryApi {
   getToday(): Promise<IsoDate>
 }
 
-export type NotificationKind = 'tarefa' | 'tarefa_concluida' | 'lembrete' | 'prazo' | 'comentario' | 'roadmap' | 'avaliacao' | 'integracao' | 'risco'
+export type NotificationKind = 'tarefa' | 'tarefa_concluida' | 'lembrete' | 'prazo' | 'comentario' | 'roadmap' | 'avaliacao' | 'integracao' | 'risco' | 'chat'
 
 export interface AppNotification {
   id: Id
@@ -502,6 +502,7 @@ export interface Api {
   directory: DirectoryApi
   notifications: NotificationsApi
   integrations: IntegrationsApi
+  chat: ChatApi
 }
 
 export class ApiError extends Error {
@@ -589,4 +590,78 @@ export interface IntegrationsApi {
   listDiscoveries(org: Id): Promise<DiscoveredAsset[]>
   decide(org: Id, id: Id, decision: DiscoveryDecision): Promise<DiscoveredAsset>
   listEvidence(org: Id): Promise<CollectedEvidence[]>
+}
+//nao percebi bem se isto esta correto cuidado
+export interface ChatMessageInput {
+  role: 'user' | 'bot'
+  text: string
+}
+
+export type ChatMessageRole = 'user' | 'bot' | 'notice'
+
+export interface ChatStoredMessage {
+  id: Id
+  role: ChatMessageRole
+  authorId?: Id
+  text: string
+  source?: { label: string; title: string; to: string; cta?: string }
+  error?: boolean
+  createdAt: IsoDate
+  table?: ChatTable
+  /** Mockup: só os metadados do ficheiro (o conteúdo iria para o armazenamento de objetos). */
+  attachments?: { id: Id; name: string; size: number; type: string }[]
+  /** Pedido de documento da consultora; `fulfilledBy` é a mensagem do cliente com o anexo. */
+  documentRequest?: { title: string; fulfilledBy?: Id }
+}
+
+export interface ChatConversation {
+  id: Id
+  scopeKey: string
+  userId: Id
+  messages: ChatStoredMessage[]
+  topic?: string
+  /** Nome escolhido pelo utilizador (não é substituído pelo resumo automático). */
+  topicRenamed?: boolean
+  awaitingReview: boolean
+  reviewedMessageCount?: number
+  createdAt: IsoDate
+  updatedAt: IsoDate
+}
+
+export interface ChatReply {
+  /** Id da mensagem: ao guardar a conversa, o servidor só aceita respostas do assistente que ele próprio emitiu. */
+  id: Id
+  text: string
+  source?: {
+    label: string
+    title: string
+    to: string
+    cta?: string
+  }
+  notice?: string
+  table?: ChatTable
+}
+
+/** Perguntas cujas respostas vão à consultora para revisão. Quem decide é o servidor; o widget usa-a só para mostrar o estado logo. */
+export const CHAT_REVIEW_PATTERN = /rascunho|política|incidente|notificação|CNPD|relatório/i
+/** Textos do assistente gerados no cliente: o servidor guarda estes, não o que o cliente envia. */
+export const CHAT_GREETING = 'Olá! Sou o assistente da Alinha. Posso ajudar a perceber os riscos, o roadmap e os requisitos da NIS2 e do RGPD.'
+export const CHAT_ERROR_TEXT = 'Não consegui responder agora. Tente novamente daqui a pouco.'
+
+export interface ChatApi {
+  list(scopeKey: string): Promise<ChatConversation[]>
+  save(scopeKey: string, conversation: ChatConversation): Promise<ChatConversation>
+  delete(scopeKey: string, conversationId: Id): Promise<void>
+  clear(scopeKey: string): Promise<void>
+  review(scopeKey: string, conversationId: Id): Promise<ChatConversation>
+  send(
+    organizationId: Id | undefined,
+    messages: ChatMessageInput[],
+  ): Promise<ChatReply>
+}
+
+export interface ChatTable {
+  caption?: string
+  columns: string[]
+  rows: string[][]
 }

@@ -8,6 +8,7 @@ import { shortDayPt } from './dates'
 import { createIntegrationsMock } from './integrationsMock'
 import { createOrganizationMock } from './organizationMock'
 import { createAssessmentMock } from './assessmentMock'
+import { createChatMock } from './chatMock'
 import { canRole, type Action, type Resource } from '../../core/rbac'
 import type { DemoState } from './seed'
 
@@ -106,6 +107,7 @@ export function createMockApi(getActor: ActorProvider): Api {
   const write = (mutate: (s: DemoState, me: User) => DemoState) => setState((s) => mutate(s, user(s, getActor().userId)))
 
   return {
+    chat: createChatMock(getActor),
     organization: createOrganizationMock(getActor),
     integrations: createIntegrationsMock(getActor),
 

@@ -1,7 +1,8 @@
 import { Suspense, type ReactNode } from 'react'
+import { Sparkles, type LucideIcon } from 'lucide-react'
 import { Link, matchPath, useLocation } from 'react-router'
-import type { LucideIcon } from 'lucide-react'
 import { Avatar, Logo, SkeletonRows, cn } from '../ui'
+import { openExpandedChat } from '../features/chatbot/ChatControl'
 import { MobileTabBar } from './MobileTabBar'
 
 export interface NavItem {
@@ -67,6 +68,17 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
             </div>
           ))}
         </nav>
+
+        {/* Abre o assistente já em ecrã inteiro (o botão flutuante continua a abrir o painel pequeno) */}
+        <button
+          type="button"
+          onClick={() => openExpandedChat()}
+          className="mb-12 mt-4 flex h-10 items-center gap-2 rounded-[10px] bg-brand-soft px-3 text-[0.875rem] font-bold text-brand transition-colors duration-150 hover:bg-brand-soft/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        >
+          <Sparkles className="size-4 flex-none" aria-hidden />
+          Assistente IA
+        </button>
+
         <div className="flex items-center gap-2.5 pt-4">
           <Avatar initials={user.initials} size={36} />
           <div className="min-w-0">
