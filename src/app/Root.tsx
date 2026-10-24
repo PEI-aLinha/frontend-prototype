@@ -1,5 +1,6 @@
 import { Outlet, ScrollRestoration, useLocation } from 'react-router'
 import { PersonaSwitcher } from '../core/PersonaSwitcher'
+import { RouteAnnouncer } from './RouteAnnouncer'
 import { GlobalChatWidget } from './GlobalChatWidget'
 
 /** Rotas sem sessão (registo, convite, página de design): o assistente não aparece. */
@@ -14,6 +15,7 @@ export function Root() {
       {showChat && <GlobalChatWidget />}
       <PersonaSwitcher />
       <ScrollRestoration />
+      <RouteAnnouncer />
     </>
   )
 }

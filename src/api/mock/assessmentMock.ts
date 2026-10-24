@@ -25,18 +25,26 @@ const QUESTIONS = catalog as QuestionDef[]
 
 const CHOICE_LABEL = { sim: 'Sim', parcial: 'Em parte', nao: 'Não', nao_sei: 'Não sei' } as const
 
-/** Latest analyst task for a question, unless it was cancelled. */
-const delegation = (s: DemoState, questionId: Id) => s.tasks.findLast((t) => t.questionId === questionId && t.status !== 'cancelada')
+/** Latest analyst task for a question in this organization, unless it was cancelled. */
+const delegation = (s: DemoState, org: Id, questionId: Id) => s.tasks.findLast((t) => t.organizationId === org && t.questionId === questionId && t.status !== 'cancelada')
 
 /** The designated manager's own answer wins; otherwise the analyst's, once they reply. */
 function withAnswer(s: DemoState, org: Id, question: QuestionDef): AssessmentQuestion {
-  const task = delegation(s, question.id)
+  const task = delegation(s, org, question.id)
   const delegatedAnswer = task?.status === 'concluida' ? task.answer ?? null : null
   return { ...question, answer: s.answers[org]?.[question.id] ?? delegatedAnswer, delegatedTaskId: task?.id ?? null }
 }
 
 export function createAssessmentMock(getActor: () => DemoActor): Pick<AssessmentApi, 'getAssessment' | 'answerQuestion' | 'listQuestions' | 'saveAnswer' | 'delegateQuestion' | 'submitAssessment'> {
-  const role = (s: DemoState) => s.users.find((u) => u.id === getActor().userId)?.role
+  // Tenant scoping: the role alone is not enough, the person must belong to this organization.
+  const isManager = (s: DemoState, org: Id) => {
+    const me = s.users.find((u) => u.id === getActor().userId)
+    return me?.role === 'responsavel' && s.members.some((m) => m.organizationId === org && m.userId === me.id && m.status === 'ativo' && m.role === 'responsavel')
+  }
+  const canRead = (s: DemoState, org: Id) => {
+    const me = s.users.find((u) => u.id === getActor().userId)
+    return isManager(s, org) || (me?.role === 'consultor' && s.organizations.find((o) => o.id === org)?.consultantId === me.id)
+  }
   const findQuestion = (id: Id) => {
     const question = QUESTIONS.find((x) => x.id === id)
     if (!question) throw new ApiError('Pergunta não encontrada', 404)
@@ -49,12 +57,12 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
   return {
     getAssessment: (org) => simulate(() => {
       const s = getState()
-      if (role(s) === 'analista') throw new ApiError('Não tem permissão para ver a avaliação.', 403)
+      if (!canRead(s, org)) throw new ApiError('Não tem permissão para ver a avaliação.', 403)
       const roadmap = s.roadmap[org]
       const done = !!roadmap?.assessmentCompletedAt
       const sections = SECTIONS.map((sec) => {
         const questions = QUESTIONS.filter((x) => x.sectionId === sec.id).map((x) => withAnswer(s, org, x))
-        const tasks = questions.map((x) => delegation(s, x.id)).filter((t): t is Task => !!t)
+        const tasks = questions.map((x) => delegation(s, org, x.id)).filter((t): t is Task => !!t)
         return {
           ...sec,
           total: questions.length,
@@ -73,14 +81,14 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
 
     listQuestions: (org, sectionId) => simulate(() => {
       const s = getState()
-      if (role(s) === 'analista') throw new ApiError('Não tem permissão para ver a avaliação.', 403)
+      if (!canRead(s, org)) throw new ApiError('Não tem permissão para ver a avaliação.', 403)
       if (!SECTIONS.some((x) => x.id === sectionId)) throw new ApiError('Secção não encontrada', 404)
       return QUESTIONS.filter((x) => x.sectionId === sectionId).map((x) => withAnswer(s, org, x))
     }),
 
     saveAnswer: (org, questionId, answer) => simulate(() => {
       const s = getState()
-      if (role(s) !== 'responsavel') throw new ApiError('Só o Responsável designado responde à avaliação.', 403)
+      if (!isManager(s, org)) throw new ApiError('Só o Responsável designado responde à avaliação.', 403)
       const question = findQuestion(questionId)
       if (!answer.choice) throw new ApiError('Escolha uma resposta.', 422)
       assertOpen(s, org)
@@ -95,13 +103,13 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
 
     delegateQuestion: (org, questionId, input) => simulate(() => {
       const s = getState()
-      if (role(s) !== 'responsavel') throw new ApiError('Só o Responsável designado pode delegar perguntas.', 403)
+      if (!isManager(s, org)) throw new ApiError('Só o Responsável designado pode delegar perguntas.', 403)
       const question = findQuestion(questionId)
       assertOpen(s, org)
       const member = s.members.find((m) => m.organizationId === org && m.userId === input.assigneeId && m.status === 'ativo' && m.role === 'analista')
       if (!member) throw new ApiError('Escolha um analista ativo da equipa.', 422)
       if (input.dueDate && input.dueDate < s.today) throw new ApiError('O prazo não pode ser no passado.', 422)
-      if (delegation(s, questionId)?.status === 'pendente') throw new ApiError('Esta pergunta já foi delegada e está à espera de resposta.', 409)
+      if (delegation(s, org, questionId)?.status === 'pendente') throw new ApiError('Esta pergunta já foi delegada e está à espera de resposta.', 409)
       const o = s.organizations.find((x) => x.id === org)!
       const me = s.users.find((u) => u.id === getActor().userId)!
       const section = SECTIONS.find((x) => x.id === question.sectionId)!
@@ -121,7 +129,7 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
 
     submitAssessment: (org) => simulate(() => {
       const s = getState()
-      if (role(s) !== 'responsavel') throw new ApiError('Só o Responsável designado pode submeter a avaliação.', 403)
+      if (!isManager(s, org)) throw new ApiError('Só o Responsável designado pode submeter a avaliação.', 403)
       assertOpen(s, org)
       const missing = QUESTIONS.filter((x) => !withAnswer(s, org, x).answer).length
       if (missing > 0) throw new ApiError(`Faltam ${missing} ${missing === 1 ? 'pergunta' : 'perguntas'} por responder.`, 422)
@@ -143,7 +151,7 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
     answerQuestion: (org, taskId, answer) => simulate(() => {
       if (!answer.choice) throw new ApiError('Escolha uma resposta.', 422)
       let saved = getState().tasks.find((t) => t.id === taskId)
-      if (!saved || saved.kind !== 'pergunta') throw new ApiError('Pergunta não encontrada', 404)
+      if (!saved || saved.kind !== 'pergunta' || saved.organizationId !== org) throw new ApiError('Pergunta não encontrada', 404)
       if (saved.assigneeId !== getActor().userId) throw new ApiError('Esta pergunta não lhe foi atribuída.', 403)
       setState((s) => {
         const t = s.tasks.find((x) => x.id === taskId)!

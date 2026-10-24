@@ -14,6 +14,8 @@ export interface User {
   name: string
   initials: string
   role: Role
+  /** Client organisation the user belongs to; null for consultancy staff, who work across organisations. */
+  organizationId: Id | null
   title: string
   email: string
 }

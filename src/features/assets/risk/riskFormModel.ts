@@ -50,8 +50,29 @@ export function validateRisk(v: RiskFormValues): RiskErrors {
   if (v.impact === null) e.impact = 'Escolha o impacto.'
   if (v.treatment === 'mitigar' && v.actionIds.length === 0) e.actionIds = 'Para mitigar, ligue pelo menos uma ação do roadmap (ou proponha uma nova).'
   if (v.treatment === 'aceitar' && v.acceptanceJustification.trim().length < 10) e.acceptanceJustification = 'Explique porque é que a empresa aceita este risco.'
-  if (v.hasResidual && (v.residualProbability === null || v.residualImpact === null)) e.residual = 'Indique a probabilidade e o impacto previstos depois do tratamento.'
-  return e
+  if (v.hasResidual) e.residual = residualError(v)
+  return Object.fromEntries(Object.entries(e).filter(([, msg]) => msg)) as RiskErrors
+}
+
+function residualError({ probability, impact, residualProbability, residualImpact }: RiskFormValues): string | undefined {
+  if (residualProbability === null || residualImpact === null) return 'Indique a probabilidade e o impacto previstos depois do tratamento.'
+  if (probability !== null && impact !== null && residualProbability * residualImpact > probability * impact) {
+    return 'O risco residual não pode ser maior do que o risco atual: o tratamento só o mantém ou reduz.'
+  }
+  return undefined
+}
+
+/** The three ISO/IEC 27005 steps of the new-risk wizard, with the fields each one validates. */
+export const RISK_STEPS: { title: string; hint: string; fields: (keyof RiskErrors)[] }[] = [
+  { title: 'Identificar', hint: 'O que pode correr mal e a que ativo', fields: ['threat'] },
+  { title: 'Avaliar', hint: 'Quão provável e quão grave', fields: ['probability', 'impact'] },
+  { title: 'Tratar', hint: 'O que fazer e quando rever', fields: ['treatment', 'actionIds', 'acceptanceJustification', 'residual'] },
+]
+
+/** Errors of one wizard step only, so people are not blocked by fields they have not reached yet. */
+export function validateRiskStep(v: RiskFormValues, step: number): RiskErrors {
+  const all = validateRisk(v)
+  return Object.fromEntries(Object.entries(all).filter(([k]) => RISK_STEPS[step].fields.includes(k as keyof RiskErrors)))
 }
 
 export function toRiskInput(v: RiskFormValues): RiskInput {

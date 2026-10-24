@@ -26,7 +26,7 @@ test('Onboarding — Rui creates the account, sets up MFA, registers the company
 
   await expect(page).toHaveURL(/\/registo\/concluido/)
   await expect(page.getByRole('heading', { name: /está registada/ })).toBeVisible()
-  await page.getByRole('button', { name: 'Continuar' }).click()
+  await page.getByRole('link', { name: 'Continuar' }).click()
 
   await expect(page).toHaveURL(new RegExp(`${ORG}/ambito/perguntas`))
   await page.getByRole('group', { name: /contactos, salários/ }).getByRole('radio', { name: 'Sim' }).check({ force: true })

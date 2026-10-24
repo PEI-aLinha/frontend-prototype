@@ -6,7 +6,7 @@ import { ACTION_STATUS_LABEL, dateTime, shortDate } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  AIBadge, Button, Chip, ErrorState, Explainer, Modal, Note, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
+  AIBadge, Button, Chip, ErrorState, Modal, Note, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 
@@ -43,22 +43,14 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
       ) : (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
           <Chip tone="signal">Avaliação concluída · 14 out.</Chip>
-          <span className="text-[13px] text-ink-soft">O roadmap foi proposto pela IA a partir das lacunas. A prioridade final é decidida pela consultora.</span>
+          <span className="text-[0.8125rem] text-ink-soft">O roadmap foi proposto pela IA a partir das lacunas. A prioridade final é decidida pela consultora.</span>
           <span className="ml-auto"><AIBadge /></span>
         </div>
       )}
 
-      <Explainer id="roadmap" title="Como os riscos mudam o roadmap"
-        intro="A IA propôs uma ordem a partir das lacunas da avaliação. O registo de riscos acrescenta o que é mais grave para esta empresa em concreto."
-        steps={[
-          { title: 'Antes dos riscos', text: 'Ordem proposta pela IA, só com base nas lacunas e nas obrigações legais.' },
-          { title: 'Priorizado pelos riscos', text: <>As ações ligadas a <Term k="risco">riscos</Term> altos sobem para o topo; depois as ligadas a médios. Cada uma mostra porque subiu.</> },
-          { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o Rui vê o plano e os riscos.' },
-        ]} />
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />
-        <p className="text-[13px] text-ink-soft" aria-live="polite">
+        <p className="text-[0.8125rem] text-ink-soft" aria-live="polite">
           {view === 'riscos' ? (raised ? `${raised} ${raised === 1 ? 'ação subiu' : 'ações subiram'} por estarem ligadas a riscos.` : 'Ainda não há ações ligadas a riscos.') : 'Ordem proposta pela IA, sem ter em conta o registo de riscos.'}
         </p>
       </div>
@@ -75,7 +67,7 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           onSuccess: () => { setConfirm(false); toast.show('Roadmap validado · o Rui foi notificado') },
           onError: (e) => toast.show(e.message, 'error'),
         })}>Validar roadmap</Button></>}>
-        <ul className="flex flex-col gap-1.5 text-[14px] text-ink-soft">
+        <ul className="flex flex-col gap-1.5 text-[0.875rem] text-ink-soft">
           <li>• {ranked.length} ações, {raised} priorizadas pelos riscos</li>
           <li>• As etiquetas "Proposta pela IA" passam a "Validada pela consultora"</li>
         </ul>
@@ -88,13 +80,12 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
   const owner = users.find((u) => u.id === a.assignedTo)
-  const { data: status } = useRoadmapStatus(a.organizationId)
   return (
     <li className={cn('flex gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
-        <span className={cn('grid size-9 place-items-center rounded-[10px] text-[15px] font-extrabold', reason ? 'bg-brand text-white' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
+        <span className={cn('grid size-9 place-items-center rounded-[10px] text-[0.9375rem] font-extrabold', reason ? 'bg-brand text-white' : rank === 1 ? 'bg-signal-soft text-brand' : 'bg-paper-soft text-ink-soft')} aria-label={`Prioridade ${rank}`}>{rank}</span>
         {moved > 0 && (
-          <span className="mt-0.5 flex flex-col text-[11px] font-bold leading-tight text-brand" aria-label={`Subiu ${moved} posições: era a ${baseRank}.ª`}>
+          <span className="mt-0.5 flex flex-col text-[0.6875rem] font-bold leading-tight text-brand" aria-label={`Subiu ${moved} posições: era a ${baseRank}.ª`}>
             <span className="inline-flex items-center"><ArrowUp className="size-3.5" aria-hidden />{moved}</span>
             <span className="font-semibold text-muted line-through">era #{baseRank}</span>
           </span>
@@ -102,25 +93,24 @@ function ActionRow({ item, users, showMovement }: { item: PrioritizedAction<Reme
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <h3 className="text-[15px] font-bold">{a.description}</h3>
+          <h2 className="text-[0.9375rem] font-bold">{a.description}</h2>
           <div className="flex flex-wrap gap-1.5">
             {topRisk && <RiskLevelBadge level={topRisk.level} prefix="Risco " />}
             <Chip tone={a.status === 'em_curso' ? 'signal' : 'neutral'}>{ACTION_STATUS_LABEL[a.status]}</Chip>
           </div>
         </div>
-        <p className="mt-1 text-[13px] text-ink-soft">{a.legalObligation}</p>
-        <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-muted">
+        <p className="mt-1 text-[0.8125rem] text-ink-soft">{a.legalObligation}</p>
+        <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[0.75rem] text-muted">
           <div><dt className="inline">Prazo: </dt><dd className="inline font-semibold text-ink-soft">{a.dueDate ? shortDate(a.dueDate) : '—'}</dd></div>
           <div><dt className="inline">Responsável: </dt><dd className="inline font-semibold text-ink-soft">{owner?.name ?? 'Por atribuir'}</dd></div>
           <div><dt className="inline">Evidência: </dt><dd className="inline font-semibold text-ink-soft">{a.requiredEvidence}</dd></div>
           <div><dt className="inline">Origem: </dt><dd className="inline font-semibold text-ink-soft">{a.controlCode} · {a.findingTitle}</dd></div>
         </dl>
         {reason && (
-          <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-[8px] bg-signal-soft px-2.5 py-1.5 text-[13px] font-semibold text-brand">
+          <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-[8px] bg-signal-soft px-2.5 py-1.5 text-[0.8125rem] font-semibold text-brand">
             <ShieldAlert className="size-4" aria-hidden />{reason}
           </p>
         )}
-        {a.aiOutputId && !status?.validated && <div className="mt-2"><AIBadge /></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}
       </div>
     </li>

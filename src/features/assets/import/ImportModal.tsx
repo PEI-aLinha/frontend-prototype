@@ -74,9 +74,9 @@ export function ImportModal({ open, onClose, inventory }: { open: boolean; onClo
               ['Carregue o ficheiro', 'Mostramos o que está certo e o que falta.'],
             ].map(([t, d], i) => (
               <li key={t} className="rounded-[12px] bg-paper-soft p-3.5">
-                <span className="grid size-6 place-items-center rounded-full bg-brand text-[12px] font-extrabold text-white">{i + 1}</span>
-                <p className="mt-2 text-[14px] font-bold">{t}</p>
-                <p className="text-[13px] text-ink-soft">{d}</p>
+                <span className="grid size-6 place-items-center rounded-full bg-brand text-[0.75rem] font-extrabold text-white">{i + 1}</span>
+                <p className="mt-2 text-[0.875rem] font-bold">{t}</p>
+                <p className="text-[0.8125rem] text-ink-soft">{d}</p>
               </li>
             ))}
           </ol>
@@ -88,29 +88,29 @@ export function ImportModal({ open, onClose, inventory }: { open: boolean; onClo
             className={cn('flex flex-col items-center gap-2 rounded-[14px] border-2 border-dashed px-6 py-8 text-center transition-colors', dragging ? 'border-brand bg-brand-soft/40' : 'border-line')}
           >
             <FileUp className="size-6 text-brand" aria-hidden />
-            <p className="text-[14px] font-bold">Arraste o ficheiro CSV para aqui</p>
-            <p className="text-[13px] text-ink-soft">ou</p>
+            <p className="text-[0.875rem] font-bold">Arraste o ficheiro CSV para aqui</p>
+            <p className="text-[0.8125rem] text-ink-soft">ou</p>
             <div className="flex flex-wrap justify-center gap-2">
               <Button size="sm" onClick={() => fileRef.current?.click()}>Escolher ficheiro</Button>
               <Button size="sm" variant="ghost" onClick={() => load(SAMPLE, 'exemplo-componentes-agueda.csv')}>Usar ficheiro de exemplo</Button>
             </div>
             <input ref={fileRef} type="file" accept=".csv,text/csv" className="sr-only" aria-label="Escolher ficheiro CSV" onChange={(e) => readFile(e.target.files?.[0])} />
           </div>
-          {error && <p role="alert" className="text-[13px] font-semibold text-danger">{error}</p>}
+          {error && <p role="alert" className="text-[0.8125rem] font-semibold text-danger">{error}</p>}
         </>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2 text-[14px]">
+          <div className="flex flex-wrap items-center gap-2 text-[0.875rem]">
             <span className="font-bold">{fileName}</span>
             <Chip>{valid.length} prontos</Chip>
             {invalid.length > 0 && <Chip tone="neutral">{invalid.length} com erros (não entram)</Chip>}
             <Button variant="link" size="sm" className="ml-auto" onClick={() => { setRows(null); setFileName(null) }}>Escolher outro ficheiro</Button>
           </div>
           <div className="max-h-[320px] overflow-y-auto rounded-[12px] border border-line-soft">
-            <table className="w-full text-left text-[13px]">
+            <table className="w-full text-left text-[0.8125rem]">
               <caption className="sr-only">Pré-visualização da importação</caption>
               <thead className="sticky top-0 bg-paper-soft">
-                <tr>{['Linha', 'Ativo', 'Resultado'].map((h) => <th key={h} scope="col" className="eyebrow px-3 py-2 text-[10.5px] font-normal text-muted">{h}</th>)}</tr>
+                <tr>{['Linha', 'Ativo', 'Resultado'].map((h) => <th key={h} scope="col" className="eyebrow px-3 py-2 text-[0.6563rem] font-normal text-muted">{h}</th>)}</tr>
               </thead>
               <tbody>
                 {rows.map((r) => (

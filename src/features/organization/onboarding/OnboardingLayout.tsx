@@ -57,20 +57,20 @@ export function OnboardingLayout() {
   return (
     <RegistrationProvider>
       <div className="flex min-h-dvh bg-paper">
-        <aside className="sticky top-0 flex h-dvh w-[500px] shrink-0 flex-col justify-between overflow-hidden bg-brand-deep bg-gradient-to-br from-brand-deep via-brand/90 to-signal/75 px-14 pb-28 pt-14 max-xl:w-[420px] max-xl:px-11 max-lg:hidden">
+        <aside aria-label="Progresso do registo" className="sticky top-0 flex h-dvh w-[500px] shrink-0 flex-col justify-between overflow-hidden bg-brand-deep bg-gradient-to-br from-brand-deep via-brand/90 to-signal/75 px-14 pb-28 pt-14 max-xl:w-[420px] max-xl:px-11 max-lg:hidden">
           {reducedMotion ? <Network /> : <Suspense fallback={<Network />}><OnboardingParticles /></Suspense>}
           <Logo className="relative h-10 w-fit brightness-0 invert" />
-          <p className="relative text-[64px] font-extrabold leading-[0.98] tracking-[-0.03em] text-white">Tudo<br />alinhado.</p>
+          <p className="relative text-[4rem] font-extrabold leading-[0.98] tracking-[-0.03em] text-white">Tudo<br />alinhado.</p>
           <div className="relative">
             <Stepper steps={steps} current={current} label="Passos do registo" orientation="vertical" />
           </div>
         </aside>
         <div className="flex min-w-0 flex-1 items-center px-10 pb-28 pt-16 max-md:px-5 max-md:pt-6">
           <div className="mx-auto flex w-full max-w-[620px] flex-col gap-7">
-            <div className="flex flex-col gap-7 lg:hidden">
+            <header className="flex flex-col gap-7 lg:hidden">
               <Logo className="self-start" />
               <Stepper steps={steps} current={current} label="Passos do registo" />
-            </div>
+            </header>
             <main id="conteudo" className="flex flex-col gap-6">
               <Outlet />
             </main>

@@ -47,7 +47,7 @@ export function AssessmentQuestionPage() {
   const section = sections[at]
   const index = questions.data.findIndex((q) => q.id === questionId)
   const question = questions.data[index]
-  if (!section || !question) return <EmptyState title="Pergunta não encontrada"><Link to={base} className="font-bold text-brand hover:underline">Voltar à avaliação</Link></EmptyState>
+  if (!section || !question) return <EmptyState headingLevel={1} title="Pergunta não encontrada"><Link to={base} className="font-bold text-brand hover:underline">Voltar à avaliação</Link></EmptyState>
 
   const before = questions.data[index - 1] ?? prevQuestions.data?.at(-1)
   const after = questions.data[index + 1] ?? nextQuestions.data?.[0]
@@ -64,11 +64,11 @@ export function AssessmentQuestionPage() {
 
   return (
     <>
-      <Link to={`${base}/${sectionId}`} className="-mb-4 inline-flex items-center gap-1.5 text-[14px] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar a </span>{section.name}</Link>
+      <Link to={`${base}/${sectionId}`} className="-mb-4 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar a </span>{section.name}</Link>
       <PageHeader eyebrow="Avaliação de maturidade · NIS2 + RGPD" title={`Pergunta ${number} de ${total}`}
         actions={
           // Always rendered, so screen readers announce it when a save fills it in.
-          <p role="status" className="flex items-center gap-1.5 text-[13px] font-semibold text-ink-soft">
+          <p role="status" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold text-ink-soft">
             {savedAt && <><Check className="size-4 text-signal" aria-hidden />Progresso guardado {savedLabel(savedAt)}</>}
           </p>
         } />
@@ -78,9 +78,9 @@ export function AssessmentQuestionPage() {
           <div className="flex flex-col gap-2.5">
             <p className="flex flex-wrap items-center gap-2">
               <Chip tone={question.kind === 'tecnica' ? 'dark' : 'neutral'}>{KIND_LABEL[question.kind]}</Chip>
-              <span className="text-[13px] font-semibold text-ink-soft">{section.name}</span>
+              <span className="text-[0.8125rem] font-semibold text-ink-soft">{section.name}</span>
             </p>
-            <h2 className="text-[20px] font-extrabold leading-snug">{question.text}</h2>
+            <h2 className="text-[1.25rem] font-extrabold leading-snug">{question.text}</h2>
           </div>
           {open
             ? <AnswerForm key={question.id} question={question} nav={nav} overviewPath={base} />
@@ -88,9 +88,9 @@ export function AssessmentQuestionPage() {
               <>
                 <div className="rounded-[14px] bg-paper-soft p-4">
                   <Eyebrow>Resposta</Eyebrow>
-                  <p className="mt-1 text-[16px] font-bold">{question.answer ? CHOICE_LABEL[question.answer.choice] : 'Sem resposta'}</p>
-                  {question.answer?.note && <p className="mt-1 text-[14px] text-ink-soft">"{question.answer.note}"</p>}
-                  <p className="mt-3 text-[13px] text-muted">A avaliação já foi submetida. As respostas já não podem ser alteradas.</p>
+                  <p className="mt-1 text-[1rem] font-bold">{question.answer ? CHOICE_LABEL[question.answer.choice] : 'Sem resposta'}</p>
+                  {question.answer?.note && <p className="mt-1 text-[0.875rem] text-ink-soft">"{question.answer.note}"</p>}
+                  <p className="mt-3 text-[0.8125rem] text-muted">A avaliação já foi submetida. As respostas já não podem ser alteradas.</p>
                 </div>
                 <QuestionNav nav={nav} onGo={(path) => navigate(path)} />
               </>
@@ -109,16 +109,16 @@ export function AssessmentQuestionPage() {
 function AIHelp({ question }: { question: AssessmentQuestion }) {
   return (
     <section aria-labelledby="ajuda-ia" className="flex flex-col gap-3.5 rounded-[18px] bg-brand-deep p-[26px] max-md:p-5">
-      <Eyebrow className="text-[12px] text-signal-soft">Ajuda da IA</Eyebrow>
-      <h2 id="ajuda-ia" className="text-[19px] font-extrabold leading-snug text-white">O que significa esta pergunta?</h2>
-      <p className="text-[14px] leading-relaxed text-brand-soft">{question.explanation}</p>
+      <Eyebrow className="text-[0.75rem] text-signal-soft">Ajuda da IA</Eyebrow>
+      <h2 id="ajuda-ia" className="text-[1.1875rem] font-extrabold leading-snug text-white">O que significa esta pergunta?</h2>
+      <p className="text-[0.875rem] leading-relaxed text-brand-soft">{question.explanation}</p>
       <div className="rounded-[12px] bg-brand px-4 py-3.5">
-        <h3 className="text-[13px] font-bold text-white">Exemplo</h3>
-        <p className="text-[13px] leading-relaxed text-brand-soft">{question.example}</p>
+        <h3 className="text-[0.8125rem] font-bold text-white">Exemplo</h3>
+        <p className="text-[0.8125rem] leading-relaxed text-brand-soft">{question.example}</p>
       </div>
       <div>
-        <h3 className="text-[13px] font-bold text-white">Porque é importante</h3>
-        <p className="text-[13px] leading-relaxed text-brand-soft">{question.whyItMatters}</p>
+        <h3 className="text-[0.8125rem] font-bold text-white">Porque é importante</h3>
+        <p className="text-[0.8125rem] leading-relaxed text-brand-soft">{question.whyItMatters}</p>
       </div>
       <div><AIBadge kind="info" onDark /></div>
     </section>
@@ -195,9 +195,9 @@ function Delegation({ question, task, assignee, open }: { question: AssessmentQu
     return (
       <section aria-label="Resposta do analista" className="flex flex-col gap-1.5 rounded-[16px] border border-line-soft bg-paper p-5">
         <Eyebrow>Resposta de {who}</Eyebrow>
-        <p className="text-[16px] font-bold">{task.answer ? CHOICE_LABEL[task.answer.choice] : '—'}</p>
-        {task.answer?.note && <p className="text-[14px] text-ink-soft">"{task.answer.note}"</p>}
-        {open && <p className="mt-1 text-[12px] text-muted">Pode guardar esta resposta ou responder de outra forma.</p>}
+        <p className="text-[1rem] font-bold">{task.answer ? CHOICE_LABEL[task.answer.choice] : '—'}</p>
+        {task.answer?.note && <p className="text-[0.875rem] text-ink-soft">"{task.answer.note}"</p>}
+        {open && <p className="mt-1 text-[0.75rem] text-muted">Pode guardar esta resposta ou responder de outra forma.</p>}
       </section>
     )
   }
@@ -208,8 +208,8 @@ function Delegation({ question, task, assignee, open }: { question: AssessmentQu
   }
   return (
     <section aria-label="Delegar" className="flex flex-col gap-2.5 rounded-[16px] border border-line-soft bg-paper p-5">
-      <h2 className="text-[15px] font-extrabold">Não sabe responder?</h2>
-      <p className="text-[14px] text-ink-soft">Envie a pergunta a quem saiba. Recebe a resposta aqui.</p>
+      <h2 className="text-[0.9375rem] font-extrabold">Não sabe responder?</h2>
+      <p className="text-[0.875rem] text-ink-soft">Envie a pergunta a quem saiba. Recebe a resposta aqui.</p>
       <Button variant="secondary" onClick={() => setDelegating(true)}>{analysts.length === 1 ? `Delegar a ${analysts[0].name}` : 'Delegar a um analista'}</Button>
       {delegating && <DelegateModal question={question} analysts={analysts} onClose={() => setDelegating(false)} />}
     </section>
@@ -242,18 +242,18 @@ function DelegateModal({ question, analysts, onClose }: { question: AssessmentQu
     <Modal open onOpenChange={(o) => !o && onClose()} chip={<Chip>Pergunta técnica</Chip>} title="Delegar pergunta"
       description="O analista recebe um email e só vê esta pergunta."
       footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit} loading={delegate.isPending}>Enviar</Button></>}>
-      <p className="rounded-[12px] bg-paper-soft p-4 text-[15px] font-bold leading-snug">{question.text}</p>
+      <p className="rounded-[12px] bg-paper-soft p-4 text-[0.9375rem] font-bold leading-snug">{question.text}</p>
       {analysts.length > 1 ? (
         <Field label="Analista" error={errors.assignee}>
           {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={assignee} placeholder="Escolher o analista…" onChange={setAssignee} options={analysts.map((a) => ({ value: a.userId!, label: a.name, hint: a.email }))} />}
         </Field>
       ) : (
-        <p className="text-[14px]">Para: <strong>{analysts[0].name}</strong></p>
+        <p className="text-[0.875rem]">Para: <strong>{analysts[0].name}</strong></p>
       )}
       <Field label="Prazo" optional hint="Sem prazo, a pergunta fica sem data limite." error={errors.due} className="max-w-[260px]">
         {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}
       </Field>
-      {delegate.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{delegate.error.message}</p>}
+      {delegate.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">{delegate.error.message}</p>}
     </Modal>
   )
 }

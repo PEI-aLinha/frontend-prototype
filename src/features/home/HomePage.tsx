@@ -3,8 +3,9 @@ import { useAssessment, useAssets, useConsultant, useRisks, useRoadmapStatus, us
 import { dateTime, RISK_LEVEL_LABEL, shortDate } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
+import { PageTour } from '../../core/onboarding/PageTour'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
-import { Button, Eyebrow, HighlightCard, NextSteps, Note, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
+import { Button, HighlightCard, NextSteps, Note, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
 import { ConsultantCard, nis2Status } from '../organization/public'
 
@@ -55,11 +56,7 @@ export function HomePage() {
 
   return (
     <>
-      <header className="flex flex-col gap-2">
-        <Eyebrow className="text-[12px]">{org.name}</Eyebrow>
-        <h1 className="text-[30px] font-extrabold title-tight">Olá, Rui</h1>
-        <p className="text-[16px] text-ink-soft">{subtitle}</p>
-      </header>
+      <PageHeader eyebrow={org.name} title="Olá, Rui" subtitle={subtitle} help={<PageTour id="inicio" ready={!!assets.data && !!tasks.data} />} />
 
       {!org.scope && (
         <Note>
@@ -77,22 +74,23 @@ export function HomePage() {
         {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} por ${consultant}` : submitted ? `Submetida qua., 14 out. às 10:12 · ${consultant} está a rever` : notStarted ? 'Ainda sem respostas · o progresso fica guardado' : [...pending, 'o progresso fica guardado'].join(' · ')}
       </HighlightCard>
 
-      <NextSteps steps={[
-        { label: 'Registar os ativos que conhece', hint: 'Programas e serviços do dia a dia: ERP, email, portáteis.', done: (assets.data?.length ?? 0) > 0, to: `${base}/ativos?novo=1`, cta: 'Adicionar ativo' },
-        { label: 'Pedir ao Pedro o registo técnico', hint: 'Servidores, rede e máquinas da fábrica. Ele recebe uma tarefa.', done: !!assetTask, to: `${base}/ativos?atribuir=1`, cta: 'Atribuir' },
-        { label: 'Esperar que o Pedro conclua o registo', hint: assetTask ? `${assetTask.dueDate ? `Prazo: ${assetTask.dueDate.split('-').reverse().slice(0, 2).join('/')}. ` : ''}Recebe uma notificação quando ele terminar.` : undefined, done: inventoryDone, to: `${base}/ativos`, cta: 'Ver inventário' },
-        { label: 'Terminar e submeter a avaliação', hint: 'O questionário de maturidade NIS2 + RGPD.', done: submitted, to: `${base}/avaliacao`, cta: 'Continuar' },
-        { label: 'A consultora valida resultados, roadmap e riscos', hint: 'Não precisa de fazer nada: é avisado quando terminar.', done: !!validated },
-        { label: 'Acompanhar os riscos e o plano de ação', hint: 'Comece pelos riscos altos.', done: false, to: validated ? `${base}/riscos` : undefined, cta: 'Ver riscos' },
+      <div data-tour="home-steps">
+        <NextSteps steps={[
+          { label: 'Registar os ativos que conhece', hint: 'Programas e serviços do dia a dia: ERP, email, portáteis.', done: (assets.data?.length ?? 0) > 0, to: `${base}/ativos?novo=1`, cta: 'Adicionar ativo' },
+          { label: 'Pedir ao Pedro o registo técnico', hint: 'Servidores, rede e máquinas da fábrica. Ele recebe uma tarefa.', done: !!assetTask, to: `${base}/ativos?atribuir=1`, cta: 'Atribuir' },
+          { label: 'Esperar que o Pedro conclua o registo', hint: assetTask ? `${assetTask.dueDate ? `Prazo: ${assetTask.dueDate.split('-').reverse().slice(0, 2).join('/')}. ` : ''}Recebe uma notificação quando ele terminar.` : undefined, done: inventoryDone, to: `${base}/ativos`, cta: 'Ver inventário' },
+          { label: 'Terminar e submeter a avaliação', hint: 'O questionário de maturidade NIS2 + RGPD.', done: submitted, to: `${base}/avaliacao`, cta: 'Continuar' },
+          { label: 'A consultora valida resultados, roadmap e riscos', hint: 'Não precisa de fazer nada: é avisado quando terminar.', done: !!validated },
+          { label: 'Acompanhar os riscos e o plano de ação', hint: 'Comece pelos riscos altos.', done: false, to: validated ? `${base}/riscos` : undefined, cta: 'Ver riscos' },
       ]} />
+      </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3 md:items-start" data-tour="home-summary">
+        <h2 id="home-summary-title" className="sr-only">Resumo</h2>
         {seeRisks && risks.data && top ? (
-          <Link to={`${base}/riscos`} className="flex flex-col rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]">
-            <div className="flex items-start justify-between"><Eyebrow>Riscos</Eyebrow><RiskLevelBadge level={top} /></div>
-            <p className="mt-1.5 text-[18px] font-extrabold">{topCount} {topCount === 1 ? 'risco' : 'riscos'} {RISK_LEVEL_LABEL[top].toLowerCase()}{topCount === 1 ? '' : 's'} · {topTreating ? 'em tratamento' : 'por tratar'}</p>
-            <p className="mt-1.5 text-[13px] text-ink-soft">{levels.length} riscos registados pela consultora</p>
-          </Link>
+          <StatCard to={`${base}/riscos`} label="Riscos" accent={<RiskLevelBadge level={top} />}
+            value={`${topCount} ${topCount === 1 ? 'risco' : 'riscos'} ${RISK_LEVEL_LABEL[top].toLowerCase()}${topCount === 1 ? '' : 's'} · ${topTreating ? 'em tratamento' : 'por tratar'}`}
+            caption={`${levels.length} riscos registados pela consultora`} />
         ) : (
           <Link to={`${base}/enquadramento`} className="contents">
             <StatCard label="Enquadramento" value={nis2?.label ?? '—'} caption={nis2?.official ? `Oficial · CNCS · Ato de ${shortDate(nis2.date!)}` : 'Sugestão indicativa · aguarda o CNCS'} />
@@ -102,7 +100,7 @@ export function HomePage() {
           <StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? 2} serviços críticos · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />
         </Link>
         <ConsultantCard orgId={org.id} />
-      </div>
+      </section>
     </>
   )
 }

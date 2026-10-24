@@ -2,7 +2,7 @@ import type { Role } from '../api/contracts'
 import { FLAGS } from '../config/flags'
 
 export type Resource = 'scope' | 'framing' | 'asset' | 'critical_service' | 'asset_task' | 'asset_comment' | 'risk' | 'roadmap' | 'history' | 'portfolio' | 'asset_export'
-export type Action = 'view' | 'create' | 'edit' | 'delete' | 'assign' | 'comment' | 'validate' | 'link'
+export type Action = 'view' | 'create' | 'edit' | 'delete' | 'assign' | 'comment' | 'validate' | 'link' | 'import' | 'bulk_edit'
 
 export interface RbacContext {
   roadmapValidated?: boolean
@@ -18,7 +18,7 @@ const MATRIX: Record<Role, Matrix> = {
   responsavel: {
     scope: { view: true, edit: true },
     framing: { view: true, edit: true },
-    asset: { view: true, create: true, edit: true, delete: true },
+    asset: { view: true, create: true, edit: true, delete: true, import: true, bulk_edit: true },
     critical_service: { view: true, create: true, edit: true, delete: true },
     asset_task: { view: true, assign: true },
     asset_comment: { view: true },

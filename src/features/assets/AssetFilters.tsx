@@ -29,7 +29,7 @@ export function AssetFilters({ value, onChange, onClear, inventory, shown, total
       <div className="w-[160px] max-md:flex-1"><Select size="sm" ariaLabel="Criticidade" value={value.crit} onChange={(v) => onChange({ crit: v })} options={[{ value: ALL, label: 'Qualquer criticidade' }, ...(['alto', 'medio', 'baixo'] as Level[]).map((l) => ({ value: l, label: CRITICALITY_LABEL[l] }))]} /></div>
       <div className="w-[150px] max-md:flex-1"><Select size="sm" ariaLabel="Responsável" value={value.owner} onChange={(v) => onChange({ owner: v })} options={[{ value: ALL, label: 'Todos os responsáveis' }, ...owners.map((u) => ({ value: u.id, label: u.name }))]} /></div>
       {isFiltering(value) && (
-        <div className="flex items-center gap-2 text-[13px] text-ink-soft" aria-live="polite">
+        <div className="flex items-center gap-2 text-[0.8125rem] text-ink-soft" aria-live="polite">
           {shown} de {total}
           <Button variant="ghost" size="sm" onClick={onClear} icon={<X className="size-3.5" aria-hidden />}>Limpar</Button>
         </div>

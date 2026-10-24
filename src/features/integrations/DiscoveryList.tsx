@@ -24,12 +24,12 @@ function Suggestion({ d, assets, services, providerName, canDecide }: Omit<Props
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <Eyebrow>{providerName(d.provider)} · {ASSET_TYPE_LABEL[d.type]}</Eyebrow>
-            <p className="mt-1 text-[15px] font-bold">{d.name}</p>
-            <p className="text-[13px] text-ink-soft">{d.details}</p>
+            <p className="mt-1 text-[0.9375rem] font-bold">{d.name}</p>
+            <p className="text-[0.8125rem] text-ink-soft">{d.details}</p>
           </div>
           <CriticalityChip level={d.suggestedCriticality} />
         </div>
-        {match && <p className="rounded-[10px] bg-signal-soft/60 px-3 py-2 text-[13px]">Parece ser o ativo <strong>{match.name}</strong> que já está no inventário.</p>}
+        {match && <p className="rounded-[10px] bg-signal-soft/60 px-3 py-2 text-[0.8125rem]">Parece ser o ativo <strong>{match.name}</strong> que já está no inventário.</p>}
         {canDecide && (
           <div className="flex flex-col gap-3 border-t border-line-soft pt-3">
             {!match && (
@@ -62,10 +62,10 @@ export function DiscoveryList(props: Props) {
   return (
     <div className="flex flex-col gap-3">
       {pending.length === 0
-        ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Não há sugestões por rever.</p>
+        ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[0.875rem] text-ink-soft">Não há sugestões por rever.</p>
         : <ul className="flex flex-col gap-3">{pending.map((d) => <Suggestion key={d.id} d={d} {...props} />)}</ul>}
       {done.length > 0 && (
-        <details className="text-[13px]">
+        <details className="text-[0.8125rem]">
           <summary className="cursor-pointer font-bold text-ink-soft">Já decididas ({done.length})</summary>
           <ul className="mt-2 flex flex-col gap-1.5">
             {done.map((d) => (
