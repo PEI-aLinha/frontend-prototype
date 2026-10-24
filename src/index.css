@@ -56,8 +56,6 @@
 @layer base {
   html {
     color-scheme: light;
-    /* Reserva sempre o espaço da barra de scroll: os elementos fixos (botão da IA) não saltam entre páginas curtas e longas */
-    scrollbar-gutter: stable;
   }
   /* iOS only: follow the system text size (Dynamic Type). Every size is in rem, so the whole UI scales. */
   @supports (-webkit-touch-callout: none) {
