@@ -414,7 +414,7 @@ export function ChatWidget({
         <Sparkles className="size-5 flex-none" aria-hidden />
         <span
           aria-hidden
-          className="ml-0 max-w-0 overflow-hidden whitespace-nowrap text-[14px] font-bold opacity-0 transition-all duration-200 group-hover:ml-2.5 group-hover:max-w-[200px] group-hover:opacity-100 group-focus-visible:ml-2.5 group-focus-visible:max-w-[200px] group-focus-visible:opacity-100"
+          className="ml-0 max-w-0 overflow-hidden whitespace-nowrap text-[0.875rem] font-bold opacity-0 transition-all duration-200 group-hover:ml-2.5 group-hover:max-w-[200px] group-hover:opacity-100 group-focus-visible:ml-2.5 group-focus-visible:max-w-[200px] group-focus-visible:opacity-100"
         >
           Pergunta à Alinha
         </span>
@@ -474,7 +474,7 @@ export function ChatWidget({
       <section role="dialog" aria-label={title} aria-modal="false" className={`flex flex-col overflow-hidden bg-white ${panelBox}`}>
         <header className="flex items-center gap-3 bg-brand py-4 pl-[18px] pr-3 text-white">
           <Sparkles className="size-[18px]" aria-hidden />
-          <strong className="flex-1 text-[15px] font-extrabold">{title}</strong>
+          <strong className="flex-1 text-[0.9375rem] font-extrabold">{title}</strong>
           <Button variant="inverse" size="sm" onClick={() => setOpen(false)}>Fechar</Button>
         </header>
         <div className="flex flex-1 items-center justify-center p-6">
@@ -495,8 +495,8 @@ export function ChatWidget({
           <Sparkles className="size-[18px]" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <strong className="text-[15px] font-extrabold">{title}</strong>
-          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-white/70">{subtitle}</span>
+          <strong className="text-[0.9375rem] font-extrabold">{title}</strong>
+          <span className="font-mono text-[0.625rem] uppercase tracking-[0.1em] text-white/70">{subtitle}</span>
         </div>
         <button
           type="button"

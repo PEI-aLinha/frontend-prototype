@@ -73,7 +73,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
         <button
           type="button"
           onClick={() => openExpandedChat()}
-          className="mb-12 mt-4 flex h-10 items-center gap-2 rounded-[10px] bg-brand-soft px-3 text-[14px] font-bold text-brand transition-colors duration-150 hover:bg-brand-soft/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="mb-12 mt-4 flex h-10 items-center gap-2 rounded-[10px] bg-brand-soft px-3 text-[0.875rem] font-bold text-brand transition-colors duration-150 hover:bg-brand-soft/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           <Sparkles className="size-4 flex-none" aria-hidden />
           Assistente IA

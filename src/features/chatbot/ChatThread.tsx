@@ -29,7 +29,7 @@ type ChatThreadProps = {
   context?: ReactNode
 }
 
-const LABEL = 'font-mono text-[10px] uppercase tracking-[0.1em]'
+const LABEL = 'font-mono text-[0.625rem] uppercase tracking-[0.1em]'
 
 const COMMON_DOCUMENTS = ['Política de segurança', 'Plano de resposta a incidentes', 'Contrato com fornecedor', 'Plano de cópias de segurança']
 
@@ -45,8 +45,8 @@ function AttachmentChip({ attachment: a, inverse }: { attachment: ChatAttachment
     <>
       <FileText className="size-4 flex-none" aria-hidden />
       <span className="flex min-w-0 flex-col">
-        <span className="truncate text-[13px] font-bold">{a.name}</span>
-        <span className={`text-[11px] ${inverse ? 'text-white/70' : 'text-muted'}`}>{formatSize(a.size)}</span>
+        <span className="truncate text-[0.8125rem] font-bold">{a.name}</span>
+        <span className={`text-[0.6875rem] ${inverse ? 'text-white/70' : 'text-muted'}`}>{formatSize(a.size)}</span>
       </span>
     </>
   )
@@ -66,7 +66,7 @@ function ConversationDocuments({ messages }: { messages: ChatMessage[] }) {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 w-full items-center gap-2 px-4 text-[13px] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+        className="flex min-h-11 w-full items-center gap-2 px-4 text-[0.8125rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
       >
         <Paperclip className="size-4" aria-hidden />
         Documentos da conversa ({docs.length})
@@ -98,7 +98,7 @@ function ClientContextStrip({ children, expanded }: { children: ReactNode; expan
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 w-full items-center gap-2 px-4 text-[13px] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+        className="flex min-h-11 w-full items-center gap-2 px-4 text-[0.8125rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
       >
         <Building2 className="size-4" aria-hidden />
         Contexto do cliente
@@ -118,9 +118,9 @@ function DocumentRequestCard({ message, messages, onAnswer }: { message: ChatMes
       <span className={`flex items-center gap-1.5 text-muted ${LABEL}`}>
         <FilePlus2 className="size-3" aria-hidden />Documento pedido
       </span>
-      <strong className="text-[14px] font-extrabold text-brand">{request.title}</strong>
+      <strong className="text-[0.875rem] font-extrabold text-brand">{request.title}</strong>
       {request.fulfilledBy ? (
-        <span className="flex items-center gap-1.5 text-[13px] font-bold text-brand">
+        <span className="flex items-center gap-1.5 text-[0.8125rem] font-bold text-brand">
           <Check className="size-4" aria-hidden />Enviado{sent && `: ${sent.name}`}
         </span>
       ) : onAnswer ? (
@@ -128,7 +128,7 @@ function DocumentRequestCard({ message, messages, onAnswer }: { message: ChatMes
           Enviar documento
         </Button>
       ) : (
-        <span className="text-[13px] text-ink-soft">A aguardar o envio pelo cliente.</span>
+        <span className="text-[0.8125rem] text-ink-soft">A aguardar o envio pelo cliente.</span>
       )}
     </div>
   )
@@ -149,7 +149,7 @@ function RequestDocumentForm({ onSubmit, onCancel }: { onSubmit: (title: string,
       <div className="flex flex-wrap gap-1.5">
         {COMMON_DOCUMENTS.map((d) => (
           <button key={d} type="button" aria-pressed={title === d} onClick={() => setTitle(d)}
-            className={`min-h-9 rounded-full border px-3 text-[12px] font-bold ${title === d ? 'border-brand bg-brand text-white' : 'border-brand-soft bg-white text-brand hover:bg-paper-soft'}`}>
+            className={`min-h-9 rounded-full border px-3 text-[0.75rem] font-bold ${title === d ? 'border-brand bg-brand text-white' : 'border-brand-soft bg-white text-brand hover:bg-paper-soft'}`}>
             {d}
           </button>
         ))}
@@ -169,12 +169,12 @@ function MessageTable({ table }: { table: ChatTable }) {
   const label = table.caption ?? 'Tabela'
   return (
     <div className="max-w-full self-start overflow-hidden rounded-[12px] border border-brand-soft bg-white">
-      <table className="w-full border-collapse break-words text-left text-[12.5px] leading-snug">
+      <table className="w-full border-collapse break-words text-left text-[0.7813rem] leading-snug">
         <caption className="sr-only">{label}</caption>
         <thead className="bg-paper">
           <tr>
             {table.columns.map((c) => (
-              <th key={c} scope="col" className="px-3 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.08em] text-ink-soft">{c}</th>
+              <th key={c} scope="col" className="px-3 py-2 font-mono text-[0.625rem] font-bold uppercase tracking-[0.08em] text-ink-soft">{c}</th>
             ))}
           </tr>
         </thead>
@@ -255,7 +255,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
       {reviewing && (
         <div role="note" className="flex items-start gap-2.5 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-amber-900">
           <UserCheck className="mt-0.5 size-4 flex-none" aria-hidden />
-          <p className="text-[12.5px] leading-normal">
+          <p className="text-[0.7813rem] leading-normal">
             <strong>Está a ajudar um cliente.</strong> Esta conversa não é sua: o que escrever aqui é enviado ao cliente como resposta da consultora.
           </p>
         </div>
@@ -278,7 +278,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                   <Clock className="mt-0.5 size-4 flex-none" aria-hidden />
                   <div className="flex flex-col gap-1">
                     <span className={LABEL}>Em revisão</span>
-                    <p className="text-[13px] leading-normal">{m.text}</p>
+                    <p className="text-[0.8125rem] leading-normal">{m.text}</p>
                   </div>
                 </div>
               )
@@ -287,8 +287,8 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
             const fromConsultant = m.role === 'bot' && !!m.authorId
             const fromAi = m.role === 'bot' && !m.authorId
             const bubble = m.role === 'user'
-              ? 'max-w-[85%] self-end whitespace-pre-wrap break-words rounded-[16px_16px_4px_16px] bg-brand px-3.5 py-2.5 text-[14px] leading-normal text-white'
-              : `max-w-[85%] self-start whitespace-pre-wrap break-words rounded-[16px_16px_16px_4px] border px-3.5 py-2.5 text-[14px] leading-normal ${
+              ? 'max-w-[85%] self-end whitespace-pre-wrap break-words rounded-[16px_16px_4px_16px] bg-brand px-3.5 py-2.5 text-[0.875rem] leading-normal text-white'
+              : `max-w-[85%] self-start whitespace-pre-wrap break-words rounded-[16px_16px_16px_4px] border px-3.5 py-2.5 text-[0.875rem] leading-normal ${
                   m.error
                     ? 'border-red-200 bg-red-50 text-red-800'
                     : fromConsultant
@@ -327,9 +327,9 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                 {m.table && <MessageTable table={m.table} />}
                 {m.source && (
                   <Link to={m.source.to} className="flex max-w-[85%] flex-col gap-1.5 self-start rounded-[12px] border border-brand-soft bg-paper px-3.5 py-3 text-brand no-underline hover:underline">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">{m.source.label}</span>
-                    <strong className="text-[14px] font-extrabold">{m.source.title}</strong>
-                    <span className="text-[13px] font-bold">{m.source.cta ?? 'Abrir →'}</span>
+                    <span className="font-mono text-[0.625rem] uppercase tracking-[0.1em] text-muted">{m.source.label}</span>
+                    <strong className="text-[0.875rem] font-extrabold">{m.source.title}</strong>
+                    <span className="text-[0.8125rem] font-bold">{m.source.cta ?? 'Abrir →'}</span>
                   </Link>
                 )}
               </div>
@@ -347,7 +347,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
           {active.messages.length <= 1 && !active.typing && !reviewing && (
             <div className="flex flex-wrap gap-2 pt-1">
               {suggestions.map((s) => (
-                <button key={s.label} type="button" onClick={() => onSend(s.label, s)} className="min-h-11 rounded-[22px] border border-brand-soft bg-white px-3.5 py-2 text-left text-[13px] font-bold text-brand hover:bg-paper">
+                <button key={s.label} type="button" onClick={() => onSend(s.label, s)} className="min-h-11 rounded-[22px] border border-brand-soft bg-white px-3.5 py-2 text-left text-[0.8125rem] font-bold text-brand hover:bg-paper">
                   {s.label}
                 </button>
               ))}
@@ -372,7 +372,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
           {pending.length > 0 && (
             <ul aria-label="Ficheiros por enviar" className="flex flex-wrap gap-1.5">
               {pending.map((f, i) => (
-                <li key={`${f.name}-${i}`} className="flex max-w-full items-center gap-1.5 rounded-full border border-brand-soft bg-paper py-1 pl-3 pr-1 text-[12px] font-bold text-brand">
+                <li key={`${f.name}-${i}`} className="flex max-w-full items-center gap-1.5 rounded-full border border-brand-soft bg-paper py-1 pl-3 pr-1 text-[0.75rem] font-bold text-brand">
                   <FileText className="size-3.5 flex-none" aria-hidden />
                   <span className="truncate">{f.name}</span>
                   <span className="flex-none font-normal text-muted">{formatSize(f.size)}</span>
@@ -384,10 +384,10 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
               ))}
             </ul>
           )}
-          {fileError && <p role="alert" className="text-[12px] text-red-700">{fileError}</p>}
+          {fileError && <p role="alert" className="text-[0.75rem] text-red-700">{fileError}</p>}
           <input ref={fileRef} type="file" multiple accept={ATTACHMENT_ACCEPT} className="hidden" tabIndex={-1} aria-hidden onChange={(e) => onFiles(e.target.files)} />
           {readOnly ? (
-            <p className="rounded-[12px] bg-paper-soft px-3.5 py-3 text-center text-[13px] text-ink-soft">
+            <p className="rounded-[12px] bg-paper-soft px-3.5 py-3 text-center text-[0.8125rem] text-ink-soft">
               Conversa já revista. Só pode ver as mensagens até ao momento da revisão.
             </p>
           ) : (
@@ -411,7 +411,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                 placeholder={placeholder}
                 aria-label={placeholder}
                 maxLength={1000}
-                className="h-[46px] min-w-0 flex-1 rounded-[12px] border-brand-soft px-3.5 text-[14px] focus-visible:outline-2 focus-visible:outline-brand"
+                className="h-[46px] min-w-0 flex-1 rounded-[12px] border-brand-soft px-3.5 text-[0.875rem] focus-visible:outline-2 focus-visible:outline-brand"
               />
               <Button
                 type="submit"
@@ -425,7 +425,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
             </form>
           )}
           {!canReview && (
-            <p className="text-center text-[11px] text-muted">As respostas de IA podem conter erros. Confirme com a consultora.</p>
+            <p className="text-center text-[0.6875rem] text-muted">As respostas de IA podem conter erros. Confirme com a consultora.</p>
           )}
         </div>
       </footer>

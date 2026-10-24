@@ -30,7 +30,7 @@ function ConversationSidebar({
         type="button"
         onClick={onAdd}
         disabled={!canAdd}
-        className="flex min-h-11 items-center gap-2 rounded-[12px] border border-brand-soft bg-white px-3.5 text-[14px] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex min-h-11 items-center gap-2 rounded-[12px] border border-brand-soft bg-white px-3.5 text-[0.875rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Plus className="size-4" aria-hidden />
         Nova conversa
@@ -55,7 +55,7 @@ function ConversationSidebar({
                 title={label}
                 onClick={() => onSelect(c.id)}
                 onDoubleClick={() => renamable && rename.start(c.id)}
-                className={`flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] pl-3 pr-1 text-left text-[13px] focus-visible:outline-2 focus-visible:outline-brand ${selected ? 'font-bold' : 'font-semibold'}`}
+                className={`flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-[10px] pl-3 pr-1 text-left text-[0.8125rem] focus-visible:outline-2 focus-visible:outline-brand ${selected ? 'font-bold' : 'font-semibold'}`}
               >
                 <span className="truncate">{label}</span>
                 <ConversationBadges conversation={c} selected={selected} />
@@ -86,7 +86,7 @@ function ConversationSidebar({
         })}
       </div>
       {!canAdd && (
-        <p className="px-1 text-[11px] text-muted">Máximo de {maxConversations} conversas. Feche uma para abrir outra.</p>
+        <p className="px-1 text-[0.6875rem] text-muted">Máximo de {maxConversations} conversas. Feche uma para abrir outra.</p>
       )}
     </aside>
   )
@@ -128,7 +128,7 @@ export function ChatExpanded({
         />
         {context && (
           <aside aria-label="Contexto do cliente" className="hidden w-[280px] flex-none flex-col gap-3 overflow-y-auto border-l border-brand-soft bg-white p-4 xl:flex">
-            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted">Contexto do cliente</span>
+            <span className="font-mono text-[0.625rem] uppercase tracking-[0.1em] text-muted">Contexto do cliente</span>
             {context}
           </aside>
         )}

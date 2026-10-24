@@ -74,7 +74,7 @@ export function RenameField({ initial, onDone, className }: { initial: string; o
         // Esc só cancela a edição: não deixa chegar ao atalho que minimiza o assistente
         if (e.key === 'Escape') { e.stopPropagation(); finish(null) }
       }}
-      className={`min-w-0 rounded-[8px] border border-brand bg-white px-2.5 text-[13px] font-bold text-brand outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand ${className ?? ''}`}
+      className={`min-w-0 rounded-[8px] border border-brand bg-white px-2.5 text-[0.8125rem] font-bold text-brand outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand ${className ?? ''}`}
     />
   )
 }
@@ -128,7 +128,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
               title={label}
               onClick={() => onSelect(c.id)}
               onDoubleClick={() => renamable && rename.start(c.id)}
-              className={`flex min-h-10 max-w-[170px] min-w-0 items-center gap-1.5 rounded-full pl-3.5 text-[13px] font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${conversations.length > 1 || (selected && renamable) ? 'pr-1.5' : 'pr-3.5'}`}
+              className={`flex min-h-10 max-w-[170px] min-w-0 items-center gap-1.5 rounded-full pl-3.5 text-[0.8125rem] font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${conversations.length > 1 || (selected && renamable) ? 'pr-1.5' : 'pr-3.5'}`}
             >
               <span className="truncate">{label}</span>
               <ConversationBadges conversation={c} selected={selected} />
