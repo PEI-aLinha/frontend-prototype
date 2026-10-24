@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Check } from 'lucide-react'
 import type { AiUse, ScopeInput } from '../../../api/contracts'
@@ -67,9 +67,10 @@ function AiUseGroup({ value, onChange, error }: { value: AiUse[]; onChange: (v: 
 }
 
 function Question({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  const titleId = useId()
   return (
-    <section className="flex flex-col gap-3 border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
-      <h2 className="text-[16px] font-bold">{n}. {title}</h2>
+    <section aria-labelledby={titleId} className="flex flex-col gap-3 border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
+      <h2 id={titleId} className="text-[16px] font-bold">{n}. {title}</h2>
       {children}
     </section>
   )

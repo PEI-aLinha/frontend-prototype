@@ -1,4 +1,5 @@
 export { Button } from './Button'
+export { buttonClass } from './buttonClass'
 export { Avatar, Person } from './Avatar'
 export { Logo } from './Logo'
 export { Chip, CriticalityChip, RiskLevelBadge, AIBadge } from './Chip'

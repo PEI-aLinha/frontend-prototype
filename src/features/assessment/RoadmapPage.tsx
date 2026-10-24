@@ -6,7 +6,7 @@ import { ACTION_STATUS_LABEL, dateTime, shortDate } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  AIBadge, Button, Chip, ErrorState, Explainer, Modal, Note, Term, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
+  AIBadge, Button, Chip, ErrorState, Modal, Note, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 
@@ -47,14 +47,6 @@ export function RoadmapPage({ signals }: { signals: RiskSignal[] }) {
           <span className="ml-auto"><AIBadge /></span>
         </div>
       )}
-
-      <Explainer id="roadmap" title="Como os riscos mudam o roadmap"
-        intro="A IA propôs uma ordem a partir das lacunas da avaliação. O registo de riscos acrescenta o que é mais grave para esta empresa em concreto."
-        steps={[
-          { title: 'Antes dos riscos', text: 'Ordem proposta pela IA, só com base nas lacunas e nas obrigações legais.' },
-          { title: 'Priorizado pelos riscos', text: <>As ações ligadas a <Term k="risco">riscos</Term> altos sobem para o topo; depois as ligadas a médios. Cada uma mostra porque subiu.</> },
-          { title: 'A consultora decide', text: 'Nada muda sozinho para o cliente: só depois de "Validar roadmap" o Rui vê o plano e os riscos.' },
-        ]} />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented<View> ariaLabel="Ordem do roadmap" value={view} onChange={setView} options={[{ value: 'base', label: 'Antes dos riscos' }, { value: 'riscos', label: 'Priorizado pelos riscos' }]} />

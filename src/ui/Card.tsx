@@ -2,8 +2,8 @@ import type { HTMLAttributes, ReactNode } from 'react'
 import { Info } from 'lucide-react'
 import { cn } from './cn'
 
-export function Card({ className, soft, ...rest }: HTMLAttributes<HTMLDivElement> & { soft?: boolean }) {
-  return <div className={cn('rounded-[14px] border border-line-soft px-5 py-[18px]', soft ? 'bg-paper-soft' : 'bg-paper', className)} {...rest} />
+export function Card({ className, soft, as: Tag = 'div', ...rest }: HTMLAttributes<HTMLElement> & { soft?: boolean; as?: 'div' | 'section' | 'article' }) {
+  return <Tag className={cn('rounded-[14px] border border-line-soft px-5 py-[18px]', soft ? 'bg-paper-soft' : 'bg-paper', className)} {...rest} />
 }
 
 export function Eyebrow({ children, className, as: Tag = 'p' }: { children: ReactNode; className?: string; as?: 'p' | 'span' | 'h2' | 'h3' }) {

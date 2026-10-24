@@ -4,7 +4,7 @@ import type { Task } from '../../api/contracts'
 import { useAssets, useCompleteTask, useTasks, useToday, useUsers } from '../../api/queries'
 import { dueStatus, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, Chip, EmptyState, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, Tooltip, cn, useToast } from '../../ui'
+import { Button, Card, Chip, EmptyState, ErrorState, Eyebrow, PageHeader, SkeletonRows, TaskCard, Tooltip, cn, useToast } from '../../ui'
 import { useSession } from '../../core/session'
 
 const KIND_LABEL: Record<Task['kind'], string> = { ativos: 'Ativos', pergunta: 'Pergunta técnica', evidencia: 'Evidência', tarefa: 'Tarefa', integracao: 'Integração' }
@@ -62,12 +62,6 @@ export function TasksPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title={`Olá, ${persona.firstName}`} subtitle={subtitle} />
-      <Explainer id="tasks-analyst"
-        steps={[
-          { title: 'Escolha a tarefa', text: 'As mais urgentes aparecem primeiro, com o prazo a verde.' },
-          { title: 'Faça o pedido', text: 'Responder a uma pergunta técnica ou registar os ativos que conhece.' },
-          { title: 'Conclua', text: 'Ao concluir, o Responsável designado é notificado e a tarefa passa para "Concluídas".' },
-        ]} />
       <div className="flex gap-7 max-lg:flex-col">
         <div className="flex min-w-0 flex-1 flex-col gap-3.5">
           {tasks.isError ? <ErrorState error={tasks.error} onRetry={() => tasks.refetch()} /> : !tasks.data ? <SkeletonRows rows={3} /> : (

@@ -21,6 +21,8 @@ interface DataTableProps<T> {
   rowLabel?: (row: T) => string
   /** Card version for mobile. */
   renderCard?: (row: T) => ReactNode
+  /** Width below which the cards replace the table: phones only (default), or up to small desktops for wide tables. */
+  cardsBelow?: 'md' | 'xl'
   footer?: ReactNode
   empty?: ReactNode
   initialSorting?: SortingState
@@ -34,7 +36,7 @@ interface DataTableProps<T> {
 /** Table: radius 16 card, paper-soft header with 11 eyebrows, 14/20 rows with line-soft separator. */
 const boxCls = 'size-4 cursor-pointer rounded accent-[var(--color-brand)]'
 
-export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, renderCard, footer, empty, initialSorting = [], caption, highlightId, selected, onSelectedChange }: DataTableProps<T>) {
+export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, renderCard, cardsBelow = 'md', footer, empty, initialSorting = [], caption, highlightId, selected, onSelectedChange }: DataTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting)
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({ data, columns, state: { sorting }, onSortingChange: setSorting, getRowId, getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel() })
@@ -47,7 +49,7 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
 
   return (
     <div className="overflow-hidden rounded-[16px] border border-line-soft bg-paper">
-      <table className={cn('w-full table-fixed border-collapse', renderCard && 'max-md:hidden')}>
+      <table className={cn('w-full table-fixed border-collapse', renderCard && (cardsBelow === 'xl' ? 'max-xl:hidden' : 'max-md:hidden'))}>
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-paper-soft">
           {table.getHeaderGroups().map((hg) => (
@@ -107,7 +109,7 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
         </tbody>
       </table>
       {renderCard && (
-        <ul className="divide-y divide-line-soft md:hidden">
+        <ul className={cn('divide-y divide-line-soft', cardsBelow === 'xl' ? 'xl:hidden' : 'md:hidden')}>
           {rows.map((row) => (
             <li key={row.id}>
               {onRowClick ? (

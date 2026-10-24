@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import type { TeamMember, WorkAssignmentInput } from '../../../api/contracts'
 import { useAssignWork, useDelegateQuestion, useToday } from '../../../api/queries'
 import { useTenant } from '../../../core/tenant'
@@ -44,7 +44,9 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
   }
   const errors = submitted ? validate() : {}
 
-  const submit = () => {
+  const formId = useId()
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
     setSubmitted(true)
     if (Object.keys(validate()).length > 0) return
     const done = {
@@ -68,29 +70,31 @@ export function AssignWorkModal({ analysts, assigneeId, onClose }: { analysts: T
   return (
     <Modal open onOpenChange={(o) => !o && onClose()} width={640} chip={<Chip>Tarefa para analista</Chip>} title="Atribuir tarefa"
       description="O analista recebe um email e vê a tarefa na sua lista."
-      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={submit} loading={assign.isPending || delegate.isPending}>Atribuir</Button></>}>
-      <Field label="Analista" error={errors.assignee}>
-        {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={assignee} placeholder="Escolher o analista…" onChange={setAssignee} options={analysts.map((a) => ({ value: a.userId!, label: a.name, hint: a.email }))} />}
-      </Field>
-
-      <OptionGroup name="kind" legend="O que quer atribuir?" columns={3} value={kind} onChange={(k) => { setKind(k); setItem(''); setOther('') }} options={KINDS} error={errors.kind} />
-
-      {kind && (
-        <Field label={kind === 'pergunta' ? 'Pergunta' : kind === 'evidencia' ? 'Evidência' : 'Tarefa'} error={errors.item}>
-          {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={item} placeholder="Escolher…" onChange={setItem} options={itemOptions} />}
+      footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form={formId} loading={assign.isPending || delegate.isPending}>Atribuir</Button></>}>
+      <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-[18px]">
+        <Field label="Analista" error={errors.assignee}>
+          {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={assignee} placeholder="Escolher o analista…" onChange={setAssignee} options={analysts.map((a) => ({ value: a.userId!, label: a.name, hint: a.email }))} />}
         </Field>
-      )}
-      {item === OTHER && (
-        <Field label="Descreva a tarefa" error={errors.other}>
-          {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} rows={2} value={other} onChange={(e) => setOther(e.target.value)} placeholder="Ex.: Verificar se o antivírus está ativo em todos os portáteis." />}
+
+        <OptionGroup name="kind" legend="O que quer atribuir?" columns={3} value={kind} onChange={(k) => { setKind(k); setItem(''); setOther('') }} options={KINDS} error={errors.kind} />
+
+        {kind && (
+          <Field label={kind === 'pergunta' ? 'Pergunta' : kind === 'evidencia' ? 'Evidência' : 'Tarefa'} error={errors.item}>
+            {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={item} placeholder="Escolher…" onChange={setItem} options={itemOptions} />}
+          </Field>
+        )}
+        {item === OTHER && (
+          <Field label="Descreva a tarefa" error={errors.other}>
+            {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} rows={2} value={other} onChange={(e) => setOther(e.target.value)} placeholder="Ex.: Verificar se o antivírus está ativo em todos os portáteis." />}
+          </Field>
+        )}
+
+        <Field label="Prazo" optional hint="Sem prazo, a tarefa fica sem data limite." error={errors.due} className="max-w-[260px]">
+          {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}
         </Field>
-      )}
 
-      <Field label="Prazo" optional hint="Sem prazo, a tarefa fica sem data limite." error={errors.due} className="max-w-[260px]">
-        {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}
-      </Field>
-
-      {failure && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{failure.message}</p>}
+        {failure && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{failure.message}</p>}
+      </form>
     </Modal>
   )
 }
