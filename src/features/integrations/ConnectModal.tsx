@@ -37,8 +37,8 @@ export function ConnectModal({ provider, open, onClose }: { provider: ProviderIn
       description="O aLinha nunca altera nada nos seus sistemas. Só lê o necessário para manter o inventário e as evidências em dia.">
       <ol className="flex gap-2" aria-label="Passos">
         {STEPS.map((s, i) => (
-          <li key={s} aria-current={i === step ? 'step' : undefined} className={cn('flex flex-1 items-center gap-2 rounded-[10px] px-3 py-2 text-[13px] font-bold', i === step ? 'bg-brand-soft text-brand' : i < step ? 'text-brand' : 'text-muted')}>
-            <span className={cn('grid size-5 place-items-center rounded-full text-[11px]', i <= step ? 'bg-brand text-white' : 'bg-paper-soft')}>{i < step ? <Check className="size-3" aria-hidden /> : i + 1}</span>
+          <li key={s} aria-current={i === step ? 'step' : undefined} className={cn('flex flex-1 items-center gap-2 rounded-[10px] px-3 py-2 text-[0.8125rem] font-bold', i === step ? 'bg-brand-soft text-brand' : i < step ? 'text-brand' : 'text-muted')}>
+            <span className={cn('grid size-5 place-items-center rounded-full text-[0.6875rem]', i <= step ? 'bg-brand text-white' : 'bg-paper-soft')}>{i < step ? <Check className="size-3" aria-hidden /> : i + 1}</span>
             {s}
           </li>
         ))}
@@ -47,14 +47,14 @@ export function ConnectModal({ provider, open, onClose }: { provider: ProviderIn
       {step === 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
           <section className="rounded-[14px] bg-paper-soft p-4">
-            <h3 className="text-[14px] font-bold">O aLinha vai ler</h3>
-            <ul className="mt-2 flex flex-col gap-1.5 text-[13px] text-ink-soft">{provider.reads.map((r) => <li key={r} className="flex gap-2"><Check className="mt-0.5 size-3.5 shrink-0 text-brand" aria-hidden />{r}</li>)}</ul>
+            <h3 className="text-[0.875rem] font-bold">O aLinha vai ler</h3>
+            <ul className="mt-2 flex flex-col gap-1.5 text-[0.8125rem] text-ink-soft">{provider.reads.map((r) => <li key={r} className="flex gap-2"><Check className="mt-0.5 size-3.5 shrink-0 text-brand" aria-hidden />{r}</li>)}</ul>
           </section>
           <section className="rounded-[14px] bg-paper-soft p-4">
-            <h3 className="text-[14px] font-bold">E traz para aqui</h3>
-            <ul className="mt-2 flex flex-col gap-1.5 text-[13px] text-ink-soft">{provider.brings.map((r) => <li key={r} className="flex gap-2"><Check className="mt-0.5 size-3.5 shrink-0 text-brand" aria-hidden />{r}</li>)}</ul>
+            <h3 className="text-[0.875rem] font-bold">E traz para aqui</h3>
+            <ul className="mt-2 flex flex-col gap-1.5 text-[0.8125rem] text-ink-soft">{provider.brings.map((r) => <li key={r} className="flex gap-2"><Check className="mt-0.5 size-3.5 shrink-0 text-brand" aria-hidden />{r}</li>)}</ul>
           </section>
-          <p className="text-[13px] text-ink-soft sm:col-span-2">Os ativos encontrados <strong>não entram sozinhos</strong> no inventário: aparecem como sugestões e é o Responsável que decide.</p>
+          <p className="text-[0.8125rem] text-ink-soft sm:col-span-2">Os ativos encontrados <strong>não entram sozinhos</strong> no inventário: aparecem como sugestões e é o Responsável que decide.</p>
         </div>
       )}
 
@@ -62,12 +62,12 @@ export function ConnectModal({ provider, open, onClose }: { provider: ProviderIn
         <div className="flex flex-col gap-3">
           <div className="flex gap-3 rounded-[14px] border border-line-soft p-4">
             <KeyRound className="mt-0.5 size-5 shrink-0 text-brand" aria-hidden />
-            <div className="text-[13px] text-ink-soft">
-              <p className="text-[14px] font-bold text-ink">Simulação da página de autorização de {provider.name}</p>
+            <div className="text-[0.8125rem] text-ink-soft">
+              <p className="text-[0.875rem] font-bold text-ink">Simulação da página de autorização de {provider.name}</p>
               <p className="mt-1">Na versão real abre-se a página do fornecedor, onde um administrador aprova o acesso. A credencial fica guardada num cofre cifrado (OpenBao) e <strong>nunca</strong> é mostrada no aLinha.</p>
             </div>
           </div>
-          <label className="flex items-start gap-2 text-[14px]">
+          <label className="flex items-start gap-2 text-[0.875rem]">
             <input type="checkbox" className="mt-0.5 size-4 accent-[var(--color-brand)]" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
             Sou administrador de {provider.name} e autorizo o aLinha a ler estes dados.
           </label>
@@ -77,8 +77,8 @@ export function ConnectModal({ provider, open, onClose }: { provider: ProviderIn
       {step === 2 && (
         <div className="flex flex-col items-center gap-2 py-4 text-center" role="status">
           {connect.isPending ? <RefreshCw className="size-6 animate-spin text-brand" aria-hidden /> : <Lock className="size-6 text-brand" aria-hidden />}
-          <p className="text-[15px] font-bold">{connect.isPending ? 'A fazer a primeira leitura…' : 'Ligação feita. Primeira leitura concluída.'}</p>
-          {!connect.isPending && <p className="text-[13px] text-ink-soft">Os ativos sugeridos e as evidências recolhidas estão na página de integrações.</p>}
+          <p className="text-[0.9375rem] font-bold">{connect.isPending ? 'A fazer a primeira leitura…' : 'Ligação feita. Primeira leitura concluída.'}</p>
+          {!connect.isPending && <p className="text-[0.8125rem] text-ink-soft">Os ativos sugeridos e as evidências recolhidas estão na página de integrações.</p>}
         </div>
       )}
       {step < 2 && <Note>Pode desligar a qualquer momento. Ao desligar, a credencial é apagada do cofre.</Note>}

@@ -10,7 +10,7 @@ function Bullets({ items }: { items: string[] }) {
   return (
     <ul className="flex flex-col gap-2">
       {items.map((t) => (
-        <li key={t} className="flex items-start gap-2.5 text-[14px] text-ink">
+        <li key={t} className="flex items-start gap-2.5 text-[0.875rem] text-ink">
           <span aria-hidden className="mt-[7px] size-1.5 shrink-0 rounded-full bg-signal" />
           <span>{t}</span>
         </li>
@@ -39,8 +39,8 @@ export function FramingPage() {
           <Eyebrow className={covered ? 'text-signal-soft' : undefined}>{status.official ? 'Qualificação oficial' : 'Enquadramento sugerido'}</Eyebrow>
           <Nis2Badge official={status.official} onDark={covered} />
         </div>
-        <h2 id="enquadramento-titulo" className="text-[34px] font-extrabold title-tight max-md:text-[28px]">{status.label}</h2>
-        <ul className={cn('flex flex-col gap-1.5 text-[14px] font-semibold', covered ? 'text-brand-soft' : 'text-ink-soft')}>
+        <h2 id="enquadramento-titulo" className="text-[2.125rem] font-extrabold title-tight max-md:text-[1.75rem]">{status.label}</h2>
+        <ul className={cn('flex flex-col gap-1.5 text-[0.875rem] font-semibold', covered ? 'text-brand-soft' : 'text-ink-soft')}>
           {reasons.map((r) => <li key={r}>{r}</li>)}
         </ul>
       </section>
@@ -59,7 +59,7 @@ export function FramingPage() {
       )}
 
       <Card as="section" aria-labelledby="significado-titulo" className="flex flex-col gap-3 px-6 py-6">
-        <h2 id="significado-titulo" className="text-[18px] font-extrabold">O que isto significa</h2>
+        <h2 id="significado-titulo" className="section-title">O que isto significa</h2>
         <Bullets items={NIS2_MEANING[status.classification]} />
       </Card>
 

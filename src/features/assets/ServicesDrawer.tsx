@@ -54,8 +54,8 @@ export function ServicesDrawer({ open, onClose, inventory }: { open: boolean; on
           <div key={s.id} className="flex items-center gap-3 rounded-[14px] border border-line-soft px-4 py-3.5">
             <div className="min-w-0 flex-1">
               <p className="font-bold">{s.name}</p>
-              <p className="text-[13px] text-ink-soft">{count(s.id)} {count(s.id) === 1 ? 'ativo' : 'ativos'}</p>
-              <div className="mt-1.5">{ownerOf(s) ? <Person initials={ownerOf(s)!.initials} name={ownerOf(s)!.name} /> : <span className="text-[13px] font-semibold text-danger">Sem responsável</span>}</div>
+              <p className="text-[0.8125rem] text-ink-soft">{count(s.id)} {count(s.id) === 1 ? 'ativo' : 'ativos'}</p>
+              <div className="mt-1.5">{ownerOf(s) ? <Person initials={ownerOf(s)!.initials} name={ownerOf(s)!.name} /> : <span className="text-[0.8125rem] font-semibold text-danger">Sem responsável</span>}</div>
             </div>
             <CriticalityChip level={s.criticality} />
             {editable && (
@@ -74,7 +74,7 @@ export function ServicesDrawer({ open, onClose, inventory }: { open: boolean; on
               {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={ownerId} onChange={setOwnerId} options={owners.map((u) => ({ value: u.id, label: u.name }))} />}
             </Field>
             <div className="flex flex-col gap-2">
-              <p className="text-[13px] font-semibold text-ink-soft">Criticidade</p>
+              <p className="text-[0.8125rem] font-semibold text-ink-soft">Criticidade</p>
               <Segmented ariaLabel="Criticidade do serviço" value={crit} onChange={setCrit} options={[{ value: 'alto', label: 'Alta' }, { value: 'medio', label: 'Média' }, { value: 'baixo', label: 'Baixa' }]} />
             </div>
             <div className="flex justify-end gap-3">

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computeRiskLevel, describeRule, maxLevel } from './computeRiskLevel'
-import type { RiskMatrixConfig } from '../../../config/riskMatrix'
+import { matrix5x5 } from './matrix5x5.fixture'
 
 describe('computeRiskLevel (3×3)', () => {
   it.each([
@@ -22,16 +22,7 @@ describe('computeRiskLevel (3×3)', () => {
 })
 
 describe('computeRiskLevel with a 5×5 config', () => {
-  const steps = [1, 2, 3, 4, 5].map((value) => ({ value, label: String(value), hint: '' }))
-  const config: RiskMatrixConfig = {
-    probability: steps,
-    impact: steps,
-    bands: [
-      { level: 'baixo', min: 1, max: 6 },
-      { level: 'medio', min: 7, max: 14 },
-      { level: 'alto', min: 15, max: 25 },
-    ],
-  }
+  const config = matrix5x5()
   it('uses the configured bands without code changes', () => {
     expect(computeRiskLevel(5, 5, config).level).toBe('alto')
     expect(computeRiskLevel(3, 3, config).level).toBe('medio')

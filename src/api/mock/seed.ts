@@ -38,7 +38,7 @@ export interface DemoState {
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 11
+export const STATE_VERSION = 12
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -49,9 +49,9 @@ export const ASSET_TASK_ID = 'task-ativos'
 const at = (day: number, time = '10:00') => `2026-10-${String(day).padStart(2, '0')}T${time}:00`
 
 const USERS: User[] = [
-  { id: RUI, name: 'Rui Santos', initials: 'RS', role: 'responsavel', title: 'Responsável designado', email: 'rui.santos@compagueda.pt' },
-  { id: PEDRO, name: 'Pedro Almeida', initials: 'PA', role: 'analista', title: 'Analista', email: 'pedro.almeida@tiagueda.pt' },
-  { id: MARTA, name: 'Marta Ferreira', initials: 'MF', role: 'consultor', title: 'Consultora aLinha', email: 'marta.ferreira@alinha.pt' },
+  { id: RUI, name: 'Rui Santos', initials: 'RS', role: 'responsavel', organizationId: ORG_ID, title: 'Responsável designado', email: 'rui.santos@compagueda.pt' },
+  { id: PEDRO, name: 'Pedro Almeida', initials: 'PA', role: 'analista', organizationId: ORG_ID, title: 'Analista', email: 'pedro.almeida@tiagueda.pt' },
+  { id: MARTA, name: 'Marta Ferreira', initials: 'MF', role: 'consultor', organizationId: null, title: 'Consultora aLinha', email: 'marta.ferreira@alinha.pt' },
 ]
 
 const CONSULTANTS: ConsultantRecord[] = [

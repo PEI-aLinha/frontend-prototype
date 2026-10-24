@@ -14,7 +14,7 @@ test('Integrations — Rui asks Pedro, Pedro connects, Rui decides on the sugges
   await page.goto(`${ORG}/tarefas`)
   await page.getByRole('button', { name: 'Ligar' }).click()
   await expect(page).toHaveURL(/integracoes/)
-  await page.getByRole('button', { name: 'Ligar' }).click()
+  await page.getByRole('region', { name: 'Pedidos para si' }).getByRole('button', { name: 'Ligar' }).click()
   const dialog = page.getByRole('dialog', { name: 'Ligar Microsoft Intune' })
   await dialog.getByRole('button', { name: 'Continuar' }).click()
   const authorize = dialog.getByRole('button', { name: 'Autorizar acesso só de leitura' })

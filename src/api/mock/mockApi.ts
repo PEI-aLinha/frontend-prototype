@@ -8,6 +8,7 @@ import { shortDayPt } from './dates'
 import { createIntegrationsMock } from './integrationsMock'
 import { createOrganizationMock } from './organizationMock'
 import { createAssessmentMock } from './assessmentMock'
+import { canRole, type Action, type Resource } from '../../core/rbac'
 import type { DemoState } from './seed'
 
 /** Who is making the request. In the real API it comes from the token (Keycloak). */
@@ -38,6 +39,27 @@ function deny(): never {
   throw new ApiError('Não tem permissão para esta ação.', 403)
 }
 
+/** Tenant scoping: an active member of the organization, or the consultant assigned to it. */
+function belongsTo(s: Readonly<DemoState>, me: User, org: Id): boolean {
+  if (me.role === 'consultor') return s.organizations.some((o) => o.id === org && o.consultantId === me.id)
+  return s.members.some((m) => m.organizationId === org && m.userId === me.id && m.status === 'ativo')
+}
+
+/** Single source of truth for permissions: the same matrix the UI uses (core/rbac.ts), within the caller's organizations. */
+function can(s: Readonly<DemoState>, me: User, org: Id, action: Action, resource: Resource): boolean {
+  return belongsTo(s, me, org) && canRole(me.role, action, resource, { roadmapValidated: roadmapValidated(s, org) })
+}
+
+function assertCan(s: Readonly<DemoState>, me: User, org: Id, action: Action, resource: Resource): void {
+  if (!can(s, me, org, action, resource)) deny()
+}
+
+/** Resources of another organisation are indistinguishable from missing ones (no cross-tenant leaks). */
+function inOrg<T extends { organizationId: Id }>(item: T | undefined, org: Id, notFound: string): T {
+  if (!item || item.organizationId !== org) throw new ApiError(notFound, 404)
+  return item
+}
+
 /** Assets visible to the actor: the analyst only sees those of their task (RF06/US27). */
 function visibleAssets(s: Readonly<DemoState>, org: Id, actor: User): Asset[] {
   const all = s.assets.filter((a) => a.organizationId === org)
@@ -46,7 +68,7 @@ function visibleAssets(s: Readonly<DemoState>, org: Id, actor: User): Asset[] {
   return all.filter((a) => a.taskId !== undefined && myTasks.has(a.taskId))
 }
 
-function clientCanSeeRisks(s: Readonly<DemoState>, org: Id): boolean {
+function roadmapValidated(s: Readonly<DemoState>, org: Id): boolean {
   return !!s.roadmap[org]?.validated
 }
 
@@ -66,6 +88,11 @@ function validateRisk(input: RiskInput): void {
   if (!input.threat.trim()) throw new ApiError('Indique a ameaça.', 422)
   if (input.treatment === 'mitigar' && input.actionIds.length === 0) throw new ApiError('Para mitigar, ligue pelo menos uma ação do roadmap.', 422)
   if (input.treatment === 'aceitar' && !input.acceptanceJustification?.trim()) throw new ApiError('Para aceitar o risco, escreva uma justificação.', 422)
+  const { residualProbability: rp, residualImpact: ri } = input
+  if ((rp === undefined) !== (ri === undefined)) throw new ApiError('Indique a probabilidade e o impacto previstos depois do tratamento.', 422)
+  if (rp !== undefined && ri !== undefined && rp * ri > input.probability * input.impact) {
+    throw new ApiError('O risco residual não pode ser maior do que o risco atual: o tratamento só o mantém ou reduz.', 422)
+  }
 }
 
 function riskStatus(input: RiskInput): Risk['status'] {
@@ -95,7 +122,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
       listUsers: (org) => simulate(() => {
         requireOrg(getState(), org)
-        return getState().users
+        return getState().users.filter((u) => u.organizationId === org || u.organizationId === null)
       }),
       getToday: () => simulate(() => getState().today),
     },
@@ -113,12 +140,12 @@ export function createMockApi(getActor: ActorProvider): Api {
     audit: {
       list: (org, filter) => simulate(() => {
         const me = actor()
-        if (me.role === 'analista') deny()
+        assertCan(getState(), me, org, 'view', 'history')
         return getState().audit
           .filter((e) => e.organizationId === org)
           .filter((e) => !filter?.entityId || e.entityId === filter.entityId)
           .filter((e) => !filter?.entityType || e.entityType === filter.entityType)
-          .filter((e) => me.role !== 'responsavel' || clientCanSeeRisks(getState(), org) || (e.entityType !== 'risk' && e.entityType !== 'risk_action'))
+          .filter((e) => can(getState(), me, org, 'view', 'risk') || (e.entityType !== 'risk' && e.entityType !== 'risk_action'))
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       }),
     },
@@ -127,12 +154,11 @@ export function createMockApi(getActor: ActorProvider): Api {
       listServices: (org) => simulate(() => getState().services.filter((s) => s.organizationId === org)),
 
       saveService: (org, input, id) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, id ? 'edit' : 'create', 'critical_service')
         if (!input.name.trim()) throw new ApiError('Indique o nome do serviço.', 422)
         let saved!: CriticalService
         write((s, me) => {
-          const before = id ? s.services.find((x) => x.id === id) : undefined
-          if (id && !before) throw new ApiError('Serviço não encontrado', 404)
+          const before = id ? inOrg(s.services.find((x) => x.id === id), org, 'Serviço não encontrado') : undefined
           saved = { ...(before ?? { id: newId('svc'), organizationId: org }), ...input }
           const services = before ? s.services.map((x) => (x.id === id ? saved : x)) : [...s.services, saved]
           const entry = auditEntry({ organizationId: org, userId: me.id, action: before ? 'update' : 'create', entityType: 'critical_service', entityId: saved.id, summary: `${before ? 'Editou' : 'Criou'} o serviço crítico "${saved.name}"`, before: before ? { ...before } : null, after: { ...saved } })
@@ -142,10 +168,9 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       deleteService: (org, id) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, 'delete', 'critical_service')
         write((s, me) => {
-          const svc = s.services.find((x) => x.id === id)
-          if (!svc) throw new ApiError('Serviço não encontrado', 404)
+          const svc = inOrg(s.services.find((x) => x.id === id), org, 'Serviço não encontrado')
           if (s.assets.some((a) => a.criticalServiceId === id)) throw new ApiError('Há ativos ligados a este serviço. Mude-os de serviço primeiro.', 409)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'delete', entityType: 'critical_service', entityId: id, summary: `Removeu o serviço crítico "${svc.name}"`, before: { ...svc }, after: null })
           return { ...s, services: s.services.filter((x) => x.id !== id), audit: [...s.audit, entry] }
@@ -162,7 +187,7 @@ export function createMockApi(getActor: ActorProvider): Api {
 
       saveAsset: (org, input, id) => simulate(() => {
         const me = actor()
-        if (me.role === 'consultor') deny()
+        assertCan(getState(), me, org, id ? 'edit' : 'create', 'asset')
         validateAsset(input)
         if (me.role === 'analista') {
           const task = getState().tasks.find((t) => t.id === input.taskId && t.assigneeId === me.id)
@@ -171,8 +196,7 @@ export function createMockApi(getActor: ActorProvider): Api {
         }
         let saved!: Asset
         write((s) => {
-          const before = id ? s.assets.find((x) => x.id === id) : undefined
-          if (id && !before) throw new ApiError('Ativo não encontrado', 404)
+          const before = id ? inOrg(s.assets.find((x) => x.id === id), org, 'Ativo não encontrado') : undefined
           const stamp = now()
           saved = before
             ? { ...before, ...input, updatedAt: stamp }
@@ -185,7 +209,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       importAssets: (org, inputs) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, 'import', 'asset')
         if (inputs.length === 0) throw new ApiError('O ficheiro não tem ativos válidos.', 422)
         inputs.forEach(validateAsset)
         let created: Asset[] = []
@@ -199,12 +223,12 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       bulkUpdateAssets: (org, ids, change) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, 'bulk_edit', 'asset')
         write((s, me) => {
           const stamp = now()
           const entries: AuditEntry[] = []
           const assets = s.assets.map((a) => {
-            if (!ids.includes(a.id)) return a
+            if (a.organizationId !== org || !ids.includes(a.id)) return a
             const next = { ...a, ...change, updatedAt: stamp }
             entries.push(auditEntry({ organizationId: org, userId: me.id, action: 'update', entityType: 'asset', entityId: a.id, summary: `Editou o ativo "${a.name}" (alteração em massa)`, before: pickAsset(a), after: pickAsset(next) }))
             return next
@@ -214,24 +238,24 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       bulkDeleteAssets: (org, ids) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, 'delete', 'asset')
         write((s, me) => {
-          const removed = s.assets.filter((a) => ids.includes(a.id))
+          const scoped = ids.filter((id) => s.assets.some((a) => a.id === id && a.organizationId === org))
+          const removed = s.assets.filter((a) => scoped.includes(a.id))
           const entries = removed.map((a) => auditEntry({ organizationId: org, userId: me.id, action: 'delete', entityType: 'asset', entityId: a.id, summary: `Removeu o ativo "${a.name}"`, before: pickAsset(a), after: null }))
           return {
             ...s,
-            assets: s.assets.filter((a) => !ids.includes(a.id)).map((a) => ({ ...a, dependsOn: a.dependsOn?.filter((d) => !ids.includes(d)) })),
-            risks: s.risks.map((r) => (r.assetId && ids.includes(r.assetId) ? { ...r, assetId: null } : r)),
+            assets: s.assets.filter((a) => !scoped.includes(a.id)).map((a) => ({ ...a, dependsOn: a.dependsOn?.filter((d) => !scoped.includes(d)) })),
+            risks: s.risks.map((r) => (r.assetId && scoped.includes(r.assetId) ? { ...r, assetId: null } : r)),
             audit: [...s.audit, ...entries],
           }
         })
       }),
 
       deleteAsset: (org, id) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, 'delete', 'asset')
         write((s, me) => {
-          const a = s.assets.find((x) => x.id === id)
-          if (!a) throw new ApiError('Ativo não encontrado', 404)
+          const a = inOrg(s.assets.find((x) => x.id === id), org, 'Ativo não encontrado')
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'delete', entityType: 'asset', entityId: id, summary: `Removeu o ativo "${a.name}"`, before: pickAsset(a), after: null })
           return {
             ...s,
@@ -249,7 +273,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       assignTask: (org, input) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, 'assign', 'asset_task')
         if (!input.title.trim()) throw new ApiError('Indique o que registar.', 422)
         if (!input.dueDate) throw new ApiError('Indique o prazo.', 422)
         let task!: Task
@@ -273,8 +297,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       completeTask: (org, id) => simulate(() => {
         let task!: Task
         write((s, me) => {
-          const t = s.tasks.find((x) => x.id === id)
-          if (!t) throw new ApiError('Tarefa não encontrada', 404)
+          const t = inOrg(s.tasks.find((x) => x.id === id), org, 'Tarefa não encontrada')
           if (me.role === 'analista' && t.assigneeId !== me.id) deny()
           task = { ...t, status: 'concluida' }
           const count = s.assets.filter((a) => a.taskId === id).length
@@ -292,11 +315,10 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       updateTask: (org, id, change) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, 'assign', 'asset_task')
         let task!: Task
         write((s, me) => {
-          const t = s.tasks.find((x) => x.id === id)
-          if (!t) throw new ApiError('Tarefa não encontrada', 404)
+          const t = inOrg(s.tasks.find((x) => x.id === id), org, 'Tarefa não encontrada')
           if (t.status !== 'pendente') throw new ApiError('Só pode alterar tarefas pendentes.', 409)
           if (change.dueDate && change.dueDate < s.today) throw new ApiError('O novo prazo não pode ser no passado.', 422)
           task = { ...t, ...change }
@@ -310,37 +332,33 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       remindTask: (org, id) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        assertCan(getState(), actor(), org, 'assign', 'asset_task')
         write((s, me) => {
-          const t = s.tasks.find((x) => x.id === id)
-          if (!t || t.status !== 'pendente') throw new ApiError('Só pode lembrar tarefas pendentes.', 409)
+          const t = inOrg(s.tasks.find((x) => x.id === id), org, 'Tarefa não encontrada')
+          if (t.status !== 'pendente') throw new ApiError('Só pode lembrar tarefas pendentes.', 409)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'remind', entityType: 'task', entityId: id, summary: `Enviou um lembrete da tarefa "${t.title}"`, before: null, after: null })
           return notify({ ...s, audit: [...s.audit, entry] }, { organizationId: org, userId: t.assigneeId, kind: 'lembrete', title: `Lembrete de ${me.name.split(' ')[0]}`, body: `${t.title}${t.dueDate ? ` · até ${shortDayPt(t.dueDate)}` : ''}`, link: t.kind === 'ativos' ? `${orgPath(s, org)}/tarefas/${t.id}/ativos` : `${orgPath(s, org)}/tarefas` })
         })
       }),
 
       listRisks: (org) => simulate(() => {
-        const me = actor()
-        if (me.role === 'analista') deny()
-        if (me.role === 'responsavel' && !clientCanSeeRisks(getState(), org)) deny()
+        assertCan(getState(), actor(), org, 'view', 'risk')
         return getState().risks.filter((r) => r.organizationId === org)
       }),
 
       getRisk: (org, id) => simulate(() => {
-        const me = actor()
-        if (me.role === 'analista' || (me.role === 'responsavel' && !clientCanSeeRisks(getState(), org))) deny()
+        assertCan(getState(), actor(), org, 'view', 'risk')
         const r = getState().risks.find((x) => x.id === id && x.organizationId === org)
         if (!r) throw new ApiError('Risco não encontrado', 404)
         return r
       }),
 
       saveRisk: (org, input, id) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        assertCan(getState(), actor(), org, id ? 'edit' : 'create', 'risk')
         validateRisk(input)
         let saved!: Risk
         write((s, me) => {
-          const before = id ? s.risks.find((x) => x.id === id) : undefined
-          if (id && !before) throw new ApiError('Risco não encontrado', 404)
+          const before = id ? inOrg(s.risks.find((x) => x.id === id), org, 'Risco não encontrado') : undefined
           const { actionIds, ...fields } = input
           const stamp = now()
           saved = before
@@ -367,7 +385,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       setRiskStatus: (org, id, change) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        assertCan(getState(), actor(), org, 'edit', 'risk')
         let saved!: Risk
         write((s, me) => {
           const r = s.risks.find((x) => x.id === id && x.organizationId === org)
@@ -384,20 +402,23 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       listRiskLinks: (org) => simulate(() => {
-        const me = actor()
-        if (me.role === 'analista') deny()
-        if (me.role === 'responsavel' && !clientCanSeeRisks(getState(), org)) return []
+        if (!can(getState(), actor(), org, 'view', 'risk')) {
+          if (actor().role === 'analista') deny()
+          return []
+        }
         const ids = new Set(getState().risks.filter((r) => r.organizationId === org).map((r) => r.id))
         return getState().links.filter((l) => ids.has(l.riskId))
       }),
 
-      listComments: (_org, assetId) => simulate(() => {
-        if (actor().role === 'analista') return []
-        return getState().comments.filter((c) => c.assetId === assetId)
+      listComments: (org, assetId) => simulate(() => {
+        if (!can(getState(), actor(), org, 'view', 'asset_comment')) return []
+        const orgAssets = new Set(getState().assets.filter((a) => a.organizationId === org).map((a) => a.id))
+        return getState().comments.filter((c) => c.assetId === assetId && orgAssets.has(assetId))
       }),
 
       addComment: (org, assetId, body) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        assertCan(getState(), actor(), org, 'comment', 'asset_comment')
+        inOrg(getState().assets.find((a) => a.id === assetId), org, 'Ativo não encontrado')
         if (!body.trim()) throw new ApiError('Escreva o comentário.', 422)
         const comment = { id: newId('cmt'), assetId, authorId: getActor().userId, body: body.trim(), createdAt: now() }
         write((s, me) => {
@@ -415,12 +436,12 @@ export function createMockApi(getActor: ActorProvider): Api {
       ...createAssessmentMock(getActor),
 
       listActions: (org) => simulate(() => {
-        if (actor().role === 'analista') deny()
+        assertCan(getState(), actor(), org, 'view', 'roadmap')
         return getState().actions.filter((a) => a.organizationId === org)
       }),
 
       proposeAction: (org, input) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        assertCan(getState(), actor(), org, 'create', 'roadmap')
         if (!input.description.trim()) throw new ApiError('Descreva a ação.', 422)
         let created!: RemediationAction
         write((s, me) => {
@@ -443,7 +464,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       validateRoadmap: (org) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        assertCan(getState(), actor(), org, 'validate', 'roadmap')
         let status = getState().roadmap[org]
         write((s, me) => {
           status = { ...s.roadmap[org], validated: true, validatedAt: now(), validatedBy: me.id }
@@ -458,7 +479,7 @@ export function createMockApi(getActor: ActorProvider): Api {
 
       listPortfolio: () => simulate(() => {
         const me = actor()
-        if (me.role !== 'consultor') deny()
+        if (!canRole(me.role, 'view', 'portfolio')) deny()
         // Each consultant only sees the organizations assigned to them.
         return getState().portfolio.filter((p) => p.organization.consultantId === me.id)
       }),

@@ -71,12 +71,12 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
                     className={cn('py-3 text-left font-normal', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === hg.headers.length - 1 ? 'pr-5' : 'pr-3', h.column.columnDef.meta?.align === 'right' && 'text-right')}
                   >
                     {canSort ? (
-                      <button type="button" onClick={h.column.getToggleSortingHandler()} className="eyebrow group inline-flex items-center gap-1 text-[11px] text-muted hover:text-ink">
+                      <button type="button" onClick={h.column.getToggleSortingHandler()} className="eyebrow group inline-flex items-center gap-1 text-[0.6875rem] text-muted hover:text-ink">
                         {flexRender(h.column.columnDef.header, h.getContext())}
                         {sorted === 'asc' ? <ArrowUp className="size-3" aria-hidden /> : sorted === 'desc' ? <ArrowDown className="size-3" aria-hidden /> : <ChevronsUpDown className="size-3 opacity-0 group-hover:opacity-60" aria-hidden />}
                       </button>
                     ) : (
-                      <span className="eyebrow text-[11px] text-muted">{flexRender(h.column.columnDef.header, h.getContext())}</span>
+                      <span className="eyebrow text-[0.6875rem] text-muted">{flexRender(h.column.columnDef.header, h.getContext())}</span>
                     )}
                   </th>
                 )
@@ -88,19 +88,21 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
           {rows.map((row) => (
             <tr
               key={row.id}
-              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-              onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row.original) } } : undefined}
-              tabIndex={onRowClick ? 0 : undefined}
-              aria-label={onRowClick && rowLabel ? rowLabel(row.original) : undefined}
-              className={cn('border-b border-line-soft last:border-b-0 transition-colors', onRowClick && 'cursor-pointer hover:bg-paper-soft focus-visible:bg-paper-soft focus-visible:outline-offset-[-2px]', (highlightId === row.id || sel.includes(row.id)) && 'bg-signal-soft/50')}
+              className={cn('relative border-b border-line-soft last:border-b-0 transition-colors', onRowClick && 'cursor-pointer hover:bg-paper-soft focus-within:bg-paper-soft', (highlightId === row.id || sel.includes(row.id)) && 'bg-signal-soft/50')}
             >
               {selectable && (
-                <td className="w-11 pl-5" onClick={(e) => e.stopPropagation()}>
-                  <input type="checkbox" className={boxCls} aria-label={`Selecionar ${rowLabel?.(row.original).replace(/^Abrir /, '') ?? row.id}`} checked={sel.includes(row.id)} onChange={() => toggle(row.id)} onKeyDown={(e) => e.stopPropagation()} />
+                <td className="relative z-10 w-11 pl-5">
+                  <input type="checkbox" className={boxCls} aria-label={`Selecionar ${rowLabel?.(row.original).replace(/^Abrir /, '') ?? row.id}`} checked={sel.includes(row.id)} onChange={() => toggle(row.id)} />
                 </td>
               )}
               {row.getVisibleCells().map((cell, i, all) => (
-                <td key={cell.id} className={cn('py-3.5 align-middle text-[14px]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
+                <td key={cell.id} className={cn('row-cell py-3.5 align-middle text-[0.875rem]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
+                  {/* One real button per row, stretched over it; row-cell keeps links, buttons and fields in the cells above it. */}
+                  {i === 0 && onRowClick && (
+                    <button type="button" data-row-open onClick={() => onRowClick(row.original)} className="absolute inset-0 rounded-none focus-visible:outline-offset-[-2px]">
+                      <span className="sr-only">{rowLabel?.(row.original) ?? 'Abrir'}</span>
+                    </button>
+                  )}
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}

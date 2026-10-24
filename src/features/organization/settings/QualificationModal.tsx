@@ -71,13 +71,13 @@ export function QualificationModal({ suggested, today, current, onClose }: { sug
         </Field>
 
         <fieldset className="flex min-w-0 flex-col gap-1.5" aria-describedby={errors.document ? `${formId}-doc-err` : undefined}>
-          <legend className="mb-1.5 text-[13px] font-semibold text-ink-soft">Ato de Qualificação (PDF)</legend>
+          <legend className="mb-1.5 text-[0.8125rem] font-semibold text-ink-soft">Ato de Qualificação (PDF)</legend>
           {doc ? (
             <div className={cn('flex items-center gap-3 rounded-[12px] border px-4 py-3', errors.document ? 'border-danger' : 'border-line-soft')}>
               <FileText className="size-5 shrink-0 text-brand" aria-hidden />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-bold">{doc.name}</span>
-                <span className="block text-[12px] text-muted">{kb(doc.size)}</span>
+                <span className="block truncate text-[0.875rem] font-bold">{doc.name}</span>
+                <span className="block text-[0.75rem] text-muted">{kb(doc.size)}</span>
               </span>
               <Button variant="link" size="sm" onClick={() => { setDoc(null); setFile(null) }}>{current ? 'Substituir' : 'Remover'}</Button>
             </div>
@@ -88,14 +88,14 @@ export function QualificationModal({ suggested, today, current, onClose }: { sug
                 <Button size="sm" onClick={() => fileRef.current?.click()}>Escolher ficheiro</Button>
                 <Button size="sm" variant="ghost" onClick={() => setDoc(EXAMPLE_FILE)}>Usar ficheiro de exemplo</Button>
               </div>
-              <p className="text-[12px] text-muted">PDF até 10 MB. No protótipo, o ficheiro não é enviado.</p>
+              <p className="text-[0.75rem] text-muted">PDF até 10 MB. No protótipo, o ficheiro não é enviado.</p>
             </div>
           )}
           <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="sr-only" aria-label="Escolher o Ato de Qualificação" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setDoc({ name: f.name, size: f.size }); setFile(f) } e.target.value = '' }} />
-          {errors.document && <p id={`${formId}-doc-err`} role="alert" className="text-[13px] font-semibold text-danger">{errors.document}</p>}
+          {errors.document && <p id={`${formId}-doc-err`} role="alert" className="text-[0.8125rem] font-semibold text-danger">{errors.document}</p>}
         </fieldset>
 
-        {save.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{save.error.message}</p>}
+        {save.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">{save.error.message}</p>}
       </form>
     </Modal>
   )

@@ -22,12 +22,12 @@ interface TaskCount { open: number; late: number; done: number }
 
 /** Tasks of one analyst (US14): to do, of which late, and done. */
 function TaskCountCell({ c }: { c?: TaskCount }) {
-  if (!c) return <span className="text-[14px] text-muted">—</span>
-  if (c.open === 0 && c.done === 0) return <span className="text-[14px] text-ink-soft">Sem tarefas</span>
+  if (!c) return <span className="text-[0.875rem] text-muted">—</span>
+  if (c.open === 0 && c.done === 0) return <span className="text-[0.875rem] text-ink-soft">Sem tarefas</span>
   return (
-    <span className="flex flex-col text-[14px] leading-snug">
+    <span className="flex flex-col text-[0.875rem] leading-snug">
       <span className="font-bold text-ink">{c.open === 0 ? 'Nada por fazer' : `${c.open} por fazer`}</span>
-      <span className="text-[12px] text-muted">
+      <span className="text-[0.75rem] text-muted">
         {c.late > 0 && <span className="font-bold text-risk-high-ink">{c.late} {c.late === 1 ? 'atrasada' : 'atrasadas'} · </span>}
         {c.done} {c.done === 1 ? 'concluída' : 'concluídas'}
       </span>
@@ -42,7 +42,7 @@ function MemberName({ m, isMe }: { m: TeamMember; isMe: boolean }) {
       <Avatar initials={initialsOf(m.name)} size={36} tone={pending ? 'soft' : 'dark'} />
       <span className="min-w-0">
         <span className={cn('block truncate font-bold', pending && 'text-ink-soft')}>{m.name}{isMe && <span className="font-normal text-muted"> (você)</span>}</span>
-        <span className="block truncate text-[13px] text-ink-soft">{m.email}</span>
+        <span className="block truncate text-[0.8125rem] text-ink-soft">{m.email}</span>
       </span>
     </span>
   )
@@ -53,7 +53,7 @@ function MemberStatus({ m }: { m: TeamMember }) {
   return (
     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
       {pending ? <Chip tone="neutral">Convite pendente</Chip> : <Chip tone="signal">Ativo</Chip>}
-      {pending && m.invitedAt && <span className="text-[12px] text-muted">enviado a <time dateTime={m.invitedAt}>{shortDate(m.invitedAt)}</time></span>}
+      {pending && m.invitedAt && <span className="text-[0.75rem] text-muted">enviado a <time dateTime={m.invitedAt}>{shortDate(m.invitedAt)}</time></span>}
     </span>
   )
 }
@@ -72,7 +72,7 @@ function MemberActions({ m, onConfirm, onAssign, className }: { m: TeamMember; o
       {pending && <Button variant="ghost" size="sm" icon={<XCircle className="size-4" aria-hidden />} onClick={onConfirm}>Cancelar convite</Button>}
       {pending && (
         <Tooltip content="Só no protótipo: abre o link que o analista recebe por email.">
-          <Link to={`/convite/${m.id}`} className="inline-flex items-center gap-1.5 rounded-[9px] px-3.5 py-2 text-[13px] font-bold text-brand hover:bg-paper-soft"><ExternalLink className="size-4" aria-hidden />Abrir convite</Link>
+          <Link to={`/convite/${m.id}`} className="inline-flex items-center gap-1.5 rounded-[9px] px-3.5 py-2 text-[0.8125rem] font-bold text-brand hover:bg-paper-soft"><ExternalLink className="size-4" aria-hidden />Abrir convite</Link>
         </Tooltip>
       )}
       {!pending && m.role === 'analista' && <Button variant="ghost" size="sm" icon={<ClipboardPlus className="size-4" aria-hidden />} onClick={onAssign}>Atribuir</Button>}
@@ -125,7 +125,7 @@ export function TeamPage() {
       <PageHeader eyebrow={org.name} title="Equipa" subtitle="Quem trabalha consigo no aLinha e o que pediu a cada pessoa." actions={<><Button variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} onClick={() => setInvite(true)}>Convidar analista</Button><Button icon={<ClipboardPlus className="size-4" aria-hidden />} disabled={analysts.length === 0} title={analysts.length === 0 ? 'Convide primeiro um analista' : undefined} onClick={() => setAssigning({})}>Atribuir tarefa</Button></>} />
 
       <section aria-labelledby="members" className="flex flex-col gap-3">
-        <h2 id="members" className="text-[18px] font-extrabold">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
+        <h2 id="members" className="section-title">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
         {members.isError ? <ErrorState error={members.error} onRetry={() => members.refetch()} /> : !members.data ? <SkeletonRows rows={3} /> : (
           <DataTable caption="Membros da organização" data={members.data} columns={columns} getRowId={(m) => m.id} cardsBelow="xl"
             renderCard={(m) => (
@@ -141,9 +141,9 @@ export function TeamPage() {
       </section>
 
       <section aria-labelledby="assigned" className="flex flex-col gap-3">
-        <h2 id="assigned" className="text-[18px] font-extrabold">Tarefas atribuídas</h2>
+        <h2 id="assigned" className="section-title">Tarefas atribuídas</h2>
         {!tasks.data || !today.data ? <SkeletonRows rows={3} /> : pending.length === 0 ? (
-          <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[14px] text-ink-soft">Não há tarefas por fazer. Atribua o registo de ativos em <Link className="font-bold text-brand hover:underline" to={`/org/${org.slug}/ativos?atribuir=1`}>Ativos</Link>.</p>
+          <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[0.875rem] text-ink-soft">Não há tarefas por fazer. Atribua o registo de ativos em <Link className="font-bold text-brand hover:underline" to={`/org/${org.slug}/ativos?atribuir=1`}>Ativos</Link>.</p>
         ) : (
           <ul role="list" aria-label="Tarefas por fazer" className="flex flex-col gap-3">
             {pending.map((t) => <li key={t.id}><TaskRow task={t} today={today.data} assignee={users.data?.find((u) => u.id === t.assigneeId)?.name ?? '—'} onEdit={() => setEditing(t)} /></li>)}
@@ -154,9 +154,9 @@ export function TeamPage() {
             <Eyebrow as="h3"><span id="closed">Concluídas ou canceladas</span></Eyebrow>
             <ul role="list" className="flex flex-col gap-3">
               {closed.map((t) => (
-                <li key={t.id} className="flex items-center gap-3 rounded-[14px] bg-paper-soft px-5 py-3 text-[14px]">
+                <li key={t.id} className="flex items-center gap-3 rounded-[14px] bg-paper-soft px-5 py-3 text-[0.875rem]">
                   <span className="flex-1 text-ink-soft">{t.title}</span>
-                  <span className="text-[13px] text-muted">{users.data?.find((u) => u.id === t.assigneeId)?.name}</span>
+                  <span className="text-[0.8125rem] text-muted">{users.data?.find((u) => u.id === t.assigneeId)?.name}</span>
                   <Chip tone="neutral">{t.status === 'concluida' ? 'Concluída' : 'Cancelada'}</Chip>
                 </li>
               ))}
@@ -184,10 +184,10 @@ function TaskRow({ task, today, assignee, onEdit }: { task: Task; today: string;
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Chip>{KIND_LABEL[task.kind]}</Chip>
-          {due ? <span className={cn('rounded-full px-2.5 py-1 text-[12px] font-bold', TONE_CLASS[due.tone])}>{due.label}</span> : <Chip tone="neutral">Sem prazo</Chip>}
+          {due ? <span className={cn('rounded-full px-2.5 py-1 text-[0.75rem] font-bold', TONE_CLASS[due.tone])}>{due.label}</span> : <Chip tone="neutral">Sem prazo</Chip>}
         </div>
-        <h3 id={`tarefa-${task.id}`} className="mt-2 text-[16px] font-bold">{task.title}</h3>
-        <p className="text-[13px] text-muted">Para {assignee} · {task.dueDate ? <>até <time dateTime={task.dueDate}>{shortDay(task.dueDate)}</time></> : 'sem prazo'}</p>
+        <h3 id={`tarefa-${task.id}`} className="mt-2 text-[1rem] font-bold">{task.title}</h3>
+        <p className="text-[0.8125rem] text-muted">Para {assignee} · {task.dueDate ? <>até <time dateTime={task.dueDate}>{shortDay(task.dueDate)}</time></> : 'sem prazo'}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button variant="secondary" size="sm" icon={<BellRing className="size-4" aria-hidden />} loading={remind.isPending} onClick={() => remind.mutate(task.id, { onSuccess: () => toast.show(`Lembrete enviado a ${assignee}`), onError: (e) => toast.show(e.message, 'error') })}>Lembrar</Button>
@@ -246,8 +246,8 @@ function InviteModal({ onClose }: { onClose: () => void }) {
       <form id={formId} noValidate onSubmit={submit} className="flex flex-col gap-[18px]">
         <Field label="Nome" error={errors.name}>{(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex.: Pedro Almeida" autoFocus />}</Field>
         <Field label="Email" error={errors.email}>{(p) => <TextInput id={p.id} type="email" invalid={p.invalid} aria-describedby={p.describedBy} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nome@empresa.pt" />}</Field>
-        {invite.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{invite.error.message}</p>}
-        <p className="text-[13px] text-muted">O convite é válido durante 7 dias. Neste protótipo, o email não é enviado.</p>
+        {invite.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">{invite.error.message}</p>}
+        <p className="text-[0.8125rem] text-muted">O convite é válido durante 7 dias. Neste protótipo, o email não é enviado.</p>
       </form>
     </Modal>
   )
@@ -273,7 +273,7 @@ function ConfirmMemberModal({ m, onClose }: { m: TeamMember; onClose: () => void
         ? `O link enviado para ${m.email} deixa de funcionar. Pode voltar a convidar mais tarde.`
         : `${m.name} deixa de ter acesso à organização.${open ? ` ${open === 1 ? 'A tarefa por fazer fica cancelada' : `As ${open} tarefas por fazer ficam canceladas`}.` : ''} O que já registou fica guardado.`}
       footer={<><Button variant="secondary" onClick={onClose}>Voltar</Button><Button variant="danger" onClick={confirm} loading={action.isPending}>{pending ? 'Cancelar convite' : 'Remover da equipa'}</Button></>}>
-      {action.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{action.error.message}</p>}
+      {action.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">{action.error.message}</p>}
     </Modal>
   )
 }
