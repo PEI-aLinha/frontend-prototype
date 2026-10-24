@@ -5,7 +5,7 @@ import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveri
 import { dateTime } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, Chip, ErrorState, Eyebrow, Explainer, NextAction, Note, PageHeader, ProgressBar, SkeletonRows, Term, cn, useToast } from '../../ui'
+import { Button, Card, Chip, ErrorState, Eyebrow, NextAction, Note, PageHeader, ProgressBar, SkeletonRows, cn, useToast } from '../../ui'
 import { ConnectModal } from './ConnectModal'
 import { DiscoveryList } from './DiscoveryList'
 
@@ -123,18 +123,6 @@ export function IntegrationsPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
-      {!isConsultant && (
-        <Explainer id={`integrations-${persona.role}`} intro={<>Uma <Term k="integracao">integração</Term> lê dados de um sistema que já usam (ex.: Microsoft 365). Nunca altera nada.</>}
-          steps={persona.role === 'analista' ? [
-            { title: 'Autorize o acesso', text: 'O Rui pediu-lhe para ligar um sistema. Clique em "Ligar" e siga os três passos.' },
-            { title: 'Primeira leitura', text: 'O aLinha lê os dados e prepara sugestões de ativos.' },
-            { title: 'O Rui decide', text: 'As sugestões ficam à espera do Rui. Não entram sozinhas no inventário.' },
-          ] : [
-            { title: 'Escolha o que ligar', text: 'Comece pelo email e contas (Microsoft 365). Se não souber as senhas de administrador, peça ao Pedro.' },
-            { title: 'Reveja as sugestões', text: 'Os ativos encontrados aparecem em baixo. Acrescente, associe a um que já existe, ou ignore.' },
-            { title: 'Evidências automáticas', text: 'Algumas ações do roadmap (ex.: MFA) passam a ser verificadas sozinhas. A consultora vê o resultado.' },
-          ]} />
-      )}
       {integrations.data && nextAction}
       {error ? <ErrorState error={error} onRetry={() => { integrations.refetch(); discoveries.refetch(); evidence.refetch() }} /> : !integrations.data ? <SkeletonRows rows={4} /> : (
         <>

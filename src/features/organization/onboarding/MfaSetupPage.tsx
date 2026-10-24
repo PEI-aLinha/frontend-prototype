@@ -1,5 +1,5 @@
-import { Navigate, useNavigate } from 'react-router'
-import { Button } from '../../../ui'
+import { Link, Navigate, useNavigate } from 'react-router'
+import { buttonClass } from '../../../ui'
 import { StepBadge } from './OnboardingLayout'
 import { MfaSetup } from './MfaSetup'
 import { useRegistration } from './registration'
@@ -19,7 +19,7 @@ export function MfaSetupPage() {
       </header>
       <MfaSetup email={account.email} onVerified={() => { setMfaVerified(true); navigate('/registo/organizacao') }} />
       <div className="-mt-4 flex">
-        <Button variant="link" size="sm" className="!text-ink-soft" onClick={() => navigate('/registo/conta')}>Voltar ao passo anterior</Button>
+        <Link to="/registo/conta" className={buttonClass({ variant: 'link', size: 'sm', className: '!text-ink-soft' })}>Voltar ao passo anterior</Link>
       </div>
     </>
   )
