@@ -60,7 +60,9 @@
   /* iOS only: follow the system text size (Dynamic Type). Every size is in rem, so the whole UI scales. */
   @supports (-webkit-touch-callout: none) {
     html {
-      font: -apple-system-body;
+      /* Via a custom property: -apple-system-body is a system font keyword, not a family, so it needs no generic fallback. */
+      --ios-body-font: -apple-system-body;
+      font: var(--ios-body-font);
       font-family: var(--font-sans), sans-serif;
     }
   }
