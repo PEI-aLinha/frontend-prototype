@@ -35,12 +35,12 @@ function columns(inv: Inventory, opts: { risks: boolean; riskLink?: (a: Asset) =
     { id: 'crit', accessorFn: (a) => LEVEL_ORDER[a.criticality], header: 'Criticidade', cell: (c) => <CriticalityChip level={c.row.original.criticality} />, meta: compact ? { width: dense ? 110 : 120 } : undefined },
   ]
   if (opts.risks) {
-    cols.push({ id: 'risk', accessorFn: (a) => (inv.topRisk(a.id) ? LEVEL_ORDER[inv.topRisk(a.id)!] : 0), header: 'Risco', cell: (c) => { const l = inv.topRisk(c.row.original.id); const n = inv.risksByAsset.get(c.row.original.id)?.length ?? 0; return l ? <span className="inline-flex items-center gap-2"><RiskLevelBadge level={l} /><span className="text-[12px] text-muted">{n}</span></span> : <span className="text-[13px] text-muted">Sem riscos</span> }, meta: dense ? { width: 130 } : undefined })
+    cols.push({ id: 'risk', accessorFn: (a) => (inv.topRisk(a.id) ? LEVEL_ORDER[inv.topRisk(a.id)!] : 0), header: 'Risco', cell: (c) => { const l = inv.topRisk(c.row.original.id); const n = inv.risksByAsset.get(c.row.original.id)?.length ?? 0; return l ? <span className="inline-flex items-center gap-2"><RiskLevelBadge level={l} /><span className="text-xs text-muted">{n}</span></span> : <span className="text-sm text-muted">Sem riscos</span> }, meta: dense ? { width: 130 } : undefined })
   }
   if (opts.riskLink) {
     const href = opts.riskLink
     cols.push({ id: 'action', header: '', enableSorting: false, meta: { align: 'right' }, cell: (c) => (
-      <Link to={href(c.row.original)} onClick={(e) => e.stopPropagation()} aria-label={`Registar risco sobre ${c.row.original.name}`} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-[13px] font-bold text-brand hover:bg-brand-soft">
+      <Link to={href(c.row.original)} onClick={(e) => e.stopPropagation()} aria-label={`Registar risco sobre ${c.row.original.name}`} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-sm font-bold text-brand hover:bg-brand-soft">
         <ShieldPlus className="size-4" aria-hidden />Registar risco
       </Link>
     ) })
@@ -54,8 +54,8 @@ function AssetCard({ a, inv }: { a: Asset; inv: Inventory }) {
     <div className="flex items-start gap-3">
       <div className="min-w-0 flex-1">
         <p className="font-bold">{a.name}</p>
-        <p className="text-[13px] text-ink-soft">{ASSET_TYPE_LABEL[a.type]} · {inv.serviceName(a.criticalServiceId)}</p>
-        <p className="mt-1 text-[12px] text-muted">{inv.user(a.ownerId)?.name}</p>
+        <p className="text-sm text-ink-soft">{ASSET_TYPE_LABEL[a.type]} · {inv.serviceName(a.criticalServiceId)}</p>
+        <p className="mt-1 text-xs text-muted">{inv.user(a.ownerId)?.name}</p>
       </div>
       <div className="flex flex-col items-end gap-1.5">
         <CriticalityChip level={a.criticality} />
@@ -172,15 +172,15 @@ export function AssetsPage() {
               <AssetFilters value={filters} inventory={data} shown={visible.length} total={data.assets.length}
                 onChange={(n: Partial<AssetFilterState>) => update(n as Record<string, string>)}
                 onClear={() => update(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))} />
-              <div className="flex flex-wrap items-center justify-end gap-1 text-[13px]">
-                <Button variant="ghost" size="sm" icon={<Layers className="size-4" aria-hidden />} onClick={() => update({ servicos: '1' })}>Serviços críticos</Button>
-                {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
-                {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
-                <span className="ml-2 max-md:ml-0 max-md:w-full">
-                  <Segmented ariaLabel="Vista" value={params.get('vista') === 'servicos' ? 'servicos' : 'tabela'} onChange={(v) => update({ vista: v === 'tabela' ? null : v })}
-                    options={[{ value: 'tabela', label: 'Tabela' }, { value: 'servicos', label: 'Por serviço' }]} />
-                </span>
-              </div>
+               <div className="flex flex-wrap items-center justify-end gap-1 text-sm">
+                 <Button variant="ghost" size="sm" icon={<Layers className="size-4" aria-hidden />} onClick={() => update({ servicos: '1' })}>Serviços críticos</Button>
+                 {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
+                 {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
+                 <span className="ml-2 max-md:ml-0 max-md:w-full">
+                   <Segmented ariaLabel="Vista" value={params.get('vista') === 'servicos' ? 'servicos' : 'tabela'} onChange={(v) => update({ vista: v === 'tabela' ? null : v })}
+                     options={[{ value: 'tabela', label: 'Tabela' }, { value: 'servicos', label: 'Por serviço' }]} />
+                 </span>
+               </div>
             </div>
           )}
 
@@ -194,12 +194,12 @@ export function AssetsPage() {
             rowLabel={(a) => `Abrir ${a.name}`}
             renderCard={(a) => <AssetCard a={a} inv={data} />}
             footer={pending}
-            empty={data.assets.length === 0
-              ? <EmptyState className="m-4" title="Ainda não há ativos registados" action={can('create', 'asset') && <Button onClick={() => update({ novo: '1' })}>Adicionar o primeiro ativo</Button>}>Comece pelos sistemas sem os quais a empresa para: faturação, produção, email.</EmptyState>
-              : <p className="px-5 py-8 text-center text-[14px] text-ink-soft">Nenhum ativo corresponde aos filtros.</p>}
-            selected={picked}
-            onSelectedChange={can('edit', 'asset') && !consultant ? setPicked : undefined}
-          />}
+             empty={data.assets.length === 0
+               ? <EmptyState className="m-4" title="Ainda não há ativos registados" action={can('create', 'asset') && <Button onClick={() => update({ novo: '1' })}>Adicionar o primeiro ativo</Button>}>Comece pelos sistemas sem os quais a empresa para: faturação, produção, email.</EmptyState>
+               : <p className="px-5 py-8 text-center text-sm text-ink-soft">Nenhum ativo corresponde aos filtros.</p>}
+             selected={picked}
+             onSelectedChange={can('edit', 'asset') && !consultant ? setPicked : undefined}
+           />}
 
           <AssetDrawer key={`new-${params.get('novo')}`} inventory={data} asset={null} mode="new" open={params.get('novo') === '1'} onClose={() => update({ novo: null })} />
           <AssetDrawer key={selected?.id ?? 'none'} inventory={data} asset={selected} mode="view" open={!!selected} onClose={() => update({ ativo: null })} />

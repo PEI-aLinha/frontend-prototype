@@ -49,7 +49,7 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
 
   return (
     <div className="hidden rounded-[16px] border border-line-soft bg-paper px-5 py-5 md:block">
-      <div className="mb-3 flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-[11px] text-ink-soft">
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-x-4 gap-y-1 text-xs text-ink-soft">
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full bg-brand" />Concluída</span>
           <span className="flex items-center gap-1.5"><span aria-hidden className="size-2.5 rounded-full border-2 border-dashed border-brand" />Em curso</span>
@@ -75,15 +75,15 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
                   aria-label={`Ação ${i + 1} de ${items.length}: ${a.description}. ${ACTION_STATUS_LABEL[a.status]}.`}
                   className="group flex flex-col items-center gap-1.5"
                 >
-                  <span className={cn(
-                    'grid size-12 place-items-center rounded-full border-2 text-[15px] font-extrabold transition-transform group-hover:scale-110 md:size-14',
-                    a.status === 'concluida' ? 'border-brand bg-brand text-white' : a.status === 'em_curso' ? 'border-dashed border-brand bg-paper text-brand' : 'border-line bg-paper text-ink-soft',
-                  )}>
-                    {a.status === 'concluida' ? <Check className="size-6" strokeWidth={3} aria-hidden /> : i + 1}
-                  </span>
-                  <span className="hidden max-w-[15ch] md:block">
-                    <span className="line-clamp-2 text-center text-[11px] leading-tight text-ink-soft">{a.description}</span>
-                  </span>
+                   <span className={cn(
+                     'grid size-12 place-items-center rounded-full border-2 text-sm font-extrabold transition-transform group-hover:scale-110 md:size-14',
+                     a.status === 'concluida' ? 'border-brand bg-brand text-white' : a.status === 'em_curso' ? 'border-dashed border-brand bg-paper text-brand' : 'border-line bg-paper text-ink-soft',
+                   )}>
+                     {a.status === 'concluida' ? <Check className="size-6" strokeWidth={3} aria-hidden /> : i + 1}
+                   </span>
+                   <span className="hidden max-w-[15ch] md:block">
+                     <span className="line-clamp-2 text-center text-xs leading-tight text-ink-soft">{a.description}</span>
+                   </span>
                 </button>
               </li>
             ))}

@@ -103,15 +103,12 @@ export function RisksPage() {
         subtitle={editable ? 'Segundo a ISO/IEC 27005. O nível é calculado: probabilidade × impacto.' : 'Os riscos que a consultora identificou e o que está a ser feito para os reduzir.'}
         help={<PageTour id={editable ? 'riscos-consultor' : 'riscos-cliente'} ready={!!ready} />}
         actions={<>
-<<<<<<< HEAD
           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! }, editable ? 'consultant' : 'client', org.slug)}>Exportar registo</Button>}
           {can('create', 'risk') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
-=======
           {editable && <Button variant="secondary" data-tour="risk-template" icon={<FileSpreadsheet className="size-4" aria-hidden />} onClick={() => downloadRiskTemplate().catch(() => toast.show('Não foi possível gerar o template. Tente outra vez.', 'error'))}>Template Excel</Button>}
           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! })}>Exportar registo</Button>}
           {/* With no risks yet, the empty state's button is the primary action; this one steps back. */}
           {can('create', 'risk') && <Button variant={ready && all.length === 0 ? 'secondary' : 'primary'} data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
->>>>>>> origin/dev
         </>}
       />
 
@@ -122,7 +119,6 @@ export function RisksPage() {
           <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[0.875rem] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
         </div>
       )}
-<<<<<<< HEAD
       {!editable && <Note>Registo validado pela consultora{validator ? ` ${validator}` : ''}. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
       {editable ? (
         <Explainer id="risks-consultant" intro="O registo de riscos segue o método da ISO/IEC 27005 em três passos. O resultado prioriza o roadmap do cliente."
@@ -140,8 +136,6 @@ export function RisksPage() {
           ]} />
       )}
 
-=======
->>>>>>> origin/dev
       {error ? <ErrorState error={error} onRetry={() => { risks.refetch(); links.refetch(); assets.refetch(); actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
         <>
           {nextAction}

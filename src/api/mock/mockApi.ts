@@ -8,6 +8,7 @@ import { shortDayPt } from './dates'
 import { createIntegrationsMock } from './integrationsMock'
 import { createOrganizationMock } from './organizationMock'
 import { createAssessmentMock } from './assessmentMock'
+import { createChatMock } from './chatMock'
 import type { DemoState } from './seed'
 
 /** Who is making the request. In the real API it comes from the token (Keycloak). */
@@ -79,6 +80,7 @@ export function createMockApi(getActor: ActorProvider): Api {
   const write = (mutate: (s: DemoState, me: User) => DemoState) => setState((s) => mutate(s, user(s, getActor().userId)))
 
   return {
+    chat: createChatMock(getActor),
     organization: createOrganizationMock(getActor),
     integrations: createIntegrationsMock(getActor),
 
@@ -341,12 +343,23 @@ export function createMockApi(getActor: ActorProvider): Api {
         write((s, me) => {
           const before = id ? s.risks.find((x) => x.id === id) : undefined
           if (id && !before) throw new ApiError('Risco não encontrado', 404)
+          if (input.residualProbability !== undefined && input.residualImpact === undefined) {
+            throw new ApiError('Indique também o impacto residual.', 422)
+          }
+          if (input.residualImpact !== undefined && input.residualProbability === undefined) {
+            throw new ApiError('Indique também a probabilidade residual.', 422)
+          }
+          if (input.residualProbability > (before?.probability ?? input.probability) || input.residualImpact > (before?.impact ?? input.impact)) {
+            throw new ApiError('O risco residual não pode ser superior ao risco atual.', 422)
+          }
           const { actionIds, ...fields } = input
           const stamp = now()
           saved = before
             ? { ...before, ...fields, status: before.status === 'arquivado' || before.status === 'tratado' ? before.status : riskStatus(input), updatedAt: stamp }
             : { ...fields, id: newId('rsk'), organizationId: org, status: riskStatus(input), createdBy: me.id, createdAt: stamp, updatedAt: stamp }
           const risks = before ? s.risks.map((x) => (x.id === id ? saved : x)) : [...s.risks, saved]
+
+
 
           const previous = s.links.filter((l) => l.riskId === saved.id).map((l) => l.remediationActionId)
           const unknown = actionIds.filter((a) => !s.actions.some((x) => x.id === a))

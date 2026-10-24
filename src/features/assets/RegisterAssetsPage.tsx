@@ -75,14 +75,15 @@ export function RegisterAssetsPage() {
 
   const meta = (
     <div className="flex w-[260px] flex-col items-end gap-2 max-md:w-full max-md:items-stretch">
-      <p className="text-[13px] font-bold">{mine.length} de {expected} registados</p>
+      <p className="text-sm font-bold">{mine.length} de {expected} registados</p>
       <ProgressBar value={mine.length} max={expected} label="Ativos registados" className="w-full" />
     </div>
   )
 
+
   return (
     <>
-      <button type="button" onClick={() => navigate(`/org/${org.slug}/tarefas`)} className="-mb-3 inline-flex items-center gap-1.5 self-start text-[13px] font-bold text-brand hover:underline">
+      <button type="button" onClick={() => navigate(`/org/${org.slug}/tarefas`)} className="-mb-3 inline-flex items-center gap-1.5 self-start text-sm font-bold text-brand hover:underline">
         <ArrowLeft className="size-4" aria-hidden />As minhas tarefas
       </button>
       <PageHeader eyebrow="Tarefa · Inventário de ativos" title="Registar ativos técnicos" subtitle={`${assigner ? `Atribuída por ${assigner}` : 'Atribuída pelo responsável designado'} · ${task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}`} actions={meta} />
@@ -96,26 +97,26 @@ export function RegisterAssetsPage() {
 
       <div className="flex items-start gap-7 max-lg:flex-col-reverse">
         <section aria-labelledby="registered" className="flex min-w-0 flex-1 flex-col gap-3 max-lg:w-full">
-          <h2 id="registered" className="text-[16px] font-bold">Já registados</h2>
-          {mine.length === 0 && <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[14px] text-ink-soft">Ainda não registou nenhum ativo. Comece pelo servidor de produção.</p>}
-          {mine.map((a) => (
+         <h2 id="registered" className="text-base font-bold">Já registados</h2>
+         {mine.length === 0 && <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-sm text-ink-soft">Ainda não registou nenhum ativo. Comece pelo servidor de produção.</p>}
+         {mine.map((a) => (
             <button key={a.id} type="button" onClick={() => { setEditing(a); form.reset(valuesFromAsset(a)) }}
               className={cn('group flex items-center gap-3.5 rounded-[14px] border bg-paper px-[18px] py-3.5 text-left transition-colors hover:border-line', editing?.id === a.id ? 'border-brand' : 'border-line-soft')}>
-              <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-bold">{a.name}</p>
-                <p className="text-[13px] text-ink-soft">{ASSET_TYPE_LABEL[a.type]} · {inv.data!.serviceName(a.criticalServiceId)}</p>
-              </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold">{a.name}</p>
+                  <p className="text-sm text-ink-soft">{ASSET_TYPE_LABEL[a.type]} · {inv.data!.serviceName(a.criticalServiceId)}</p>
+                </div>
               <Pencil className="size-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" aria-label="Editar" />
               <CriticalityChip level={a.criticality} />
             </button>
           ))}
         </section>
 
-        <section aria-labelledby="new-asset" className="flex w-[520px] shrink-0 flex-col gap-4 rounded-[18px] border border-line-soft bg-paper px-7 py-[26px] max-lg:w-full max-md:px-5">
-          <div className="flex items-center justify-between">
-            <h2 id="new-asset" className="text-[19px] font-extrabold">{editing ? 'Editar ativo' : 'Novo ativo'}</h2>
-            {editing && <Button variant="ghost" size="sm" onClick={() => { setEditing(null); form.reset(defaults) }}>Cancelar edição</Button>}
-          </div>
+         <section aria-labelledby="new-asset" className="flex w-[520px] shrink-0 flex-col gap-4 rounded-[18px] border border-line-soft bg-paper px-7 py-[26px] max-lg:w-full max-md:px-5">
+           <div className="flex items-center justify-between">
+             <h2 id="new-asset" className="text-lg font-extrabold">{editing ? 'Editar ativo' : 'Novo ativo'}</h2>
+             {editing && <Button variant="ghost" size="sm" onClick={() => { setEditing(null); form.reset(defaults) }}>Cancelar edição</Button>}
+           </div>
           <span id="asset-name-focus" tabIndex={-1} />
           <FormShell id="register-form" onSubmit={() => persist('another')}>
             <AssetFields id="reg" values={form.values} onChange={form.onChange} services={inv.data.services} owners={owners} errors={form.errors} />

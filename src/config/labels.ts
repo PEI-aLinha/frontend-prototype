@@ -45,8 +45,6 @@ export const ACTION_STATUS_LABEL: Record<ActionStatus, string> = {
   concluida: 'Concluída',
 }
 
-/** Maturity scale 1 to 5 (glossary: 1 inicial, 5 otimizada). */
-export const MATURITY_LABEL: Record<number, string> = { 1: 'Inicial', 2: 'Básico', 3: 'Definido', 4: 'Gerido', 5: 'Otimizada' }
 
 export const EVIDENCE_STRENGTH_LABEL: Record<EvidenceStrength, string> = {
   autodeclarada: 'Autodeclarada',

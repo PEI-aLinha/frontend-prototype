@@ -57,10 +57,14 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
   return {
     getAssessment: (org) => simulate(() => {
       const s = getState()
+      const me = s.users.find((u) => u.id === getActor().userId)
       if (role(s) === 'analista') throw new ApiError('Não tem permissão para ver a avaliação.', 403)
+      const company = s.organizations.find((o) => o.id === org)
+      if (!company || (me?.role === 'consultor' && company.consultantId !== me.id) || (me?.role !== 'consultor' && !s.members.some((m) => m.organizationId === org && m.userId === me?.id && m.role === 'responsavel'))) {
+        throw new ApiError('Não tem permissão para ver esta avaliação.', 403)
+      }
       const roadmap = s.roadmap[org]
       const done = !!roadmap?.assessmentCompletedAt
-      const company = s.organizations.find((o) => o.id === org)
       const sections = SECTIONS.map((sec) => {
         const questions = QUESTIONS.filter((x) => x.sectionId === sec.id).map((x) => withAnswer(s, org, x))
         const tasks = questions.map((x) => delegation(s, x.id)).filter((t): t is Task => !!t)
@@ -86,7 +90,12 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
 
     listQuestions: (org, sectionId) => simulate(() => {
       const s = getState()
+      const me = s.users.find((u) => u.id === getActor().userId)
       if (role(s) === 'analista') throw new ApiError('Não tem permissão para ver a avaliação.', 403)
+      const company = s.organizations.find((o) => o.id === org)
+      if (!company || (me?.role === 'consultor' && company.consultantId !== me.id) || (me?.role !== 'consultor' && !s.members.some((m) => m.organizationId === org && m.userId === me?.id && m.role === 'responsavel'))) {
+        throw new ApiError('Não tem permissão para ver esta avaliação.', 403)
+      }
       if (!SECTIONS.some((x) => x.id === sectionId)) throw new ApiError('Secção não encontrada', 404)
       return QUESTIONS.filter((x) => x.sectionId === sectionId).map((x) => withAnswer(s, org, x))
     }),
@@ -94,6 +103,18 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
     saveAnswer: (org, questionId, answer) => simulate(() => {
       const s = getState()
       if (role(s) !== 'responsavel') throw new ApiError('Só o Responsável designado responde à avaliação.', 403)
+      
+      const company = s.organizations.find((o) => o.id === org)
+      if (!company || company.consultantId !== s.users.find((u) => u.id === getActor().userId)?.id) {
+         // This is a simplification: assume the responsavel must belong to the org.
+         // The real check is that the user must be the designated manager of this org.
+      }
+      // Use the already existing check in createMockApi to unify.
+      // Actually, let's just add a basic membership check.
+      if (!s.members.some((m) => m.organizationId === org && m.userId === getActor().userId && m.role === 'responsavel')) {
+        throw new ApiError('Não tem permissão para responder a esta organização.', 403)
+      }
+
       const question = findQuestion(questionId)
       if (!answer.choice) throw new ApiError('Escolha uma resposta.', 422)
       assertOpen(s, org)
@@ -134,13 +155,18 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
 
     submitAssessment: (org) => simulate(() => {
       const s = getState()
+      const me = s.users.find((u) => u.id === getActor().userId)
       if (role(s) !== 'responsavel') throw new ApiError('Só o Responsável designado pode submeter a avaliação.', 403)
+      const company = s.organizations.find((o) => o.id === org)
+      if (!company || (me?.role === 'consultor' && company.consultantId !== me.id) || (me?.role !== 'consultor' && !s.members.some((m) => m.organizationId === org && m.userId === me?.id && m.role === 'responsavel'))) {
+        throw new ApiError('Não tem permissão para submeter esta avaliação.', 403)
+      }
       assertOpen(s, org)
       const missing = QUESTIONS.filter((x) => !withAnswer(s, org, x).answer).length
       if (missing > 0) throw new ApiError(`Faltam ${missing} ${missing === 1 ? 'pergunta' : 'perguntas'} por responder.`, 422)
       const o = s.organizations.find((x) => x.id === org)!
-      const me = s.users.find((u) => u.id === getActor().userId)!
-      const entry = auditEntry({ organizationId: org, userId: me.id, action: 'submit', entityType: 'assessment', entityId: org, summary: 'Submeteu a avaliação', before: { status: 'em_curso' }, after: { status: 'submetida' } })
+      const me_ = s.users.find((u) => u.id === getActor().userId)!
+      const entry = auditEntry({ organizationId: org, userId: me_.id, action: 'submit', entityType: 'assessment', entityId: org, summary: 'Submeteu a avaliação', before: { status: 'em_curso' }, after: { status: 'submetida' } })
       setState((st) => {
         const next = {
           ...st,
@@ -148,8 +174,7 @@ export function createAssessmentMock(getActor: () => DemoActor): Pick<Assessment
           portfolio: st.portfolio.map((p) => (p.organization.id === org ? { ...p, stage: 'Avaliação concluída', stageTone: 'signal' as const, nextStep: 'Registar riscos e validar roadmap', updatedAt: now() } : p)),
           audit: [...st.audit, entry],
         }
-        // The consultant reviews the answers next.
-        return o.consultantId ? notify(next, { organizationId: org, userId: o.consultantId, kind: 'avaliacao', title: 'Avaliação concluída', body: `${me.name} submeteu a avaliação de ${o.name}.`, link: `/clientes/${o.slug}/visao-geral` }) : next
+        return o.consultantId ? notify(next, { organizationId: org, userId: o.consultantId, kind: 'avaliacao', title: 'Avaliação concluída', body: `${me_.name} submeteu a avaliação de ${o.name}.`, link: `/clientes/${o.slug}/visao-geral` }) : next
       })
     }),
 

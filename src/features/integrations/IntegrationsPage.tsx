@@ -30,13 +30,13 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
         <div className="flex items-start justify-between gap-2">
           <div>
             <Eyebrow>{c.provider.category}</Eyebrow>
-            <h3 className="mt-1 text-[16px] font-extrabold">{c.provider.name}</h3>
-          </div>
-          {c.provider.applies ? <Chip tone={on ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
-        </div>
-        <p className="text-[13px] text-ink-soft">{c.provider.description}</p>
-        {on && <p className="text-[12px] text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
-        {c.status === 'pedido' && assignee && <p className="text-[12px] text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
+             <h3 className="mt-1 text-base font-extrabold">{c.provider.name}</h3>
+           </div>
+           {c.provider.applies ? <Chip tone={on ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
+         </div>
+         <p className="text-sm text-ink-soft">{c.provider.description}</p>
+         {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
+         {c.status === 'pedido' && assignee && <p className="text-xs text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
         {c.provider.applies && (
           <div className="mt-auto flex flex-wrap gap-2 pt-1">
             {on ? (
@@ -64,16 +64,16 @@ function Lock() {
 }
 
 function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; providerName: (p: CollectedEvidence['provider']) => string }) {
-  if (!items.length) return <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Ainda não há evidências recolhidas. Ligue uma integração para começar.</p>
+  if (!items.length) return <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-sm text-ink-soft">Ainda não há evidências recolhidas. Ligue uma integração para começar.</p>
   return (
     <ul className="flex flex-col gap-2">
       {items.map((e) => (
         <li key={e.id} className="flex items-start gap-3 rounded-[12px] border border-line-soft px-4 py-3">
           {e.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" aria-label="Cumpre" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-risk-high-ink" aria-label="Não cumpre" />}
           <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-bold">{e.title}</p>
-            <p className="text-[13px] text-ink-soft">{e.result}</p>
-            <p className="mt-1 text-[12px] text-muted">{providerName(e.provider)} · {EVIDENCE_STRENGTH_LABEL[e.strength]} · {dateTime(e.collectedAt)}</p>
+            <p className="text-sm font-bold">{e.title}</p>
+            <p className="text-sm text-ink-soft">{e.result}</p>
+            <p className="mt-1 text-xs text-muted">{providerName(e.provider)} · {EVIDENCE_STRENGTH_LABEL[e.strength]} · {dateTime(e.collectedAt)}</p>
           </div>
         </li>
       ))}
@@ -116,21 +116,21 @@ export function IntegrationsPage() {
         <>
           {!isConsultant && (
             <section aria-labelledby="int-catalog" className="flex flex-col gap-3">
-              <h2 id="int-catalog" className="text-[18px] font-extrabold">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
+              <h2 id="int-catalog" className="text-lg font-extrabold">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
               {integrations.data.length === 0
-                ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[14px] text-ink-soft">Não tem integrações para ligar.</p>
+                ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-sm text-ink-soft">Não tem integrações para ligar.</p>
                 : <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{integrations.data.map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>}
             </section>
           )}
           {isOwner && (
             <section aria-labelledby="int-disc" className="flex flex-col gap-3">
-              <h2 id="int-disc" className="flex items-center gap-2 text-[18px] font-extrabold">Ativos encontrados {pending > 0 && <Chip>{pending} por rever</Chip>}</h2>
+              <h2 id="int-disc" className="flex items-center gap-2 text-lg font-extrabold">Ativos encontrados {pending > 0 && <Chip>{pending} por rever</Chip>}</h2>
               <DiscoveryList items={discoveries.data ?? []} assets={assets.data ?? []} services={services.data ?? []} providerName={providerName} canDecide={isOwner} />
             </section>
           )}
           {persona.role !== 'analista' && (
             <section aria-labelledby="int-ev" className="flex flex-col gap-3">
-              <h2 id="int-ev" className="text-[18px] font-extrabold">Evidências recolhidas</h2>
+              <h2 id="int-ev" className="text-lg font-extrabold">Evidências recolhidas</h2>
               <EvidenceList items={evidence.data ?? []} providerName={providerName} />
             </section>
           )}

@@ -37,46 +37,46 @@ export function AssessmentPage() {
                 <Eyebrow>Progresso</Eyebrow>
                 <Chip tone={a.status === 'em_curso' ? 'signal' : 'neutral'}>{STATUS[a.status]}</Chip>
               </div>
-              <p className="text-[28px] font-extrabold">{answered} <span className="text-[16px] font-semibold text-ink-soft">de {total} perguntas respondidas</span></p>
-              <ProgressBar value={answered} max={total} label="Progresso da avaliação" />
-              {a.maturity && <p className="text-[14px]">Nível de maturidade: <strong>{a.maturity} de 5</strong> · {MATURITY_LABEL[a.maturity]}</p>}
-            </Card>
-            {a.status === 'em_curso' && total > 0 && answered === total && (
-              <Card className="flex flex-col items-start gap-3 border-brand">
-                <h2 className="text-[17px] font-extrabold">Avaliação completa</h2>
-                <p className="text-[14px] text-ink-soft">Respondeu a todas as perguntas. Quando submeter, a consultora revê as respostas e valida o roadmap.</p>
-                <Button onClick={() => setConfirming(true)}>Submeter avaliação</Button>
-              </Card>
-            )}
-            <ul className="flex flex-col gap-3" aria-label="Secções da avaliação">
-              {a.sections.map((s) => {
-                const complete = s.answered === s.total
-                return (
-                  <li key={s.id}>
-                    <Card className="flex flex-col gap-2.5">
-                      <div className="flex items-start justify-between gap-3">
-                        <h2 className="flex items-center gap-2 text-[15px] font-bold">
-                          {complete ? <CheckCircle2 className="size-4 text-brand" role="img" aria-label="Completa" /> : <Clock className="size-4 text-muted" role="img" aria-label="Por completar" />}
-                          {s.name}
-                        </h2>
-                        <span className="shrink-0 text-[13px] text-ink-soft">{s.answered}/{s.total}</span>
-                      </div>
-                      <ProgressBar value={s.answered} max={s.total} label={`Progresso de ${s.name}`} />
-                      {s.delegated.map((d) => {
-                        const u = name(d.assigneeId)
-                        return (
-                          <p key={d.taskId} className="flex items-center gap-2 text-[13px] text-ink-soft">
-                            {u && <Avatar initials={u.initials} size={24} />}
-                            <span>1 pergunta delegada {u ? `ao ${u.name}` : ''}: <strong className={d.status === 'concluida' ? 'text-brand' : 'text-ink'}>{d.status === 'concluida' ? 'respondida' : 'à espera de resposta'}</strong></span>
-                          </p>
-                        )
-                      })}
-                      <Link to={s.id} className="self-start text-[14px] font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span> <span aria-hidden>→</span></Link>
-                    </Card>
-                  </li>
-                )
-              })}
-            </ul>
+               <p className="text-3xl font-extrabold">{answered} <span className="text-base font-semibold text-ink-soft">de {total} perguntas respondidas</span></p>
+               <ProgressBar value={answered} max={total} label="Progresso da avaliação" />
+               {a.maturity && <p className="text-sm">Nível de maturidade: <strong>{a.maturity} de 5</strong> · {MATURITY_LABEL[a.maturity]}</p>}
+             </Card>
+             {a.status === 'em_curso' && total > 0 && answered === total && (
+               <Card className="flex flex-col items-start gap-3 border-brand">
+                 <h2 className="text-base font-extrabold">Avaliação completa</h2>
+                 <p className="text-sm text-ink-soft">Respondeu a todas as perguntas. Quando submeter, a consultora revê as respostas e valida o roadmap.</p>
+                 <Button onClick={() => setConfirming(true)}>Submeter avaliação</Button>
+               </Card>
+             )}
+             <ul className="flex flex-col gap-3" aria-label="Secções da avaliação">
+               {a.sections.map((s) => {
+                 const complete = s.answered === s.total
+                 return (
+                   <li key={s.id}>
+                     <Card className="flex flex-col gap-2.5">
+                       <div className="flex items-start justify-between gap-3">
+                         <h2 className="flex items-center gap-2 text-sm font-bold">
+                           {complete ? <CheckCircle2 className="size-4 text-brand" role="img" aria-label="Completa" /> : <Clock className="size-4 text-muted" role="img" aria-label="Por completar" />}
+                           {s.name}
+                         </h2>
+                         <span className="shrink-0 text-sm text-ink-soft">{s.answered}/{s.total}</span>
+                       </div>
+                       <ProgressBar value={s.answered} max={s.total} label={`Progresso de ${s.name}`} />
+                       {s.delegated.map((d) => {
+                         const u = name(d.assigneeId)
+                         return (
+                           <p key={d.taskId} className="flex items-center gap-2 text-sm text-ink-soft">
+                             {u && <Avatar initials={u.initials} size={24} />}
+                             <span>1 pergunta delegada {u ? `ao ${u.name}` : ''}: <strong className={d.status === 'concluida' ? 'text-brand' : 'text-ink'}>{d.status === 'concluida' ? 'respondida' : 'à espera de resposta'}</strong></span>
+                           </p>
+                         )
+                       })}
+                       <Link to={s.id} className="self-start text-sm font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span> <span aria-hidden>→</span></Link>
+                     </Card>
+                   </li>
+                 )
+               })}
+             </ul>
           </div>
           <aside className="flex flex-col gap-4">
             <NextSteps steps={[
@@ -107,7 +107,7 @@ function SubmitModal({ onClose }: { onClose: () => void }) {
     <Modal open onOpenChange={(o) => !o && onClose()} title="Submeter a avaliação?"
       description="Depois de submeter, as respostas deixam de poder ser alteradas. A consultora vai revê-las e validar o roadmap."
       footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={confirm} loading={submit.isPending}>Submeter</Button></>}>
-      {submit.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{submit.error.message}</p>}
+       {submit.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-sm font-semibold text-risk-high-ink">{submit.error.message}</p>}
     </Modal>
   )
 }

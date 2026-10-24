@@ -7,7 +7,7 @@ export function Card({ className, soft, ...rest }: HTMLAttributes<HTMLDivElement
 }
 
 export function Eyebrow({ children, className, as: Tag = 'p' }: { children: ReactNode; className?: string; as?: 'p' | 'span' | 'h2' | 'h3' }) {
-  return <Tag className={cn('eyebrow text-[11px] text-muted', className)}>{children}</Tag>
+  return <Tag className={cn('eyebrow text-xs text-muted', className)}>{children}</Tag>
 }
 
 interface StatCardProps {
@@ -31,8 +31,8 @@ export function StatCard({ label, value, caption, children, onClick, accent, cla
         <Eyebrow as={labelAs}>{label}</Eyebrow>
         {accent}
       </div>
-      <p className="mt-1.5 text-[18px] font-extrabold leading-tight">{value}</p>
-      {caption && <p className="mt-1.5 text-[13px] text-ink-soft">{caption}</p>}
+      <p className="mt-1.5 text-lg font-extrabold leading-tight">{value}</p>
+      {caption && <p className="mt-1.5 text-sm text-ink-soft">{caption}</p>}
       {children && <div className="mt-3">{children}</div>}
     </>
   )
@@ -52,8 +52,8 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
     <section className="flex flex-col gap-6 rounded-[20px] bg-brand-deep px-8 py-[30px] text-white md:flex-row md:items-center">
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
         <Eyebrow className="text-signal-soft">{eyebrow}</Eyebrow>
-        <h2 className="text-[26px] font-extrabold title-tight">{title}</h2>
-        {children && <div className="text-[13px] font-semibold text-brand-soft">{children}</div>}
+        <h2 className="text-3xl font-extrabold title-tight">{title}</h2>
+        {children && <div className="text-sm font-semibold text-brand-soft">{children}</div>}
       </div>
       {action}
     </section>
@@ -63,7 +63,7 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
 /** Aviso: fundo signal-soft, texto brand SemiBold 13, a toda a largura. */
 export function Note({ children, icon = true, className }: { children: ReactNode; icon?: boolean; className?: string }) {
   return (
-    <div role="note" className={cn('flex items-start gap-2.5 rounded-[10px] bg-signal-soft px-3.5 py-2.5 text-[13px] font-semibold text-brand', className)}>
+    <div role="note" className={cn('flex items-start gap-2.5 rounded-[10px] bg-signal-soft px-3.5 py-2.5 text-sm font-semibold text-brand', className)}>
       {icon && <Info className="mt-[2px] size-4 shrink-0" aria-hidden />}
       <div className="min-w-0">{children}</div>
     </div>
