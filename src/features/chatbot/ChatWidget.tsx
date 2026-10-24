@@ -7,6 +7,7 @@ import { OPEN_CHAT_EVENT, type OpenChatOptions } from './ChatControl'
 import type { BotReply, BotReplyObject, ChatMessage, Conversation, Suggestion } from './ChatTypes'
 import type { SendOptions } from './ChatThread'
 import { keepAttachment } from './attachmentStore'
+import { CHAT_ERROR_TEXT, CHAT_GREETING } from '../../api/contracts'
 import { Button, ErrorState, SkeletonRows, useToast } from '../../ui'
 
 export type { BotReply, ChatMessage, Suggestion } from './ChatTypes'
@@ -41,9 +42,6 @@ type ChatWidgetProps = {
   reviewContext?: (ownerId?: string) => ReactNode
 }
 
-const GREETING =
-  'Olá! Sou o assistente da Alinha. Posso ajudar a perceber os riscos, o roadmap e os requisitos da NIS2 e do RGPD.'
-
 const ROADMAP_NOTICE = 'A aguardar que um consultor verifique e aprove o roadmap.'
 
 const DEFAULT_SUGGESTIONS: Suggestion[] = [
@@ -75,7 +73,7 @@ const deriveTopic = (text: string) => {
 
 const freshConversation = (): Conversation => ({
   id: newChatId('chat'),
-  messages: [{ id: newChatId('msg'), role: 'bot', text: GREETING, createdAt: new Date().toISOString() }],
+  messages: [{ id: newChatId('msg'), role: 'bot', text: CHAT_GREETING, createdAt: new Date().toISOString() }],
   draft: '',
   typing: false,
   unread: false,
@@ -336,7 +334,7 @@ export function ChatWidget({
       // A consultora não precisa de revisão: as suas conversas nunca ficam "à espera".
       const noticeText = canReview ? undefined : (replyNotice ?? from?.notice)
       const stamp = new Date().toISOString()
-      const botMsg: ChatMessage = { id: newChatId('msg'), role: 'bot', createdAt: stamp, ...botBody }
+      const botMsg: ChatMessage = { ...botBody, id: botBody.id ?? newChatId('msg'), role: 'bot', createdAt: stamp }
       const added: ChatMessage[] = [botMsg]
       if (noticeText) added.push({ id: newChatId('msg'), role: 'notice', text: noticeText, createdAt: stamp })
       receive(id, added, !canReview && (!!reviewOnReply?.(text) || !!noticeText))
@@ -354,7 +352,7 @@ export function ChatWidget({
     } catch {
       toast.show('Não foi possível responder agora. Tente novamente.', 'error')
       receive(id, [
-        { id: newChatId('msg'), role: 'bot', error: true, text: 'Não consegui responder agora. Tente novamente daqui a pouco.', createdAt: new Date().toISOString() },
+        { id: newChatId('msg'), role: 'bot', error: true, text: CHAT_ERROR_TEXT, createdAt: new Date().toISOString() },
       ])
     }
   }

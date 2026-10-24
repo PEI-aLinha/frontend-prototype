@@ -590,6 +590,8 @@ export interface ChatConversation {
 }
 
 export interface ChatReply {
+  /** Id da mensagem: ao guardar a conversa, o servidor só aceita respostas do assistente que ele próprio emitiu. */
+  id: Id
   text: string
   source?: {
     label: string
@@ -600,6 +602,12 @@ export interface ChatReply {
   notice?: string
   table?: ChatTable
 }
+
+/** Perguntas cujas respostas vão à consultora para revisão. Quem decide é o servidor; o widget usa-a só para mostrar o estado logo. */
+export const CHAT_REVIEW_PATTERN = /rascunho|política|incidente|notificação|CNPD|relatório/i
+/** Textos do assistente gerados no cliente: o servidor guarda estes, não o que o cliente envia. */
+export const CHAT_GREETING = 'Olá! Sou o assistente da Alinha. Posso ajudar a perceber os riscos, o roadmap e os requisitos da NIS2 e do RGPD.'
+export const CHAT_ERROR_TEXT = 'Não consegui responder agora. Tente novamente daqui a pouco.'
 
 export interface ChatApi {
   list(scopeKey: string): Promise<ChatConversation[]>

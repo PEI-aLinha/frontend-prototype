@@ -1,4 +1,4 @@
-import { ApiError, type ChatApi, type ChatConversation, type ChatMessageInput, type DemoActor, type Id } from '../contracts'
+import { ApiError, CHAT_ERROR_TEXT, CHAT_GREETING, CHAT_REVIEW_PATTERN, type ChatApi, type ChatConversation, type ChatMessageInput, type ChatReply, type ChatStoredMessage, type DemoActor, type Id } from '../contracts'
 import { getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
 import type { DemoState } from './seed'
@@ -16,7 +16,75 @@ function requireScopeAccess(state: Readonly<DemoState>, actorId: Id, scopeKey: s
   }
 }
 
+type Issued = Map<Id, { userId: Id; reply: Omit<ChatReply, 'id'> }>
+
+/**
+ * Mensagens novas do dono da conversa. O que já está guardado não muda (exceto marcar um pedido de documento
+ * como respondido), e o servidor decide o conteúdo das mensagens do assistente.
+ * `flagged`: há algo novo para a consultora rever.
+ */
+function ownerMessages(before: ChatConversation | undefined, incoming: ChatStoredMessage[], actorId: Id, issued: Issued) {
+  const known = new Map((before?.messages ?? []).map((m) => [m.id, m]))
+  const added: ChatStoredMessage[] = []
+  let flagged = false
+  incoming.forEach((m, index) => {
+    if (known.has(m.id)) return
+    const base = { id: m.id, createdAt: m.createdAt }
+    if (m.role === 'user') {
+      added.push({ ...base, role: 'user', authorId: actorId, text: m.text, attachments: m.attachments })
+      return
+    }
+    if (m.role === 'notice') {
+      added.push({ ...base, role: 'notice', text: m.text })
+      return
+    }
+    const sent = issued.get(m.id)
+    if (sent?.userId === actorId) {
+      const { notice, ...reply } = sent.reply
+      added.push({ ...base, role: 'bot', ...reply })
+      const question = [...(before?.messages ?? []), ...added].findLast((x) => x.role === 'user')
+      if (notice || CHAT_REVIEW_PATTERN.test(question?.text ?? '')) flagged = true
+    } else if (m.error) {
+      added.push({ ...base, role: 'bot', error: true, text: CHAT_ERROR_TEXT })
+    } else if (!before && index === 0) {
+      added.push({ ...base, role: 'bot', text: CHAT_GREETING })
+    } else {
+      throw new ApiError('Mensagem do assistente não reconhecida.', 403)
+    }
+  })
+  // Resposta a um pedido de documento: só aponta para um anexo novo do próprio dono
+  const fulfilled = new Map(incoming.filter((m) => m.documentRequest?.fulfilledBy).map((m) => [m.id, m.documentRequest!.fulfilledBy!]))
+  const kept = (before?.messages ?? []).map((m) => {
+    const by = fulfilled.get(m.id)
+    if (!m.documentRequest || m.documentRequest.fulfilledBy || !by) return m
+    if (!added.some((x) => x.id === by && x.role === 'user' && x.attachments?.length)) return m
+    flagged = true
+    return { ...m, documentRequest: { ...m.documentRequest, fulfilledBy: by } }
+  })
+  return { messages: [...kept, ...added], flagged }
+}
+
+/** Consultora a rever: só acrescenta mensagens dela, do lado do assistente. */
+function reviewerMessages(before: ChatConversation, incoming: ChatStoredMessage[], actorId: Id): ChatStoredMessage[] {
+  const known = new Set(before.messages.map((m) => m.id))
+  const added = incoming.filter((m) => !known.has(m.id)).map((m): ChatStoredMessage => {
+    if (m.role !== 'bot') throw new ApiError('A consultora só pode responder como assistente.', 403)
+    return {
+      id: m.id,
+      role: 'bot',
+      authorId: actorId,
+      text: m.text,
+      attachments: m.attachments,
+      documentRequest: m.documentRequest && { title: m.documentRequest.title },
+      createdAt: m.createdAt,
+    }
+  })
+  return [...before.messages, ...added]
+}
+
 export function createChatMock(getActor: () => DemoActor): ChatApi {
+  /** Respostas devolvidas pelo `send`: só estas podem ser guardadas como mensagens do assistente. */
+  const issued: Issued = new Map()
   return {
     list: (scopeKey) => simulate(() => {
       const actorId = getActor().userId
@@ -43,18 +111,25 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
         requireScopeAccess(state, actorId, scopeKey)
         const me = state.users.find((user) => user.id === actorId)
         const before = state.chat.find((item) => item.id === conversation.id)
+        // Não deixa mover uma conversa para outra organização
+        if (before && before.scopeKey !== scopeKey) throw new ApiError('Conversa não encontrada.', 404)
         // A consultora "a rever" = conversa existente que pertence a outro utilizador
         const reviewing = me?.role === 'consultor' && !!before && before.userId !== actorId
         if (reviewing && !before!.awaitingReview) throw new ApiError('Conversa não está pendente de revisão.', 409)
         if (before && !reviewing && before.userId !== actorId) throw new ApiError('Não tem permissão para esta ação.', 403)
 
+        // O estado de revisão é decidido aqui: o cliente pode pô-la em revisão (com uma pergunta que o justifique), nunca tirá-la
+        const owned = reviewing ? undefined : ownerMessages(before, conversation.messages, actorId, issued)
         result = {
-          ...conversation,
-          id: conversation.id || newId('chat'),
+          id: before?.id ?? (conversation.id || newId('chat')),
           scopeKey,
           userId: before?.userId ?? actorId, // o dono não muda quando a consultora guarda
-          reviewedMessageCount: before?.reviewedMessageCount, // o cliente não o conhece: preservar
-          createdAt: before?.createdAt ?? conversation.createdAt ?? timestamp,
+          messages: owned ? owned.messages : reviewerMessages(before!, conversation.messages, actorId),
+          topic: reviewing ? before!.topic : conversation.topic?.slice(0, 40),
+          topicRenamed: reviewing ? before!.topicRenamed : conversation.topicRenamed,
+          awaitingReview: !!before?.awaitingReview || (!!owned?.flagged && me?.role !== 'consultor'),
+          reviewedMessageCount: before?.reviewedMessageCount,
+          createdAt: before?.createdAt ?? timestamp,
           updatedAt: timestamp,
         }
         const next = {
@@ -112,64 +187,74 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
         const next = { ...state, chat: state.chat.map((item) => item.id === conversationId ? reviewed : item) }
         const orgSlug = scopeKey.replace(/^org:/, '')
         const org = state.organizations.find((item) => item.slug === orgSlug)
+        // O analista não tem acesso ao Início: a sua página é "As minhas tarefas"
+        const ownerHome = state.users.find((user) => user.id === current.userId)?.role === 'analista' ? 'tarefas' : 'inicio'
         return org
-          ? notify(next, { organizationId: org.id, userId: current.userId, kind: 'chat', title: 'A sua conversa foi revista', body: current.topic ? `A consultora reviu: ${current.topic}.` : 'A consultora respondeu à sua conversa.', link: `/org/${orgSlug}/inicio?chat=${current.id}` })
+          ? notify(next, { organizationId: org.id, userId: current.userId, kind: 'chat', title: 'A sua conversa foi revista', body: current.topic ? `A consultora reviu: ${current.topic}.` : 'A consultora respondeu à sua conversa.', link: `/org/${orgSlug}/${ownerHome}?chat=${current.id}` })
           : next
       })
       return reviewed
     }),
 
     send: (organizationId: Id | undefined, messages: ChatMessageInput[]) =>
-      simulate(() => {
-        const latest = messages.at(-1)?.text.toLowerCase() ?? ''
-
-        const attached = [...(messages.at(-1)?.text ?? '').matchAll(/\[Anexo: (.+?)\]/g)].map((match) => match[1])
-        if (attached.length) {
-          return {
-            text: `Recebi ${attached.length === 1 ? `o documento «${attached[0]}»` : `${attached.length} documentos`}. Neste protótipo ainda não leio o conteúdo, mas fica guardado na conversa e a consultora pode consultá-lo.`,
-          }
-        }
-
-        if (latest.includes('responsabilidades')) {
-          return {
-            text: [
-              'Como responsável pela segurança da informação (CISO), as suas responsabilidades principais na NIS2 são:',
-              '• Governação: propor e manter a política de segurança e levá-la à aprovação da gestão de topo, que supervisiona as medidas.',
-              '• Gestão de risco: identificar ativos e riscos, definir o tratamento e rever periodicamente.',
-              '• Medidas técnicas e organizacionais: controlo de acessos, cópias de segurança, cifragem, continuidade de negócio e gestão de vulnerabilidades.',
-              '• Cadeia de fornecimento: avaliar a segurança dos fornecedores críticos.',
-              '• Incidentes: detetar, responder e coordenar as notificações ao CNCS dentro dos prazos legais.',
-              '• Formação: garantir sensibilização e formação para a gestão e os colaboradores.',
-              '• Evidências e reporte: reunir provas de conformidade e reportar o estado à gestão e à consultora.',
-              '',
-              'Informação indicativa: confirme com a consultora.',
-            ].join('\n'),
-          }
-        }
-
-        if (latest.includes('prazos legais')) {
-          return {
-            text: 'Estes são os prazos legais máximos a cumprir depois de detetar um incidente significativo:',
-            table: {
-              caption: 'Prazos legais de notificação de um incidente',
-              columns: ['Fase da notificação', 'Entidade destinatária', 'Prazo legal máximo'],
-              rows: [
-                ['Alerta inicial', 'CNCS (MyCiber)', '24 horas após deteção'],
-                ['Notificação de dados', 'CNPD (se aplicável)', '72 horas após deteção'],
-                ['Atualização do incidente', 'CNCS (MyCiber)', '72 horas após deteção'],
-              ],
-            },
-          }
-        }
-
-        if (latest.includes('roadmap')) {
-          return {
-            text: 'Posso ajudar a analisar o roadmap da organização.',
-            notice: organizationId ? 'Resposta associada à organização atual.' : undefined,
-          }
-        }
-
-        return { text: 'Resposta de exemplo devolvida pela API do assistente.' }
+      simulate((): ChatReply => {
+        const reply = answer(organizationId, messages)
+        const id = newId('msg')
+        issued.set(id, { userId: getActor().userId, reply })
+        return { id, ...reply }
       }),
   }
+}
+
+/** Resposta de exemplo do assistente. */
+function answer(organizationId: Id | undefined, messages: ChatMessageInput[]): Omit<ChatReply, 'id'> {
+  const latest = messages.at(-1)?.text.toLowerCase() ?? ''
+
+  const attached = [...(messages.at(-1)?.text ?? '').matchAll(/\[Anexo: (.+?)\]/g)].map((match) => match[1])
+  if (attached.length) {
+    return {
+      text: `Recebi ${attached.length === 1 ? `o documento «${attached[0]}»` : `${attached.length} documentos`}. Neste protótipo ainda não leio o conteúdo, mas fica guardado na conversa e a consultora pode consultá-lo.`,
+    }
+  }
+
+  if (latest.includes('responsabilidades')) {
+    return {
+      text: [
+        'Como responsável pela segurança da informação (CISO), as suas responsabilidades principais na NIS2 são:',
+        '• Governação: propor e manter a política de segurança e levá-la à aprovação da gestão de topo, que supervisiona as medidas.',
+        '• Gestão de risco: identificar ativos e riscos, definir o tratamento e rever periodicamente.',
+        '• Medidas técnicas e organizacionais: controlo de acessos, cópias de segurança, cifragem, continuidade de negócio e gestão de vulnerabilidades.',
+        '• Cadeia de fornecimento: avaliar a segurança dos fornecedores críticos.',
+        '• Incidentes: detetar, responder e coordenar as notificações ao CNCS dentro dos prazos legais.',
+        '• Formação: garantir sensibilização e formação para a gestão e os colaboradores.',
+        '• Evidências e reporte: reunir provas de conformidade e reportar o estado à gestão e à consultora.',
+        '',
+        'Informação indicativa: confirme com a consultora.',
+      ].join('\n'),
+    }
+  }
+
+  if (latest.includes('prazos legais')) {
+    return {
+      text: 'Estes são os prazos legais máximos a cumprir depois de detetar um incidente significativo:',
+      table: {
+        caption: 'Prazos legais de notificação de um incidente',
+        columns: ['Fase da notificação', 'Entidade destinatária', 'Prazo legal máximo'],
+        rows: [
+          ['Alerta inicial', 'CNCS (MyCiber)', '24 horas após deteção'],
+          ['Notificação de dados', 'CNPD (se aplicável)', '72 horas após deteção'],
+          ['Atualização do incidente', 'CNCS (MyCiber)', '72 horas após deteção'],
+        ],
+      },
+    }
+  }
+
+  if (latest.includes('roadmap')) {
+    return {
+      text: 'Posso ajudar a analisar o roadmap da organização.',
+      notice: organizationId ? 'Resposta associada à organização atual.' : undefined,
+    }
+  }
+
+  return { text: 'Resposta de exemplo devolvida pela API do assistente.' }
 }

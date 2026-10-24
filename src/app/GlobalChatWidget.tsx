@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useLocation } from 'react-router'
 import { useChatHistory, useDeleteChatConversation, useReviewChatConversation, useSaveChatConversation, useSendChatMessage } from '../api/queries'
-import type { ChatConversation } from '../api/contracts'
+import { CHAT_REVIEW_PATTERN, type ChatConversation } from '../api/contracts'
 import { useSession } from '../core/session'
 import { ChatWidget } from '../features/chatbot/ChatWidget'
 import { ChatClientContext } from './ChatClientContext'
@@ -76,7 +76,7 @@ function toStoredConversation(conversation: Conversation, scopeKey: string): Cha
     })),
     topic: conversation.topic,
     topicRenamed: conversation.topicRenamed,
-    awaitingReview: conversation.awaitingReview,
+    awaitingReview: conversation.awaitingReview, // indicativo: o servidor decide
     createdAt: conversation.createdAt ?? timestamp,
     updatedAt: timestamp,
   }
@@ -121,7 +121,7 @@ export function GlobalChatWidget() {
     [deleteConversation],
   )
   const handleReview = useCallback((id: string) => reviewConversation(id).then(() => undefined), [reviewConversation])
-  const needsReview = useCallback((text: string) => !isConsultant && /rascunho|política|incidente|notificação|CNPD|relatório/i.test(text), [isConsultant])
+  const needsReview = useCallback((text: string) => !isConsultant && CHAT_REVIEW_PATTERN.test(text), [isConsultant])
 
   return (
     <ChatWidget

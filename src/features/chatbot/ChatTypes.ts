@@ -28,7 +28,7 @@ export type ChatMessage = {
   createdAt?: string
 }
 
-export type BotReplyObject = { text: string; source?: ChatSource; table?: ChatTable; notice?: string }
+export type BotReplyObject = { id?: string; text: string; source?: ChatSource; table?: ChatTable; notice?: string }
 export type BotReply = string | BotReplyObject
 
 export type Suggestion = {
