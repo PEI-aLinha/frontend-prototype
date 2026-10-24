@@ -23,7 +23,7 @@
   --color-signal-soft: #cdedea;
   --color-silver: #747b82;
   --color-silver-soft: #d9dde0;
-  --color-line: #b8bdc1;
+  --color-line: #858b90;
   --color-line-soft: #d9dde0;
   --color-line-strong: #202124;
 
@@ -57,12 +57,28 @@
   html {
     color-scheme: light;
   }
+  /* iOS only: follow the system text size (Dynamic Type). Every size is in rem, so the whole UI scales. */
+  @supports (-webkit-touch-callout: none) {
+    html {
+      /* Via a custom property: -apple-system-body is a system font keyword, not a family, so it needs no generic fallback. */
+      --ios-body-font: -apple-system-body;
+      font: var(--ios-body-font);
+      font-family: var(--font-sans), sans-serif;
+    }
+  }
+  /* Keep the focused field clear of the sticky header (56 px) and the fixed tab bar (WCAG 2.4.11). */
+  @media (width < 48rem) {
+    html {
+      scroll-padding-top: 64px;
+      scroll-padding-bottom: 88px;
+    }
+  }
   body {
     margin: 0;
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -71,6 +87,8 @@
     outline: 2px solid var(--color-signal);
     outline-offset: 2px;
   }
+  /* Headings get focus after navigation only so screen readers announce them; no ring needed. */
+  h1[tabindex='-1']:focus { outline: none; }
   button { cursor: pointer; }
   button:disabled { cursor: not-allowed; }
 }
@@ -83,9 +101,52 @@
   line-height: 1.3;
 }
 
+/* Section heading (h2 inside a page): sits between the 30 px page title and the 11 px eyebrows. */
+@utility section-title {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+/* DataTable cell: links, buttons and fields stay above the row's stretched open button, so they keep their own click. */
+@layer components {
+  .row-cell :is(a, button, input, select, textarea, summary, [tabindex]):not([data-row-open]) {
+    position: relative;
+    z-index: 10;
+  }
+}
+
 @utility title-tight {
   letter-spacing: -0.015em;
   line-height: 1.18;
+}
+
+/*
+ * Windows high contrast / forced colors: backgrounds and box-shadows are dropped, so every state that
+ * relied on them (current page, selected tab/option/toggle, filled buttons, progress) gets a system
+ * colour or a border instead.
+ */
+@media (forced-colors: active) {
+  [aria-current='page'],
+  [role='tab'][aria-selected='true'],
+  [role='radio'][aria-checked='true'],
+  [aria-pressed='true'] {
+    forced-color-adjust: none;
+    background: Highlight;
+    color: HighlightText;
+  }
+  label:has(> input.sr-only:checked) {
+    outline: 3px solid Highlight;
+    outline-offset: -1px;
+  }
+  [role='progressbar'] {
+    border: 1px solid CanvasText;
+  }
+  [role='progressbar'] > * {
+    forced-color-adjust: none;
+    background: Highlight;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

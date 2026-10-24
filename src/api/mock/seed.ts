@@ -1,6 +1,6 @@
 // Demo data (docs/prompt-ativos-riscos.md, "Dados de demonstração"). Dates in October 2026.
 import type {
-  AppNotification, Asset, Consultant, TeamMember, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
+  AppNotification, Asset, ChatConversation, Consultant, TeamMember, CollectedEvidence, DiscoveredAsset, IntegrationConnection, ProviderId, AssetComment, AuditEntry, CriticalService, Organization, PortfolioClient, RemediationAction,
   Risk, RiskActionLink, RoadmapStatus, Task, User, AnswerChoice, QuestionAnswer,
 } from '../contracts'
 
@@ -32,13 +32,14 @@ export interface DemoState {
   portfolio: PortfolioClient[]
   audit: AuditEntry[]
   notifications: AppNotification[]
+  chat: ChatConversation[]
   today: string
   connections: Partial<Record<ProviderId, Omit<IntegrationConnection, 'provider'>>>
   discoveries: DiscoveredAsset[]
   evidence: CollectedEvidence[]
 }
 
-export const STATE_VERSION = 11
+export const STATE_VERSION = 12
 export const ORG_ID = 'org-ca'
 export const ORG_SLUG = 'componentes-agueda'
 export const RUI = 'u-rui'
@@ -49,9 +50,9 @@ export const ASSET_TASK_ID = 'task-ativos'
 const at = (day: number, time = '10:00') => `2026-10-${String(day).padStart(2, '0')}T${time}:00`
 
 const USERS: User[] = [
-  { id: RUI, name: 'Rui Santos', initials: 'RS', role: 'responsavel', title: 'Responsável designado', email: 'rui.santos@compagueda.pt' },
-  { id: PEDRO, name: 'Pedro Almeida', initials: 'PA', role: 'analista', title: 'Analista', email: 'pedro.almeida@tiagueda.pt' },
-  { id: MARTA, name: 'Marta Ferreira', initials: 'MF', role: 'consultor', title: 'Consultora aLinha', email: 'marta.ferreira@alinha.pt' },
+  { id: RUI, name: 'Rui Santos', initials: 'RS', role: 'responsavel', organizationId: ORG_ID, title: 'Responsável designado', email: 'rui.santos@compagueda.pt' },
+  { id: PEDRO, name: 'Pedro Almeida', initials: 'PA', role: 'analista', organizationId: ORG_ID, title: 'Analista', email: 'pedro.almeida@tiagueda.pt' },
+  { id: MARTA, name: 'Marta Ferreira', initials: 'MF', role: 'consultor', organizationId: null, title: 'Consultora aLinha', email: 'marta.ferreira@alinha.pt' },
 ]
 
 const CONSULTANTS: ConsultantRecord[] = [
@@ -258,7 +259,7 @@ function baseAudit(): AuditEntry[] {
 function emptySnapshot(): DemoState {
   return {
     version: STATE_VERSION, consultants: CONSULTANTS, members: [], snapshot: 'c0', users: USERS.filter((u) => u.id === MARTA), organizations: [], services: [], assets: [], tasks: [],
-    risks: [], links: [], comments: [], actions: [], roadmap: {}, answers: {}, portfolio: portfolio('c0'), audit: [], notifications: [], today: '2026-10-09',
+    risks: [], links: [], comments: [], actions: [], roadmap: {}, answers: {}, portfolio: portfolio('c0'), audit: [], notifications: [], chat: [], today: '2026-10-09',
     connections: {}, discoveries: [], evidence: [],
   }
 }
@@ -336,6 +337,7 @@ export function buildSnapshot(snapshot: SnapshotId): DemoState {
     portfolio: portfolio(snapshot),
     audit: entries,
     notifications: seedNotifications(snapshot),
+    chat: [],
     today: snapshot === 'c1' ? '2026-10-13' : '2026-10-16',
     connections: snapshot === 'c3' ? { microsoft365: { status: 'ligado', connectedBy: PEDRO, connectedAt: at(16, '11:00'), lastSyncAt: at(16, '17:30'), secretRef: 'openbao://alinha/org-ca/microsoft365', assignedTo: PEDRO } } : {},
     discoveries: snapshot === 'c3' ? [{ id: 'dsc-m365', provider: 'microsoft365', name: 'Microsoft 365 (tenant compagueda.pt)', type: 'servico_cloud', details: '15 utilizadores · Exchange, SharePoint e Teams', suggestedServiceId: 'svc-faturacao', suggestedCriticality: 'medio', possibleMatchId: 'ast-email', status: 'associado', resolvedAssetId: 'ast-email' }] : [],

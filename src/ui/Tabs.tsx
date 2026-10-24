@@ -16,10 +16,10 @@ export function Tabs({ tabs, value, onValueChange, defaultValue }: { tabs: TabDe
           <RTabs.Trigger
             key={t.value}
             value={t.value}
-            className="-mb-px flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2.5 text-[14px] font-semibold text-ink-soft transition-colors hover:text-ink data-[state=active]:border-brand data-[state=active]:font-bold data-[state=active]:text-brand"
+            className="-mb-px flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2.5 text-[0.875rem] font-semibold text-ink-soft transition-colors hover:text-ink data-[state=active]:border-brand data-[state=active]:font-bold data-[state=active]:text-brand"
           >
             {t.label}
-            {t.count !== undefined && <span className="rounded-full bg-paper-deep px-1.5 text-[11px] font-bold text-ink-soft">{t.count}</span>}
+            {t.count !== undefined && <span className="rounded-full bg-paper-deep px-1.5 text-[0.6875rem] font-bold text-ink-soft">{t.count}</span>}
           </RTabs.Trigger>
         ))}
       </RTabs.List>

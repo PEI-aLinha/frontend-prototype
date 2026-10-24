@@ -1,6 +1,8 @@
 import type { ActionStatus, AssetType, EvidenceStrength, Id, Level, RiskStatus, Role, Treatment, User } from '../api/contracts'
 
 export const CRITICALITY_LABEL: Record<Level, string> = { alto: 'Alta', medio: 'Média', baixo: 'Baixa' }
+/** Maturity scale 1–5 (CMMI-style, as in the glossary: 1 inicial … 5 otimizada). */
+export const MATURITY_LABEL: Record<number, string> = { 1: 'Inicial', 2: 'Básico', 3: 'Definido', 4: 'Gerido', 5: 'Otimizado' }
 export const RISK_LEVEL_LABEL: Record<Level, string> = { alto: 'Alto', medio: 'Médio', baixo: 'Baixo' }
 
 export const ASSET_TYPE_LABEL: Record<AssetType, string> = {

@@ -1,19 +1,21 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ArrowRight, Download, Plus, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Download, FileSpreadsheet, Plus, ShieldCheck } from 'lucide-react'
 import type { Level, Risk } from '../../../api/contracts'
 import { useActions, useAssets, useRiskLinks, useRisks, useRoadmapStatus, useToday, useUsers } from '../../../api/queries'
 import { RISK_MATRIX } from '../../../config/riskMatrix'
 import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
+import { PageTour } from '../../../core/onboarding/PageTour'
 import {
-  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, Eyebrow, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows,
+  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, StatCard, useToast,
   type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
 import { RiskEditDrawer, RiskReadDrawer } from './RiskDrawer'
 import { exportRiskRegister } from './exportRisks'
+import { downloadRiskTemplate } from './riskTemplate'
 
 const levelOf = (p: number, i: number): Level => computeRiskLevel(p, i).level
 
@@ -33,6 +35,7 @@ export function RisksPage() {
   const validator = users.data?.find((u) => u.id === status.data?.validatedBy)?.name
   const [raisedBy, setRaisedBy] = useState<string | null>(null)
   const today = useToday()
+  const toast = useToast()
   const residual = params.get('matriz') === 'residual'
   const showArchived = params.get('arquivados') === '1'
 
@@ -65,24 +68,32 @@ export function RisksPage() {
 
   const columns: ColumnDef<Risk, unknown>[] = editable ? [
     { id: 'level', accessorFn: (r) => computeRiskLevel(r.probability, r.impact).score, header: 'Nível', cell: (c) => <RiskLevelBadge level={levelOf(c.row.original.probability, c.row.original.impact)} />, meta: { width: 110 } },
-    { id: 'threat', accessorFn: (r) => r.threat, header: 'Risco', cell: (c) => <div><p className="font-bold">{c.row.original.threat}</p><p className="text-[13px] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 330 } },
+    { id: 'threat', accessorFn: (r) => r.threat, header: 'Risco', cell: (c) => <div><p className="font-bold">{c.row.original.threat}</p><p className="text-[0.8125rem] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 330 } },
     { id: 'treatment', accessorFn: (r) => r.treatment ?? '', header: 'Tratamento', cell: (c) => (c.row.original.treatment ? <span className="font-semibold">{TREATMENT_LABEL[c.row.original.treatment]}</span> : <span className="text-muted">—</span>), meta: { width: 120 } },
-    { id: 'actions', accessorFn: (r) => linkedActions(r).length, header: 'Ações ligadas', cell: (c) => { const n = linkedActions(c.row.original).length; return n ? <Chip>{n} {n === 1 ? 'ação' : 'ações'}</Chip> : <span className="text-[13px] text-muted">Nenhuma</span> }, meta: { width: 130 } },
+    { id: 'actions', accessorFn: (r) => linkedActions(r).length, header: 'Ações ligadas', cell: (c) => { const n = linkedActions(c.row.original).length; return n ? <Chip>{n} {n === 1 ? 'ação' : 'ações'}</Chip> : <span className="text-[0.8125rem] text-muted">Nenhuma</span> }, meta: { width: 130 } },
     { id: 'status', accessorFn: (r) => r.status, header: 'Estado', cell: (c) => {
       const r = c.row.original
       const late = r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado'
-      return <div><p className="text-[13px] text-ink-soft">{RISK_STATUS_LABEL[r.status]}</p>{r.reviewDate && <p className={late ? 'text-[12px] font-bold text-risk-high-ink' : 'text-[12px] text-muted'}>{late ? 'Revisão atrasada' : `Rever a ${shortDate(r.reviewDate)}`}</p>}</div>
+      return <div><p className="text-[0.8125rem] text-ink-soft">{RISK_STATUS_LABEL[r.status]}</p>{r.reviewDate && <p className={late ? 'text-[0.75rem] font-bold text-risk-high-ink' : 'text-[0.75rem] text-muted'}>{late ? 'Revisão atrasada' : `Rever a ${shortDate(r.reviewDate)}`}</p>}</div>
     }, meta: { width: 150 } },
     { id: 'owner', accessorFn: (r) => owner(r.ownerId)?.name ?? '', header: 'Responsável', cell: (c) => { const u = owner(c.row.original.ownerId); return u ? <Person initials={u.initials} name={u.name} /> : '—' } },
   ] : [
     { id: 'level', accessorFn: (r) => computeRiskLevel(r.probability, r.impact).score, header: 'Nível', cell: (c) => <RiskLevelBadge level={levelOf(c.row.original.probability, c.row.original.impact)} />, meta: { width: 110 } },
-    { id: 'plain', accessorFn: (r) => r.threat, header: 'O que pode acontecer', cell: (c) => <div><p className="font-bold">{c.row.original.plainLanguage ?? c.row.original.threat}</p><p className="text-[13px] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 460 } },
-    { id: 'doing', accessorFn: (r) => r.treatment ?? '', header: 'O que está a ser feito', cell: (c) => { const r = c.row.original; const n = linkedActions(r).length; return <span className="text-[13px]">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Por decidir'}{n ? ` · ${n} ${n === 1 ? 'ação' : 'ações'} no roadmap` : ''}</span> } },
+    { id: 'plain', accessorFn: (r) => r.threat, header: 'O que pode acontecer', cell: (c) => <div><p className="font-bold">{c.row.original.plainLanguage ?? c.row.original.threat}</p><p className="text-[0.8125rem] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 460 } },
+    { id: 'doing', accessorFn: (r) => r.treatment ?? '', header: 'O que está a ser feito', cell: (c) => { const r = c.row.original; const n = linkedActions(r).length; return <span className="text-[0.8125rem]">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Por decidir'}{n ? ` · ${n} ${n === 1 ? 'ação' : 'ações'} no roadmap` : ''}</span> } },
   ]
 
   const selected = all.find((r) => r.id === params.get('risco')) ?? null
   const isNew = params.get('novo') === '1'
   const counts = (l: Level) => all.filter((r) => levelOf(pos(r).p, pos(r).i) === l).length
+
+  const undecided = all.filter((r) => !r.treatment && levelOf(r.probability, r.impact) === 'alto')
+  const nextAction = editable && ready && undecided.length > 0 && (
+    <NextAction
+      title={`Decida o tratamento de ${undecided.length} ${undecided.length === 1 ? 'risco alto' : 'riscos altos'}`}
+      text={`Comece por "${undecided[0].threat}". Ao mitigar, ligue ações do roadmap: sobem de prioridade.`}
+      cta="Abrir risco" onClick={() => update({ risco: undecided[0].id })} />
+  )
 
   return (
     <>
@@ -90,19 +101,28 @@ export function RisksPage() {
         eyebrow={org.name}
         title={editable ? 'Registo de riscos' : 'Riscos'}
         subtitle={editable ? 'Segundo a ISO/IEC 27005. O nível é calculado: probabilidade × impacto.' : 'Os riscos que a consultora identificou e o que está a ser feito para os reduzir.'}
+        help={<PageTour id={editable ? 'riscos-consultor' : 'riscos-cliente'} ready={!!ready} />}
         actions={<>
+<<<<<<< HEAD
           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! }, editable ? 'consultant' : 'client', org.slug)}>Exportar registo</Button>}
           {can('create', 'risk') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
+=======
+          {editable && <Button variant="secondary" data-tour="risk-template" icon={<FileSpreadsheet className="size-4" aria-hidden />} onClick={() => downloadRiskTemplate().catch(() => toast.show('Não foi possível gerar o template. Tente outra vez.', 'error'))}>Template Excel</Button>}
+          {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! })}>Exportar registo</Button>}
+          {/* With no risks yet, the empty state's button is the primary action; this one steps back. */}
+          {can('create', 'risk') && <Button variant={ready && all.length === 0 ? 'secondary' : 'primary'} data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
+>>>>>>> origin/dev
         </>}
       />
 
       {raisedBy && (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-brand/30 bg-signal-soft px-4 py-3 animate-pop-in" role="status">
           <ShieldCheck className="size-5 text-brand" aria-hidden />
-          <p className="flex-1 text-[14px] font-semibold text-brand">As ações ligadas ao risco "{raisedBy}" subiram no roadmap.</p>
-          <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[14px] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
+          <p className="flex-1 text-[0.875rem] font-semibold text-brand">As ações ligadas ao risco "{raisedBy}" subiram no roadmap.</p>
+          <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[0.875rem] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
         </div>
       )}
+<<<<<<< HEAD
       {!editable && <Note>Registo validado pela consultora{validator ? ` ${validator}` : ''}. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
       {editable ? (
         <Explainer id="risks-consultant" intro="O registo de riscos segue o método da ISO/IEC 27005 em três passos. O resultado prioriza o roadmap do cliente."
@@ -120,36 +140,43 @@ export function RisksPage() {
           ]} />
       )}
 
+=======
+>>>>>>> origin/dev
       {error ? <ErrorState error={error} onRetry={() => { risks.refetch(); links.refetch(); assets.refetch(); actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
         <>
+          {nextAction}
+          {!editable && <Note>Registo validado pela consultora Marta Ferreira. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
+
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <Card className="rounded-[16px] px-6 py-5">
-              <div className="mb-2 flex items-center justify-between">
-                <Eyebrow><Term k="matriz">Matriz de risco</Term> · {RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</Eyebrow>
+            <Card as="section" aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5" data-tour="risk-matrix">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
+                <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-[0.6875rem] font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
                 {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
               </div>
               <div className="mb-3 flex flex-wrap items-center gap-3">
                 <Segmented ariaLabel="Mostrar risco" value={residual ? 'residual' : 'inerente'} onChange={(v) => update({ matriz: v === 'residual' ? 'residual' : null, p: null, i: null })}
                   options={[{ value: 'inerente', label: 'Risco atual' }, { value: 'residual', label: 'Depois das ações' }]} />
-                <span className="text-[12px] text-muted">{residual ? <>Mostra o <Term k="riscoResidual">risco residual</Term> previsto. Riscos sem previsão ficam na posição atual.</> : 'Mostra o risco hoje, antes das ações.'}</span>
+                <span className="text-[0.75rem] text-muted">{residual ? <>Mostra o <Term k="riscoResidual">risco residual</Term> previsto. Riscos sem previsão ficam na posição atual.</> : 'Mostra o risco hoje, antes das ações.'}</span>
               </div>
-              <p className="mb-3 text-[13px] text-ink-soft">
+              <p className="mb-3 text-[0.8125rem] text-ink-soft">
                 Cada quadrado conta os riscos com essa <Term k="probabilidade">probabilidade</Term> (linhas) e esse <Term k="impacto">impacto</Term> (colunas). Quanto mais acima e à direita, mais grave. Clique num quadrado para filtrar a tabela.
               </p>
               <RiskMatrix probability={RISK_MATRIX.probability} impact={RISK_MATRIX.impact} levelOf={levelOf}
                 count={(p, i) => all.filter((r) => pos(r).p === p && pos(r).i === i).length}
                 selected={cell} onSelect={(c) => update({ p: c ? String(c.probability) : null, i: c ? String(c.impact) : null })} compact />
             </Card>
-            <div className="grid grid-cols-3 gap-3 lg:grid-cols-1">
+            <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1" data-tour="risk-summary">
+              <h2 id="risk-summary-title" className="sr-only">Resumo por nível{residual ? ' depois das ações' : ''}</h2>
               {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
-                <Card key={l} className="flex items-center justify-between max-md:px-3.5 max-md:py-3">
-                  <div><Eyebrow>Risco {RISK_LEVEL_LABEL[l].toLowerCase()}</Eyebrow><p className="mt-1 text-[18px] font-extrabold">{counts(l)}</p></div>
-                  <span className="max-md:hidden"><RiskLevelBadge level={l} /></span>
-                </Card>
+                <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)} emphasis={l === 'alto' && counts(l) > 0} tone={l === 'alto' && counts(l) > 0 ? 'alert' : 'default'}
+                  className="max-md:px-3.5 max-md:py-3"
+                  accent={<span className="max-md:hidden"><RiskLevelBadge level={l} /></span>} />
               ))}
-            </div>
+            </section>
           </div>
 
+          <section aria-labelledby="risk-table-title" className="flex flex-col gap-3" data-tour="risk-table">
+          <h2 id="risk-table-title" className="section-title">{editable ? 'Riscos registados' : 'O que pode correr mal'} <span className="font-semibold text-ink-soft">· {visible.length}</span></h2>
           <DataTable
             caption="Registo de riscos"
             data={visible}
@@ -162,20 +189,21 @@ export function RisksPage() {
               <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{editable ? r.threat : r.plainLanguage ?? r.threat}</p>
-                  <p className="text-[13px] text-ink-soft">{assetName(r.assetId)}</p>
-                  <p className="mt-1 text-[12px] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} ações</p>
-                  {editable && r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado' && <p className="text-[12px] font-bold text-risk-high-ink">Revisão atrasada</p>}
+                  <p className="text-[0.8125rem] text-ink-soft">{assetName(r.assetId)}</p>
+                  <p className="mt-1 text-[0.75rem] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} ações</p>
+                  {editable && r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado' && <p className="text-[0.75rem] font-bold text-risk-high-ink">Revisão atrasada</p>}
                 </div>
                 <RiskLevelBadge level={levelOf(r.probability, r.impact)} />
               </div>
             )}
             empty={all.length === 0
               ? <EmptyState className="m-4" title="Ainda não há riscos registados" action={can('create', 'risk') && <Button onClick={() => update({ novo: '1' })}>Registar o primeiro risco</Button>}>Comece pelos ativos de criticidade alta.</EmptyState>
-              : <p className="px-5 py-8 text-center text-[14px] text-ink-soft">Nenhum risco nesta célula da matriz.</p>}
+              : <p className="px-5 py-8 text-center text-[0.875rem] text-ink-soft">Nenhum risco nesta célula da matriz.</p>}
           />
-          {cell && <p className="-mt-4 text-[13px] text-ink-soft">A mostrar {visible.length} de {all.length} riscos (filtro da matriz).</p>}
+          </section>
+          {cell && <p className="-mt-4 text-[0.8125rem] text-ink-soft">A mostrar {visible.length} de {all.length} riscos (filtro da matriz).</p>}
           {editable && archived.length > 0 && (
-            <label className="-mt-3 flex items-center gap-2 text-[13px] text-ink-soft">
+            <label className="-mt-3 flex items-center gap-2 text-[0.8125rem] text-ink-soft">
               <input type="checkbox" className="size-4 accent-[var(--color-brand)]" checked={showArchived} onChange={(e) => update({ arquivados: e.target.checked ? '1' : null })} />
               Mostrar riscos arquivados ({archived.length})
             </label>

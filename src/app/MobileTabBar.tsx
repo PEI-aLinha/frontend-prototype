@@ -7,7 +7,7 @@ import { navActive, type NavItem } from './AppShell'
 /** More than this and the last slot becomes "Mais" (design-spec: the tab bar keeps every navigation entry). */
 const MAX_TABS = 5
 
-const tabClass = (isActive: boolean) => cn('flex flex-1 flex-col items-center gap-0.5 py-1 text-[11px]', isActive ? 'font-bold text-brand' : 'font-semibold text-ink-soft')
+const tabClass = (isActive: boolean) => cn('flex flex-1 flex-col items-center gap-0.5 py-1 text-[0.6875rem]', isActive ? 'font-bold text-brand' : 'font-semibold text-ink-soft')
 
 function TabFace({ icon: Icon, label, isActive }: { icon: NavItem['icon']; label: string; isActive: boolean }) {
   return (
@@ -45,7 +45,7 @@ export function MobileTabBar({ items }: { items: NavItem[] }) {
               {more.map((item) => (
                 <li key={item.to}>
                   <Link to={item.to} onClick={() => setMoreOpen(false)} aria-current={navActive(item, pathname) ? 'page' : undefined}
-                    className={cn('flex h-12 items-center gap-3 rounded-[12px] px-3 text-[15px]', navActive(item, pathname) ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink hover:bg-paper-soft')}>
+                    className={cn('flex h-12 items-center gap-3 rounded-[12px] px-3 text-[0.9375rem]', navActive(item, pathname) ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink hover:bg-paper-soft')}>
                     <item.icon className="size-5" aria-hidden />
                     {item.label}
                   </Link>

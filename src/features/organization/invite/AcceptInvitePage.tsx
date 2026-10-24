@@ -55,9 +55,9 @@ export function AcceptInvitePage() {
       <>
         <Stepper steps={['Conta', 'Segurança']} current={step} label="Passos para aceitar o convite" />
         <header className="flex flex-col gap-2">
-          <Eyebrow className="text-[12px]">Convite de {inv.invitedByName} · {shortDate(inv.invitedAt)}</Eyebrow>
-          <h1 className="text-[30px] font-extrabold title-tight">{step === 0 ? `Junte-se à equipa da ${inv.organizationName}` : 'Proteja a sua conta'}</h1>
-          {step === 0 && <p className="text-[16px] text-ink-soft">Como analista, vai ver só as tarefas que lhe forem atribuídas.</p>}
+          <Eyebrow className="text-[0.75rem]">Convite de {inv.invitedByName} · <time dateTime={inv.invitedAt}>{shortDate(inv.invitedAt)}</time></Eyebrow>
+          <h1 className="text-[1.875rem] font-extrabold title-tight">{step === 0 ? `Junte-se à equipa da ${inv.organizationName}` : 'Proteja a sua conta'}</h1>
+          {step === 0 && <p className="text-[1rem] text-ink-soft">Como analista, vai ver só as tarefas que lhe forem atribuídas.</p>}
         </header>
 
         {step === 0 ? (
@@ -80,24 +80,24 @@ export function AcceptInvitePage() {
                   </Field>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="flex cursor-pointer items-start gap-3 text-[14px] text-ink">
+                  <label className="flex cursor-pointer items-start gap-3 text-[0.875rem] text-ink">
                     <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} aria-invalid={!!errors.terms || undefined} aria-describedby={errors.terms ? 'invite-terms-error' : undefined} className="mt-[3px] size-[18px] shrink-0 accent-brand" />
                     <span>Li e aceito os termos de utilização e a política de privacidade.</span>
                   </label>
-                  {errors.terms && <p id="invite-terms-error" role="alert" className="text-[13px] font-semibold text-danger">{errors.terms}</p>}
+                  {errors.terms && <p id="invite-terms-error" role="alert" className="text-[0.8125rem] font-semibold text-danger">{errors.terms}</p>}
                 </div>
                 <Button type="submit" block>Continuar</Button>
               </form>
             </Card>
             <div className="flex flex-col items-center gap-2 text-center">
               <Button variant="link" size="sm" onClick={() => { const example = examplePassword(); setPassword(example); setConfirm(example); setTerms(true); setSubmitted(false) }}>Preencher com o exemplo</Button>
-              <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
+              <p className="text-[0.75rem] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
             </div>
           </>
         ) : (
           <>
             <MfaSetup email={inv.email} submitLabel="Ativar e entrar" onVerified={finish} />
-            {accept.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{accept.error.message}</p>}
+            {accept.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">{accept.error.message}</p>}
             <div className="-mt-4 flex justify-center">
               <Button variant="link" size="sm" className="!text-ink-soft" onClick={() => setStep(0)}>Voltar ao passo anterior</Button>
             </div>
@@ -109,10 +109,12 @@ export function AcceptInvitePage() {
 
   return (
     <div className="min-h-dvh bg-paper-soft px-5 pb-28 pt-10 max-md:pt-6">
-      <main id="conteudo" className="mx-auto flex max-w-[760px] flex-col gap-7">
-        <Logo />
-        {content}
-      </main>
+      <div className="mx-auto flex max-w-[760px] flex-col gap-7">
+        <header><Logo /></header>
+        <main id="conteudo" className="flex flex-col gap-7">
+          {content}
+        </main>
+      </div>
     </div>
   )
 }

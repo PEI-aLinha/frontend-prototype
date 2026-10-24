@@ -11,10 +11,12 @@ npm run build        # tsc + build de produção
 npm run lint
 npm test             # Vitest (regra de risco, permissões, roadmap, contraste, API mock)
 npx playwright install chromium
-npm run test:e2e     # Playwright: 3 cenários + acessibilidade (axe), desktop 1440×900 e mobile 390×844
+npm run test:e2e     # Playwright: 3 cenários + acessibilidade (axe) + assistente, desktop 1440×900 e mobile 390×844
 ```
 
 Os screenshots do Playwright ficam em `e2e/__screenshots__/{desktop,mobile}/`.
+
+> Se, com muitos workers, aparecerem falhas aleatórias por timeout (páginas que demoram a renderizar), corra com menos paralelismo: `npx playwright test --workers=3`. Os mesmos testes passam quando corridos com menos carga.
 
 ## Trocar de persona
 
@@ -76,6 +78,53 @@ A ordem do roadmap e o histórico abrem por parâmetro de URL, por isso esses es
 
 Design system: `/_design`.
 
+## Assistente de IA (US18 · US03 · US06)
+
+| User story | Persona | Onde | Estado |
+|---|---|---|---|
+| US18 Pedir rascunho de política ao assistente | Rui | `/org/componentes-agueda/inicio` → botão "Pergunta à Alinha" → "Criar rascunho da política de segurança" | Implementada (respostas simuladas) |
+| US03 Editar e aprovar rascunho de política | Marta | Notificação "Resposta do assistente para rever" → `/clientes/componentes-agueda/visao-geral?chat=<id>` → responder → **Marcar como revisto** | Implementada |
+| US06 Preparar notificações de incidente com IA | Marta | Assistente → **Nova conversa** | **Parcial**: a Marta já tem conversas próprias em que é o "user" e a IA responde (sem ir para revisão), mas a resposta ainda é o texto de exemplo; falta gerar os rascunhos de notificação |
+
+Fluxo de demonstração (US18 → US03): o Rui pede um rascunho; a conversa fica **à espera de aprovação** e a Marta é notificada; a Marta responde e marca como revisto; o Rui recebe a notificação e vê a resposta rotulada **Consultora** (as da IA aparecem como **Assistente IA**). Depois da revisão, a Marta mantém a conversa em só leitura até ao momento da revisão. Os pedidos que mencionam rascunho, política, incidente, notificação, CNPD ou relatório vão para revisão (regra provisória em `GlobalChatWidget`; não se aplica à consultora).
+
+### Conversas da consultora: próprias vs. de clientes
+
+Cada conversa guarda o seu dono (`ownerId`, o `userId` do servidor). O widget compara-o com o utilizador atual (`senderId`):
+
+- **Conversa de um cliente** (`canReview` e `ownerId` ≠ utilizador): modo "a rever". Aparece o aviso "Está a ajudar um cliente", o campo "Escreva a sua resposta ao cliente…", o botão **Marcar como revisto**, e o que a Marta escreve é enviado como resposta da **Consultora** (lado do assistente, sem chamar a IA).
+- **Conversa própria** (nova ou com o seu `ownerId`): comportamento normal. A Marta é o "user", a IA responde e a conversa nunca fica à espera de revisão.
+
+### Perguntas pré-feitas do Rui
+
+Definidas em `PERSONA_SUGGESTIONS` (`src/app/GlobalChatWidget.tsx`); as respostas são simuladas em `src/api/mock/chatMock.ts`.
+
+| Pergunta | Resposta | Revisão |
+|---|---|---|
+| Criar rascunho da política de segurança | Resposta de exemplo | Sim (fica à espera da consultora) |
+| Quais são as minhas responsabilidades? | Texto com as responsabilidades de um CISO na NIS2 (governação, gestão de risco, medidas técnicas, cadeia de fornecimento, incidentes, formação, evidências), marcado como indicativo | Não |
+| Quais são os prazos legais se sofrermos um ciberataque? | **Tabela** (abaixo) | Não |
+
+Resposta em tabela:
+
+| Fase da notificação | Entidade destinatária | Prazo legal máximo |
+|---|---|---|
+| Alerta inicial | CNCS (MyCiber) | 24 horas após deteção |
+| Notificação de dados | CNPD (se aplicável) | 72 horas após deteção |
+| Atualização do incidente | CNCS (MyCiber) | 72 horas após deteção |
+
+Notas:
+- A tabela chega ao frontend como dado estruturado, não como texto: `table: { caption?, columns, rows }` (tipo `ChatTable`), na mensagem do assistente. O `ChatThread` desenha-a como `<table>` real, com `<caption>` (nome acessível) e `<th scope>`; o texto das células quebra linha, por isso não precisa de scroll no painel pequeno.
+- A tabela segue o formato pedido e **não inclui o relatório final** previsto na NIS2; confirmar o conteúdo e os prazos com a consultora/fonte legal antes de usar fora da demonstração.
+- Teste E2E: "Rui pergunta pelos prazos legais e recebe uma tabela" (`e2e/chatbot.spec.ts`).
+
+### Modo expandido (ecrã inteiro)
+
+- O botão de expandir no cabeçalho do assistente passa o painel a **ecrã inteiro** (`fixed inset-0`), com as conversas na barra lateral esquerda. Em ecrãs pequenos volta aos separadores. Esc ou **Minimizar** fecham-no; **Reduzir** volta ao painel normal.
+- Na barra lateral da app (desktop) há o botão **Assistente IA**, que abre o assistente **já em ecrã inteiro**. O botão flutuante continua a abrir o painel pequeno.
+- Qualquer parte da app pode abrir o assistente com `openChat()` ou `openExpandedChat()` (`src/features/chatbot/chatControl.ts`): é um evento de janela, por isso não precisa de contexto nem de props.
+- Em mobile o botão flutuante fica acima do seletor de persona e da tab bar, e o painel aberto fica por cima de ambos.
+
 ## Arquitetura
 
 ```
@@ -87,6 +136,8 @@ src/
 ├── features/
 │   ├── assets/     inventário, serviços, tarefas do analista, registo de riscos (plugin Riscos e Ativos)
 │   ├── assessment/ roadmap mínimo e prioritizeRoadmap (plugin Avaliação)
+│   ├── assessment/ também o resumo da avaliação (ecrã do Rui)
+│   ├── chatbot/    assistente flutuante, conversas por organização, fluxo de revisão pela consultora (US18/US03), respostas com tabela, modo ecrã inteiro e chatControl
 │   ├── assessment/ também o questionário do Rui: resumo, secções, perguntas e delegação ao analista
 │   ├── integrations/ catálogo só de leitura, sugestões de ativos, evidências (RF37)
 │   ├── home/  portfolio/  tasks/  team/
@@ -117,13 +168,9 @@ src/
   - Notificações (`notification`), ligações de integração (`integration_connection` com referência ao segredo no OpenBao), `discovered_asset` e `collected_evidence`.
 - **Desvio visual:** o texto "✓ Feito" e outros textos a `signal` (#168C80) não passavam AA sobre branco; passaram a `brand`, com o visto em `signal`.
 - **Tokens de risco novos:** `risk-low/medium/high` (+ `-ink`), sóbrios e com contraste AA testado; os níveis têm sempre ícone e texto.
-- **D5 — Avaliação: desvios aos mockups.**
-  - **Fluxo contínuo.** As perguntas seguem-se umas às outras ("Pergunta 23 de 41", barra de progresso global, "← Anterior" / "Seguinte →" passam de uma secção para a seguinte). As páginas de secção ficam como índice, porque o catálogo tem 41 perguntas em 6 secções.
-  - **Respostas fixas.** Os mockups têm opções próprias por pergunta; aqui todas usam Sim / Em parte / Não / Não sei, porque o contrato `QuestionAnswer` é fixo.
-  - **Delegar num modal com prazo** (US14), em vez da lista de analistas dentro do cartão.
-  - **Ajuda da IA.** A explicação, o exemplo e o "porque é importante" são texto fixo no mock, mas representam a ajuda que a IA pré-gera para cada pergunta (como `task.ai_help`). Por isso levam o rótulo "Gerado por IA · apenas informativo".
-- **Avaliação: `STATE_VERSION`.** Esta branch e `feat/chatbot` sobem ambas para 11: a que entrar em segundo na `dev` tem de passar para 12.
+- **D5 — Conversas do assistente.** Novas entidades `chat_conversation` (com `scope_key`, `topic`, `awaiting_review` e `reviewed_message_count`) e `chat_message` (com `role`, `author_id`, `source`). A consultora só vê conversas de clientes à espera de revisão ou já revistas, e só até ao momento da revisão; esta regra tem de ser aplicada no servidor. A consultora vê sempre as **suas próprias** conversas completas, e só o dono de uma conversa a pode apagar; o servidor deve devolver o `user_id` (dono) de cada conversa, porque é com ele que o frontend distingue "a rever" de "própria".
+- **D6 — Respostas do assistente com tabela.** `chat_message` ganha um campo opcional `table` (JSON: `caption`, `columns`, `rows`), e `ChatReply` devolve o mesmo formato. O backend/IA deve responder com dados estruturados para o frontend os desenhar como tabela acessível, em vez de markdown ou texto livre.
 
 ## Fora do âmbito
 
-Backend real, Keycloak/MFA, envio real de emails, integração com CNCS/MyCiber, ligação real a fornecedores (o consentimento é simulado), IA nova (a ajuda da pergunta técnica é texto pré-gerado e rotulado). As 41 perguntas da Avaliação são um catálogo de exemplo (`src/api/mock/assessmentCatalog.json`), não o questionário oficial.
+Backend real, Keycloak/MFA, envio real de emails, integração com CNCS/MyCiber, ligação real a fornecedores (o consentimento é simulado), IA real (as respostas do assistente, incluindo a tabela de prazos, e a ajuda da pergunta técnica são texto simulado e rotulado), geração de notificações de incidente com IA (US06), questionário completo da Avaliação (só o resumo e a pergunta delegada).

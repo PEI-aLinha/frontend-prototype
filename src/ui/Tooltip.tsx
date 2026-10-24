@@ -6,7 +6,7 @@ export function Tooltip({ content, children }: { content: ReactNode; children: R
     <RTooltip.Root delayDuration={250}>
       <RTooltip.Trigger asChild>{children}</RTooltip.Trigger>
       <RTooltip.Portal>
-        <RTooltip.Content sideOffset={6} className="z-[95] max-w-[280px] rounded-[8px] bg-ink px-3 py-2 text-[12px] font-semibold text-white shadow-lg animate-fade-in">
+        <RTooltip.Content sideOffset={6} className="z-[95] max-w-[280px] rounded-[8px] bg-ink px-3 py-2 text-[0.75rem] font-semibold text-white shadow-lg animate-fade-in">
           {content}
           <RTooltip.Arrow className="fill-ink" />
         </RTooltip.Content>

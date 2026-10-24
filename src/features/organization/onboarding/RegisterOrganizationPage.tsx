@@ -1,9 +1,9 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { Link, Navigate, useNavigate } from 'react-router'
 import { Info, Save } from 'lucide-react'
 import { useRegisterOrganization } from '../../../api/queries'
 import { useSession } from '../../../core/session'
-import { Button, Field, Note, Select, TextArea, TextInput, Tooltip, useToast } from '../../../ui'
+import { Button, Field, Note, Select, TextArea, TextInput, Tooltip, buttonClass, useToast } from '../../../ui'
 import { StepBadge } from './OnboardingLayout'
 import { SECTORS, sectorById } from '../sectors'
 import { EMPTY_ORGANIZATION, EXAMPLE_ORGANIZATION, toOrganizationInput, validateOrganization, type OrganizationForm } from './organizationForm'
@@ -22,14 +22,16 @@ function WithHelp({ label, help }: { label: string; help: string }) {
 }
 
 function Section({ title, description, help, children }: { title: string; description?: string; help?: string; children: ReactNode }) {
+  const descriptionId = useId()
+  // The legend must be the fieldset's first child to name the group; the divider lives on the wrapper so it does not cut through the legend.
   return (
-    <fieldset className="flex min-w-0 flex-col gap-4 border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
-      <div className="flex flex-col gap-1">
-        <legend className="text-[16px] font-bold">{help ? <WithHelp label={title} help={help} /> : title}</legend>
-        {description && <p className="text-[13px] text-ink-soft">{description}</p>}
-      </div>
-      {children}
-    </fieldset>
+    <div className="border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
+      <fieldset aria-describedby={description ? descriptionId : undefined} className="flex min-w-0 flex-col gap-4">
+        <legend className={description ? 'mb-1 text-[1rem] font-bold' : 'mb-4 text-[1rem] font-bold'}>{help ? <WithHelp label={title} help={help} /> : title}</legend>
+        {description && <p id={descriptionId} className="text-[0.8125rem] text-ink-soft">{description}</p>}
+        {children}
+      </fieldset>
+    </div>
   )
 }
 
@@ -80,16 +82,17 @@ export function RegisterOrganizationPage() {
     toast.show('Guardado. Pode fechar a página e continuar mais tarde a partir daqui.')
   }
 
-  const text = (key: keyof OrganizationForm, extra: Partial<Parameters<typeof TextInput>[0]> = {}) => (p: { id: string; describedBy?: string; invalid: boolean }) => (
-    <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} value={form[key]} onChange={(e) => set(key, e.target.value)} {...extra} />
+  const text = (key: keyof OrganizationForm, extra: Partial<Parameters<typeof TextInput>[0]> = {}) => (p: { id: string; describedBy?: string; invalid: boolean; required: boolean }) => (
+    <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} aria-required={p.required} value={form[key]} onChange={(e) => set(key, e.target.value)} {...extra} />
   )
 
   return (
     <>
       <header className="flex flex-col gap-3">
         <StepBadge>Passo 3 de 3</StepBadge>
-        <h1 className="text-[30px] font-extrabold title-tight">Registe a sua organização</h1>
-        <p className="text-[16px] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
+        <h1 className="text-[1.875rem] font-extrabold title-tight">Registe a sua organização</h1>
+        <p className="text-[1rem] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
+        <p className="text-[0.875rem] text-ink-soft">Todos os campos são obrigatórios.</p>
       </header>
 
       {restored && organization && <Note>Retomámos o registo que deixou a meio. Confirme os dados e termine quando quiser.</Note>}
@@ -106,17 +109,17 @@ export function RegisterOrganizationPage() {
           <Section title="Atividade">
             <div className={row}>
               <Field label="Setor" error={errors.sector}>
-                {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={form.sector} placeholder="Escolher o setor…" onChange={(v) => setForm((f) => ({ ...f, sector: v, subsector: '' }))} options={SECTORS.map((s) => ({ value: s.id, label: s.label }))} />}
+                {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} required={p.required} value={form.sector} placeholder="Escolher o setor…" onChange={(v) => setForm((f) => ({ ...f, sector: v, subsector: '' }))} options={SECTORS.map((s) => ({ value: s.id, label: s.label }))} />}
               </Field>
               <Field label="Subsetor" hint={sector && sector.subsectors.length === 0 ? 'Este setor não tem subsetores.' : undefined} error={errors.subsector}>
-                {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={form.subsector} placeholder={sector ? (sector.subsectors.length ? 'Escolher o subsetor…' : 'Não se aplica') : 'Escolha primeiro o setor'} disabled={!sector || sector.subsectors.length === 0} onChange={(v) => set('subsector', v)} options={(sector?.subsectors ?? []).map((s) => ({ value: s.id, label: s.label }))} />}
+                {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} required={!!sector && sector.subsectors.length > 0} value={form.subsector} placeholder={sector ? (sector.subsectors.length ? 'Escolher o subsetor…' : 'Não se aplica') : 'Escolha primeiro o setor'} disabled={!sector || sector.subsectors.length === 0} onChange={(v) => set('subsector', v)} options={(sector?.subsectors ?? []).map((s) => ({ value: s.id, label: s.label }))} />}
               </Field>
             </div>
             <Field
               label={<WithHelp label="Serviços prestados" help="O que a empresa faz ou vende, e a quem." />}
               error={errors.services}
             >
-              {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} value={form.services} onChange={(e) => set('services', e.target.value)} placeholder="Ex.: Fabrico de componentes para a indústria automóvel." />}
+              {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} aria-required={p.required} value={form.services} onChange={(e) => set('services', e.target.value)} placeholder="Ex.: Fabrico de componentes para a indústria automóvel." />}
             </Field>
           </Section>
 
@@ -126,8 +129,8 @@ export function RegisterOrganizationPage() {
               <Field label={<WithHelp label="Volume de negócios anual" help="Em euros, sem cêntimos." />} error={errors.turnover}>
                 {(p) => (
                   <div className="relative">
-                    <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} inputMode="numeric" value={form.turnover} onChange={(e) => set('turnover', e.target.value)} placeholder="Ex.: 18 500 000" className="pr-10" />
-                    <span aria-hidden className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[15px] text-muted">€</span>
+                    <TextInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} aria-required={p.required} inputMode="numeric" value={form.turnover} onChange={(e) => set('turnover', e.target.value)} placeholder="Ex.: 18 500 000" className="pr-10" />
+                    <span aria-hidden className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[0.9375rem] text-muted">€</span>
                   </div>
                 )}
               </Field>
@@ -158,7 +161,7 @@ export function RegisterOrganizationPage() {
           </Section>
 
           {register.isError && (
-            <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">
+            <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">
               <span>{register.error.message}</span>
               {/email/i.test(register.error.message) && <Button variant="link" size="sm" onClick={() => navigate('/registo/conta')}>Voltar ao primeiro passo</Button>}
             </div>
@@ -171,8 +174,8 @@ export function RegisterOrganizationPage() {
 
       <div className="flex flex-col items-start gap-1">
         <Button variant="link" size="sm" onClick={() => { setForm(EXAMPLE_ORGANIZATION); setSubmitted(false) }}>Preencher com o exemplo da Componentes Águeda</Button>
-        <p className="text-[12px] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
-        <Button variant="link" size="sm" className="mt-2 !text-ink-soft" onClick={() => navigate('/registo/seguranca')}>Voltar ao passo anterior</Button>
+        <p className="text-[0.75rem] text-muted">Só existe no protótipo, para acelerar a demonstração.</p>
+        <Link to="/registo/seguranca" className={buttonClass({ variant: 'link', size: 'sm', className: 'mt-2 !text-ink-soft' })}>Voltar ao passo anterior</Link>
       </div>
     </>
   )

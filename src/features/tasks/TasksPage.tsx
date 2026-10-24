@@ -4,7 +4,7 @@ import type { Task } from '../../api/contracts'
 import { useAssets, useCompleteTask, useTasks, useToday, useUsers } from '../../api/queries'
 import { dueStatus, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, Chip, EmptyState, ErrorState, Explainer, Eyebrow, PageHeader, SkeletonRows, TaskCard, Tooltip, cn, useToast } from '../../ui'
+import { Button, Card, Chip, EmptyState, ErrorState, Eyebrow, PageHeader, SkeletonRows, TaskCard, Tooltip, cn, useToast } from '../../ui'
 import { useSession } from '../../core/session'
 
 const KIND_LABEL: Record<Task['kind'], string> = { ativos: 'Ativos', pergunta: 'Pergunta técnica', evidencia: 'Evidência', tarefa: 'Tarefa', integracao: 'Integração' }
@@ -62,12 +62,6 @@ export function TasksPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title={`Olá, ${persona.firstName}`} subtitle={subtitle} />
-      <Explainer id="tasks-analyst"
-        steps={[
-          { title: 'Escolha a tarefa', text: 'As mais urgentes aparecem primeiro, com o prazo a verde.' },
-          { title: 'Faça o pedido', text: 'Responder a uma pergunta técnica ou registar os ativos que conhece.' },
-          { title: 'Conclua', text: 'Ao concluir, o Responsável designado é notificado e a tarefa passa para "Concluídas".' },
-        ]} />
       <div className="flex gap-7 max-lg:flex-col">
         <div className="flex min-w-0 flex-1 flex-col gap-3.5">
           {tasks.isError ? <ErrorState error={tasks.error} onRetry={() => tasks.refetch()} /> : !tasks.data ? <SkeletonRows rows={3} /> : (
@@ -77,9 +71,9 @@ export function TasksPage() {
                   Quando o Responsável designado lhe atribuir uma pergunta técnica, uma evidência ou outra tarefa, aparece aqui com o prazo. Também recebe um email.
                 </EmptyState>
               )}
-              {open.length > 0 && <h2 className="text-[16px] font-bold">Por fazer</h2>}
+              {open.length > 0 && <h2 className="section-title">Por fazer</h2>}
               {open.map(card)}
-              {done.length > 0 && <h2 className={cn('text-[16px] font-bold', open.length > 0 && 'mt-3')}>Concluídas</h2>}
+              {done.length > 0 && <h2 className={cn('section-title', open.length > 0 && 'mt-3')}>Concluídas</h2>}
               {done.map(card)}
             </>
           )}
@@ -91,7 +85,7 @@ export function TasksPage() {
               <span className={cn('mt-px grid size-5 shrink-0 place-items-center rounded-full', on ? 'bg-signal-soft text-brand' : 'bg-paper-deep text-ink-soft')}>
                 {on ? <Check className="size-3" strokeWidth={3} aria-label="Sim" /> : <Minus className="size-3" strokeWidth={3} aria-label="Não" />}
               </span>
-              <span className={cn('text-[13px]', on ? 'text-ink' : 'text-ink-soft')}>{s}</span>
+              <span className={cn('text-[0.8125rem]', on ? 'text-ink' : 'text-ink-soft')}>{s}</span>
             </div>
           ))}
         </Card>

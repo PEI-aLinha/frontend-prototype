@@ -43,20 +43,20 @@ export function AssetFields({ id, values: v, onChange, services, owners, errors,
         {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={v.ownerId} onChange={(x) => set('ownerId', x)} options={owners.map((u) => ({ value: u.id, label: u.name }))} />}
       </Field>
       <div className="flex flex-col gap-2">
-        <p id={`${id}-crit`} className="text-[13px] font-semibold text-ink-soft"><Term k="criticidade" /></p>
+        <p id={`${id}-crit`} className="text-[0.8125rem] font-semibold text-ink-soft"><Term k="criticidade" /></p>
         <Segmented labelledBy={`${id}-crit`} value={v.criticality} onChange={(x) => set('criticality', x)} options={[{ value: 'alto', label: 'Alta' }, { value: 'medio', label: 'Média' }, { value: 'baixo', label: 'Baixa' }]} />
-        <p className="text-[13px] text-muted">Alta: se falhar, a produção ou a faturação param. Média: atrasa o trabalho. Baixa: incómodo, resolve-se no dia.</p>
+        <p className="text-[0.8125rem] text-muted">Alta: se falhar, a produção ou a faturação param. Média: atrasa o trabalho. Baixa: incómodo, resolve-se no dia.</p>
       </div>
       {others.length > 0 && (
         <fieldset className="flex flex-col gap-2">
-          <legend className="text-[13px] font-semibold text-ink-soft">Depende de <span className="font-normal text-muted">(opcional)</span></legend>
-          <p className="-mt-1 text-[13px] text-muted">Que outros ativos têm de funcionar para este funcionar? Ajuda a perceber o efeito em cadeia de uma falha.</p>
+          <legend className="text-[0.8125rem] font-semibold text-ink-soft">Depende de <span className="font-normal text-muted">(opcional)</span></legend>
+          <p className="-mt-1 text-[0.8125rem] text-muted">Que outros ativos têm de funcionar para este funcionar? Ajuda a perceber o efeito em cadeia de uma falha.</p>
           <div className="flex flex-wrap gap-2">
             {others.map((o) => {
               const on = v.dependsOn.includes(o.id)
               return (
                 <button key={o.id} type="button" aria-pressed={on} onClick={() => set('dependsOn', on ? v.dependsOn.filter((d) => d !== o.id) : [...v.dependsOn, o.id])}
-                  className={on ? 'rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-[13px] font-bold text-brand' : 'rounded-full border border-line-soft px-3 py-1.5 text-[13px] font-semibold text-ink-soft hover:border-line'}>
+                  className={on ? 'rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-[0.8125rem] font-bold text-brand' : 'rounded-full border border-line-soft px-3 py-1.5 text-[0.8125rem] font-semibold text-ink-soft hover:border-line'}>
                   {on ? '✓ ' : '+ '}{o.name}
                 </button>
               )

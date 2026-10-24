@@ -22,8 +22,8 @@ function DataList({ rows }: { rows: Array<[string, ReactNode]> }) {
     <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[200px_1fr]">
       {rows.map(([label, value]) => (
         <div key={label} className="contents">
-          <dt className="text-[13px] font-semibold text-ink-soft">{label}</dt>
-          <dd className="text-[15px] text-ink max-sm:-mt-2">{value}</dd>
+          <dt className="text-[0.8125rem] font-semibold text-ink-soft">{label}</dt>
+          <dd className="text-[0.9375rem] text-ink max-sm:-mt-2">{value}</dd>
         </div>
       ))}
     </dl>
@@ -54,20 +54,20 @@ export function OrganizationSettingsPage() {
     <>
       <PageHeader eyebrow={org.name} title="Definições da organização" />
 
-      <Card className="flex flex-col gap-4 px-6 py-6">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className="text-[18px] font-extrabold">Qualificação NIS2</h2>
+      <Card as="section" aria-labelledby="qualificacao-titulo" className="flex flex-col gap-4 px-6 py-6">
+        <header className="flex flex-wrap items-start justify-between gap-3">
+          <h2 id="qualificacao-titulo" className="section-title">Qualificação NIS2</h2>
           {canEdit && suggested && suggested !== 'nao_abrangida' && !official && today.data && (
             <Button icon={<BadgeCheck className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Registar qualificação oficial</Button>
           )}
           {canEdit && official && today.data && (
             <Button variant="secondary" icon={<Pencil className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Corrigir</Button>
           )}
-        </div>
+        </header>
         {official ? (
           <DataList rows={[
             ['Classificação oficial', <span className="flex flex-wrap items-center gap-2"><span className="font-bold">{NIS2_LABEL[official.classification]}</span><Nis2Badge official /></span>],
-            ['Data do Ato de Qualificação', shortDate(official.date)],
+            ['Data do Ato de Qualificação', <time dateTime={official.date}>{shortDate(official.date)}</time>],
             ['Documento', (
               <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span>{official.document.name}</span>
@@ -78,10 +78,10 @@ export function OrganizationSettingsPage() {
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[15px] font-bold">{suggested ? NIS2_LABEL[suggested] : '—'}</span>
+              <span className="text-[0.9375rem] font-bold">{suggested ? NIS2_LABEL[suggested] : '—'}</span>
               <Nis2Badge official={false} />
             </div>
-            <p className="text-[14px] text-ink-soft">
+            <p className="text-[0.875rem] text-ink-soft">
               {suggested === 'nao_abrangida'
                 ? 'Pela sugestão do aLinha, a empresa não está abrangida, por isso não deve receber um Ato de Qualificação.'
                 : 'É a sugestão do aLinha. Quando receber o Ato de Qualificação do CNCS, registe aqui a classificação oficial.'}{' '}
@@ -90,13 +90,13 @@ export function OrganizationSettingsPage() {
           </>
         )}
         {official && (
-          <p className="flex items-center gap-2 text-[13px] text-muted"><FileText className="size-4" aria-hidden />Registada a {shortDate(official.registeredAt)}</p>
+          <p className="flex items-center gap-2 text-[0.8125rem] text-muted"><FileText className="size-4" aria-hidden />Registada a <time dateTime={official.registeredAt}>{shortDate(official.registeredAt)}</time></p>
         )}
       </Card>
 
       {p && (
-        <Card className="flex flex-col gap-4 px-6 py-6">
-          <h2 className="text-[18px] font-extrabold">Dados da organização</h2>
+        <Card as="section" aria-labelledby="dados-titulo" className="flex flex-col gap-4 px-6 py-6">
+          <h2 id="dados-titulo" className="section-title">Dados da organização</h2>
           <DataList rows={[
             ['Denominação', org.name],
             ['NIF', formatNif(p.nif)],

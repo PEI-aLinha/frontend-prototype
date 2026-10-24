@@ -47,12 +47,12 @@ export function DemoGuide({ open, onClose, onGo }: { open: boolean; onClose: () 
       footer={<Button variant="secondary" onClick={onClose}>Fechar</Button>}>
       {SCENARIOS.map((sc) => (
         <section key={sc.title} className="flex flex-col gap-2">
-          <h3 className="text-[16px] font-extrabold">{sc.title}</h3>
-          <p className="text-[13px] text-ink-soft">{sc.summary}</p>
+          <h3 className="text-[1rem] font-extrabold">{sc.title}</h3>
+          <p className="text-[0.8125rem] text-ink-soft">{sc.summary}</p>
           <ol className="flex flex-col gap-1.5">
             {sc.steps.map((st) => (
               <li key={st.text} className="flex items-center gap-3 rounded-[10px] bg-paper-soft px-3 py-2">
-                <span className="min-w-0 flex-1 text-[13px]">{st.text}{st.snapshot && <span className="text-muted"> (repõe os dados)</span>}</span>
+                <span className="min-w-0 flex-1 text-[0.8125rem]">{st.text}{st.snapshot && <span className="text-muted"> (repõe os dados)</span>}</span>
                 <Button size="sm" variant="ghost" icon={<PlayCircle className="size-4" aria-hidden />} onClick={() => onGo(st)}>Ir</Button>
               </li>
             ))}

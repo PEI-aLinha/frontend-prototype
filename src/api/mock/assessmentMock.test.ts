@@ -55,6 +55,14 @@ describe('assessment questionnaire (mock API)', () => {
     await expect(api.assessment.saveAnswer(ORG_ID, 'q-acessos-wifi', { choice: 'sim' })).rejects.toMatchObject({ status: 403 })
   })
 
+  it("denies another organization's questionnaire, even to a designated manager", async () => {
+    await expect(api.assessment.saveAnswer('org-outra', 'q-acessos-wifi', { choice: 'sim' })).rejects.toMatchObject({ status: 403 })
+    await expect(api.assessment.listQuestions('org-outra', 'sec-acessos')).rejects.toMatchObject({ status: 403 })
+    await expect(api.assessment.submitAssessment('org-outra')).rejects.toMatchObject({ status: 403 })
+    who = MARTA
+    await expect(api.assessment.getAssessment('org-outra')).rejects.toMatchObject({ status: 403 })
+  })
+
   it('delegates a question once and rejects a past deadline', async () => {
     await expect(api.assessment.delegateQuestion(ORG_ID, 'q-inc-antivirus', { assigneeId: PEDRO, dueDate: '2020-01-01' })).rejects.toMatchObject({ status: 422 })
     const task = await api.assessment.delegateQuestion(ORG_ID, 'q-inc-antivirus', { assigneeId: PEDRO, dueDate: null })

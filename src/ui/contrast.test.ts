@@ -18,4 +18,9 @@ describe('WCAG AA contrast of design tokens', () => {
   ])('%s on %s ≥ 4.5', (fg, bg) => {
     expect(ratio(token(fg), token(bg))).toBeGreaterThanOrEqual(4.5)
   })
+
+  // Borders of inputs, selects and option cards are what tells you where to click (WCAG 1.4.11).
+  it.each([['line', 'paper'], ['line', 'paper-soft']])('%s on %s ≥ 3', (fg, bg) => {
+    expect(ratio(token(fg), token(bg))).toBeGreaterThanOrEqual(3)
+  })
 })

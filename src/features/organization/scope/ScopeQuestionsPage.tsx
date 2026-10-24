@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useId, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Check } from 'lucide-react'
 import type { AiUse, ScopeInput } from '../../../api/contracts'
@@ -43,33 +43,34 @@ function AiUseGroup({ value, onChange, error }: { value: AiUse[]; onChange: (v: 
   const toggle = (u: AiUse) => onChange(value.includes(u) ? value.filter((x) => x !== u) : [...value, u])
   return (
     <fieldset className="flex min-w-0 flex-col gap-1.5" aria-describedby={error ? 'ai-uses-err' : undefined}>
-      <legend className="mb-1.5 text-[13px] font-semibold text-ink-soft">Para quê? Escolha todos os que se aplicam.</legend>
+      <legend className="mb-1.5 text-[0.8125rem] font-semibold text-ink-soft">Para quê? Escolha todos os que se aplicam.</legend>
       <div className="grid gap-2.5 sm:grid-cols-2">
         {AI_USES.map((o) => {
           const on = value.includes(o.value)
           return (
-            <label key={o.value} className={cn('flex cursor-pointer items-start gap-3 rounded-[12px] border px-4 py-3.5 transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-signal', on ? 'border-brand bg-brand-soft' : 'border-line-soft bg-paper hover:border-line')}>
+            <label key={o.value} className={cn('flex cursor-pointer items-start gap-3 rounded-[12px] border px-4 py-3.5 transition-colors duration-150 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-signal', on ? 'border-brand bg-brand-soft' : 'border-line bg-paper hover:border-ink-soft')}>
               <input type="checkbox" checked={on} onChange={() => toggle(o.value)} className="sr-only" />
               <span aria-hidden className={cn('mt-[3px] grid size-[18px] shrink-0 place-items-center rounded-[5px] border-2', on ? 'border-brand bg-brand text-white' : 'border-line')}>
                 {on && <Check className="size-3" strokeWidth={3} />}
               </span>
               <span className="min-w-0">
-                <span className={cn('block text-[15px]', on ? 'font-bold text-brand' : 'text-ink')}>{o.label}</span>
-                <span className="mt-0.5 block text-[13px] text-ink-soft">{o.hint}</span>
+                <span className={cn('block text-[0.9375rem]', on ? 'font-bold text-brand' : 'text-ink')}>{o.label}</span>
+                <span className="mt-0.5 block text-[0.8125rem] text-ink-soft">{o.hint}</span>
               </span>
             </label>
           )
         })}
       </div>
-      {error && <p id="ai-uses-err" role="alert" className="text-[13px] font-semibold text-danger">{error}</p>}
+      {error && <p id="ai-uses-err" role="alert" className="text-[0.8125rem] font-semibold text-danger">{error}</p>}
     </fieldset>
   )
 }
 
 function Question({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  const titleId = useId()
   return (
-    <section className="flex flex-col gap-3 border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
-      <h2 className="text-[16px] font-bold">{n}. {title}</h2>
+    <section aria-labelledby={titleId} className="flex flex-col gap-3 border-t border-line-soft pt-6 first:border-t-0 first:pt-0">
+      <h2 id={titleId} className="text-[1rem] font-bold">{n}. {title}</h2>
       {children}
     </section>
   )
@@ -118,7 +119,7 @@ export function ScopeQuestionsPage() {
             <OptionGroup name="usesAi" legend="Programas que respondem, escolhem ou decidem sozinhos, como um chatbot." columns={3} value={draft.usesAi} onChange={(v) => set('usesAi', v)} options={USES_AI} error={errors.usesAi} />
             {draft.usesAi === 'sim' && <AiUseGroup value={draft.aiUses} onChange={(v) => set('aiUses', v)} error={errors.aiUses} />}
           </Question>
-          {save.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{save.error.message}</p>}
+          {save.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[0.8125rem] font-semibold text-risk-high-ink">{save.error.message}</p>}
           <Button type="submit" className="self-start max-sm:self-stretch" loading={save.isPending}>Guardar respostas</Button>
         </form>
       </Card>
