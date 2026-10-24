@@ -98,9 +98,9 @@ export function AcceptInvitePage() {
           <>
             <MfaSetup email={inv.email} submitLabel="Ativar e entrar" onVerified={finish} />
             {accept.isError && <p role="alert" className="rounded-[10px] bg-risk-high px-3.5 py-2.5 text-[13px] font-semibold text-risk-high-ink">{accept.error.message}</p>}
-            <p className="-mt-4 flex justify-center">
+            <div className="-mt-4 flex justify-center">
               <Button variant="link" size="sm" className="!text-ink-soft" onClick={() => setStep(0)}>Voltar ao passo anterior</Button>
-            </p>
+            </div>
           </>
         )}
       </>

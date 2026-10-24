@@ -63,9 +63,9 @@ export function FramingPage() {
         <Bullets items={NIS2_MEANING[status.classification]} />
       </Card>
 
-      <p>
+      <div>
         <Link to={`/org/${org.slug}/ambito`} className={buttonClass({ variant: 'secondary' })}><ArrowLeft className="size-4" aria-hidden />Voltar ao âmbito regulatório</Link>
-      </p>
+      </div>
     </>
   )
 }

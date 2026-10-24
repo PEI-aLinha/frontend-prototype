@@ -56,7 +56,7 @@ export function MfaSetup({ email, submitLabel = 'Confirmar e continuar', onVerif
   return (
     <>
       <Card className="px-7 py-7 max-md:px-5">
-        <ol aria-label="Passos para ativar a autenticação em dois passos" className="flex flex-col gap-6">
+        <ol role="list" aria-label="Passos para ativar a autenticação em dois passos" className="flex flex-col gap-6">
           <li>
             <section aria-labelledby={`${ids}-app`} className="flex flex-col gap-1.5">
               <h2 id={`${ids}-app`} className="text-[16px] font-bold"><span aria-hidden>1. </span>Instale uma aplicação de autenticação</h2>

@@ -70,7 +70,7 @@ export function ScopeResultPage() {
     <>
       <PageHeader eyebrow={org.name} title="Que leis se aplicam à empresa" subtitle={subtitle}
         actions={canEdit && <Link to="perguntas" className={buttonClass({ variant: 'secondary' })}><Pencil className="size-4" aria-hidden />Mudar respostas</Link>} />
-      <ul aria-label="Leis avaliadas" className="grid gap-4 lg:grid-cols-3">
+      <ul role="list" aria-label="Leis avaliadas" className="grid gap-4 lg:grid-cols-3">
         {results.map((r) => (
           <li key={r.id}>
             <FrameworkCard r={r} framingLink={r.id === 'nis2' ? `/org/${org.slug}/enquadramento` : undefined} official={nis2Status(org)?.official} />

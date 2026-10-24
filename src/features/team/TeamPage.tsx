@@ -22,7 +22,7 @@ interface TaskCount { open: number; late: number; done: number }
 
 /** Tasks of one analyst (US14): to do, of which late, and done. */
 function TaskCountCell({ c }: { c?: TaskCount }) {
-  if (!c) return <span className="text-[14px] text-muted max-md:hidden">—</span>
+  if (!c) return <span className="text-[14px] text-muted">—</span>
   if (c.open === 0 && c.done === 0) return <span className="text-[14px] text-ink-soft">Sem tarefas</span>
   return (
     <span className="flex flex-col text-[14px] leading-snug">
@@ -40,7 +40,10 @@ function MemberName({ m, isMe }: { m: TeamMember; isMe: boolean }) {
   return (
     <span className="flex min-w-0 items-center gap-3">
       <Avatar initials={initialsOf(m.name)} size={36} tone={pending ? 'soft' : 'dark'} />
-      <span className={cn('truncate font-bold', pending && 'text-ink-soft')}>{m.name}{isMe && <span className="font-normal text-muted"> (você)</span>}</span>
+      <span className="min-w-0">
+        <span className={cn('block truncate font-bold', pending && 'text-ink-soft')}>{m.name}{isMe && <span className="font-normal text-muted"> (você)</span>}</span>
+        <span className="block truncate text-[13px] text-ink-soft">{m.email}</span>
+      </span>
     </span>
   )
 }
@@ -55,13 +58,13 @@ function MemberStatus({ m }: { m: TeamMember }) {
   )
 }
 
-function MemberActions({ m, onConfirm, onAssign }: { m: TeamMember; onConfirm: () => void; onAssign: () => void }) {
+function MemberActions({ m, onConfirm, onAssign, className }: { m: TeamMember; onConfirm: () => void; onAssign: () => void; className?: string }) {
   const org = useTenant()
   const toast = useToast()
   const resend = useResendInvite(org.id)
   const pending = m.status === 'convite_pendente'
   return (
-    <span className="flex flex-wrap justify-end gap-1 max-md:justify-start">
+    <span className={cn('flex flex-wrap justify-end gap-1', className)}>
       {pending && (
         <Button variant="ghost" size="sm" icon={<Send className="size-4" aria-hidden />} loading={resend.isPending}
           onClick={() => resend.mutate(m.id, { onSuccess: () => toast.show(`Convite reenviado para ${m.email}`), onError: (e) => toast.show(e.message, 'error') })}>Reenviar</Button>
@@ -102,10 +105,10 @@ export function TeamPage() {
   const [editing, setEditing] = useState<Task | null>(null)
   const isMe = (m: TeamMember) => m.userId === persona.userId
   const tasksOf = (m: TeamMember) => (m.role === 'analista' && m.status === 'ativo' ? countFor(m.userId!) : undefined)
-  const actions = (m: TeamMember) => <MemberActions m={m} onConfirm={() => setConfirming(m)} onAssign={() => setAssigning({ to: m.userId! })} />
+  const actions = (m: TeamMember, className?: string) => <MemberActions m={m} className={className} onConfirm={() => setConfirming(m)} onAssign={() => setAssigning({ to: m.userId! })} />
   const columns: ColumnDef<TeamMember, unknown>[] = [
-    { id: 'nome', header: 'Nome', enableSorting: false, meta: { width: 200 }, cell: ({ row }) => <MemberName m={row.original} isMe={isMe(row.original)} /> },
-    { id: 'email', header: 'Email', enableSorting: false, cell: ({ row }) => <span className="block truncate text-[14px] text-ink-soft">{row.original.email}</span> },
+    // The member column takes the width left over, so the email is never squeezed out.
+    { id: 'membro', header: 'Membro', enableSorting: false, cell: ({ row }) => <MemberName m={row.original} isMe={isMe(row.original)} /> },
     { id: 'papel', header: 'Papel', enableSorting: false, meta: { width: 185 }, cell: ({ row }) => <Chip tone={row.original.role === 'responsavel' ? 'dark' : 'outline'}>{ROLE_LABEL[row.original.role]}</Chip> },
     { id: 'estado', header: 'Estado', enableSorting: false, meta: { width: 160 }, cell: ({ row }) => <MemberStatus m={row.original} /> },
     { id: 'tarefas', header: 'Tarefas', enableSorting: false, meta: { width: 120 }, cell: ({ row }) => <TaskCountCell c={tasksOf(row.original)} /> },
@@ -124,15 +127,14 @@ export function TeamPage() {
       <section aria-labelledby="members" className="flex flex-col gap-3">
         <h2 id="members" className="text-[18px] font-extrabold">Membros{members.data ? ` (${members.data.length})` : ''}</h2>
         {members.isError ? <ErrorState error={members.error} onRetry={() => members.refetch()} /> : !members.data ? <SkeletonRows rows={3} /> : (
-          <DataTable caption="Membros da organização" data={members.data} columns={columns} getRowId={(m) => m.id}
+          <DataTable caption="Membros da organização" data={members.data} columns={columns} getRowId={(m) => m.id} cardsBelow="xl"
             renderCard={(m) => (
               <div className="flex flex-col gap-1.5">
                 <MemberName m={m} isMe={isMe(m)} />
-                <span className="truncate text-[14px] text-ink-soft">{m.email}</span>
                 <span><Chip tone={m.role === 'responsavel' ? 'dark' : 'outline'}>{ROLE_LABEL[m.role]}</Chip></span>
                 <MemberStatus m={m} />
-                <TaskCountCell c={tasksOf(m)} />
-                {actions(m)}
+                {tasksOf(m) && <TaskCountCell c={tasksOf(m)} />}
+                {actions(m, 'justify-start')}
               </div>
             )} />
         )}
@@ -143,14 +145,14 @@ export function TeamPage() {
         {!tasks.data || !today.data ? <SkeletonRows rows={3} /> : pending.length === 0 ? (
           <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[14px] text-ink-soft">Não há tarefas por fazer. Atribua o registo de ativos em <Link className="font-bold text-brand hover:underline" to={`/org/${org.slug}/ativos?atribuir=1`}>Ativos</Link>.</p>
         ) : (
-          <ul aria-label="Tarefas por fazer" className="flex flex-col gap-3">
+          <ul role="list" aria-label="Tarefas por fazer" className="flex flex-col gap-3">
             {pending.map((t) => <li key={t.id}><TaskRow task={t} today={today.data} assignee={users.data?.find((u) => u.id === t.assigneeId)?.name ?? '—'} onEdit={() => setEditing(t)} /></li>)}
           </ul>
         )}
         {closed.length > 0 && (
           <section aria-labelledby="closed" className="mt-2 flex flex-col gap-3">
             <Eyebrow as="h3"><span id="closed">Concluídas ou canceladas</span></Eyebrow>
-            <ul className="flex flex-col gap-3">
+            <ul role="list" className="flex flex-col gap-3">
               {closed.map((t) => (
                 <li key={t.id} className="flex items-center gap-3 rounded-[14px] bg-paper-soft px-5 py-3 text-[14px]">
                   <span className="flex-1 text-ink-soft">{t.title}</span>
