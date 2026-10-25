@@ -25,7 +25,7 @@ jobs:
 
       - name: Build
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run build
 
       - name: Configure SSH
