@@ -181,7 +181,7 @@ export function createChatMock(getActor: () => DemoActor): ChatApi {
           ...current,
           messages,
           awaitingReview: false,
-          reviewedMessageCount: messages.filter((message) => message.role === 'user').length, // ponto até onde a consultora vê
+          reviewedMessageCount: messages.length, // ponto até onde a consultora vê
           updatedAt: now(),
         }
         const next = { ...state, chat: state.chat.map((item) => item.id === conversationId ? reviewed : item) }

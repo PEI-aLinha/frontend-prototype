@@ -84,7 +84,8 @@ export function AssetsPage() {
   const filters = readFilters(params)
 
   const update = (next: Record<string, string | null>) => {
-    const p = new URLSearchParams(params)
+    // O URL muda antes do re-render committar: usar o estado do render aqui repõe parâmetros já removidos.
+    const p = new URLSearchParams(window.location.search)
     for (const [k, v] of Object.entries(next)) {
       if (v === null || v === '' || v === 'all') p.delete(k)
       else p.set(k, v)
