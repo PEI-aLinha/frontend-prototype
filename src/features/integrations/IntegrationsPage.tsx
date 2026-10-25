@@ -25,18 +25,18 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   const fail = (e: Error) => toast.show(e.message, 'error')
 
   return (
-    <li>
-      <Card className={cn('flex h-full flex-col gap-3', !c.provider.applies && 'opacity-70')}>
+    <li className="list-none">
+      <Card className={cn('flex h-full flex-col gap-3', !c.provider.applies && 'opacity-100')}>
         <div className="flex items-start justify-between gap-2">
-          <div>
+          <div className="min-w-0">
             <Eyebrow>{c.provider.category}</Eyebrow>
-             <h3 className="mt-1 text-base font-extrabold">{c.provider.name}</h3>
+             <h3 className="mt-1 text-base font-extrabold truncate">{c.provider.name}</h3>
            </div>
            {c.provider.applies ? <Chip tone={on ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
-         </div>
-         <p className="text-sm text-ink-soft">{c.provider.description}</p>
-         {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
-         {c.status === 'pedido' && assignee && <p className="text-xs text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
+          </div>
+          <p className="text-sm text-ink-soft">{c.provider.description}</p>
+          {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
+          {c.status === 'pedido' && assignee && <p className="text-xs text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
         {c.provider.applies && (
           <div className="mt-auto flex flex-wrap gap-2 pt-1">
             {on ? (

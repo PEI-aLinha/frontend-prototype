@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMockApi } from './mockApi'
-import { getState, resetDemo, setState } from './store'
+import { resetDemo } from './store'
 import { ORG_ID, PEDRO, RUI, MARTA, ASSET_TASK_ID } from './seed'
 
 let who = RUI

@@ -8,6 +8,7 @@ import { LEVEL_ORDER } from '../../config/riskMatrix'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
+import { PageTour } from '../../core/onboarding/PageTour'
 import {
   Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Explainer, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
   Segmented, SkeletonRows, StatCard, type ColumnDef,
@@ -37,14 +38,14 @@ function columns(inv: Inventory, opts: { risks: boolean; riskLink?: (a: Asset) =
   if (opts.risks) {
     cols.push({ id: 'risk', accessorFn: (a) => (inv.topRisk(a.id) ? LEVEL_ORDER[inv.topRisk(a.id)!] : 0), header: 'Risco', cell: (c) => { const l = inv.topRisk(c.row.original.id); const n = inv.risksByAsset.get(c.row.original.id)?.length ?? 0; return l ? <span className="inline-flex items-center gap-2"><RiskLevelBadge level={l} /><span className="text-xs text-muted">{n}</span></span> : <span className="text-sm text-muted">Sem riscos</span> }, meta: dense ? { width: 130 } : undefined })
   }
-  if (opts.riskLink) {
-    const href = opts.riskLink
-    cols.push({ id: 'action', header: '', enableSorting: false, meta: { align: 'right' }, cell: (c) => (
-      <Link to={href(c.row.original)} onClick={(e) => e.stopPropagation()} aria-label={`Registar risco sobre ${c.row.original.name}`} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-sm font-bold text-brand hover:bg-brand-soft">
-        <ShieldPlus className="size-4" aria-hidden />Registar risco
-      </Link>
-    ) })
-  }
+    if (opts.riskLink) {
+      const href = opts.riskLink
+      cols.push({ id: 'action', header: 'Ação', enableSorting: false, meta: { align: 'right' }, cell: (c) => (
+        <Link to={href(c.row.original)} onClick={(e) => e.stopPropagation()} aria-label={`Registar risco sobre ${c.row.original.name}`} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-sm font-bold text-brand hover:bg-brand-soft">
+          <ShieldPlus className="size-4" aria-hidden />Registar risco
+        </Link>
+      ) })
+    }
   return cols
 }
 
@@ -119,8 +120,8 @@ export function AssetsPage() {
     <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>
   ) : (
     <>
-      {can('assign', 'asset_task') && <Button variant="secondary" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
-      {can('create', 'asset') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1' })}>Adicionar ativo</Button>}
+      {can('assign', 'asset_task') && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
+      {can('create', 'asset') && <Button data-tour="asset-add" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1' })}>Adicionar ativo</Button>}
     </>
   )
 
@@ -139,7 +140,7 @@ export function AssetsPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? `Inventário preenchido${authors ? ` por ${authors}` : ''}. Use-o para registar os riscos.` : undefined} actions={actions} />
+      <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? `Inventário preenchido${authors ? ` por ${authors}` : ''}. Use-o para registar os riscos.` : undefined} help={<PageTour id={consultant ? 'ativos-consultor' : 'ativos-cliente'} ready={!!data} />} actions={actions} />
       <Note>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
       {consultant ? (
         <Explainer id="assets-consultant" intro="Este é o inventário preenchido pelo cliente. Use-o como ponto de partida da análise de riscos."

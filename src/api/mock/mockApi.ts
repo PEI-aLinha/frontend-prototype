@@ -349,7 +349,7 @@ export function createMockApi(getActor: ActorProvider): Api {
           if (input.residualImpact !== undefined && input.residualProbability === undefined) {
             throw new ApiError('Indique também a probabilidade residual.', 422)
           }
-          if (input.residualProbability > (before?.probability ?? input.probability) || input.residualImpact > (before?.impact ?? input.impact)) {
+          if ((input.residualProbability ?? 0) > (before?.probability ?? input.probability ?? 0) || (input.residualImpact ?? 0) > (before?.impact ?? input.impact ?? 0)) {
             throw new ApiError('O risco residual não pode ser superior ao risco atual.', 422)
           }
           const { actionIds, ...fields } = input
@@ -358,6 +358,7 @@ export function createMockApi(getActor: ActorProvider): Api {
             ? { ...before, ...fields, status: before.status === 'arquivado' || before.status === 'tratado' ? before.status : riskStatus(input), updatedAt: stamp }
             : { ...fields, id: newId('rsk'), organizationId: org, status: riskStatus(input), createdBy: me.id, createdAt: stamp, updatedAt: stamp }
           const risks = before ? s.risks.map((x) => (x.id === id ? saved : x)) : [...s.risks, saved]
+
 
 
 

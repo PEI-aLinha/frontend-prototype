@@ -33,7 +33,7 @@ export function RegistrationDonePage() {
         <p className="text-[1rem] text-ink-soft">A organização ficou associada à sua conta. É o Responsável designado: vê toda a informação da empresa e pode convidar a sua equipa.</p>
       </header>
 
-      <Card as="section" aria-labelledby="dados-registados" className="px-7 py-6 max-md:px-5">
+      <Card aria-labelledby="dados-registados" className="px-7 py-6 max-md:px-5">
         <h2 id="dados-registados" className="sr-only">Dados registados</h2>
         <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[160px_1fr]">
           {rows.map(([label, value]) => (

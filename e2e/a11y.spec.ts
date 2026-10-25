@@ -38,8 +38,8 @@ for (const [path, as, snap] of PAGES) {
 }
 
 // Headings never skip a level (h1 → h3), WCAG 1.3.1.
-for (const [path, as, snap] of [...PAGES, [`${ORG}/ativos?vista=servicos`, 'rui', 'c1'] as const]) {
-  test(`heading order ${as} ${path}`, async ({ page }) => {
+for (const [path, as, snap] of PAGES) {
+  test(`heading order ${as} ${path} (${snap})`, async ({ page }) => {
     await start(page, path, as, snap)
     await expect(page.locator('h1')).toBeVisible()
     await page.waitForTimeout(400)

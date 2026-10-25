@@ -9,13 +9,14 @@ import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
 import { PageTour } from '../../../core/onboarding/PageTour'
 import {
-  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, StatCard, useToast,
+  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, Explainer, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, StatCard, useToast,
   type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
 import { RiskEditDrawer, RiskReadDrawer } from './RiskDrawer'
 import { exportRiskRegister } from './exportRisks'
 import { downloadRiskTemplate } from './riskTemplate'
+import type { RemediationAction } from '../../../api/contracts'
 
 const levelOf = (p: number, i: number): Level => computeRiskLevel(p, i).level
 
@@ -62,25 +63,25 @@ export function RisksPage() {
   const ready = risks.data && assets.data && users.data && actions.data && links.data
   const base = editable ? `/clientes/${org.slug}` : `/org/${org.slug}`
 
-  const linkedActions = (r: Risk) => (links.data ?? []).filter((l) => l.riskId === r.id).map((l) => actions.data?.find((a) => a.id === l.remediationActionId)).filter(Boolean)
+  const linkedActions = (r: Risk) => (links.data ?? []).filter((l) => l.riskId === r.id).map((l) => actions.data?.find((a) => a.id === l.remediationActionId)).filter((a): a is RemediationAction => !!a)
   const assetName = (id: string | null) => (id ? assets.data?.find((a) => a.id === id)?.name ?? '—' : 'Toda a empresa')
   const owner = (id: string | null) => users.data?.find((u) => u.id === id)
 
   const columns: ColumnDef<Risk, unknown>[] = editable ? [
     { id: 'level', accessorFn: (r) => computeRiskLevel(r.probability, r.impact).score, header: 'Nível', cell: (c) => <RiskLevelBadge level={levelOf(c.row.original.probability, c.row.original.impact)} />, meta: { width: 110 } },
-    { id: 'threat', accessorFn: (r) => r.threat, header: 'Risco', cell: (c) => <div><p className="font-bold">{c.row.original.threat}</p><p className="text-[0.8125rem] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 330 } },
+    { id: 'threat', accessorFn: (r) => r.threat, header: 'Risco', cell: (c) => <div><p className="font-bold">{c.row.original.threat}</p><p className="text-xs text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 330 } },
     { id: 'treatment', accessorFn: (r) => r.treatment ?? '', header: 'Tratamento', cell: (c) => (c.row.original.treatment ? <span className="font-semibold">{TREATMENT_LABEL[c.row.original.treatment]}</span> : <span className="text-muted">—</span>), meta: { width: 120 } },
-    { id: 'actions', accessorFn: (r) => linkedActions(r).length, header: 'Ações ligadas', cell: (c) => { const n = linkedActions(c.row.original).length; return n ? <Chip>{n} {n === 1 ? 'ação' : 'ações'}</Chip> : <span className="text-[0.8125rem] text-muted">Nenhuma</span> }, meta: { width: 130 } },
+    { id: 'actions', accessorFn: (r) => linkedActions(r).length, header: 'Ações ligadas', cell: (c) => { const n = linkedActions(c.row.original).length; return n ? <Chip>{n} {n === 1 ? 'ação' : 'ações'}</Chip> : <span className="text-xs text-muted">Nenhuma</span> }, meta: { width: 130 } },
     { id: 'status', accessorFn: (r) => r.status, header: 'Estado', cell: (c) => {
       const r = c.row.original
       const late = r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado'
-      return <div><p className="text-[0.8125rem] text-ink-soft">{RISK_STATUS_LABEL[r.status]}</p>{r.reviewDate && <p className={late ? 'text-[0.75rem] font-bold text-risk-high-ink' : 'text-[0.75rem] text-muted'}>{late ? 'Revisão atrasada' : `Rever a ${shortDate(r.reviewDate)}`}</p>}</div>
+      return <div><p className="text-xs text-ink-soft">{RISK_STATUS_LABEL[r.status]}</p>{r.reviewDate && <p className={late ? 'text-xs font-bold text-risk-high-ink' : 'text-xs text-muted'}>{late ? 'Revisão atrasada' : `Rever a ${shortDate(r.reviewDate)}`}</p>}</div>
     }, meta: { width: 150 } },
     { id: 'owner', accessorFn: (r) => owner(r.ownerId)?.name ?? '', header: 'Responsável', cell: (c) => { const u = owner(c.row.original.ownerId); return u ? <Person initials={u.initials} name={u.name} /> : '—' } },
   ] : [
     { id: 'level', accessorFn: (r) => computeRiskLevel(r.probability, r.impact).score, header: 'Nível', cell: (c) => <RiskLevelBadge level={levelOf(c.row.original.probability, c.row.original.impact)} />, meta: { width: 110 } },
-    { id: 'plain', accessorFn: (r) => r.threat, header: 'O que pode acontecer', cell: (c) => <div><p className="font-bold">{c.row.original.plainLanguage ?? c.row.original.threat}</p><p className="text-[0.8125rem] text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 460 } },
-    { id: 'doing', accessorFn: (r) => r.treatment ?? '', header: 'O que está a ser feito', cell: (c) => { const r = c.row.original; const n = linkedActions(r).length; return <span className="text-[0.8125rem]">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Por decidir'}{n ? ` · ${n} ${n === 1 ? 'ação' : 'ações'} no roadmap` : ''}</span> } },
+    { id: 'plain', accessorFn: (r) => r.threat, header: 'O que pode acontecer', cell: (c) => <div><p className="font-bold">{c.row.original.plainLanguage ?? c.row.original.threat}</p><p className="text-xs text-ink-soft">{assetName(c.row.original.assetId)}</p></div>, meta: { width: 460 } },
+    { id: 'doing', accessorFn: (r) => r.treatment ?? '', header: 'O que está a ser feito', cell: (c) => { const r = c.row.original; const n = linkedActions(r).length; return <span className="text-xs">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Por decidir'}{n ? ` · ${n} ${n === 1 ? 'ação' : 'ações'} no roadmap` : ''}</span> } },
   ]
 
   const selected = all.find((r) => r.id === params.get('risco')) ?? null
@@ -106,9 +107,9 @@ export function RisksPage() {
           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! }, editable ? 'consultant' : 'client', org.slug)}>Exportar registo</Button>}
           {can('create', 'risk') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
           {editable && <Button variant="secondary" data-tour="risk-template" icon={<FileSpreadsheet className="size-4" aria-hidden />} onClick={() => downloadRiskTemplate().catch(() => toast.show('Não foi possível gerar o template. Tente outra vez.', 'error'))}>Template Excel</Button>}
-          {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! })}>Exportar registo</Button>}
-          {/* With no risks yet, the empty state's button is the primary action; this one steps back. */}
-          {can('create', 'risk') && <Button variant={ready && all.length === 0 ? 'secondary' : 'primary'} data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
+           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! }, 'client', org.slug)}>Exportar registo</Button>}
+           {/* With no risks yet, the empty state's button is the primary action; this one steps back. */}
+           {can('create', 'risk') && <Button variant={ready && all.length === 0 ? 'secondary' : 'primary'} data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
         </>}
       />
 
@@ -142,9 +143,9 @@ export function RisksPage() {
           {!editable && <Note>Registo validado pela consultora Marta Ferreira. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <Card as="section" aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5" data-tour="risk-matrix">
+            <Card aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5" data-tour="risk-matrix">
               <div className="mb-3 flex items-baseline justify-between gap-3">
-                <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-[0.6875rem] font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
+                <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-xs font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
                 {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
               </div>
               <div className="mb-3 flex flex-wrap items-center gap-3">
@@ -161,11 +162,11 @@ export function RisksPage() {
             </Card>
             <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1" data-tour="risk-summary">
               <h2 id="risk-summary-title" className="sr-only">Resumo por nível{residual ? ' depois das ações' : ''}</h2>
-              {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
-                <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)} emphasis={l === 'alto' && counts(l) > 0} tone={l === 'alto' && counts(l) > 0 ? 'alert' : 'default'}
-                  className="max-md:px-3.5 max-md:py-3"
-                  accent={<span className="max-md:hidden"><RiskLevelBadge level={l} /></span>} />
-              ))}
+                {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
+                  <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)}
+                    className="max-md:px-3.5 max-md:py-3"
+                    accent={<span className="max-md:hidden"><RiskLevelBadge level={l} /></span>} />
+                ))}
             </section>
           </div>
 

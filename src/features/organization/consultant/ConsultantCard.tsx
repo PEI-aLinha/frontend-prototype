@@ -14,15 +14,15 @@ export function ConsultantCard({ orgId, className }: { orgId: Id; className?: st
   const c = consultant.data
   if (!c) {
     return (
-      <Card as="section" aria-labelledby={titleId} className={cn('flex flex-col gap-1.5', className)}>
-        <Eyebrow as="h2"><span id={titleId}>Acompanhamento aLinha</span></Eyebrow>
+      <Card aria-labelledby={titleId} className={cn('flex flex-col gap-1.5', className)}>
+        <Eyebrow><span id={titleId}>Acompanhamento aLinha</span></Eyebrow>
         <p className="text-[0.875rem] text-ink-soft">A atribuir. Recebe um email quando houver alguém atribuído.</p>
       </Card>
     )
   }
   return (
-    <Card as="section" aria-labelledby={titleId} className={cn('flex flex-col gap-3', className)}>
-      <Eyebrow as="h2"><span id={titleId}>{c.heading}</span></Eyebrow>
+    <Card aria-labelledby={titleId} className={cn('flex flex-col gap-3', className)}>
+      <Eyebrow><span id={titleId}>{c.heading}</span></Eyebrow>
       <div className="flex items-center gap-3">
         <Avatar initials={c.initials} size={40} tone="dark" />
         <div className="min-w-0">

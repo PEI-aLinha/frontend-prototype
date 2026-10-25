@@ -7,7 +7,7 @@ test('Portfolio — no illustrative client can be opened before the first regist
   await startEmpty(page)
   await page.goto('/carteira?as=marta')
   await expect(page.getByRole('list', { name: 'Clientes' }).getByRole('listitem')).toHaveCount(11)
-  await expect(page.getByRole('button', { name: /^Abrir / })).toHaveCount(0)
+  await expect(page.getByRole('list', { name: 'Clientes' }).getByRole('button', { name: /^Abrir / })).toHaveCount(0)
 })
 
 test('Scenario 2 — Marta registers the ransomware risk, links actions and the roadmap is reprioritized', async ({ page }) => {

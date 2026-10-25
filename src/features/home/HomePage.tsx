@@ -91,11 +91,13 @@ export function HomePage() {
 
       <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3 md:items-start" data-tour="home-summary">
         <h2 id="home-summary-title" className="sr-only">Resumo</h2>
-        {seeRisks && risks.data && top ? (
-          <StatCard to={`${base}/riscos`} label="Riscos" accent={<RiskLevelBadge level={top} />}
-            value={`${topCount} ${topCount === 1 ? 'risco' : 'riscos'} ${RISK_LEVEL_LABEL[top].toLowerCase()}${topCount === 1 ? '' : 's'} · ${topTreating ? 'em tratamento' : 'por tratar'}`}
-            caption={`${levels.length} riscos registados pela consultora`} />
-        ) : (
+         {seeRisks && risks.data && top ? (
+           <Link to={`${base}/riscos`} className="contents">
+             <StatCard label="Riscos" accent={<RiskLevelBadge level={top} />}
+               value={`${topCount} ${topCount === 1 ? 'risco' : 'riscos'} ${RISK_LEVEL_LABEL[top].toLowerCase()}${topCount === 1 ? '' : 's'} · ${topTreating ? 'em tratamento' : 'por tratar'}`}
+               caption={`${levels.length} riscos registados pela consultora`} />
+           </Link>
+         ) : (
           <Link to={`${base}/enquadramento`} className="contents">
             <StatCard label="Enquadramento" value={nis2?.label ?? '—'} caption={nis2?.official ? `Oficial · CNCS · Ato de ${shortDate(nis2.date!)}` : 'Sugestão indicativa · aguarda o CNCS'} />
           </Link>
