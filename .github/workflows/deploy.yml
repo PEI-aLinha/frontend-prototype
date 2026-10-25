@@ -45,9 +45,16 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
-          test -n "$DEPLOY_HOST" && test -n "$DEPLOY_USER" && test -n "$DEPLOY_PATH"
+          : "${DEPLOY_HOST:?Missing repository secret DEPLOY_HOST}"
+          : "${DEPLOY_USER:?Missing repository secret DEPLOY_USER}"
+          : "${DEPLOY_PATH:?Missing repository variable DEPLOY_PATH}"
+          : "${GITHUB_SHA:?Missing commit SHA}"
+          [[ "$DEPLOY_HOST" =~ ^[A-Za-z0-9.-]+$ ]] || { echo "DEPLOY_HOST must be a hostname or IP only (no user, scheme, or port)." >&2; exit 2; }
+          [[ "$DEPLOY_USER" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]] || { echo "DEPLOY_USER must be a single SSH username." >&2; exit 2; }
+          [[ "$DEPLOY_PATH" =~ ^/[A-Za-z0-9/_-]+$ ]] || { echo "DEPLOY_PATH must be an absolute path containing only letters, numbers, /, _ or -." >&2; exit 2; }
+          target="$DEPLOY_USER@$DEPLOY_HOST"
           release="$DEPLOY_PATH/releases/$GITHUB_SHA"
-          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$release'"
-          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" dist/ "$DEPLOY_USER@$DEPLOY_HOST:$release/"
-          ssh -i ~/.ssh/deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+          ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/deploy_key "$target" "mkdir -p '$release'"
+          rsync -az --delete -e "ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/deploy_key" dist/ "$target:$release/"
+          ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -i ~/.ssh/deploy_key "$target" \
             "ln -sfn 'releases/$GITHUB_SHA' '$DEPLOY_PATH/current.next' && mv -Tf '$DEPLOY_PATH/current.next' '$DEPLOY_PATH/current'"
