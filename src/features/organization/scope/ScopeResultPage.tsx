@@ -19,7 +19,7 @@ function FrameworkCard({ r, framingLink, official }: { r: FrameworkResult; frami
   const applies = r.applicability === 'aplica'
   const titleId = useId()
   return (
-    <Card as="article" aria-labelledby={titleId} soft={!applies} className={cn('flex h-full flex-col gap-4 rounded-[16px] px-6 py-6', applies && 'border-brand/30')}>
+    <Card aria-labelledby={titleId} soft={!applies} className={cn('flex h-full flex-col gap-4 rounded-[16px] px-6 py-6', applies && 'border-brand/30')}>
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 id={titleId} className={cn('text-[1.375rem] font-extrabold title-tight', !applies && 'text-ink-soft')}>{r.name}</h2>

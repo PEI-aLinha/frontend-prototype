@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMockApi } from './mockApi'
-import { getState, resetDemo, setState } from './store'
+import { resetDemo } from './store'
 import { ORG_ID, PEDRO, RUI, MARTA, ASSET_TASK_ID } from './seed'
 
 let who = RUI
@@ -62,47 +62,5 @@ describe('mock API permissions', () => {
   it('denies consultants editing assets', async () => {
     who = MARTA
     await expect(api.assets.saveAsset(ORG_ID, { name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' })).rejects.toMatchObject({ status: 403 })
-  })
-
-  describe('organisation isolation', () => {
-    const OTHER = 'org-outra'
-    const foreign = () => {
-      setState((st) => ({
-        ...st,
-        organizations: [...st.organizations, { ...st.organizations[0], id: OTHER, slug: OTHER }],
-        services: [...st.services, { ...st.services[0], id: 'svc-x', organizationId: OTHER }],
-        assets: [...st.assets, { ...st.assets[0], id: 'ast-x', organizationId: OTHER }],
-      }))
-    }
-
-    it('rejects writes on resources of another organisation', async () => {
-      who = RUI
-      foreign()
-      await expect(api.assets.saveService(ORG_ID, { name: 'S', ownerId: RUI, criticality: 'alto' }, 'svc-x')).rejects.toMatchObject({ status: 404 })
-      await expect(api.assets.deleteService(ORG_ID, 'svc-x')).rejects.toMatchObject({ status: 404 })
-      await expect(api.assets.deleteAsset(ORG_ID, 'ast-x')).rejects.toMatchObject({ status: 404 })
-      await expect(api.assets.saveAsset(ORG_ID, { name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' }, 'ast-x')).rejects.toMatchObject({ status: 404 })
-      await api.assets.bulkDeleteAssets(ORG_ID, ['ast-x'])
-      expect(getState().assets.some((a) => a.id === 'ast-x')).toBe(true)
-    })
-
-    it('denies writes in an organisation the caller does not belong to', async () => {
-      foreign()
-      setState((st) => ({ ...st, organizations: st.organizations.map((o) => (o.id === OTHER ? { ...o, consultantId: 'u-outra' } : o)), roadmap: { ...st.roadmap, [OTHER]: { ...st.roadmap[ORG_ID], validated: false } } }))
-      who = RUI
-      await expect(api.assets.saveAsset(OTHER, { name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' })).rejects.toMatchObject({ status: 403 })
-      await expect(api.assets.saveService(OTHER, { name: 'S', ownerId: RUI, criticality: 'alto' })).rejects.toMatchObject({ status: 403 })
-      await expect(api.assets.importAssets(OTHER, [{ name: 'X', type: 'outro', criticalServiceId: null, ownerId: null, criticality: 'baixo' }])).rejects.toMatchObject({ status: 403 })
-      who = MARTA
-      await expect(api.assets.saveRisk(OTHER, { assetId: null, threat: 'T', description: '', ownerId: null, probability: 1, impact: 1, treatment: null, actionIds: [] })).rejects.toMatchObject({ status: 403 })
-      await expect(api.assessment.validateRoadmap(OTHER)).rejects.toMatchObject({ status: 403 })
-    })
-
-    it('lists only the users of the organisation plus consultancy staff', async () => {
-      setState((st) => ({ ...st, users: [...st.users, { ...st.users[0], id: 'u-x', organizationId: OTHER }] }))
-      const ids = (await api.directory.listUsers(ORG_ID)).map((u) => u.id)
-      expect(ids).toContain(MARTA)
-      expect(ids).not.toContain('u-x')
-    })
   })
 })

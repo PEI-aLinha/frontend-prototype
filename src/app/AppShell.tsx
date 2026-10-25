@@ -46,7 +46,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
         Saltar para o conteúdo
       </a>
 
-      <aside className="sticky top-0 hidden h-dvh w-[232px] shrink-0 flex-col border-r border-line-soft bg-paper-soft px-5 pb-7 pt-8 md:flex">
+      <aside aria-label="Barra lateral" className="sticky top-0 hidden h-dvh w-[232px] shrink-0 flex-col border-r border-line-soft bg-paper-soft px-5 pb-7 pt-8 md:flex">
         <div className="flex items-center justify-between pl-1"><Logo />{tools}</div>
         <nav aria-label="Navegação principal" data-tour="nav" className="mt-9 flex flex-1 flex-col gap-5 overflow-y-auto">
           {sections.map((s, i) => (

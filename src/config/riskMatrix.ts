@@ -37,4 +37,5 @@ export const RISK_MATRIX: RiskMatrixConfig = {
   ],
 }
 
-export const LEVEL_LABEL: Record<Level, string> = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto' }
+/** Severity order, for comparing two levels. The display strings live in RISK_LEVEL_LABEL (config/labels.ts). */
+export const LEVEL_ORDER: Record<Level, number> = { baixo: 1, medio: 2, alto: 3 }

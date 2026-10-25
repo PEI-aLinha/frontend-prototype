@@ -41,7 +41,7 @@ export function RoadmapActionPicker({ orgId, actions, selected, onChange, error,
 
   return (
     <fieldset className="flex flex-col gap-2" aria-describedby={error ? 'actions-error' : undefined}>
-      <legend className="mb-1 text-[0.8125rem] font-semibold text-ink-soft">Ações do roadmap que mitigam este risco</legend>
+      <legend className="mb-1 text-sm font-semibold text-ink-soft">Ações do roadmap que mitigam este risco</legend>
       <ul className="flex flex-col gap-2">
         {ordered.map((a) => {
           const on = selected.includes(a.id)
@@ -53,9 +53,9 @@ export function RoadmapActionPicker({ orgId, actions, selected, onChange, error,
                   {on && <Check className="size-3" strokeWidth={3} />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className={cn('block text-[0.875rem]', on ? 'font-bold text-brand' : 'font-semibold')}>{a.description}</span>
-                  <span className="mt-0.5 block text-[0.75rem] text-muted">
-                    #{a.priority} no roadmap · {a.controlCode !== '—' ? `${a.controlCode} · ` : ''}{a.dueDate ? `até ${shortDate(a.dueDate)}` : 'sem prazo'}
+                  <span className={cn('block text-sm', on ? 'font-bold text-brand' : 'font-semibold')}>{a.description}</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    prioridade base #{a.priority} · {a.controlCode !== '—' ? `${a.controlCode} · ` : ''}{a.dueDate ? `até ${shortDate(a.dueDate)}` : 'sem prazo'}
                     {suggested.includes(a.id) && <span className="font-bold text-brand"> · sugerida para este ativo</span>}
                   </span>
                   {a.aiOutputId && <span className="mt-1.5 block"><AIBadge /></span>}
@@ -65,7 +65,7 @@ export function RoadmapActionPicker({ orgId, actions, selected, onChange, error,
           )
         })}
       </ul>
-      {error && <p id="actions-error" role="alert" className="text-[0.8125rem] font-semibold text-danger">{error}</p>}
+      {error && <p id="actions-error" role="alert" className="text-sm font-semibold text-danger">{error}</p>}
       {adding ? (
         <div className="flex flex-col gap-3 rounded-[12px] bg-paper-soft p-3.5">
           <Field label="Nova ação para o roadmap" error={formError} hint="Entra no fim do roadmap e sobe se ficar ligada a riscos altos.">

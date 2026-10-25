@@ -1,4 +1,4 @@
-import type { ActionStatus, AssetType, Level, RiskStatus, Role, Treatment } from '../api/contracts'
+import type { ActionStatus, AssetType, EvidenceStrength, Id, Level, RiskStatus, Role, Treatment, User } from '../api/contracts'
 
 export const CRITICALITY_LABEL: Record<Level, string> = { alto: 'Alta', medio: 'Média', baixo: 'Baixa' }
 /** Maturity scale 1–5 (CMMI-style, as in the glossary: 1 inicial … 5 otimizada). */
@@ -45,6 +45,14 @@ export const ACTION_STATUS_LABEL: Record<ActionStatus, string> = {
   concluida: 'Concluída',
 }
 
+
+export const EVIDENCE_STRENGTH_LABEL: Record<EvidenceStrength, string> = {
+  autodeclarada: 'Autodeclarada',
+  documento_verificado: 'Documento verificado',
+  tecnicamente_verificada: 'Verificada tecnicamente',
+  continuamente_verificada: 'Verificada continuamente',
+}
+
 export const ROLE_LABEL: Record<Role, string> = {
   responsavel: 'Responsável designado',
   analista: 'Analista',
@@ -87,6 +95,18 @@ export function dateTime(iso: string): string {
 }
 
 export type DueTone = 'late' | 'soon' | 'ok'
+
+/**
+ * Who filled the inventory, for the captions on the asset screens: "Rui Santos e Pedro Almeida",
+ * or "A, B e C" for three or more. Empty when nobody is known, so the caller can drop the clause.
+ */
+export function authorNames(assets: readonly { createdBy: Id }[], users: readonly User[]): string {
+  const names = [...new Set(assets.map((a) => a.createdBy))]
+    .map((id) => users.find((u) => u.id === id)?.name)
+    .filter((n): n is string => !!n)
+  if (names.length < 2) return names[0] ?? ''
+  return `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`
+}
 
 /** Due date status relative to the demo's "today". */
 export function dueStatus(due: string, today: string): { label: string; tone: DueTone } {

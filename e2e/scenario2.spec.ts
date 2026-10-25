@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test'
-import { openAsset, shot, start } from './helpers'
+import { openAsset, shot, start, startEmpty } from './helpers'
 
 const CLIENT = '/clientes/componentes-agueda'
+
+test('Portfolio — no illustrative client can be opened before the first registration', async ({ page }) => {
+  await startEmpty(page)
+  await page.goto('/carteira?as=marta')
+  await expect(page.getByRole('list', { name: 'Clientes' }).getByRole('listitem')).toHaveCount(11)
+  await expect(page.getByRole('list', { name: 'Clientes' }).getByRole('button', { name: /^Abrir / })).toHaveCount(0)
+})
 
 test('Scenario 2 — Marta registers the ransomware risk, links actions and the roadmap is reprioritized', async ({ page }) => {
   await start(page, '/carteira', 'marta', 'c2')
@@ -68,6 +75,88 @@ test('Scenario 2 — Marta registers the ransomware risk, links actions and the 
   await page.getByRole('button', { name: 'Validar roadmap' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Validar roadmap' }).click()
   await expect(page.getByText('Roadmap validado · o Rui foi notificado')).toBeVisible()
+  await expect(page.getByText('Proposta pela IA · por validar').first()).toBeHidden()
+  await expect(page.getByText(/Roadmap validado por Marta Ferreira/)).toBeVisible()
+  await expect(page.getByText('2 → 3 de 5')).toBeVisible()
+})
+
+test('Scenario 2 — Marta gets the same numbers, and links only to the pages she can reach', async ({ page }) => {
+  await start(page, `${CLIENT}/roadmap`, 'marta', 'c3')
+  await page.goto(`${CLIENT}/roadmap?as=marta`)
+
+  // There is no assessment route under /clientes, so the level is a card, not a dead link.
+  await expect(page.getByText('2 → 3 de 5')).toBeVisible()
+  await expect(page.getByRole('link', { name: /2 → 3 de 5/ })).toHaveCount(0)
+
+  await expect(page.getByRole('link', { name: /Nenhum risco sem ação/ })).toHaveAttribute('href', `${CLIENT}/riscos`)
+  await expect(page.getByRole('link', { name: /1 de 7 recolhidas/ })).toHaveAttribute('href', `${CLIENT}/integracoes`)
+
+  // The consultant reads the threat, where the client reads the consequence.
+  const topRisks = page.getByRole('list', { name: 'Riscos mais graves' }).locator('li')
+  await expect(topRisks).toHaveCount(3)
+  await expect(topRisks.first()).toContainText('Ransomware')
+  await expect(page.getByRole('list', { name: 'Ações do roadmap por prioridade' }).locator('li')).toHaveCount(7)
+  if ((page.viewportSize()?.width ?? 0) >= 768) await expect(page.getByRole('list', { name: 'Progresso do plano' }).locator('li')).toHaveCount(7)
+  else await expect(page.getByRole('list', { name: 'Progresso do plano' })).toHaveCount(0)
+})
+
+test('Scenario 2 — the consultant adjusts the plan, and the history records it', async ({ page }) => {
+  await start(page, `${CLIENT}/roadmap`, 'marta', 'c3')
+  await page.goto(`${CLIENT}/roadmap?as=marta`)
+
+  await page.getByRole('button', { name: 'Propor ação', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Propor ação' }).click()
+  await expect(page.getByText('Descreva a ação em pelo menos 5 caracteres.')).toBeVisible()
+
+  await page.getByLabel('O que fazer').fill('Rever com a direção a política de acessos ao ERP')
+  await page.getByRole('dialog').getByRole('button', { name: 'Propor ação' }).click()
+  await expect(page.getByRole('heading', { name: 'Rever com a direção a política de acessos ao ERP' })).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Ações do roadmap por prioridade' }).locator('li').filter({ hasText: 'Rever com a direção' })).toContainText('Proposta pela consultora')
+
+  await page.getByRole('button', { name: 'Propor ação', exact: true }).click()
+  await expect(page.getByLabel('O que fazer')).toHaveValue('')
+  await page.getByRole('button', { name: 'Cancelar' }).click()
+
+  await page.getByRole('button', { name: 'Histórico' }).click()
+  await expect(page.getByRole('dialog').getByText('propôs a ação "Rever com a direção a política de acessos ao ERP"')).toBeVisible()
+})
+
+test('Scenario 2 — the export follows the order on screen', async ({ page }) => {
+  await start(page, `${CLIENT}/roadmap`, 'marta', 'c3')
+  await page.goto(`${CLIENT}/roadmap?as=marta`)
+
+  // The listener has to be attached before the click, or the popup opens unseen.
+  const opened = page.waitForEvent('popup')
+  await page.getByRole('button', { name: 'Exportar' }).click()
+  let win = await opened
+  await win.waitForLoadState('domcontentloaded')
+  await expect(win).toHaveTitle(/^Resultados e roadmap — /)
+  await expect(win.locator('h2')).toHaveText(['Documento', 'Resumo', 'Lacunas identificadas', 'Plano de ação · priorizado pelos riscos', 'Registo de riscos'])
+  await expect(win.locator('body')).toContainText('Validado por Marta Ferreira')
+  await expect(win.locator('th[scope="col"]').first()).toBeVisible()
+  await win.close()
+
+  await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
+  await expect(page).toHaveURL(/ordem=base/)
+  const reopened = page.waitForEvent('popup')
+  await page.getByRole('button', { name: 'Exportar' }).click()
+  win = await reopened
+  await win.waitForLoadState('domcontentloaded')
+  await expect(win.locator('h2').nth(3)).toHaveText('Plano de ação · ordem proposta pela IA')
+})
+
+test('Scenario 2 — the draft export says it is not validated yet', async ({ page }) => {
+  await start(page, `${CLIENT}/roadmap`, 'marta', 'c2')
+  await page.goto(`${CLIENT}/roadmap?as=marta`)
+
+  const opened = page.waitForEvent('popup')
+  await page.getByRole('button', { name: 'Exportar' }).click()
+  const win = await opened
+  await win.waitForLoadState('domcontentloaded')
+  await expect.poll(() => win.evaluate(() => document.body?.innerText ?? '')).toContain('Rascunho — por validar')
+  await expect(win.locator('h2').nth(0)).toHaveText('Documento')
+  await expect(win.locator('h2').nth(2)).toHaveText('Lacunas identificadas')
+  await win.close()
 })
 
 test('Scenario 2 — accepting a risk requires a justification and the history records the change', async ({ page }) => {

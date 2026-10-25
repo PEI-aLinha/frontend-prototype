@@ -58,7 +58,7 @@ export function FramingPage() {
         </Note>
       )}
 
-      <Card as="section" aria-labelledby="significado-titulo" className="flex flex-col gap-3 px-6 py-6">
+      <Card aria-labelledby="significado-titulo" className="flex flex-col gap-3 px-6 py-6">
         <h2 id="significado-titulo" className="section-title">O que isto significa</h2>
         <Bullets items={NIS2_MEANING[status.classification]} />
       </Card>

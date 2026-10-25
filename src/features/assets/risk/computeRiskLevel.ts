@@ -1,4 +1,5 @@
-import { RISK_MATRIX, type Level, type RiskMatrixConfig } from '../../../config/riskMatrix'
+import { RISK_LEVEL_LABEL } from '../../../config/labels'
+import { LEVEL_ORDER, RISK_MATRIX, type Level, type RiskMatrixConfig } from '../../../config/riskMatrix'
 
 export interface RiskScore {
   score: number
@@ -22,11 +23,8 @@ export function describeRule(probability: number, impact: number, config: RiskMa
   const p = config.probability.find((s) => s.value === probability)?.label ?? '?'
   const i = config.impact.find((s) => s.value === impact)?.label ?? '?'
   const { level } = computeRiskLevel(probability, impact, config)
-  const label = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto' }[level]
-  return `${p} × ${i} = ${label}`
+  return `${p} × ${i} = ${RISK_LEVEL_LABEL[level]}`
 }
-
-export const LEVEL_ORDER: Record<Level, number> = { baixo: 1, medio: 2, alto: 3 }
 
 export function maxLevel(levels: Level[]): Level | null {
   return levels.reduce<Level | null>((acc, l) => (acc === null || LEVEL_ORDER[l] > LEVEL_ORDER[acc] ? l : acc), null)

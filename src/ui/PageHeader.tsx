@@ -13,7 +13,7 @@ interface PageHeaderProps {
 /** Eyebrow (+ help on the right) over a 30 title + subtitle; actions on the right, aligned to the title baseline. */
 export function PageHeader({ eyebrow, title, subtitle, actions, help }: PageHeaderProps) {
   return (
-    <header className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <div className="flex min-h-8 items-center justify-between gap-3">
         <Eyebrow className="text-[0.75rem]">{eyebrow}</Eyebrow>
         {help && <div className="-my-1 shrink-0">{help}</div>}
@@ -25,6 +25,6 @@ export function PageHeader({ eyebrow, title, subtitle, actions, help }: PageHead
         </div>
         {actions && <div className="flex flex-wrap items-center gap-3 max-md:w-full max-md:[&>*]:flex-1">{actions}</div>}
       </div>
-    </header>
+    </div>
   )
 }

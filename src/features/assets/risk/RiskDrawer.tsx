@@ -137,6 +137,7 @@ export function RiskReadDrawer({ open, onClose, risk, assets, users, actions, li
   const asset = assets.find((a) => a.id === risk.assetId)
   const linked = links.filter((l) => l.riskId === risk.id).map((l) => actions.find((a) => a.id === l.remediationActionId)).filter(Boolean) as RemediationAction[]
   const owner = users.find((u) => u.id === risk.ownerId)
+  const author = users.find((u) => u.id === risk.createdBy)?.name
   return (
     <Drawer open={open} onOpenChange={(o) => !o && onClose()} width={560} eyebrow={asset ? asset.name : 'Toda a empresa'} title={risk.threat} chip={<RiskLevelBadge level={level} prefix="Risco " />}
       footer={<Button variant="secondary" onClick={onClose}>Fechar</Button>}>
@@ -165,7 +166,7 @@ export function RiskReadDrawer({ open, onClose, risk, assets, users, actions, li
             ))}
           </section>
         )}
-        <Note>Registado pela consultora Marta Ferreira. O nível é calculado por regra e não por IA.</Note>
+        <Note>Registado pela consultora{author ? ` ${author}` : ''}. O nível é calculado por regra e não por IA.</Note>
       </div>
     </Drawer>
   )

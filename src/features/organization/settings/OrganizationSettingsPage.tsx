@@ -54,11 +54,11 @@ export function OrganizationSettingsPage() {
     <>
       <PageHeader eyebrow={org.name} title="Definições da organização" />
 
-      <Card as="section" aria-labelledby="qualificacao-titulo" className="flex flex-col gap-4 px-6 py-6">
+      <Card aria-labelledby="qualificacao-titulo" className="flex flex-col gap-4 px-6 py-6">
         <header className="flex flex-wrap items-start justify-between gap-3">
           <h2 id="qualificacao-titulo" className="section-title">Qualificação NIS2</h2>
           {canEdit && suggested && suggested !== 'nao_abrangida' && !official && today.data && (
-            <Button icon={<BadgeCheck className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Registar qualificação oficial</Button>
+            <Button icon={<BadgeCheck className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Registar qual uma oficial</Button>
           )}
           {canEdit && official && today.data && (
             <Button variant="secondary" icon={<Pencil className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Corrigir</Button>
@@ -95,7 +95,7 @@ export function OrganizationSettingsPage() {
       </Card>
 
       {p && (
-        <Card as="section" aria-labelledby="dados-titulo" className="flex flex-col gap-4 px-6 py-6">
+        <Card aria-labelledby="dados-titulo" className="flex flex-col gap-4 px-6 py-6">
           <h2 id="dados-titulo" className="section-title">Dados da organização</h2>
           <DataList rows={[
             ['Denominação', org.name],

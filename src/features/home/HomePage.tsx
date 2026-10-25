@@ -68,7 +68,11 @@ export function HomePage() {
       <HighlightCard
         eyebrow="Avaliação de maturidade · NIS2 + RGPD"
         title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : notStarted ? 'Avaliação por começar' : assessment.data ? `${answered} de ${total} perguntas respondidas` : '…'}
-        action={<Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{validated ? 'Ver roadmap →' : submitted ? 'Ver avaliação →' : notStarted ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>}
+        action={validated ? (
+          <Link to={`${base}/roadmap`}><Button variant="inverse" tabIndex={-1}>Ver roadmap →</Button></Link>
+        ) : (
+          <Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{submitted ? 'Ver avaliação →' : notStarted ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>
+        )}
       >
         <ProgressBar value={answered} max={total || 1} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
         {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} por ${consultant}` : submitted ? `Submetida qua., 14 out. às 10:12 · ${consultant} está a rever` : notStarted ? 'Ainda sem respostas · o progresso fica guardado' : [...pending, 'o progresso fica guardado'].join(' · ')}
@@ -87,11 +91,13 @@ export function HomePage() {
 
       <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3 md:items-start" data-tour="home-summary">
         <h2 id="home-summary-title" className="sr-only">Resumo</h2>
-        {seeRisks && risks.data && top ? (
-          <StatCard to={`${base}/riscos`} label="Riscos" accent={<RiskLevelBadge level={top} />}
-            value={`${topCount} ${topCount === 1 ? 'risco' : 'riscos'} ${RISK_LEVEL_LABEL[top].toLowerCase()}${topCount === 1 ? '' : 's'} · ${topTreating ? 'em tratamento' : 'por tratar'}`}
-            caption={`${levels.length} riscos registados pela consultora`} />
-        ) : (
+         {seeRisks && risks.data && top ? (
+           <Link to={`${base}/riscos`} className="contents">
+             <StatCard label="Riscos" accent={<RiskLevelBadge level={top} />}
+               value={`${topCount} ${topCount === 1 ? 'risco' : 'riscos'} ${RISK_LEVEL_LABEL[top].toLowerCase()}${topCount === 1 ? '' : 's'} · ${topTreating ? 'em tratamento' : 'por tratar'}`}
+               caption={`${levels.length} riscos registados pela consultora`} />
+           </Link>
+         ) : (
           <Link to={`${base}/enquadramento`} className="contents">
             <StatCard label="Enquadramento" value={nis2?.label ?? '—'} caption={nis2?.official ? `Oficial · CNCS · Ato de ${shortDate(nis2.date!)}` : 'Sugestão indicativa · aguarda o CNCS'} />
           </Link>

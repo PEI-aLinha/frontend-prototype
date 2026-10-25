@@ -1,5 +1,6 @@
 import type { Cell, Row, SheetData } from 'write-excel-file/browser'
-import { LEVEL_LABEL, RISK_MATRIX, type RiskMatrixConfig, type ScaleStep } from '../../../config/riskMatrix'
+import { RISK_LEVEL_LABEL as LEVEL_LABEL } from '../../../config/labels'
+import { RISK_MATRIX, type RiskMatrixConfig, type ScaleStep } from '../../../config/riskMatrix'
 
 /** Rows reserved in the register sheet, each with its score and level formulas already in place. */
 export const REGISTER_ROWS = 30
