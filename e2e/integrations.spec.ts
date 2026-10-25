@@ -1,0 +1,52 @@
+import { expect, test } from '@playwright/test'
+import { ORG, shot, start, switchPersona } from './helpers'
+
+test('Integrations — Rui asks Pedro, Pedro connects, Rui decides on the suggestions', async ({ page }) => {
+  await start(page, `${ORG}/integracoes`, 'rui', 'c2')
+  await page.goto(`${ORG}/integracoes?as=rui`)
+  const intune = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Microsoft Intune' }) })
+  await intune.getByRole('button', { name: 'Pedir ao Pedro' }).click()
+  await expect(page.getByText('Pedido enviado ao Pedro Almeida')).toBeVisible()
+  await expect(intune.getByText('Pedido enviado', { exact: true })).toBeVisible()
+  await shot(page, 'i-01-catalogo')
+
+  await switchPersona(page, 'Pedro Almeida')
+  await page.goto(`${ORG}/tarefas`)
+  await page.getByRole('button', { name: 'Ligar' }).click()
+  await expect(page).toHaveURL(/integracoes/)
+  await page.getByRole('region', { name: 'Pedidos para si' }).getByRole('button', { name: 'Ligar' }).click()
+  const dialog = page.getByRole('dialog', { name: 'Ligar Microsoft Intune' })
+  await dialog.getByRole('button', { name: 'Continuar' }).click()
+  const authorize = dialog.getByRole('button', { name: 'Autorizar acesso só de leitura' })
+  await expect(authorize).toBeDisabled()
+  await dialog.getByLabel(/autorizo o aLinha/).check()
+  await shot(page, 'i-02-autorizar')
+  await authorize.click()
+  await expect(dialog.getByText('Ligação feita. Primeira leitura concluída.')).toBeVisible()
+  await dialog.getByRole('button', { name: 'Ver o que foi encontrado' }).click()
+  await expect(page.getByText('Microsoft Intune ligado (só leitura)')).toBeVisible()
+
+  await switchPersona(page, 'Rui Santos')
+  await page.goto(`${ORG}/integracoes`)
+  await expect(page.getByText('2 por rever')).toBeVisible()
+  const portateis = page.getByRole('listitem').filter({ hasText: 'Portáteis geridos (23)' })
+  await expect(portateis.getByText(/Parece ser o ativo/)).toBeVisible()
+  await portateis.getByRole('button', { name: 'É o mesmo: associar' }).click()
+  await expect(page.getByText(/Associado a "Portáteis da administração/)).toBeVisible()
+  const linha = page.getByRole('listitem').filter({ hasText: 'Computadores das linhas de produção (6)' })
+  await linha.getByRole('button', { name: 'Acrescentar ao inventário' }).click()
+  await expect(page.getByText('"Computadores das linhas de produção (6)" acrescentado ao inventário')).toBeVisible()
+  await expect(page.getByText('Encriptação dos portáteis')).toBeVisible()
+  await shot(page, 'i-03-sugestoes')
+
+  await page.goto(`${ORG}/ativos`)
+  await expect(page.getByText('Computadores das linhas de produção (6)').locator('visible=true').first()).toBeVisible()
+})
+
+test('Integrations — the consultant only sees the evidence', async ({ page }) => {
+  await start(page, '/clientes/componentes-agueda/integracoes', 'marta', 'c3')
+  await page.goto('/clientes/componentes-agueda/integracoes?as=marta')
+  await expect(page.getByText('Autenticação multifator nas contas')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ligar' })).toHaveCount(0)
+  await expect(page.getByText(/credencial|openbao:\/\//i).filter({ hasText: 'openbao://' })).toHaveCount(0)
+})
