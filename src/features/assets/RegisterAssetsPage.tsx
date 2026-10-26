@@ -6,7 +6,7 @@ import { useCompleteTask, useSaveAsset } from '../../api/queries'
 import { ASSET_TYPE_LABEL, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
-import { Button, CriticalityChip, EmptyState, ErrorState, Explainer, Note, PageHeader, ProgressBar, SkeletonRows, Term, useToast, cn } from '../../ui'
+import { Button, CriticalityChip, EmptyState, ErrorState, Note, PageHeader, ProgressBar, SkeletonRows, useToast, cn } from '../../ui'
 import { AssetFields, FormShell } from './AssetForm'
 import { emptyValues, toInput, valuesFromAsset } from './assetFormModel'
 import { useAssetForm } from './useAssetForm'
@@ -87,12 +87,6 @@ export function RegisterAssetsPage() {
         <ArrowLeft className="size-4" aria-hidden />As minhas tarefas
       </button>
       <PageHeader eyebrow="Tarefa · Inventário de ativos" title="Registar ativos técnicos" subtitle={`${assigner ? `Atribuída por ${assigner}` : 'Atribuída pelo responsável designado'} · ${task.dueDate ? `até ${shortDay(task.dueDate)}` : 'sem prazo'}`} actions={meta} />
-      <Explainer id="register-assets" intro={`${assignerSubject} pediu-lhe para registar: ${task.scope ?? task.title}. Registe um ativo de cada vez.`}
-        steps={[
-          { title: 'Preencha o formulário', text: <>Nome, tipo, onde está, que <Term k="servicoCritico">serviço crítico</Term> suporta e a <Term k="criticidade">criticidade</Term>.</> },
-          { title: 'Guardar e adicionar outro', text: 'O ativo passa para a lista da esquerda. Clique nele para corrigir.' },
-          { title: 'Guardar e concluir', text: `No último ativo. ${assignerSubject} recebe uma notificação e vê-os no inventário.` },
-        ]} />
       {done && <Note>Tarefa concluída. Pode ainda corrigir os ativos que registou; {assignerSubject} vê as alterações no histórico.</Note>}
 
       <div className="flex items-start gap-7 max-lg:flex-col-reverse">

@@ -4,7 +4,7 @@ import { CheckCircle2, Clock } from 'lucide-react'
 import { useAssessment, useSubmitAssessment, useUsers } from '../../api/queries'
 import { MATURITY_LABEL } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
-import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Explainer, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, Term, useToast } from '../../ui'
+import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, useToast } from '../../ui'
 
 const STATUS = { em_curso: 'Em curso', submetida: 'Concluída · a aguardar validação', validada: 'Validada pela consultora' } as const
 
@@ -23,12 +23,6 @@ export function AssessmentPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title="Avaliação" subtitle="Questionário de maturidade em cibersegurança, alinhado com o Decreto-Lei 125/2025 (NIS2)." />
-      <Explainer id="assessment-client" intro={<>A avaliação mede a <Term k="maturidade">maturidade</Term> da empresa. Das respostas nascem as lacunas e o roadmap.</>}
-        steps={[
-          { title: 'Responda por secções', text: 'Não precisa de fazer tudo de uma vez. O progresso fica guardado.' },
-          { title: 'Delegue o técnico', text: 'Perguntas que não sabe responder podem ir para o Pedro. Ele só vê essa pergunta.' },
-          { title: 'A consultora valida', text: 'Quando concluir, a Marta revê as respostas e valida o roadmap.' },
-        ]} />
       {!a ? <SkeletonRows rows={6} /> : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="flex flex-col gap-4">

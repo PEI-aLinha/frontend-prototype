@@ -5,11 +5,23 @@ import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveri
 import { dateTime, EVIDENCE_STRENGTH_LABEL } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
-import { Button, Card, Chip, ErrorState, Eyebrow, Explainer, Note, PageHeader, SkeletonRows, Term, cn, useToast } from '../../ui'
+import { Button, Card, Chip, ErrorState, Eyebrow, Note, PageHeader, SkeletonRows, cn, useToast } from '../../ui'
 import { ConnectModal } from './ConnectModal'
 import { DiscoveryList } from './DiscoveryList'
 
 const STATUS: Record<IntegrationConnection['status'], string> = { disponivel: 'Por ligar', pedido: 'Pedido enviado', ligado: 'Ligado', erro: 'Erro' }
+
+const UNUSED_GROUP = 'Não usa'
+
+function groupByCategory(items: IntegrationConnection[]): { category: string; items: IntegrationConnection[] }[] {
+  const groups = new Map<string, IntegrationConnection[]>()
+  for (const item of items) {
+    const category = item.provider.applies ? item.provider.category : UNUSED_GROUP
+    groups.set(category, [...(groups.get(category) ?? []), item])
+  }
+  const entries = [...groups].map(([category, items]) => ({ category, items }))
+  return [...entries.filter((group) => group.category !== UNUSED_GROUP), ...entries.filter((group) => group.category === UNUSED_GROUP)]
+}
 
 function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationConnection; onConnect: (p: ProviderInfo) => void; isOwner: boolean; canConnect: boolean }) {
   const org = useTenant()
@@ -100,18 +112,6 @@ export function IntegrationsPage() {
   return (
     <>
       <PageHeader eyebrow={org.name} title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
-      {!isConsultant && (
-        <Explainer id={`integrations-${persona.role}`} intro={<>Uma <Term k="integracao">integração</Term> lê dados de um sistema que já usam (ex.: Microsoft 365). Nunca altera nada.</>}
-          steps={persona.role === 'analista' ? [
-            { title: 'Autorize o acesso', text: 'O Rui pediu-lhe para ligar um sistema. Clique em "Ligar" e siga os três passos.' },
-            { title: 'Primeira leitura', text: 'O aLinha lê os dados e prepara sugestões de ativos.' },
-            { title: 'O Rui decide', text: 'As sugestões ficam à espera do Rui. Não entram sozinhas no inventário.' },
-          ] : [
-            { title: 'Escolha o que ligar', text: 'Comece pelo email e contas (Microsoft 365). Se não souber as senhas de administrador, peça ao Pedro.' },
-            { title: 'Reveja as sugestões', text: 'Os ativos encontrados aparecem em baixo. Acrescente, associe a um que já existe, ou ignore.' },
-            { title: 'Evidências automáticas', text: 'Algumas ações do roadmap (ex.: MFA) passam a ser verificadas sozinhas. A consultora vê o resultado.' },
-          ]} />
-      )}
       {error ? <ErrorState error={error} onRetry={() => { integrations.refetch(); discoveries.refetch(); evidence.refetch() }} /> : !integrations.data ? <SkeletonRows rows={4} /> : (
         <>
           {!isConsultant && (
@@ -119,7 +119,12 @@ export function IntegrationsPage() {
               <h2 id="int-catalog" className="text-lg font-extrabold">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
               {integrations.data.length === 0
                 ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-sm text-ink-soft">Não tem integrações para ligar.</p>
-                : <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{integrations.data.map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>}
+                : groupByCategory(integrations.data).map(({ category, items }) => (
+                  <div key={category} className="flex flex-col gap-2">
+                    <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">{category}</h3>
+                    <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>
+                  </div>
+                ))}
             </section>
           )}
           {isOwner && (
