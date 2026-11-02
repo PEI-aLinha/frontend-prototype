@@ -33,7 +33,7 @@ export function NotificationBell({ compact }: { compact?: boolean }) {
         {unread > 0 && <span className="absolute right-1 top-1 grid min-w-[18px] place-items-center rounded-full bg-brand px-1 text-[0.6563rem] font-extrabold leading-[1.125rem] text-white ring-2 ring-paper-soft">{unread}</span>}
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content align="start" sideOffset={8} collisionPadding={12} className="z-[96] flex max-h-[min(560px,80dvh)] w-[380px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-[16px] border border-line-soft bg-paper shadow-[0_16px_48px_rgba(32,33,36,0.18)] animate-pop-in">
+        <Popover.Content align="start" sideOffset={8} collisionPadding={12} className="z-[96] flex max-h-[min(560px,80dvh)] w-[380px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-[16px] border border-line-soft bg-paper shadow-[0_16px_48px_rgb(var(--shadow-rgb)/0.18)] animate-pop-in">
           <header className="flex items-center justify-between border-b border-line-soft px-4 py-3">
             <p className="text-[0.9375rem] font-extrabold">Notificações</p>
             {unread > 0 && <button type="button" onClick={() => markAll.mutate()} className="text-[0.8125rem] font-bold text-brand hover:underline">Marcar todas como lidas</button>}

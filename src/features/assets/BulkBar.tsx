@@ -18,7 +18,7 @@ export function BulkBar({ ids, inventory, onDone }: { ids: string[]; inventory: 
   const fail = (e: Error) => toast.show(e.message, 'error')
 
   return (
-    <div role="region" aria-label="Ações em massa" className="sticky top-2 z-20 flex flex-wrap items-center gap-3 rounded-[14px] bg-brand-deep px-4 py-3 text-white shadow-[0_12px_32px_rgba(6,54,50,0.25)] animate-pop-in max-md:top-16">
+    <div role="region" aria-label="Ações em massa" className="sticky top-2 z-20 flex flex-wrap items-center gap-3 rounded-[14px] bg-brand-deep px-4 py-3 text-white shadow-[0_12px_32px_rgb(var(--shadow-rgb)/0.25)] animate-pop-in max-md:top-16">
       <span className="text-[0.875rem] font-bold">{n} {n === 1 ? 'ativo selecionado' : 'ativos selecionados'}</span>
       <div className="w-[170px]">
         <Select size="sm" ariaLabel="Mudar criticidade" value="" placeholder="Mudar criticidade" onChange={(v) => update.mutate({ ids, change: { criticality: v as Level } }, { onSuccess: () => done(`Criticidade alterada em ${n} ativos`), onError: fail })}

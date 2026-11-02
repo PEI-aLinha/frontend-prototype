@@ -139,7 +139,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   const actionsOpenLabel = `${summary.actionsOpen} ${summary.actionsOpen === 1 ? 'ação por resolver' : 'ações por resolver'}, ${summary.actionsDone === 0 ? 'nenhuma concluída' : `${summary.actionsDone} ${summary.actionsDone === 1 ? 'concluída' : 'concluídas'}`}`
   const evidenceLabel = `${evidenceCount} de ${ranked.length} recolhidas`
   const provenLabel = `${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}, ${failedCount} ${failedCount === 1 ? 'não comprovada' : 'não comprovadas'}, ${missingCount} sem prova recolhida`
-  const cardHover = 'transition-[border-color,box-shadow] group-hover:border-line group-hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]'
+  const cardHover = 'transition-[border-color,box-shadow] group-hover:border-line group-hover:shadow-[0_2px_10px_rgb(var(--shadow-rgb)/0.06)]'
   const levelCard = assessment.isError
     ? <StatCard className={`h-full ${cardHover}`} labelAs="h3" label="Nível de maturidade" value="—" caption="Não foi possível carregar a avaliação" />
     : assessment.data
@@ -263,7 +263,7 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
   const fell = moved < 0
   const owner = users.find((u) => u.id === a.assignedTo)
   return (
-    <li id={`acao-${a.id}`} tabIndex={-1} className={cn('flex scroll-mt-14 gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3 md:scroll-mt-0', reason ? 'border-brand/40 shadow-[0_2px_12px_rgba(11,79,74,0.08)]' : 'border-line-soft')}>
+    <li id={`acao-${a.id}`} tabIndex={-1} className={cn('flex scroll-mt-14 gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3 md:scroll-mt-0', reason ? 'border-brand/40 shadow-[0_2px_12px_rgb(var(--shadow-rgb)/0.08)]' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
         <span className="grid size-9 place-items-center rounded-[10px] bg-paper-soft text-sm font-extrabold text-ink-soft"><span className="sr-only">Prioridade </span>{rank}</span>
         {(rose || fell) && (

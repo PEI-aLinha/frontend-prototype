@@ -39,7 +39,7 @@ const UNAVAILABLE = 'Mockup: o ficheiro só fica disponível na sessão em que f
 function AttachmentChip({ attachment: a, inverse }: { attachment: ChatAttachment; inverse?: boolean }) {
   const url = attachmentUrl(a.id)
   const box = `flex min-h-11 max-w-full items-center gap-2.5 rounded-[10px] border px-3 py-2 text-left no-underline ${
-    inverse ? 'border-white/30 bg-white/10 text-white' : 'border-brand-soft bg-white text-brand'
+    inverse ? 'border-white/30 bg-white/10 text-white' : 'border-brand-soft bg-paper text-brand'
   }`
   const body = (
     <>
@@ -61,7 +61,7 @@ function ConversationDocuments({ messages }: { messages: ChatMessage[] }) {
   const docs = messages.flatMap((m) => (m.attachments ?? []).map((a) => ({ a, m })))
   if (docs.length === 0) return null
   return (
-    <div className="border-b border-brand-soft bg-white">
+    <div className="border-b border-brand-soft bg-paper">
       <button
         type="button"
         aria-expanded={open}
@@ -93,7 +93,7 @@ function ConversationDocuments({ messages }: { messages: ChatMessage[] }) {
 function ClientContextStrip({ children, expanded }: { children: ReactNode; expanded: boolean }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className={`border-b border-brand-soft bg-white ${expanded ? 'xl:hidden' : ''}`}>
+    <div className={`border-b border-brand-soft bg-paper ${expanded ? 'xl:hidden' : ''}`}>
       <button
         type="button"
         aria-expanded={open}
@@ -149,7 +149,7 @@ function RequestDocumentForm({ onSubmit, onCancel }: { onSubmit: (title: string,
       <div className="flex flex-wrap gap-1.5">
         {COMMON_DOCUMENTS.map((d) => (
           <button key={d} type="button" aria-pressed={title === d} onClick={() => setTitle(d)}
-            className={`min-h-9 rounded-full border px-3 text-[0.75rem] font-bold ${title === d ? 'border-brand bg-brand text-white' : 'border-brand-soft bg-white text-brand hover:bg-paper-soft'}`}>
+            className={`min-h-9 rounded-full border px-3 text-[0.75rem] font-bold ${title === d ? 'border-brand bg-brand text-white' : 'border-brand-soft bg-paper text-brand hover:bg-paper-soft'}`}>
             {d}
           </button>
         ))}
@@ -168,7 +168,7 @@ function RequestDocumentForm({ onSubmit, onCancel }: { onSubmit: (title: string,
 function MessageTable({ table }: { table: ChatTable }) {
   const label = table.caption ?? 'Tabela'
   return (
-    <div className="max-w-full self-start overflow-hidden rounded-[12px] border border-brand-soft bg-white">
+    <div className="max-w-full self-start overflow-hidden rounded-[12px] border border-brand-soft bg-paper">
       <table className="w-full border-collapse break-words text-left text-[0.7813rem] leading-snug">
         <caption className="sr-only">{label}</caption>
         <thead className="bg-paper">
@@ -248,7 +248,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
   }, [active.id])
 
   const placeholder = reviewing ? 'Escreva a sua resposta ao cliente…' : 'Pergunte sobre riscos, ativos ou roadmap…'
-  const iconBtn = 'flex size-[46px] flex-none items-center justify-center rounded-[12px] border border-brand-soft bg-white text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40'
+  const iconBtn = 'flex size-[46px] flex-none items-center justify-center rounded-[12px] border border-brand-soft bg-paper text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40'
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
@@ -293,7 +293,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                     ? 'border-red-200 bg-red-50 text-red-800'
                     : fromConsultant
                       ? 'border-brand bg-signal-soft/30'
-                      : 'border-brand-soft bg-white'
+                      : 'border-brand-soft bg-paper'
                 }`
 
             return (
@@ -337,7 +337,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
           })}
 
           {active.typing && (
-            <div role="status" aria-label="A escrever" className="flex gap-1.5 self-start rounded-[16px_16px_16px_4px] border border-brand-soft bg-white px-4 py-3.5">
+            <div role="status" aria-label="A escrever" className="flex gap-1.5 self-start rounded-[16px_16px_16px_4px] border border-brand-soft bg-paper px-4 py-3.5">
               {[0, 150, 300].map((d) => (
                 <span key={d} style={{ animationDelay: `${d}ms` }} className="size-[7px] animate-bounce rounded-full bg-muted" />
               ))}
@@ -347,7 +347,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
           {active.messages.length <= 1 && !active.typing && !reviewing && (
             <div className="flex flex-wrap gap-2 pt-1">
               {suggestions.map((s) => (
-                <button key={s.label} type="button" onClick={() => onSend(s.label, s)} className="min-h-11 rounded-[22px] border border-brand-soft bg-white px-3.5 py-2 text-left text-[0.8125rem] font-bold text-brand hover:bg-paper">
+                <button key={s.label} type="button" onClick={() => onSend(s.label, s)} className="min-h-11 rounded-[22px] border border-brand-soft bg-paper px-3.5 py-2 text-left text-[0.8125rem] font-bold text-brand hover:bg-paper">
                   {s.label}
                 </button>
               ))}
@@ -356,7 +356,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
         </div>
       </div>
 
-      <footer className={`border-t border-brand-soft bg-white ${expanded ? 'px-6 pb-3 pt-4' : 'px-3.5 pb-2.5 pt-3'}`}>
+      <footer className={`border-t border-brand-soft bg-paper ${expanded ? 'px-6 pb-3 pt-4' : 'px-3.5 pb-2.5 pt-3'}`}>
         <div className="mx-auto flex w-full max-w-[760px] flex-col gap-2">
           {reviewing && active.awaitingReview && onReview && (
             <Button variant="secondary" size="sm" icon={<Check className="size-4" aria-hidden />} onClick={onReview}>

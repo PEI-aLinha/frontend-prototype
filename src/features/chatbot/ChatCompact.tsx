@@ -74,7 +74,7 @@ export function RenameField({ initial, onDone, className }: { initial: string; o
         // Esc só cancela a edição: não deixa chegar ao atalho que minimiza o assistente
         if (e.key === 'Escape') { e.stopPropagation(); finish(null) }
       }}
-      className={`min-w-0 rounded-[8px] border border-brand bg-white px-2.5 text-[0.8125rem] font-bold text-brand outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand ${className ?? ''}`}
+      className={`min-w-0 rounded-[8px] border border-brand bg-paper px-2.5 text-[0.8125rem] font-bold text-brand outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand ${className ?? ''}`}
     />
   )
 }
@@ -119,7 +119,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
         return (
           <div
             key={c.id}
-            className={`flex flex-none items-center rounded-full border ${selected ? 'border-brand bg-brand text-white' : 'border-brand-soft bg-white text-brand'}`}
+            className={`flex flex-none items-center rounded-full border ${selected ? 'border-brand bg-brand text-white' : 'border-brand-soft bg-paper text-brand'}`}
           >
             <button
               type="button"
@@ -162,7 +162,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
           type="button"
           onClick={onAdd}
           aria-label="Nova conversa"
-          className="flex size-10 flex-none items-center justify-center rounded-full border border-dashed border-brand-soft bg-white text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand"
+          className="flex size-10 flex-none items-center justify-center rounded-full border border-dashed border-brand-soft bg-paper text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand"
         >
           <Plus className="size-4" aria-hidden />
         </button>

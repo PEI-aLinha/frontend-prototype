@@ -44,7 +44,7 @@ export function Modal({ open, onOpenChange, title, description, chip, children, 
         <Dialog.Content
           onCloseAutoFocus={returnFocus}
           style={{ maxWidth: width }}
-          className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-[18px] overflow-y-auto rounded-[20px] bg-paper px-8 py-7 shadow-[0_24px_64px_rgba(6,54,50,0.22)] animate-pop-in max-sm:px-5 max-sm:py-6"
+          className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-[18px] overflow-y-auto rounded-[20px] bg-paper px-8 py-7 shadow-[0_24px_64px_rgb(var(--shadow-rgb)/0.22)] animate-pop-in max-sm:px-5 max-sm:py-6"
         >
           {chip && <div>{chip}</div>}
           <Dialog.Title className="text-[1.625rem] font-extrabold title-tight">{title}</Dialog.Title>
@@ -71,7 +71,7 @@ export function Drawer({ open, onOpenChange, title, description, chip, children,
           onCloseAutoFocus={returnFocus}
           style={{ ['--drawer-w' as string]: `${width}px` }}
           className={cn(
-            'fixed z-50 flex flex-col bg-paper shadow-[-16px_0_48px_rgba(6,54,50,0.16)]',
+            'fixed z-50 flex flex-col bg-paper shadow-[-16px_0_48px_rgb(var(--shadow-rgb)/0.16)]',
             'inset-y-0 right-0 w-[min(var(--drawer-w),100vw)] animate-slide-in',
             'max-md:inset-x-0 max-md:bottom-0 max-md:top-6 max-md:w-full max-md:rounded-t-[20px] max-md:animate-slide-up',
           )}

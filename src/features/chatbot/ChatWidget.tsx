@@ -409,7 +409,7 @@ export function ChatWidget({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Abrir ${title}`}
-        className="group fixed bottom-6 right-6 z-50 inline-flex h-[52px] items-center rounded-full bg-brand px-4 text-white shadow-[0_10px_28px_rgba(2,61,54,0.35)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand max-sm:bottom-[calc(132px+env(safe-area-inset-bottom))] max-sm:right-3"
+        className="group fixed bottom-6 right-6 z-50 inline-flex h-[52px] items-center rounded-full bg-brand px-4 text-white shadow-[0_10px_28px_rgb(var(--shadow-rgb)/0.35)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand max-sm:bottom-[calc(132px+env(safe-area-inset-bottom))] max-sm:right-3"
       >
         <Sparkles className="size-5 flex-none" aria-hidden />
         <span
@@ -429,7 +429,7 @@ export function ChatWidget({
 
   const panelBox = expanded
     ? 'fixed inset-0 z-[90] h-dvh w-dvw'
-    : 'fixed bottom-6 right-6 z-[90] h-[640px] max-h-[calc(100vh-48px)] w-[400px] max-w-[calc(100vw-48px)] rounded-[20px] border border-brand-soft shadow-[0_24px_60px_rgba(2,40,35,0.22)] max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] max-sm:max-w-none'
+    : 'fixed bottom-6 right-6 z-[90] h-[640px] max-h-[calc(100vh-48px)] w-[400px] max-w-[calc(100vw-48px)] rounded-[20px] border border-brand-soft shadow-[0_24px_60px_rgb(var(--shadow-rgb)/0.22)] max-sm:bottom-3 max-sm:right-3 max-sm:h-[calc(100vh-24px)] max-sm:w-[calc(100vw-24px)] max-sm:max-w-none'
 
   const headerBtn =
     'flex size-11 items-center justify-center rounded-[10px] text-white/80 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white'
@@ -471,7 +471,7 @@ export function ChatWidget({
 
   if (loading || error) {
     return (
-      <section role="dialog" aria-label={title} aria-modal="false" className={`flex flex-col overflow-hidden bg-white ${panelBox}`}>
+      <section role="dialog" aria-label={title} aria-modal="false" className={`flex flex-col overflow-hidden bg-paper ${panelBox}`}>
         <header className="flex items-center gap-3 bg-brand py-4 pl-[18px] pr-3 text-white">
           <Sparkles className="size-[18px]" aria-hidden />
           <strong className="flex-1 text-[0.9375rem] font-extrabold">{title}</strong>
@@ -488,7 +488,7 @@ export function ChatWidget({
     <section
       role="dialog"
       aria-label={title}
-      className={`flex flex-col overflow-hidden bg-white ${panelBox}`}
+      className={`flex flex-col overflow-hidden bg-paper ${panelBox}`}
     >
       <header className="flex items-center gap-3 bg-brand py-4 pl-[18px] pr-3 text-white">
         <span className="flex size-9 flex-none items-center justify-center rounded-full bg-white/20" aria-hidden>

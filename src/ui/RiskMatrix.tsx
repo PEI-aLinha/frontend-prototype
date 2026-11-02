@@ -58,7 +58,7 @@ export function RiskMatrix({ probability, impact, levelOf, count, selected, onSe
                           'relative flex w-full flex-col items-center justify-center rounded-[10px] transition-[transform,box-shadow] duration-150',
                           size,
                           riskCellClass(level),
-                          onSelect && 'hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(32,33,36,0.1)]',
+                          onSelect && 'hover:-translate-y-px hover:shadow-[0_4px_12px_rgb(var(--shadow-rgb)/0.1)]',
                           isSel && 'ring-2 ring-ink ring-offset-2 ring-offset-paper',
                           n === 0 && 'opacity-55',
                         )}
