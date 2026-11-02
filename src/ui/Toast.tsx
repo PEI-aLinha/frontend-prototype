@@ -38,7 +38,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             role={t.tone === 'error' ? 'alert' : 'status'}
-            className={cn('pointer-events-auto flex items-center gap-2.5 rounded-[12px] px-4 py-3 text-[0.875rem] font-bold text-white shadow-[0_12px_32px_rgba(6,54,50,0.25)] animate-pop-in', t.tone === 'error' ? 'bg-risk-high-ink pr-2' : 'bg-brand-deep')}
+            className={cn('pointer-events-auto flex items-center gap-2.5 rounded-[12px] px-4 py-3 text-[0.875rem] font-bold text-white shadow-[0_12px_32px_rgb(var(--shadow-rgb)/0.25)] animate-pop-in', t.tone === 'error' ? 'bg-risk-high-ink pr-2' : 'bg-brand-deep')}
           >
             <span aria-hidden className="font-extrabold text-signal-soft">{t.tone === 'error' ? '!' : '✓'}</span>
             <span className="min-w-0 flex-1">{t.message}</span>

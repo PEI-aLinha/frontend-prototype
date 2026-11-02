@@ -74,7 +74,7 @@ export function PersonaSwitcher() {
     <DemoGuide open={guide} onClose={() => setGuide(false)} onGo={go} />
     <Menu.Root open={open} onOpenChange={setOpen}>
       <Menu.Trigger
-        className="fixed bottom-[76px] left-5 z-[85] md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[0.75rem] font-bold text-ink-soft shadow-[0_6px_20px_rgba(32,33,36,0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:left-auto max-md:right-3"
+        className="fixed bottom-[76px] left-5 z-[85] md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[0.75rem] font-bold text-ink-soft shadow-[0_6px_20px_rgb(var(--shadow-rgb)/0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:left-auto max-md:right-3"
       >
         <Avatar initials={persona.initials} size={24} />
         {/* Name from content, starting with the visible text so voice control finds it (WCAG 2.5.3). */}
@@ -84,7 +84,7 @@ export function PersonaSwitcher() {
         <ChevronUp className="size-3.5" aria-hidden />
       </Menu.Trigger>
       <Menu.Portal>
-        <Menu.Content side="top" align="start" sideOffset={8} className="z-[95] w-[300px] rounded-[14px] border border-line-soft bg-paper p-1.5 shadow-[0_16px_48px_rgba(32,33,36,0.18)] animate-pop-in">
+        <Menu.Content side="top" align="start" sideOffset={8} className="z-[95] w-[300px] rounded-[14px] border border-line-soft bg-paper p-1.5 shadow-[0_16px_48px_rgb(var(--shadow-rgb)/0.18)] animate-pop-in">
           <Menu.Label className="eyebrow px-2.5 pb-1 pt-2 text-[0.6563rem] text-muted">Ver como</Menu.Label>
           {Object.values(PERSONAS).map((p) => (
             <Menu.Item key={p.key} onSelect={() => switchTo(p.key)} className={itemCls}>

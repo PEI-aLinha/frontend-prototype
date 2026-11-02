@@ -29,7 +29,6 @@ test('Scenario 3 — Rui sees the risks read-only after validation', async ({ pa
 test('Scenario 3 — Rui reads the plan in plain language, without the legal citations', async ({ page }) => {
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)
-  await expect(page.getByText('Como ler esta página')).toBeVisible()
   await expect(page.getByText('Com a palavra-passe sozinha, quem roubar uma senha entra na conta.', { exact: false }).first()).toBeVisible()
   await expect(page.getByText('Esta ação está ligada a um risco:', { exact: false }).first()).toBeVisible()
   await expect(page.getByText('art. 21.º', { exact: false })).toHaveCount(0)

@@ -39,7 +39,7 @@ export function StatCard({ label, value, caption, children, onClick, accent, cla
   const cls = cn('flex-1 min-w-0 rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] text-left', className)
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={cn(cls, 'transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgba(32,33,36,0.06)]')}>
+      <button type="button" onClick={onClick} className={cn(cls, 'transition-[border-color,box-shadow] hover:border-line hover:shadow-[0_2px_10px_rgb(var(--shadow-rgb)/0.06)]')}>
         {body}
       </button>
     )

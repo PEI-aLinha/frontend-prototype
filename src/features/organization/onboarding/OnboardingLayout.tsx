@@ -42,8 +42,8 @@ const EDGES: Array<[number, number]> = [
 function Network() {
   return (
     <svg aria-hidden viewBox="0 0 500 900" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 size-full">
-      {EDGES.map(([a, b]) => <line key={`${a}-${b}`} x1={NODES[a][0]} y1={NODES[a][1]} x2={NODES[b][0]} y2={NODES[b][1]} stroke="white" strokeOpacity={0.14} strokeWidth={1} />)}
-      {NODES.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r={2} fill="white" fillOpacity={0.35} />)}
+      {EDGES.map(([a, b]) => <line key={`${a}-${b}`} x1={NODES[a][0]} y1={NODES[a][1]} x2={NODES[b][0]} y2={NODES[b][1]} className="stroke-white" strokeOpacity={0.14} strokeWidth={1} />)}
+      {NODES.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r={2} className="fill-white" fillOpacity={0.35} />)}
     </svg>
   )
 }

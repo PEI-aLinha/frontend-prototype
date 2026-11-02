@@ -19,7 +19,7 @@
   --color-brand: #0b4f4a;
   --color-brand-deep: #063632;
   --color-brand-soft: #d2e4e1;
-  --color-signal: #168c80;
+  --color-signal: #12786e;
   --color-signal-soft: #cdedea;
   --color-silver: #747b82;
   --color-silver-soft: #d9dde0;
@@ -51,6 +51,115 @@
   @keyframes slide-in { from { transform: translateX(24px); opacity: 0 } to { transform: none; opacity: 1 } }
   @keyframes slide-up { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
   @keyframes pop-in { from { transform: translateY(8px) scale(0.98); opacity: 0 } to { transform: none; opacity: 1 } }
+}
+
+/* Shadow tint: ink-grey on light, pure black on dark (grey shadows vanish on dark surfaces). */
+:root { --shadow-rgb: 32 33 36; }
+:root[data-theme='dark'] { --shadow-rgb: 0 0 0; }
+
+/*
+ * Appearance: two independent axes on <html>.
+ *   data-theme="dark"  → dark surfaces (light is the @theme default).
+ *   data-cvd="…"       → colour-vision-safe semantic colours (risk, signal, danger).
+ * In dark, --color-white is the text that sits on filled brand/danger surfaces, so it turns dark.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-white: #0d1716;
+  --color-paper: #141719;
+  --color-paper-soft: #1b1f22;
+  --color-paper-deep: #2a2f33;
+  --color-ink: #e8eaed;
+  --color-ink-soft: #b9bec3;
+  --color-muted: #a2a8ae;
+  --color-brand: #6cc4b9;
+  --color-brand-deep: #9fdcd3;
+  --color-brand-soft: #1b3a36;
+  --color-signal: #48c9bb;
+  --color-signal-soft: #16403b;
+  --color-silver: #8f969c;
+  --color-silver-soft: #343a3f;
+  --color-line: #7b8288;
+  --color-line-soft: #33393e;
+  --color-line-strong: #e8eaed;
+  --color-risk-low: #1f3330;
+  --color-risk-low-ink: #b5dcd4;
+  --color-risk-medium: #3a3020;
+  --color-risk-medium-ink: #f0d58f;
+  --color-risk-high: #42241e;
+  --color-risk-high-ink: #f7b8a8;
+  --color-danger: #f28b7a;
+}
+
+/* Protanopia / deuteranopia (red–green): risk runs blue → amber → dark orange; signal turns blue. */
+[data-cvd='protanopia'],
+[data-cvd='deuteranopia'] {
+  --color-signal: #1f6fb2;
+  --color-signal-soft: #d6e6f5;
+  --color-risk-low: #dbe8f5;
+  --color-risk-low-ink: #1d4a7a;
+  --color-risk-medium: #fbf1c4;
+  --color-risk-medium-ink: #7a6100;
+  --color-risk-high: #f3d6bf;
+  --color-risk-high-ink: #2e1500;
+  --color-danger: #a34f00;
+}
+[data-theme='dark'] :is([data-cvd='protanopia'], [data-cvd='deuteranopia']),
+[data-theme='dark']:is([data-cvd='protanopia'], [data-cvd='deuteranopia']) {
+  --color-signal: #6aaee8;
+  --color-signal-soft: #17324a;
+  --color-risk-low: #17293d;
+  --color-risk-low-ink: #a9cdf0;
+  --color-risk-medium: #352f17;
+  --color-risk-medium-ink: #d9b64a;
+  --color-risk-high: #43280f;
+  --color-risk-high-ink: #fff0e2;
+  --color-danger: #ffa35c;
+}
+
+/* Tritanopia (blue–yellow): risk runs teal → magenta → red; no blue/yellow pair carries meaning. */
+[data-cvd='tritanopia'] {
+  --color-risk-low: #dcebe8;
+  --color-risk-low-ink: #24524b;
+  --color-risk-medium: #f5d9e6;
+  --color-risk-medium-ink: #a0306c;
+  --color-risk-high: #f6d4cf;
+  --color-risk-high-ink: #4a0d05;
+  --color-danger: #b0200f;
+}
+[data-theme='dark'] [data-cvd='tritanopia'],
+[data-theme='dark'][data-cvd='tritanopia'] {
+  --color-risk-low: #1b3330;
+  --color-risk-low-ink: #a8dbd2;
+  --color-risk-medium: #3d1d2c;
+  --color-risk-medium-ink: #e889b8;
+  --color-risk-high: #46201b;
+  --color-risk-high-ink: #ffe2dc;
+  --color-danger: #ff8a78;
+}
+
+/* Previews (appearance menu) can force the default palette inside a colour-vision mode. */
+[data-cvd='none'] {
+  --color-signal: #12786e;
+  --color-signal-soft: #cdedea;
+  --color-risk-low: #e3ebe9;
+  --color-risk-low-ink: #2f514b;
+  --color-risk-medium: #f3e7c9;
+  --color-risk-medium-ink: #66460b;
+  --color-risk-high: #f3dbd5;
+  --color-risk-high-ink: #7a2617;
+  --color-danger: #9b2c1c;
+}
+[data-theme='dark'] [data-cvd='none'] {
+  --color-signal: #48c9bb;
+  --color-signal-soft: #16403b;
+  --color-risk-low: #1f3330;
+  --color-risk-low-ink: #b5dcd4;
+  --color-risk-medium: #3a3020;
+  --color-risk-medium-ink: #f0d58f;
+  --color-risk-high: #42241e;
+  --color-risk-high-ink: #f7b8a8;
+  --color-danger: #f28b7a;
 }
 
 @layer base {

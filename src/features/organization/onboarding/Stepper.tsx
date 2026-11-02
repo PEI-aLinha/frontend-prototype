@@ -19,7 +19,7 @@ export function Stepper({ steps, current, label, orientation = 'horizontal' }: S
           const active = i === current
           return (
             <li key={s} aria-current={active ? 'step' : undefined} className="flex items-center gap-3">
-              <span className={cn('grid size-7 shrink-0 place-items-center rounded-full text-[0.8125rem] font-bold', done ? 'bg-white/90 text-brand' : active ? 'bg-signal text-white' : 'border border-white/50 text-white/60')}>
+              <span className={cn('grid size-7 shrink-0 place-items-center rounded-full text-[0.8125rem] font-bold', done ? 'bg-white/90 text-brand' : active ? 'bg-signal text-white' : 'border border-white/50 text-white/75')}>
                 {done ? <Check className="size-3.5" strokeWidth={3} aria-label="Concluído" /> : i + 1}
               </span>
               <span className={cn('text-[0.9375rem]', active ? 'font-bold text-white' : 'text-white/80')}>{s}</span>

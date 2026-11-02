@@ -30,7 +30,7 @@ function ConversationSidebar({
         type="button"
         onClick={onAdd}
         disabled={!canAdd}
-        className="flex min-h-11 items-center gap-2 rounded-[12px] border border-brand-soft bg-white px-3.5 text-[0.875rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex min-h-11 items-center gap-2 rounded-[12px] border border-brand-soft bg-paper px-3.5 text-[0.875rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Plus className="size-4" aria-hidden />
         Nova conversa
@@ -46,7 +46,7 @@ function ConversationSidebar({
           return (
             <div
               key={c.id}
-              className={`group flex flex-none items-center rounded-[10px] border ${selected ? 'border-brand-soft bg-white text-brand' : 'border-transparent text-ink-soft hover:bg-paper-soft'}`}
+              className={`group flex flex-none items-center rounded-[10px] border ${selected ? 'border-brand-soft bg-paper text-brand' : 'border-transparent text-ink-soft hover:bg-paper-soft'}`}
             >
               <button
                 type="button"
@@ -127,7 +127,7 @@ export function ChatExpanded({
           context={context}
         />
         {context && (
-          <aside aria-label="Contexto do cliente" className="hidden w-[280px] flex-none flex-col gap-3 overflow-y-auto border-l border-brand-soft bg-white p-4 xl:flex">
+          <aside aria-label="Contexto do cliente" className="hidden w-[280px] flex-none flex-col gap-3 overflow-y-auto border-l border-brand-soft bg-paper p-4 xl:flex">
             <span className="font-mono text-[0.625rem] uppercase tracking-[0.1em] text-muted">Contexto do cliente</span>
             {context}
           </aside>
