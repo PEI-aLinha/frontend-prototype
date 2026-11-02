@@ -1,6 +1,7 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { AppearanceProvider, CVD_KEY, THEME_KEY, resolveTheme, useAppearance } from './appearance'
+import { AppearanceProvider, useAppearance } from './appearance'
+import { CVD_KEY, THEME_KEY, resolveTheme } from './appearanceModel'
 
 function mockMatchMedia(dark: boolean) {
   const listeners = new Set<(e: MediaQueryListEvent) => void>()
@@ -25,7 +26,7 @@ const html = document.documentElement
 
 describe('appearance', () => {
   beforeEach(() => { localStorage.clear(); delete html.dataset.theme; delete html.dataset.cvd })
-  afterEach(() => vi.unstubAllGlobals())
+  afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
   it('resolves system preference', () => {
     expect(resolveTheme('system', true)).toBe('dark')

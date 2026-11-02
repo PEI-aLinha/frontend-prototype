@@ -1,41 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { CVD_KEY, DARK_QUERY, THEME_KEY, THEMES, VISIONS, readStored, resolveTheme, systemPrefersDark, writeStored, type ColorVision, type ResolvedTheme, type ThemePreference } from './appearanceModel'
 
-export type ThemePreference = 'system' | 'light' | 'dark'
-export type ResolvedTheme = 'light' | 'dark'
-export type ColorVision = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia'
-
-export const THEME_KEY = 'appearance.theme'
-export const CVD_KEY = 'appearance.cvd'
-const DARK_QUERY = '(prefers-color-scheme: dark)'
-
-const THEMES: readonly ThemePreference[] = ['system', 'light', 'dark']
-const VISIONS: readonly ColorVision[] = ['none', 'protanopia', 'deuteranopia', 'tritanopia']
-
-function readStored<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw && (allowed as readonly string[]).includes(raw) ? (raw as T) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function writeStored(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value)
-  } catch {
-    // Storage blocked (private mode): the choice still applies for this session.
-  }
-}
-
-function systemPrefersDark(): boolean {
-  return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(DARK_QUERY).matches
-}
-
-export function resolveTheme(pref: ThemePreference, prefersDark: boolean): ResolvedTheme {
-  if (pref === 'system') return prefersDark ? 'dark' : 'light'
-  return pref
-}
+export type { ColorVision, ResolvedTheme, ThemePreference } from './appearanceModel'
 
 interface AppearanceValue {
   theme: ThemePreference
