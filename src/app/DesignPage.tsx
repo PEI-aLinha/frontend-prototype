@@ -9,7 +9,7 @@ import {
 
 const TOKENS = [
   ['paper', '#FFFFFF'], ['paper-soft', '#F7F7F8'], ['paper-deep', '#E5E7E9'], ['ink', '#202124'], ['ink-soft', '#555A5F'], ['muted', '#646A6F'],
-  ['brand', '#0B4F4A'], ['brand-deep', '#063632'], ['brand-soft', '#D2E4E1'], ['signal', '#168C80'], ['signal-soft', '#CDEDEA'], ['line', '#B8BDC1'],
+  ['brand', '#0B4F4A'], ['brand-deep', '#063632'], ['brand-soft', '#D2E4E1'], ['signal', '#12786E'], ['signal-soft', '#CDEDEA'], ['line', '#B8BDC1'],
   ['line-soft', '#D9DDE0'], ['risk-low', '#E3EBE9'], ['risk-medium', '#F3E7C9'], ['risk-high', '#F3DBD5'],
 ] as const
 
