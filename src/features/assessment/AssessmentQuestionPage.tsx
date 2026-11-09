@@ -64,7 +64,7 @@ export function AssessmentQuestionPage() {
 
   return (
     <>
-      <Link to={`${base}/${sectionId}`} className="-mb-4 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar a </span>{section.name}</Link>
+      <Link to={base} className="-mb-4 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar à </span>Avaliação</Link>
       <PageHeader eyebrow="Avaliação de maturidade · NIS2 + RGPD" title={`Pergunta ${number} de ${total}`}
         actions={
           // Always rendered, so screen readers announce it when a save fills it in.

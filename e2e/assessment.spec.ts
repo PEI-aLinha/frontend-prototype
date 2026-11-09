@@ -27,7 +27,6 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   // Without an answer, "Seguinte" skips the question; the flow continues into the next section.
   await page.getByRole('button', { name: 'Seguinte →' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 24 de 41' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Voltar a Continuidade do negócio' })).toBeVisible()
   await expect(page.getByRole('progressbar', { name: 'Progresso da avaliação' })).toHaveAttribute('aria-valuenow', '34')
   await page.getByRole('button', { name: '← Anterior' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 23 de 41' })).toBeVisible()
@@ -55,7 +54,6 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 22 de 41' })).toBeVisible()
   await page.getByRole('button', { name: 'Seguinte →' }).click()
   await expect(page.getByRole('radio', { name: /^Em parte/ })).toBeChecked()
-  await page.getByRole('link', { name: 'Voltar a Controlo de acessos' }).click()
   await page.getByRole('link', { name: 'Voltar à Avaliação' }).click()
   await openTopic(page, 'Controlo de acessos')
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
@@ -89,9 +87,9 @@ test('Assessment — Rui delegates a question, Pedro answers it and Rui sees the
   const analystAnswer = page.getByRole('region', { name: 'Resposta do analista' })
   await expect(analystAnswer.getByText('Resposta de Pedro Almeida')).toBeVisible()
   await expect(analystAnswer.getByText('"Falta nos portáteis."')).toBeVisible()
-  await page.getByRole('link', { name: 'Voltar a Gestão de incidentes' }).click()
-  await expect(page.getByText('5 de 6 perguntas respondidas')).toBeVisible()
-  await expect(page.getByText('Respondida por Pedro Almeida:').first()).toBeVisible()
+  await page.getByRole('link', { name: 'Voltar à Avaliação' }).click()
+  await openTopic(page, 'Gestão de incidentes')
+  await expect(page.getByRole('progressbar', { name: 'Progresso de Gestão de incidentes' })).toHaveAttribute('aria-valuenow', '5')
 })
 
 test('Assessment — the analyst cannot open it and it is read-only after submission', async ({ page }) => {
