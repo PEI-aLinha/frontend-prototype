@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { openAsset, ORG, pickOption, shot, start, switchPersona } from './helpers'
+import { openAsset, openTopic, ORG, pickOption, shot, start, switchPersona } from './helpers'
 
 test('Scenario 1 — Rui assigns registration, Pedro registers the technical assets, Rui sees the full inventory', async ({ page }) => {
   await start(page, `${ORG}/ativos`, 'rui')
@@ -88,6 +88,7 @@ test('Scenario 1 — Rui assigns registration, Pedro registers the technical ass
   await expect(page.getByText('PLC das linhas de montagem').locator('visible=true').first()).toBeVisible()
 
   await page.goto(`${ORG}/avaliacao`)
+  await openTopic(page, 'Controlo de acessos')
   await expect(page.getByText('1 pergunta delegada ao Pedro Almeida').first()).toBeVisible()
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
   await shot(page, 'c1-12-avaliacao')

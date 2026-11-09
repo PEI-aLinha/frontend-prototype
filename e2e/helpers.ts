@@ -53,3 +53,9 @@ export async function openAsset(page: Page, name: string) {
   const card = page.getByRole('button', { name: new RegExp(`^${name}`) })
   await row.or(card).first().click()
 }
+
+/** Assessment overview: opens the collapsed topic table and expands one topic. */
+export async function openTopic(page: Page, name: string) {
+  await page.getByRole('button', { name: /^Perguntas por tópico/ }).click()
+  await page.getByRole('button', { name: new RegExp(`${name}`) }).click()
+}

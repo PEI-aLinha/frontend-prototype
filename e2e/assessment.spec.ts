@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { ORG, start } from './helpers'
+import { ORG, openTopic, start } from './helpers'
 
 test('Assessment — Rui answers a question and the progress is kept', async ({ page }) => {
   await start(page, `${ORG}/avaliacao`, 'rui')
+  await expect(page.getByRole('link', { name: 'Responder à próxima pergunta' })).toHaveAttribute('href', `${ORG}/avaliacao/sec-acessos/q-acessos-wifi`)
+  await openTopic(page, 'Controlo de acessos')
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '7')
   await page.getByRole('link', { name: 'Ver perguntas de Controlo de acessos', exact: true }).click()
 
@@ -34,10 +36,12 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await page.getByLabel('Comentário').fill('Rede de visitantes separada desde 2025.')
   await page.getByRole('button', { name: 'Guardar e continuar depois' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Progresso guardado. Pode continuar quando quiser.' })).toBeVisible()
+  await openTopic(page, 'Controlo de acessos')
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
 
   // The answer survives a reload and can be changed later.
   await page.reload()
+  await openTopic(page, 'Controlo de acessos')
   await page.getByRole('link', { name: 'Ver perguntas de Controlo de acessos', exact: true }).click()
   await expect(page.getByText('8 de 9 perguntas respondidas')).toBeVisible()
   await page.getByRole('link', { name: /Wi-Fi para visitantes/ }).click()
@@ -53,6 +57,7 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await expect(page.getByRole('radio', { name: /^Em parte/ })).toBeChecked()
   await page.getByRole('link', { name: 'Voltar a Controlo de acessos' }).click()
   await page.getByRole('link', { name: 'Voltar à Avaliação' }).click()
+  await openTopic(page, 'Controlo de acessos')
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
 
   // The consultant sees the answers in the history, labelled as Assessment.
