@@ -45,7 +45,7 @@ type ChatWidgetProps = {
 const ROADMAP_NOTICE = 'A aguardar que um consultor verifique e aprove o roadmap.'
 
 const DEFAULT_SUGGESTIONS: Suggestion[] = [
-  { label: 'Cria-me um roadmap total para entrar em conformidade', topic: 'Roadmap de conformidade', notice: ROADMAP_NOTICE },
+  { label: 'Preparar um roadmap completo para a conformidade', topic: 'Roadmap de conformidade', notice: ROADMAP_NOTICE },
   { label: 'Explicar os riscos altos', topic: 'Riscos altos' },
   { label: 'O que é a NIS2?', topic: 'O que é a NIS2' },
 ]
@@ -55,7 +55,7 @@ const mockReply = (text: string): Promise<BotReply> =>
     setTimeout(
       () =>
         resolve(
-          text.toLowerCase().includes('roadmap total')
+          /roadmap (total|completo)/.test(text.toLowerCase())
             ? 'Comecei a preparar o roadmap completo para a conformidade com a NIS2 e o RGPD.'
             : 'Resposta de exemplo. Aqui vai aparecer a resposta devolvida pelo modelo.',
         ),
@@ -409,17 +409,17 @@ export function ChatWidget({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Abrir ${title}`}
-        className="group fixed bottom-6 right-6 z-50 inline-flex h-[52px] items-center rounded-full bg-brand px-4 text-white shadow-[0_10px_28px_rgb(var(--shadow-rgb)/0.35)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand max-sm:bottom-[calc(132px+env(safe-area-inset-bottom))] max-sm:right-3"
+        className="group fixed bottom-6 right-6 z-50 inline-flex h-[52px] items-center rounded-full bg-brand px-4 text-white shadow-[0_10px_28px_rgb(var(--shadow-rgb)/0.35)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal max-sm:bottom-[calc(132px+env(safe-area-inset-bottom))] max-sm:right-3"
       >
         <Sparkles className="size-5 flex-none" aria-hidden />
         <span
           aria-hidden
-          className="ml-0 max-w-0 overflow-hidden whitespace-nowrap text-[0.875rem] font-bold opacity-0 transition-all duration-200 group-hover:ml-2.5 group-hover:max-w-[200px] group-hover:opacity-100 group-focus-visible:ml-2.5 group-focus-visible:max-w-[200px] group-focus-visible:opacity-100"
+          className="ml-0 max-w-0 overflow-hidden whitespace-nowrap text-[0.9375rem] font-bold opacity-0 transition-all duration-200 group-hover:ml-2.5 group-hover:max-w-[200px] group-hover:opacity-100 group-focus-visible:ml-2.5 group-focus-visible:max-w-[200px] group-focus-visible:opacity-100"
         >
           Pergunta à Alinha
         </span>
         {hasUnread && (
-          <span className="absolute -right-0.5 -top-0.5 size-3.5 rounded-full border-2 border-white bg-red-500">
+          <span className="absolute -right-0.5 -top-0.5 size-3.5 rounded-full border-2 border-paper bg-danger">
             <span className="sr-only">Novas mensagens</span>
           </span>
         )}
@@ -496,7 +496,7 @@ export function ChatWidget({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <strong className="text-[0.9375rem] font-extrabold">{title}</strong>
-          <span className="font-mono text-[0.625rem] uppercase tracking-[0.1em] text-white/70">{subtitle}</span>
+          <span className="font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-white/70">{subtitle}</span>
         </div>
         <button
           type="button"

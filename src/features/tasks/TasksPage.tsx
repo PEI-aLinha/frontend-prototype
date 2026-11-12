@@ -33,16 +33,18 @@ export function TasksPage() {
   const assigner = (assigners.length === 1 && users.data?.find((u) => u.id === assigners[0])?.name) || 'o Responsável designado'
   const subtitle = !tasks.data ? ' ' : list.length === 0 ? 'Boas-vindas ao aLinha.' : open.length === 0 ? `Não tem tarefas pendentes. Avisámos ${assigner}.` : `Tem ${open.length} ${open.length === 1 ? 'tarefa atribuída' : 'tarefas atribuídas'} por ${assigner}.`
 
+  // One primary per view: the most urgent open task leads, the rest step back.
+  const lead = open[0]?.id
   const card = (t: (typeof list)[number]) => {
     const due = t.dueDate && today.data ? dueStatus(t.dueDate, today.data) : null
     const late = due?.tone === 'late'
     let action
     if (t.kind === 'evidencia') {
-      action = <Tooltip content="A submissão de evidências fica fora deste protótipo."><Button aria-disabled className="aria-disabled:cursor-not-allowed aria-disabled:bg-silver">Submeter</Button></Tooltip>
+      action = <Tooltip content="A submissão de evidências ainda não está disponível nesta versão."><Button variant="secondary" aria-disabled className="aria-disabled:cursor-not-allowed aria-disabled:bg-paper-soft aria-disabled:text-muted">Submeter</Button></Tooltip>
     } else if (t.kind === 'tarefa') {
       action = t.status === 'pendente' && <Button variant="secondary" loading={complete.isPending && complete.variables === t.id} onClick={() => complete.mutate(t.id, { onSuccess: () => toast.show('Tarefa concluída. O Responsável designado foi avisado.'), onError: (e) => toast.show(e.message, 'error') })}>Marcar como feita</Button>
     } else {
-      action = <Button onClick={() => navigate(t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : t.kind === 'integracao' ? `/org/${org.slug}/integracoes` : `/org/${org.slug}/tarefas/${t.id}/pergunta`)}>{t.kind === 'integracao' ? 'Ligar' : t.kind === 'pergunta' ? (t.status === 'concluida' ? 'Ver resposta' : 'Responder') : 'Registar'}</Button>
+      action = <Button variant={t.id === lead ? 'primary' : 'secondary'} onClick={() => navigate(t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : t.kind === 'integracao' ? `/org/${org.slug}/integracoes` : `/org/${org.slug}/tarefas/${t.id}/pergunta`)}>{t.kind === 'integracao' ? 'Ligar' : t.kind === 'pergunta' ? (t.status === 'concluida' ? 'Ver resposta' : 'Responder') : 'Registar'}</Button>
     }
     return (
       <TaskCard

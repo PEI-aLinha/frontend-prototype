@@ -58,7 +58,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
                   to={item.to}
                   aria-current={navActive(item, pathname) ? 'page' : undefined}
                   className={cn(
-                    'flex h-10 items-center rounded-[10px] px-3 text-[0.875rem] transition-colors duration-150',
+                    'flex h-10 items-center rounded-[10px] px-3 text-[0.9375rem] transition-colors duration-150',
                     navActive(item, pathname) ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink-soft hover:bg-paper-deep/60 hover:text-ink',
                   )}
                 >
@@ -73,9 +73,9 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
         <button
           type="button"
           onClick={() => openExpandedChat()}
-          className="mb-12 mt-4 flex h-10 items-center gap-2 rounded-[10px] bg-brand-soft px-3 text-[0.875rem] font-bold text-brand transition-colors duration-150 hover:bg-brand-soft/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="mb-12 mt-4 flex h-10 items-center gap-2 rounded-[10px] border border-line-soft bg-paper px-3 text-[0.9375rem] font-semibold text-ink-soft transition-colors duration-150 hover:border-line hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
         >
-          <Sparkles className="size-4 flex-none" aria-hidden />
+          <Sparkles className="size-4 flex-none text-brand" aria-hidden />
           Assistente IA
         </button>
 

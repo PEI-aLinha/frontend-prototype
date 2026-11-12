@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
 import {
-  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Lock, Map, Plug, Scale, Settings, ShieldAlert, Users,
+  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Ban, Map, Plug, Scale, Settings, Grid3x3, Users,
 } from 'lucide-react'
 import { useOrganization, useRoadmapStatus } from '../api/queries'
 import { homePath } from '../core/personas'
@@ -20,7 +20,7 @@ function OrgGate({ slug, children }: { slug: string; children: (org: NonNullable
   if (org.isError) {
     // No access (e.g. an analyst removed from the team): explain instead of offering a retry.
     if (org.error instanceof ApiError && org.error.status === 403) {
-      return <div className="p-14 max-md:p-6"><EmptyState icon={<Lock className="size-5" aria-hidden />} title="Sem acesso a esta organização">{org.error.message}</EmptyState></div>
+      return <div className="p-14 max-md:p-6"><EmptyState icon={<Ban className="size-5" aria-hidden />} title="Sem acesso a esta organização">{org.error.message}</EmptyState></div>
     }
     return <div className="p-14"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
   }
@@ -51,21 +51,29 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
     const seesRisks = canRole(persona.role, 'view', 'risk', { roadmapValidated: roadmap.data?.validated })
     items = [
       { to: `${base}/inicio`, label: 'Início', icon: Home },
-      { to: `${base}/ambito`, label: 'Âmbito regulatório', shortLabel: 'Leis', icon: Scale },
+      { to: `${base}/ambito`, label: 'Âmbito regulatório', shortLabel: 'Âmbito', icon: Scale },
       { to: `${base}/avaliacao`, label: 'Avaliação', icon: ClipboardCheck },
       { to: `${base}/roadmap`, label: 'Resultados e roadmap', shortLabel: 'Resultados', icon: Map },
       { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
-      ...(seesRisks ? [{ to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert }] : []),
+      ...(seesRisks ? [{ to: `${base}/riscos`, label: 'Riscos', icon: Grid3x3 }] : []),
       { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
       { to: `${base}/equipa`, label: 'Equipa', icon: Users },
       { to: `${base}/definicoes`, label: 'Definições', icon: Settings },
     ]
   }
+  // Mobile keeps the plugin's core (Ativos, Riscos) in the bar; the less frequent entries go to "Mais".
+  const order = [`${base}/inicio`, `${base}/avaliacao`, `${base}/ativos`, `${base}/riscos`, `${base}/roadmap`]
+  const tabs = persona.role === 'analista' ? undefined : [...items].sort((a, b) => rank(order, a.to) - rank(order, b.to))
   return (
-    <AppShell tools={<><AppearanceMenu /><NotificationBell /></>} sections={[{ items }]} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
+    <AppShell tools={<><AppearanceMenu /><NotificationBell /></>} sections={[{ items }]} tabs={tabs} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
       <Outlet />
     </AppShell>
   )
+}
+
+function rank(order: string[], to: string): number {
+  const i = order.indexOf(to)
+  return i === -1 ? order.length : i
 }
 
 /** Marta (Consultora): /carteira e /clientes/:org/* */
@@ -90,7 +98,7 @@ export function ConsultantLayout() {
           { to: `${base}/visao-geral`, label: 'Visão geral', shortLabel: 'Geral', icon: LayoutDashboard },
           { to: `${base}/roadmap`, label: 'Resultados e roadmap', shortLabel: 'Resultados', icon: ClipboardList },
           { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
-          { to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert },
+          { to: `${base}/riscos`, label: 'Riscos', icon: Grid3x3 },
           { to: `${base}/integracoes`, label: 'Evidências automáticas', shortLabel: 'Evidências', icon: Plug },
           { to: `${base}/historico`, label: 'Histórico', icon: History },
         ]

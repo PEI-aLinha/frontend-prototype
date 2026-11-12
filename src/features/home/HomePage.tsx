@@ -1,17 +1,19 @@
 import { Link, useNavigate } from 'react-router'
 import { useAssessment, useAssets, useConsultant, useRisks, useRoadmapStatus, useServices, useTasks, useUsers } from '../../api/queries'
 import { dateTime, RISK_LEVEL_LABEL, shortDate } from '../../config/labels'
+import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import { PageTour } from '../../core/onboarding/PageTour'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
-import { Button, HighlightCard, NextSteps, Note, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
+import { Button, buttonClass, ErrorState, HighlightCard, NextSteps, Note, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
 import type { Level } from '../../api/contracts'
 import { ConsultantCard, nis2Status } from '../organization/public'
 
 /** Designated manager home (06 / 14), with the "Risks" card after validation (scenario 3). */
 export function HomePage() {
   const org = useTenant()
+  const { persona } = useSession()
   const can = useCan()
   const navigate = useNavigate()
   const assets = useAssets(org.id)
@@ -54,9 +56,19 @@ export function HomePage() {
   // Assessment not submitted yet: invite to start or to finish it. Once submitted, only the status remains.
   const subtitle = validated ? `${consultant} validou os resultados e o roadmap.` : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : fresh ? 'Pode começar pela avaliação quando quiser.' : 'Pode terminar a avaliação quando quiser.'
 
+  const failed = [assessment, roadmap, tasks, assets].find((q) => q.isError)
+  if (failed) {
+    return (
+      <>
+        <PageHeader eyebrow={org.name} title={`Olá, ${persona.firstName}`} />
+        <ErrorState error={failed.error} onRetry={() => { assessment.refetch(); roadmap.refetch(); tasks.refetch(); assets.refetch() }} />
+      </>
+    )
+  }
+
   return (
     <>
-      <PageHeader eyebrow={org.name} title="Olá, Rui" subtitle={subtitle} help={<PageTour id="inicio" ready={!!assets.data && !!tasks.data} />} />
+      <PageHeader eyebrow={org.name} title={`Olá, ${persona.firstName}`} subtitle={subtitle} help={<PageTour id="inicio" ready={!!assets.data && !!tasks.data} />} />
 
       {!org.scope && (
         <Note>
@@ -69,13 +81,13 @@ export function HomePage() {
         eyebrow="Avaliação de maturidade · NIS2 + RGPD"
         title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : notStarted ? 'Avaliação por começar' : assessment.data ? `${answered} de ${total} perguntas respondidas` : '…'}
         action={validated ? (
-          <Link to={`${base}/roadmap`}><Button variant="inverse" tabIndex={-1}>Ver roadmap →</Button></Link>
+          <Link to={`${base}/roadmap`} className={buttonClass({ variant: 'inverse' })}>Ver roadmap →</Link>
         ) : (
           <Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{submitted ? 'Ver avaliação →' : notStarted ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>
         )}
       >
         <ProgressBar value={answered} max={total || 1} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
-        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} por ${consultant}` : submitted ? `Submetida qua., 14 out. às 10:12 · ${consultant} está a rever` : notStarted ? 'Ainda sem respostas · o progresso fica guardado' : [...pending, 'o progresso fica guardado'].join(' · ')}
+        {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} por ${consultant}` : submitted ? `Submetida${roadmap.data?.assessmentCompletedAt ? ` a ${dateTime(roadmap.data.assessmentCompletedAt)}` : ''} · ${consultant} está a rever` : notStarted ? 'Ainda sem respostas · o progresso fica guardado' : [...pending, 'o progresso fica guardado'].join(' · ')}
       </HighlightCard>
 
       <div data-tour="home-steps">
@@ -103,7 +115,7 @@ export function HomePage() {
           </Link>
         )}
         <Link to={`${base}/ativos`} className="contents">
-          <StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data?.length ?? 2} serviços críticos · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />
+          <StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data ? `${services.data.length} ${services.data.length === 1 ? 'serviço crítico' : 'serviços críticos'}` : '…'} · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />
         </Link>
         <ConsultantCard orgId={org.id} />
       </section>

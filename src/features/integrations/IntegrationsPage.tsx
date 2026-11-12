@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CheckCircle2, CircleAlert, Plug, RefreshCw, ShieldCheck, Unplug, UserPlus } from 'lucide-react'
+import { CheckCircle2, CircleAlert, Plug, RefreshCw, KeyRound, Unplug, UserPlus } from 'lucide-react'
 import type { CollectedEvidence, IntegrationConnection, ProviderInfo } from '../../api/contracts'
 import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveries, useEvidence, useIntegrations, useServices, useSyncIntegration, useUsers } from '../../api/queries'
 import { dateTime, EVIDENCE_STRENGTH_LABEL } from '../../config/labels'
@@ -47,7 +47,7 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
            {c.provider.applies ? <Chip tone={on ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
           </div>
           <p className="text-sm text-ink-soft">{c.provider.description}</p>
-          {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
+          {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <VaultKey /> credencial no cofre</>}</p>}
           {c.status === 'pedido' && assignee && <p className="text-xs text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
         {c.provider.applies && (
           <div className="mt-auto flex flex-wrap gap-2 pt-1">
@@ -71,8 +71,8 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   )
 }
 
-function Lock() {
-  return <ShieldCheck className="inline size-3.5 align-[-2px]" aria-hidden />
+function VaultKey() {
+  return <KeyRound className="inline size-3.5 align-[-2px]" aria-hidden />
 }
 
 function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; providerName: (p: CollectedEvidence['provider']) => string }) {

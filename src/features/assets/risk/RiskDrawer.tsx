@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Asset, RemediationAction, Risk, RiskActionLink, User } from '../../../api/contracts'
 import { useAudit, useSaveRisk } from '../../../api/queries'
-import { RISK_STATUS_LABEL, TREATMENT_LABEL } from '../../../config/labels'
+import { RISK_STATUS_LABEL, TREATMENT_PLAIN } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
 import { Button, Chip, Drawer, HistoryList, Modal, Note, RiskLevelBadge, Tabs, useToast } from '../../../ui'
 import { toHistory } from '../history'
@@ -21,6 +21,10 @@ interface Props {
   actions: RemediationAction[]
   links: RiskActionLink[]
   onSaved?: (risk: Risk, linkedHigh: boolean) => void
+}
+
+function focusFirstInvalid() {
+  window.requestAnimationFrame(() => document.querySelector<HTMLElement>('#risk-form [aria-invalid="true"]')?.focus())
 }
 
 /** Novo risco / editar risco (consultora). */
@@ -60,8 +64,9 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
     const e = validateRisk(values)
     setErrors(e)
     if (Object.keys(e).length) {
-      toast.show('Há campos por preencher', 'error')
       if (isWizard) setStep(RISK_STEPS.findIndex((_, i) => Object.keys(validateRiskStep(values, i)).length > 0))
+      // The inline messages carry the error; focus goes to the first one so it is read out and fixable at once.
+      focusFirstInvalid()
       return
     }
     save.mutate({ input: toRiskInput(values), id: risk?.id }, {
@@ -116,7 +121,7 @@ function IdentifySummary({ threat, asset, onEdit }: { threat: string; asset?: st
     <div className="mb-5 flex items-start gap-3 rounded-[12px] bg-paper-soft px-4 py-3">
       <div className="min-w-0 flex-1">
         <p className="eyebrow text-[0.6875rem] text-muted">Risco a registar</p>
-        <p className="mt-0.5 truncate text-[0.875rem] font-bold">{threat || '—'}</p>
+        <p className="mt-0.5 truncate text-[0.9375rem] font-bold">{threat || '—'}</p>
         <p className="text-[0.8125rem] text-ink-soft">{asset ?? 'Toda a empresa'}</p>
       </div>
       <Button variant="link" size="sm" onClick={onEdit}>Alterar</Button>
@@ -127,7 +132,7 @@ function IdentifySummary({ threat, asset, onEdit }: { threat: string; asset?: st
 function RiskHistory({ riskId, users }: { riskId: string; users: User[] }) {
   const org = useTenant()
   const audit = useAudit(org.id, riskId)
-  return audit.data ? <HistoryList items={toHistory(audit.data, users)} /> : <p className="text-[0.875rem] text-muted">A carregar…</p>
+  return audit.data ? <HistoryList items={toHistory(audit.data, users)} /> : <p className="text-[0.8125rem] text-muted">A carregar…</p>
 }
 
 /** Client view (D3): read-only, plain language. */
@@ -146,11 +151,11 @@ export function RiskReadDrawer({ open, onClose, risk, assets, users, actions, li
           <p className="eyebrow text-[0.6875rem] text-signal-soft">O que isto significa para a empresa</p>
           <p className="mt-2 text-[1.0625rem] font-bold leading-snug">{risk.plainLanguage ?? risk.description}</p>
         </section>
-        <dl className="grid grid-cols-[150px_1fr] gap-x-4 gap-y-3 text-[0.875rem] max-sm:grid-cols-1">
+        <dl className="grid grid-cols-[150px_1fr] gap-x-4 gap-y-3 text-[0.9375rem] max-sm:grid-cols-1">
           <dt className="text-ink-soft">Porque é {level === 'alto' ? 'alto' : level === 'medio' ? 'médio' : 'baixo'}</dt>
           <dd className="font-semibold">{describeRule(risk.probability, risk.impact)} <span className="font-normal text-muted">(probabilidade × impacto)</span></dd>
           <dt className="text-ink-soft">O que está a ser feito</dt>
-          <dd className="font-semibold">{risk.treatment ? TREATMENT_LABEL[risk.treatment] : 'Ainda por decidir'}{risk.treatment === 'aceitar' && risk.acceptanceJustification ? ` — ${risk.acceptanceJustification}` : ''}</dd>
+          <dd className="font-semibold">{risk.treatment ? TREATMENT_PLAIN[risk.treatment] : 'Ainda por decidir'}{risk.treatment === 'aceitar' && risk.acceptanceJustification ? ` — ${risk.acceptanceJustification}` : ''}</dd>
           <dt className="text-ink-soft">Responsável</dt>
           <dd className="font-semibold">{owner?.name ?? '—'}</dd>
           {risk.residualProbability && risk.residualImpact && (<><dt className="text-ink-soft">Depois das ações</dt><dd><RiskLevelBadge level={computeRiskLevel(risk.residualProbability, risk.residualImpact).level} prefix="Previsto: " /></dd></>)}
@@ -160,7 +165,7 @@ export function RiskReadDrawer({ open, onClose, risk, assets, users, actions, li
             <h3 className="text-[0.9375rem] font-bold">Ações do roadmap que reduzem este risco</h3>
             {linked.map((a) => (
               <div key={a.id} className="rounded-[12px] border border-line-soft px-4 py-3">
-                <p className="text-[0.875rem] font-semibold">{a.description}</p>
+                <p className="text-[0.9375rem] font-semibold">{a.description}</p>
                 <p className="text-[0.75rem] text-muted">#{a.priority} no roadmap · {a.legalObligation}</p>
               </div>
             ))}

@@ -20,7 +20,6 @@ export function PortfolioPage() {
       <div className="flex gap-4 max-md:flex-col">
         <StatCard label="À espera da consultora" value={pending} caption="Avaliações por validar" />
         <StatCard label="Roadmaps em curso" value={list.filter((c) => /Roadmap/.test(c.stage)).length} caption="Ações a acompanhar" />
-        <StatCard label="Incidentes abertos" value={list.filter((c) => c.stageTone === 'dark').length} caption="Fora deste protótipo" />
       </div>
       {portfolio.isError ? <ErrorState error={portfolio.error} onRetry={() => portfolio.refetch()} /> : !portfolio.data ? <SkeletonRows rows={8} /> : (
         <ul className="overflow-hidden rounded-[16px] border border-line-soft bg-paper" aria-label="Clientes">
@@ -51,7 +50,7 @@ export function PortfolioPage() {
                 {active ? (
                   <button type="button" className="block w-full" onClick={() => navigate(`/clientes/${c.organization.slug}/visao-geral`)} aria-label={`Abrir ${c.organization.name}`}>{row}</button>
                 ) : (
-                  <Tooltip content="Fora deste protótipo"><button type="button" disabled className="block w-full cursor-default" aria-disabled>{row}</button></Tooltip>
+                  <Tooltip content="Cliente de exemplo, sem dados nesta demonstração"><button type="button" disabled className="block w-full cursor-default" aria-disabled>{row}</button></Tooltip>
                 )}
               </li>
             )

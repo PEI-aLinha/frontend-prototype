@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ArrowDown, ArrowUp, CheckCircle2, Download, Plus, ShieldAlert } from 'lucide-react'
+import { ArrowDown, ArrowUp, CheckCircle2, Download, Plus, Grid3x3 } from 'lucide-react'
 import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/contracts'
 import { useActions, useAssessment, useAudit, useEvidence, useRiskLinks, useRisks, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
 import { ACTION_STATUS_LABEL, dateTime, MATURITY_LABEL, shortDate } from '../../config/labels'
@@ -10,6 +10,7 @@ import { useCan } from '../../core/useCan'
 import {
   AIBadge, Button, Chip, EmptyState, ErrorState, HistoryList, Modal, Note, StatCard, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
+import { computeRiskLevel } from '../assets/public'
 import { evidenceState } from './evidenceState'
 import { printResults } from './exportResults'
 import { planGaps, PREVIEW_ROWS, planSummary } from './planSummary'
@@ -110,6 +111,11 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   const pending = status.isPending
   // The mock stores ids, so both people are resolved from the directory the page already loads.
   const validator = users.data?.find((u) => u.id === status.data?.validatedBy)?.name
+  // What validation would lock in, counted against the risk order whatever view is on screen.
+  const raisedByRisks = actions.data ? prioritizeRoadmap(actions.data, signals).filter((r) => r.reason).length : 0
+  const linkedRiskIds = new Set((riskLinks.data ?? []).map((l) => l.riskId))
+  const highWithoutAction = (risks.data ?? []).filter((r) => r.status !== 'arquivado' && r.status !== 'tratado' && r.status !== 'aceite'
+    && computeRiskLevel(r.probability, r.impact).level === 'alto' && r.treatment !== 'aceitar' && !linkedRiskIds.has(r.id)).length
   // Whoever registered the company is its designated manager.
   const manager = users.data?.find((u) => u.id === org.registeredBy)?.name
   const { sectionTotal, answered } = summary.sections.reduce(
@@ -242,13 +248,19 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
       </Modal>
 
        <Modal open={confirm} onOpenChange={setConfirm} chip={<Chip>Decisão da consultora</Chip>} title="Validar o roadmap?"
-         description={`${manager ? `O ${manager}` : 'O cliente'} passa a ver o roadmap e o registo de riscos (em só leitura, com linguagem simples). Pode continuar a editar depois.`}
+         description={`${manager ? `O ${manager}` : 'O cliente'} passa a ver o roadmap e o registo de riscos em só leitura, com linguagem simples. Se mudar alguma coisa depois, o cliente vê a alteração e fica registada no histórico.`}
          footer={<><Button variant="secondary" onClick={() => setConfirm(false)}>Cancelar</Button><Button loading={validate.isPending} onClick={() => validate.mutate(undefined, {
            onSuccess: () => { setConfirm(false); toast.show(`Roadmap validado · ${manager ? `o ${manager.split(' ')[0]}` : 'o cliente'} foi notificado`) },
            onError: (e) => toast.show(e.message, 'error'),
          })}>Validar roadmap</Button></>}>
+         {(raisedByRisks === 0 || highWithoutAction > 0) && (
+           <Note tone="warning" className="mb-3">
+             {raisedByRisks === 0 ? 'Nenhuma ação foi priorizada pelos riscos: o cliente vai ver a ordem proposta pela IA.' : `${highWithoutAction} ${highWithoutAction === 1 ? 'risco alto ainda não tem' : 'riscos altos ainda não têm'} ação ligada.`}{' '}
+             <Link to={`${base}/riscos`} className="font-bold underline underline-offset-2" onClick={() => setConfirm(false)}>Rever riscos</Link>
+           </Note>
+         )}
          <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm text-ink-soft">
-           <li>{ranked.length} ações, {raised} priorizadas pelos riscos</li>
+           <li>{ranked.length} ações, {raisedByRisks} priorizadas pelos riscos</li>
            <li>As etiquetas "Proposta pela IA · por validar" desaparecem do plano</li>
          </ul>
        </Modal>
@@ -263,7 +275,7 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
   const fell = moved < 0
   const owner = users.find((u) => u.id === a.assignedTo)
   return (
-    <li id={`acao-${a.id}`} tabIndex={-1} className={cn('flex scroll-mt-14 gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3 md:scroll-mt-0', reason ? 'border-brand/40 shadow-[0_2px_12px_rgb(var(--shadow-rgb)/0.08)]' : 'border-line-soft')}>
+    <li id={`acao-${a.id}`} tabIndex={-1} className={cn('flex scroll-mt-14 gap-4 rounded-[16px] border bg-paper px-5 py-4 animate-pop-in max-md:flex-col max-md:gap-3 md:scroll-mt-0', reason ? 'border-brand/40' : 'border-line-soft')}>
       <div className="flex shrink-0 items-start gap-2">
         <span className="grid size-9 place-items-center rounded-[10px] bg-paper-soft text-sm font-extrabold text-ink-soft"><span className="sr-only">Prioridade </span>{rank}</span>
         {(rose || fell) && (
@@ -297,7 +309,7 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
         </dl>
         {reason && (
           <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-[8px] bg-signal-soft px-2.5 py-1.5 text-sm font-semibold text-brand">
-            <ShieldAlert className="size-4" aria-hidden />{consultant ? reason : `Esta ação está ligada a um risco: ${topRisk?.plainLabel ?? topRisk?.riskLabel}`}
+            <Grid3x3 className="size-4" aria-hidden />{consultant ? reason : `Esta ação está ligada a um risco: ${topRisk?.plainLabel ?? topRisk?.riskLabel}`}
           </p>
         )}
 

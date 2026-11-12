@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 import * as Popover from '@radix-ui/react-popover'
-import { Bell, BellRing, CheckCheck, ClipboardList, Mail, MessageSquare, Plug, ShieldCheck, Timer, Bot } from 'lucide-react'
+import { Bell, BellRing, CheckCheck, ClipboardList, Mail, MessageSquare, Plug, BadgeCheck, Grid3x3, Timer, Bot } from 'lucide-react'
 import type { AppNotification, NotificationKind } from '../api/contracts'
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '../api/queries'
 import { dateTime } from '../config/labels'
@@ -8,7 +8,7 @@ import { cn } from '../ui'
 
 const ICON: Record<NotificationKind, typeof Bell> = {
   tarefa: ClipboardList, tarefa_concluida: CheckCheck, lembrete: BellRing, prazo: Timer, comentario: MessageSquare,
-  roadmap: ShieldCheck, avaliacao: ClipboardList, integracao: Plug, risco: ShieldCheck,
+  roadmap: BadgeCheck, avaliacao: ClipboardList, integracao: Plug, risco: Grid3x3,
   chat: Bot,
 }
 
@@ -39,7 +39,7 @@ export function NotificationBell({ compact }: { compact?: boolean }) {
             {unread > 0 && <button type="button" onClick={() => markAll.mutate()} className="text-[0.8125rem] font-bold text-brand hover:underline">Marcar todas como lidas</button>}
           </header>
           <ul className="flex-1 overflow-y-auto">
-            {items.length === 0 && <li className="px-4 py-8 text-center text-[0.875rem] text-ink-soft">Sem notificações.</li>}
+            {items.length === 0 && <li className="px-4 py-8 text-center text-[0.8125rem] text-ink-soft">Sem notificações.</li>}
             {items.map((n) => {
               const Icon = ICON[n.kind]
               return (
@@ -49,11 +49,11 @@ export function NotificationBell({ compact }: { compact?: boolean }) {
                       <span className={cn('grid size-8 shrink-0 place-items-center rounded-full', n.read ? 'bg-paper-soft text-ink-soft' : 'bg-brand-soft text-brand')}><Icon className="size-4" aria-hidden /></span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-start gap-2">
-                          <span className={cn('flex-1 text-[0.875rem]', n.read ? 'font-semibold' : 'font-extrabold')}>{n.title}</span>
+                          <span className={cn('flex-1 text-[0.9375rem]', n.read ? 'font-semibold' : 'font-extrabold')}>{n.title}</span>
                           {!n.read && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-brand forced-colors:bg-[CanvasText]" aria-label="Por ler" />}
                         </span>
                         <span className="mt-0.5 block text-[0.8125rem] text-ink-soft">{n.body}</span>
-                        <span className="mt-1 flex items-center gap-1.5 text-[0.7188rem] text-muted">
+                        <span className="mt-1 flex items-center gap-1.5 text-[0.8125rem] text-muted">
                           {dateTime(n.createdAt)}
                           {n.channels.includes('email') && <><span aria-hidden>·</span><Mail className="size-3" aria-hidden />também por email</>}
                         </span>

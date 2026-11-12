@@ -6,7 +6,7 @@ import { computeRiskLevel } from '../features/assets/public'
 import { applicableFrameworks, nis2Status, sectorById } from '../features/organization/public'
 import { Chip } from '../ui'
 
-const LABEL = 'font-mono text-[0.625rem] uppercase tracking-[0.1em] text-muted'
+const LABEL = 'font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-muted'
 
 function Row({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -42,7 +42,7 @@ export function ChatClientContext({ orgSlug, ownerId }: { orgSlug: string; owner
           <Building2 className="size-4" />
         </span>
         <div className="flex min-w-0 flex-col gap-0.5">
-          <strong className="text-[0.875rem] font-extrabold text-brand">{org.name}</strong>
+          <strong className="text-[0.9375rem] font-extrabold text-brand">{org.name}</strong>
           <span className="text-[0.75rem] leading-snug text-ink-soft">
             {[sector, org.profile && `${org.profile.employees} trabalhadores`].filter(Boolean).join(' · ') || org.description}
           </span>

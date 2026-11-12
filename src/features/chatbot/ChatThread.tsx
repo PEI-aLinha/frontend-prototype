@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Building2, Check, ChevronDown, Clock, FilePlus2, FileText, Paperclip, Send, Sparkles, UserCheck, X } from 'lucide-react'
+import { Building2, Check, ChevronDown, Clock, FilePlus2, FileText, Paperclip, Send, UserCheck, X } from 'lucide-react'
 import type { ChatAttachment, ChatMessage, ChatTable, Conversation, Suggestion } from './ChatTypes'
 import { ATTACHMENT_ACCEPT, MAX_ATTACHMENT_BYTES, attachmentUrl, formatSize } from './attachmentStore'
-import { Button, TextInput } from '../../ui'
+import { AIBadge, Button, TextInput } from '../../ui'
 
 export type SendOptions = {
   files?: File[]
@@ -29,7 +29,7 @@ type ChatThreadProps = {
   context?: ReactNode
 }
 
-const LABEL = 'font-mono text-[0.625rem] uppercase tracking-[0.1em]'
+const LABEL = 'font-mono text-[0.6875rem] uppercase tracking-[0.06em]'
 
 const COMMON_DOCUMENTS = ['Política de segurança', 'Plano de resposta a incidentes', 'Contrato com fornecedor', 'Plano de cópias de segurança']
 
@@ -66,7 +66,7 @@ function ConversationDocuments({ messages }: { messages: ChatMessage[] }) {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 w-full items-center gap-2 px-4 text-[0.8125rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+        className="flex min-h-11 w-full items-center gap-2 px-4 text-[0.8125rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal"
       >
         <Paperclip className="size-4" aria-hidden />
         Documentos da conversa ({docs.length})
@@ -98,7 +98,7 @@ function ClientContextStrip({ children, expanded }: { children: ReactNode; expan
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 w-full items-center gap-2 px-4 text-[0.8125rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+        className="flex min-h-11 w-full items-center gap-2 px-4 text-[0.8125rem] font-bold text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal"
       >
         <Building2 className="size-4" aria-hidden />
         Contexto do cliente
@@ -118,7 +118,7 @@ function DocumentRequestCard({ message, messages, onAnswer }: { message: ChatMes
       <span className={`flex items-center gap-1.5 text-muted ${LABEL}`}>
         <FilePlus2 className="size-3" aria-hidden />Documento pedido
       </span>
-      <strong className="text-[0.875rem] font-extrabold text-brand">{request.title}</strong>
+      <strong className="text-[0.9375rem] font-extrabold text-brand">{request.title}</strong>
       {request.fulfilledBy ? (
         <span className="flex items-center gap-1.5 text-[0.8125rem] font-bold text-brand">
           <Check className="size-4" aria-hidden />Enviado{sent && `: ${sent.name}`}
@@ -174,7 +174,7 @@ function MessageTable({ table }: { table: ChatTable }) {
         <thead className="bg-paper">
           <tr>
             {table.columns.map((c) => (
-              <th key={c} scope="col" className="px-3 py-2 font-mono text-[0.625rem] font-bold uppercase tracking-[0.08em] text-ink-soft">{c}</th>
+              <th key={c} scope="col" className="px-3 py-2 font-mono text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-ink-soft">{c}</th>
             ))}
           </tr>
         </thead>
@@ -248,7 +248,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
   }, [active.id])
 
   const placeholder = reviewing ? 'Escreva a sua resposta ao cliente…' : 'Pergunte sobre riscos, ativos ou roadmap…'
-  const iconBtn = 'flex size-[46px] flex-none items-center justify-center rounded-[12px] border border-brand-soft bg-paper text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-40'
+  const iconBtn = 'flex size-[46px] flex-none items-center justify-center rounded-[12px] border border-brand-soft bg-paper text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-40'
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
@@ -287,10 +287,10 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
             const fromConsultant = m.role === 'bot' && !!m.authorId
             const fromAi = m.role === 'bot' && !m.authorId
             const bubble = m.role === 'user'
-              ? 'max-w-[85%] self-end whitespace-pre-wrap break-words rounded-[16px_16px_4px_16px] bg-brand px-3.5 py-2.5 text-[0.875rem] leading-normal text-white'
-              : `max-w-[85%] self-start whitespace-pre-wrap break-words rounded-[16px_16px_16px_4px] border px-3.5 py-2.5 text-[0.875rem] leading-normal ${
+              ? 'max-w-[85%] self-end whitespace-pre-wrap break-words rounded-[16px_16px_4px_16px] bg-brand px-3.5 py-2.5 text-[0.9375rem] leading-normal text-white'
+              : `max-w-[85%] self-start whitespace-pre-wrap break-words rounded-[16px_16px_16px_4px] border px-3.5 py-2.5 text-[0.9375rem] leading-normal ${
                   m.error
-                    ? 'border-red-200 bg-red-50 text-red-800'
+                    ? 'border-danger/40 bg-risk-high text-risk-high-ink'
                     : fromConsultant
                       ? 'border-brand bg-signal-soft/30'
                       : 'border-brand-soft bg-paper'
@@ -304,9 +304,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                   </span>
                 )}
                 {fromAi && !m.error && (
-                  <span className={`flex items-center gap-1 self-start text-muted ${LABEL}`}>
-                    <Sparkles className="size-3" aria-hidden />Assistente IA
-                  </span>
+                  <span className="self-start"><AIBadge kind="info" /></span>
                 )}
                 {reviewing && m.role === 'user' && (
                   <span className={`self-end text-muted ${LABEL}`}>Cliente</span>
@@ -327,8 +325,8 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                 {m.table && <MessageTable table={m.table} />}
                 {m.source && (
                   <Link to={m.source.to} className="flex max-w-[85%] flex-col gap-1.5 self-start rounded-[12px] border border-brand-soft bg-paper px-3.5 py-3 text-brand no-underline hover:underline">
-                    <span className="font-mono text-[0.625rem] uppercase tracking-[0.1em] text-muted">{m.source.label}</span>
-                    <strong className="text-[0.875rem] font-extrabold">{m.source.title}</strong>
+                    <span className="font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-muted">{m.source.label}</span>
+                    <strong className="text-[0.9375rem] font-extrabold">{m.source.title}</strong>
                     <span className="text-[0.8125rem] font-bold">{m.source.cta ?? 'Abrir →'}</span>
                   </Link>
                 )}
@@ -377,14 +375,14 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                   <span className="truncate">{f.name}</span>
                   <span className="flex-none font-normal text-muted">{formatSize(f.size)}</span>
                   <button type="button" aria-label={`Remover ${f.name}`} onClick={() => setPending((prev) => prev.filter((_, j) => j !== i))}
-                    className="flex size-7 flex-none items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-brand">
+                    className="flex size-7 flex-none items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-signal">
                     <X className="size-3.5" aria-hidden />
                   </button>
                 </li>
               ))}
             </ul>
           )}
-          {fileError && <p role="alert" className="text-[0.75rem] text-red-700">{fileError}</p>}
+          {fileError && <p role="alert" className="text-[0.8125rem] font-semibold text-danger">{fileError}</p>}
           <input ref={fileRef} type="file" multiple accept={ATTACHMENT_ACCEPT} className="hidden" tabIndex={-1} aria-hidden onChange={(e) => onFiles(e.target.files)} />
           {readOnly ? (
             <p className="rounded-[12px] bg-paper-soft px-3.5 py-3 text-center text-[0.8125rem] text-ink-soft">
@@ -411,7 +409,7 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                 placeholder={placeholder}
                 aria-label={placeholder}
                 maxLength={1000}
-                className="h-[46px] min-w-0 flex-1 rounded-[12px] border-brand-soft px-3.5 text-[0.875rem] focus-visible:outline-2 focus-visible:outline-brand"
+                className="h-[46px] min-w-0 flex-1 rounded-[12px] border-brand-soft px-3.5 text-[0.8125rem] focus-visible:outline-2 focus-visible:outline-signal"
               />
               <Button
                 type="submit"

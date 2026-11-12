@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react'
-import { Info } from 'lucide-react'
+import { Info, TriangleAlert } from 'lucide-react'
 import { cn } from './cn'
 
 export function Card({ className, soft, ...rest }: HTMLAttributes<HTMLDivElement> & { soft?: boolean }) {
@@ -60,11 +60,13 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
   )
 }
 
-/** Aviso: fundo signal-soft, texto brand SemiBold 13, a toda a largura. */
-export function Note({ children, icon = true, className }: { children: ReactNode; icon?: boolean; className?: string }) {
+/** Aviso: fundo signal-soft, texto brand SemiBold 13, a toda a largura. `warning` usa a tinta de risco médio
+ *  e um triângulo, para pedir atenção antes de uma decisão (nunca para erros). */
+export function Note({ children, icon = true, tone = 'info', className }: { children: ReactNode; icon?: boolean; tone?: 'info' | 'warning'; className?: string }) {
+  const Icon = tone === 'warning' ? TriangleAlert : Info
   return (
-    <div role="note" className={cn('flex items-start gap-2.5 rounded-[10px] bg-signal-soft px-3.5 py-2.5 text-sm font-semibold text-brand', className)}>
-      {icon && <Info className="mt-[2px] size-4 shrink-0" aria-hidden />}
+    <div role="note" className={cn('flex items-start gap-2.5 rounded-[10px] px-3.5 py-2.5 text-sm font-semibold', tone === 'warning' ? 'bg-risk-medium text-risk-medium-ink' : 'bg-signal-soft text-brand', className)}>
+      {icon && <Icon className="mt-[2px] size-4 shrink-0" aria-hidden />}
       <div className="min-w-0">{children}</div>
     </div>
   )

@@ -58,7 +58,7 @@ test('US03 - Marta revê o rascunho pedido pelo Rui e o Rui recebe a resposta', 
 
   await expect(chat.getByText('Está a ajudar um cliente.')).toBeVisible()
   await expect(chat.getByText('Cliente', { exact: true })).toBeVisible()
-  await expect(chat.getByText('Assistente IA', { exact: true }).first()).toBeVisible()
+  await expect(chat.getByText('Gerado por IA · apenas informativo').first()).toBeVisible()
 
   await chat.getByRole('textbox', { name: /Escreva a sua resposta ao cliente/ }).fill(CONSULTANT_REPLY)
   await chat.getByRole('button', { name: 'Enviar mensagem' }).click()

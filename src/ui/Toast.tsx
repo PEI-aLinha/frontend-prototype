@@ -10,6 +10,8 @@ interface ToastItem {
 
 interface ToastApi {
   show: (message: string, tone?: ToastItem['tone']) => void
+  /** Drops every visible toast, e.g. when the demo switches persona and old messages no longer apply. */
+  clear: () => void
 }
 
 const ToastContext = createContext<ToastApi | null>(null)
@@ -27,7 +29,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     if (tone === 'success') window.setTimeout(() => setItems((prev) => prev.filter((t) => t.id !== id)), DURATION_MS)
   }, [])
   const dismiss = useCallback((id: number) => setItems((prev) => prev.filter((t) => t.id !== id)), [])
-  const value = useMemo(() => ({ show }), [show])
+  const clear = useCallback(() => setItems([]), [])
+  const value = useMemo(() => ({ show, clear }), [show, clear])
   return (
     <ToastContext.Provider value={value}>
       {children}
@@ -38,7 +41,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             role={t.tone === 'error' ? 'alert' : 'status'}
-            className={cn('pointer-events-auto flex items-center gap-2.5 rounded-[12px] px-4 py-3 text-[0.875rem] font-bold text-white shadow-[0_12px_32px_rgb(var(--shadow-rgb)/0.25)] animate-pop-in', t.tone === 'error' ? 'bg-risk-high-ink pr-2' : 'bg-brand-deep')}
+            className={cn('pointer-events-auto flex items-center gap-2.5 rounded-[12px] px-4 py-3 text-[0.9375rem] font-bold text-white shadow-[0_12px_32px_rgb(var(--shadow-rgb)/0.25)] animate-pop-in', t.tone === 'error' ? 'bg-risk-high-ink pr-2' : 'bg-brand-deep')}
           >
             <span aria-hidden className="font-extrabold text-signal-soft">{t.tone === 'error' ? '!' : '✓'}</span>
             <span className="min-w-0 flex-1">{t.message}</span>
