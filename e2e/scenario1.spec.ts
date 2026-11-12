@@ -99,7 +99,7 @@ test('Scenario 1 — extras: filters, detail with history, edit, services and ex
   await start(page, `${ORG}/ativos`, 'rui', 'c2')
   await switchPersona(page, 'Rui Santos')
   await page.goto(`${ORG}/ativos`)
-  await expect(page.getByText('7', { exact: true })).toBeVisible()
+  await expect(page.getByText('7 ativos', { exact: true })).toBeVisible()
 
   await page.getByRole('searchbox', { name: 'Pesquisar ativos' }).fill('nas')
   await expect(page.getByText('1 de 7')).toBeVisible()

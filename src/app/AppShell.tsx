@@ -58,7 +58,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
                   to={item.to}
                   aria-current={navActive(item, pathname) ? 'page' : undefined}
                   className={cn(
-                    'flex h-10 items-center rounded-[10px] px-3 text-[0.9375rem] transition-colors duration-150',
+                    'flex min-h-10 items-center rounded-[10px] px-3 py-1.5 text-[0.9375rem] leading-tight transition-colors duration-150',
                     navActive(item, pathname) ? 'bg-brand-soft font-bold text-brand' : 'font-semibold text-ink-soft hover:bg-paper-deep/60 hover:text-ink',
                   )}
                 >

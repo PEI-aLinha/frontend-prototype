@@ -151,7 +151,7 @@ export function AssetsPage() {
           <dl data-tour="asset-summary" className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-[0.9375rem]" aria-label="Resumo do inventário">
             <div className="flex items-baseline gap-1.5">
               <dt className="sr-only">Ativos registados</dt>
-              <dd><strong className="font-extrabold">{data.assets.length} {data.assets.length === 1 ? 'ativo' : 'ativos'}</strong> <span className="text-ink-soft">{byAnalyst.length && analystName ? `· ${byAnalyst.length} pelo ${analystName}` : consultant ? '· registados pelo cliente' : '· registados por si'}</span></dd>
+              <dd><strong className="font-extrabold">{data.assets.length} {data.assets.length === 1 ? 'ativo' : 'ativos'}</strong> <span className="text-ink-soft">{byAnalyst.length && analystName ? `· ${byAnalyst.length} registados pelo ${analystName}` : consultant ? '· registados pelo cliente' : '· registados por si'}</span></dd>
             </div>
             <div className="flex items-baseline gap-1.5">
               <dt className="sr-only">Serviços críticos</dt>
