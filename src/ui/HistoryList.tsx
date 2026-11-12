@@ -13,7 +13,7 @@ export interface HistoryItem {
 
 /** Change history (RF29): who, when, what. */
 export function HistoryList({ items }: { items: HistoryItem[] }) {
-  if (items.length === 0) return <p className="text-[0.875rem] text-muted">Ainda não há alterações registadas.</p>
+  if (items.length === 0) return <p className="text-[0.8125rem] text-muted">Ainda não há alterações registadas.</p>
   return (
     <ol className="relative flex flex-col gap-4 before:absolute before:bottom-2 before:left-[13px] before:top-2 before:w-px before:bg-line-soft">
       {items.map((h) => (
@@ -26,7 +26,7 @@ export function HistoryList({ items }: { items: HistoryItem[] }) {
             </span>
           )}
           <div className="min-w-0 flex-1 pt-0.5">
-            <p className="text-[0.875rem]">
+            <p className="text-[0.8125rem]">
               <span className="font-bold">{h.actorType === 'ai' ? 'IA do aLinha' : h.actorType === 'system' ? 'Sistema' : h.who?.name}</span>{' '}
               <span className="text-ink-soft">{h.summary.charAt(0).toLowerCase() + h.summary.slice(1)}</span>
             </p>

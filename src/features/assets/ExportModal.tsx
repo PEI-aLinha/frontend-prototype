@@ -22,7 +22,7 @@ function Readiness({ inventory, base }: { inventory: Inventory; base: string }) 
   const ok = total === 0 && inventory.services.length > 0
   return (
     <section aria-label="Verificação da lista" className="flex flex-col gap-2 rounded-[14px] border border-line-soft p-4">
-      <p className="flex items-center gap-2 text-[0.875rem] font-bold">
+      <p className="flex items-center gap-2 text-[0.9375rem] font-bold">
         {ok ? <CheckCircle2 className="size-4 text-brand" aria-hidden /> : <TriangleAlert className="size-4 text-risk-medium-ink" aria-hidden />}
         {ok ? 'A lista está completa' : total === 0 ? 'Registe pelo menos um serviço crítico' : `${total} ${total === 1 ? 'registo tem' : 'registos têm'} informação em falta`}
       </p>

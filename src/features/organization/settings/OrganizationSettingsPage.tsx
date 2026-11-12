@@ -81,7 +81,7 @@ export function OrganizationSettingsPage() {
               <span className="text-[0.9375rem] font-bold">{suggested ? NIS2_LABEL[suggested] : '—'}</span>
               <Nis2Badge official={false} />
             </div>
-            <p className="text-[0.875rem] text-ink-soft">
+            <p className="text-[0.8125rem] text-ink-soft">
               {suggested === 'nao_abrangida'
                 ? 'Pela sugestão do aLinha, a empresa não está abrangida, por isso não deve receber um Ato de Qualificação.'
                 : 'É a sugestão do aLinha. Quando receber o Ato de Qualificação do CNCS, registe aqui a classificação oficial.'}{' '}

@@ -56,7 +56,7 @@ export function AppearanceMenu({ compact }: { compact?: boolean }) {
                 >
                   <input type="radio" name="appearance-cvd" value={o.value} checked={selected} onChange={() => setCvd(o.value)} className="sr-only" />
                   <span className="min-w-0 flex-1">
-                    <span className={cn('block text-[0.875rem]', selected ? 'font-extrabold text-brand' : 'font-bold')}>{o.label}</span>
+                    <span className={cn('block text-[0.9375rem]', selected ? 'font-extrabold text-brand' : 'font-bold')}>{o.label}</span>
                     <span className="block text-[0.75rem] text-ink-soft">{o.hint}</span>
                   </span>
                   <RiskSwatch vision={o.value} />

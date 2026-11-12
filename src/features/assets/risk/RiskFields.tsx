@@ -39,7 +39,7 @@ export function LiveLevel({ probability, impact, label = 'Nível de risco', comp
     <div aria-live="polite" className={cn('flex items-center justify-between gap-3 rounded-[14px] border border-dashed border-line px-4', compact ? 'py-2.5' : 'py-3.5')}>
       <div>
         <p className="eyebrow text-[0.6875rem] text-muted">{label} · calculado pelo sistema</p>
-        <p className="mt-0.5 text-[0.875rem] font-semibold">{ready ? describeRule(probability, impact) : 'Escolha a probabilidade e o impacto'}</p>
+        <p className="mt-0.5 text-[0.9375rem] font-semibold">{ready ? describeRule(probability, impact) : 'Escolha a probabilidade e o impacto'}</p>
         {result && !compact && <p className="text-[0.75rem] text-muted">Regra: probabilidade × impacto = {probability} × {impact} = {result.score}</p>}
       </div>
       {result ? <RiskLevelBadge level={result.level} size="lg" /> : <span className="text-[0.8125rem] text-muted">—</span>}
@@ -104,7 +104,7 @@ function TreatFields({ values: v, onChange, errors, assets, actions }: StepProps
       )}
 
       <div className="flex flex-col gap-3 rounded-[14px] bg-paper-soft p-4">
-        <label className="flex cursor-pointer items-center gap-2.5 text-[0.875rem] font-semibold">
+        <label className="flex cursor-pointer items-center gap-2.5 text-[0.9375rem] font-semibold">
           <input type="checkbox" checked={v.hasResidual} onChange={(e) => set('hasResidual', e.target.checked)} className="size-4 accent-[var(--color-brand)]" />
           Indicar o <Term k="riscoResidual">risco residual</Term> previsto <span className="font-normal text-muted">(opcional)</span>
         </label>

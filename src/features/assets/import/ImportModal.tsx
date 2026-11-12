@@ -75,7 +75,7 @@ export function ImportModal({ open, onClose, inventory }: { open: boolean; onClo
             ].map(([t, d], i) => (
               <li key={t} className="rounded-[12px] bg-paper-soft p-3.5">
                 <span className="grid size-6 place-items-center rounded-full bg-brand text-[0.75rem] font-extrabold text-white">{i + 1}</span>
-                <p className="mt-2 text-[0.875rem] font-bold">{t}</p>
+                <p className="mt-2 text-[0.9375rem] font-bold">{t}</p>
                 <p className="text-[0.8125rem] text-ink-soft">{d}</p>
               </li>
             ))}
@@ -88,7 +88,7 @@ export function ImportModal({ open, onClose, inventory }: { open: boolean; onClo
             className={cn('flex flex-col items-center gap-2 rounded-[14px] border-2 border-dashed px-6 py-8 text-center transition-colors', dragging ? 'border-brand bg-brand-soft/40' : 'border-line')}
           >
             <FileUp className="size-6 text-brand" aria-hidden />
-            <p className="text-[0.875rem] font-bold">Arraste o ficheiro CSV para aqui</p>
+            <p className="text-[0.9375rem] font-bold">Arraste o ficheiro CSV para aqui</p>
             <p className="text-[0.8125rem] text-ink-soft">ou</p>
             <div className="flex flex-wrap justify-center gap-2">
               <Button size="sm" onClick={() => fileRef.current?.click()}>Escolher ficheiro</Button>
@@ -100,7 +100,7 @@ export function ImportModal({ open, onClose, inventory }: { open: boolean; onClo
         </>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2 text-[0.875rem]">
+          <div className="flex flex-wrap items-center gap-2 text-[0.8125rem]">
             <span className="font-bold">{fileName}</span>
             <Chip>{valid.length} prontos</Chip>
             {invalid.length > 0 && <Chip tone="neutral">{invalid.length} com erros (não entram)</Chip>}

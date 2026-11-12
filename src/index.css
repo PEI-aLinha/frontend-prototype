@@ -7,6 +7,9 @@
 
 /* Tokens from docs/design-spec.md (same names as the Figma color/* variables). */
 @theme {
+  /* Tailwind's text-sm maps onto the DESIGN.md body-small step (13px), not its 14px default. */
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.45;
   --color-*: initial;
   --color-white: #ffffff;
   --color-transparent: transparent;

@@ -34,7 +34,7 @@ export function ServiceMap({ assets, inventory, onOpen }: { assets: Asset[]; inv
                   <li key={a.id}>
                     <button type="button" onClick={() => onOpen(a)} className="w-full rounded-[12px] border border-line-soft bg-paper px-3.5 py-2.5 text-left transition-colors hover:border-line">
                       <span className="flex items-start justify-between gap-2">
-                        <span className="text-[0.875rem] font-bold">{a.name}</span>
+                        <span className="text-[0.9375rem] font-bold">{a.name}</span>
                         <CriticalityChip level={a.criticality} />
                       </span>
                       <span className="mt-0.5 block text-[0.75rem] text-ink-soft">{ASSET_TYPE_LABEL[a.type]}</span>

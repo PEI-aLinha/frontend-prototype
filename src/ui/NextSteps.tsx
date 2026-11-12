@@ -29,7 +29,7 @@ export function NextSteps({ title = 'O que fazer a seguir', steps }: { title?: s
                 {s.done ? <Check className="size-3.5" strokeWidth={3} aria-label="Feito" /> : i + 1}
               </span>
               <div className="min-w-0 flex-1">
-                <p className={cn('text-[0.875rem]', s.done ? 'text-ink-soft line-through decoration-line' : 'font-bold')}>{s.label}</p>
+                <p className={cn('text-[0.9375rem]', s.done ? 'text-ink-soft line-through decoration-line' : 'font-bold')}>{s.label}</p>
                 {s.hint && !s.done && <p className="text-[0.8125rem] text-ink-soft">{s.hint}</p>}
               </div>
               {/* Outlined: the step is already marked by its tint and filled number; the page's primary action lives elsewhere. */}

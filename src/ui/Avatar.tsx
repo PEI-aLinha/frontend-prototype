@@ -29,7 +29,7 @@ export function Person({ initials, name }: { initials: string; name: string }) {
   return (
     <span className="inline-flex min-w-0 items-center gap-2">
       <Avatar initials={initials} size={24} />
-      <span className="truncate text-[0.875rem]">{name}</span>
+      <span className="truncate text-[0.8125rem]">{name}</span>
     </span>
   )
 }

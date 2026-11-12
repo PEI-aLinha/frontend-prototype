@@ -9,7 +9,7 @@ import {
 
 const TOKENS = [
   ['paper', '#FFFFFF'], ['paper-soft', '#F7F7F8'], ['paper-deep', '#E5E7E9'], ['ink', '#202124'], ['ink-soft', '#555A5F'], ['muted', '#646A6F'],
-  ['brand', '#0B4F4A'], ['brand-deep', '#063632'], ['brand-soft', '#D2E4E1'], ['signal', '#12786E'], ['signal-soft', '#CDEDEA'], ['line', '#B8BDC1'],
+  ['brand', '#0B4F4A'], ['brand-deep', '#063632'], ['brand-soft', '#D2E4E1'], ['signal', '#12786E'], ['signal-soft', '#CDEDEA'], ['line', '#858B90'],
   ['line-soft', '#D9DDE0'], ['risk-low', '#E3EBE9'], ['risk-medium', '#F3E7C9'], ['risk-high', '#F3DBD5'],
 ] as const
 
@@ -29,7 +29,7 @@ const COLUMNS: ColumnDef<Row, unknown>[] = [
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-4 border-t border-line-soft pt-7">
-      <h2 className="text-[1.1875rem] font-extrabold">{title}</h2>
+      <h2 className="text-[1.0625rem] font-extrabold">{title}</h2>
       {children}
     </section>
   )
@@ -56,7 +56,7 @@ export function DesignPage() {
             <div key={name} className="flex flex-col gap-1.5">
               <div className="h-14 rounded-[10px] border border-line-soft" style={{ background: `var(--color-${name})` }} />
               <p className="text-[0.75rem] font-bold">{name}</p>
-              <p className="eyebrow text-[0.625rem] text-muted">{hex}</p>
+              <p className="eyebrow text-[0.6875rem] text-muted">{hex}</p>
             </div>
           ))}
         </div>
@@ -64,10 +64,10 @@ export function DesignPage() {
 
       <Section title="Tipografia">
         <Eyebrow className="text-[0.75rem]">Componentes Águeda, Lda. · IBM Plex Mono 11–12</Eyebrow>
-        <p className="text-[2.25rem] font-extrabold title-tight">Título de onboarding 36</p>
+        <p className="text-[4rem] font-extrabold leading-[0.98] tracking-[-0.03em]">Display onboarding 64</p>
         <p className="text-[1.875rem] font-extrabold title-tight">Título de página 30</p>
         <p className="text-[1.625rem] font-extrabold title-tight">Título de modal 26</p>
-        <p className="text-[1.125rem] font-extrabold">Título de cartão 18</p>
+        <p className="text-[1.0625rem] font-extrabold">Título de secção 17</p>
         <p className="text-[1rem] text-ink-soft">Subtítulo de página 16 · ink-soft</p>
         <p className="text-[0.9375rem]">Corpo 15 — linguagem simples para quem não é técnico nem jurista.</p>
         <p className="text-[0.8125rem] text-muted">Texto secundário 13 · muted</p>
@@ -141,7 +141,7 @@ export function DesignPage() {
         </div>
         <Modal open={modal} onOpenChange={setModal} chip={<Chip>Tarefa para analista</Chip>} title="Atribuir registo de ativos" description="O analista recebe a tarefa por email e na sua lista." footer={<><Button variant="secondary" onClick={() => setModal(false)}>Cancelar</Button><Button onClick={() => setModal(false)}>Atribuir</Button></>} />
         <Drawer open={drawer} onOpenChange={setDrawer} eyebrow="Ativo" title="Servidor de produção" chip={<CriticalityChip level="alto" />} footer={<Button onClick={() => setDrawer(false)}>Guardar</Button>}>
-          <p className="text-[0.875rem] text-ink-soft">Conteúdo do painel.</p>
+          <p className="text-[0.8125rem] text-ink-soft">Conteúdo do painel.</p>
         </Drawer>
       </Section>
 
@@ -158,7 +158,7 @@ export function DesignPage() {
         <TaskCard type="Pergunta técnica" title="As cópias de segurança dos sistemas críticos são feitas regularmente?" meta="Avaliação de maturidade · Continuidade do negócio" done />
         <Tabs tabs={[
           { value: 'h', label: 'Histórico', count: 2, content: <HistoryList items={[{ id: '1', who: { name: 'Pedro Almeida', initials: 'PA' }, actorType: 'user', summary: 'Registou o ativo "PLC das linhas de montagem"', createdAt: '2026-10-15T09:41:00' }, { id: '2', who: null, actorType: 'ai', summary: 'Propôs o roadmap a partir das lacunas', createdAt: '2026-10-14T10:20:00' }]} /> },
-          { value: 'r', label: 'Riscos', content: <p className="text-[0.875rem] text-ink-soft">Sem riscos.</p> },
+          { value: 'r', label: 'Riscos', content: <p className="text-[0.8125rem] text-ink-soft">Sem riscos.</p> },
         ]} />
       </Section>
 
@@ -171,8 +171,8 @@ export function DesignPage() {
       <Section title="Painel de ajuda da IA">
         <div className="flex max-w-[360px] flex-col gap-3.5 rounded-[18px] bg-brand-deep p-[26px]">
           <Eyebrow className="text-[0.75rem] text-signal-soft">Ajuda da IA</Eyebrow>
-          <p className="text-[1.1875rem] font-extrabold text-white">O que significa esta pergunta?</p>
-          <p className="text-[0.875rem] text-brand-soft">Uma cópia de segurança é uma cópia dos dados guardada noutro sítio.</p>
+          <p className="text-[1.0625rem] font-extrabold text-white">O que significa esta pergunta?</p>
+          <p className="text-[0.9375rem] text-brand-soft">Uma cópia de segurança é uma cópia dos dados guardada noutro sítio.</p>
           <div className="rounded-[12px] bg-brand px-4 py-3.5"><p className="text-[0.8125rem] font-bold text-white">Exemplo</p><p className="text-[0.8125rem] text-brand-soft">Uma vez por mês, o técnico repõe uma pasta.</p></div>
           <div><AIBadge kind="info" onDark /></div>
         </div>

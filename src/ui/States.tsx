@@ -29,7 +29,7 @@ export function EmptyState({ icon, title, children, action, className, headingLe
     <div className={cn('flex flex-col items-center gap-3 rounded-[16px] border border-dashed border-line px-6 py-12 text-center', className)}>
       {icon && <div className="grid size-11 place-items-center rounded-full bg-paper-soft text-ink-soft">{icon}</div>}
       <Heading className="text-[1.0625rem] font-bold">{title}</Heading>
-      {children && <div className="max-w-[440px] text-[0.875rem] text-ink-soft">{children}</div>}
+      {children && <div className="max-w-[440px] text-[0.9375rem] text-ink-soft">{children}</div>}
       {action && <div className="mt-1">{action}</div>}
     </div>
   )

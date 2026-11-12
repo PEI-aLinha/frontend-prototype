@@ -80,7 +80,7 @@ export function AcceptInvitePage() {
                   </Field>
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="flex cursor-pointer items-start gap-3 text-[0.875rem] text-ink">
+                  <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] text-ink">
                     <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} aria-invalid={!!errors.terms || undefined} aria-describedby={errors.terms ? 'invite-terms-error' : undefined} className="mt-[3px] size-[18px] shrink-0 accent-brand" />
                     <span>Li e aceito os termos de utilização e a política de privacidade.</span>
                   </label>

@@ -62,7 +62,7 @@ export function DiscoveryList(props: Props) {
   return (
     <div className="flex flex-col gap-3">
       {pending.length === 0
-        ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[0.875rem] text-ink-soft">Não há sugestões por rever.</p>
+        ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-[0.8125rem] text-ink-soft">Não há sugestões por rever.</p>
         : <ul className="flex flex-col gap-3">{pending.map((d) => <Suggestion key={d.id} d={d} {...props} />)}</ul>}
       {done.length > 0 && (
         <details className="text-[0.8125rem]">

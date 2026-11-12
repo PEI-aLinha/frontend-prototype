@@ -76,7 +76,7 @@ export function CreateAccountPage() {
       <header className="flex flex-col gap-3">
         <StepBadge>Passo 1 de 3</StepBadge>
         <h1 className="text-[1.875rem] font-extrabold title-tight">Crie a sua conta</h1>
-        <p className="text-[0.875rem] text-ink-soft">Todos os campos são obrigatórios.</p>
+        <p className="text-[0.8125rem] text-ink-soft">Todos os campos são obrigatórios.</p>
       </header>
 
       <form noValidate onSubmit={submit} className="flex flex-col gap-5">
@@ -101,7 +101,7 @@ export function CreateAccountPage() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="flex cursor-pointer items-start gap-3 text-[0.875rem] text-ink">
+            <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] text-ink">
               <input ref={(el) => { refs.current.terms = el }} type="checkbox" aria-required="true" checked={form.terms} onChange={(e) => set('terms', e.target.checked)} aria-invalid={!!errors.terms || undefined} aria-describedby={errors.terms ? 'terms-error' : undefined} className="mt-[3px] size-[18px] shrink-0 accent-brand" />
               <span>Li e aceito os termos de utilização e a política de privacidade. Os dados da empresa ficam guardados na União Europeia.</span>
             </label>

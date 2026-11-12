@@ -63,7 +63,7 @@ export function RiskMatrix({ probability, impact, levelOf, count, selected, onSe
                           n === 0 && 'opacity-55',
                         )}
                       >
-                        <span className={cn('font-extrabold leading-none', compact ? 'text-[1.125rem]' : 'text-[1.375rem]')}>{n}</span>
+                        <span className={cn('font-extrabold leading-none', compact ? 'text-[0.9375rem]' : 'text-[1.125rem]')}>{n}</span>
                         {!compact && <span className="mt-1 text-[0.6875rem] font-bold opacity-80">{RISK_LEVEL_LABEL[level]}</span>}
                       </button>
                     </td>

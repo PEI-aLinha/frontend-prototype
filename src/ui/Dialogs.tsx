@@ -80,8 +80,8 @@ export function Drawer({ open, onOpenChange, title, description, chip, children,
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               {eyebrow && <div className="eyebrow text-[0.6875rem] text-muted">{eyebrow}</div>}
               {chip && <div className="flex flex-wrap gap-2">{chip}</div>}
-              <Dialog.Title className="text-[1.375rem] font-extrabold title-tight">{title}</Dialog.Title>
-              {description ? <Dialog.Description className="text-[0.875rem] text-ink-soft">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
+              <Dialog.Title className="text-[1.625rem] font-extrabold title-tight">{title}</Dialog.Title>
+              {description ? <Dialog.Description className="text-[0.9375rem] text-ink-soft">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
             </div>
             <Dialog.Close className="-mr-2 rounded-full p-2 text-muted hover:bg-paper-soft hover:text-ink" aria-label="Fechar painel">
               <X className="size-5" aria-hidden />

@@ -22,7 +22,7 @@
 
 .alinha-tour .driver-popover-description {
   margin-top: 8px;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   line-height: 1.45;
   color: var(--color-ink-soft);
 }
@@ -49,7 +49,7 @@
 }
 
 .alinha-tour .driver-popover-progress-text {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--color-muted);
 }
 

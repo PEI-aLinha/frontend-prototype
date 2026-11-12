@@ -96,7 +96,7 @@ export function DataTable<T>({ data, columns, getRowId, onRowClick, rowLabel, re
                 </td>
               )}
               {row.getVisibleCells().map((cell, i, all) => (
-                <td key={cell.id} className={cn('row-cell py-3.5 align-middle text-[0.875rem]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
+                <td key={cell.id} className={cn('row-cell py-3.5 align-middle text-[0.9375rem]', i === 0 && !selectable ? 'pl-5' : 'pl-0', i === all.length - 1 ? 'pr-5' : 'pr-3', cell.column.columnDef.meta?.align === 'right' && 'text-right')}>
                   {/* One real button per row, stretched over it; row-cell keeps links, buttons and fields in the cells above it. */}
                   {i === 0 && onRowClick && (
                     <button type="button" data-row-open onClick={() => onRowClick(row.original)} className="absolute inset-0 rounded-none focus-visible:outline-offset-[-2px]">

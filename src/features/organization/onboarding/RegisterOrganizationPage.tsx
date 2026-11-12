@@ -92,7 +92,7 @@ export function RegisterOrganizationPage() {
         <StepBadge>Passo 3 de 3</StepBadge>
         <h1 className="text-[1.875rem] font-extrabold title-tight">Registe a sua organização</h1>
         <p className="text-[1rem] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
-        <p className="text-[0.875rem] text-ink-soft">Todos os campos são obrigatórios.</p>
+        <p className="text-[0.8125rem] text-ink-soft">Todos os campos são obrigatórios.</p>
       </header>
 
       {restored && organization && <Note>Retomámos o registo que deixou a meio. Confirme os dados e termine quando quiser.</Note>}
