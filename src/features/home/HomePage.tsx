@@ -86,7 +86,8 @@ export function HomePage() {
           <Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{submitted ? 'Ver avaliação →' : notStarted ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>
         )}
       >
-        <ProgressBar value={answered} max={total || 1} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />
+        {/* Only while answering: once submitted the bar is always full and says nothing. */}
+        {!submitted && !validated && <ProgressBar value={answered} max={total || 1} label="Progresso da avaliação" track="dark" className="mb-3 max-w-[420px]" />}
         {validated && roadmap.data?.validatedAt ? `Validado a ${dateTime(roadmap.data.validatedAt)} por ${consultant}` : submitted ? `Submetida${roadmap.data?.assessmentCompletedAt ? ` a ${dateTime(roadmap.data.assessmentCompletedAt)}` : ''} · ${consultant} está a rever` : notStarted ? 'Ainda sem respostas · o progresso fica guardado' : [...pending, 'o progresso fica guardado'].join(' · ')}
       </HighlightCard>
 

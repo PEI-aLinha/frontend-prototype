@@ -11,16 +11,8 @@ import { DiscoveryList } from './DiscoveryList'
 
 const STATUS: Record<IntegrationConnection['status'], string> = { disponivel: 'Por ligar', pedido: 'Pedido enviado', ligado: 'Ligado', erro: 'Erro' }
 
-const UNUSED_GROUP = 'Não usa'
-
-function groupByCategory(items: IntegrationConnection[]): { category: string; items: IntegrationConnection[] }[] {
-  const groups = new Map<string, IntegrationConnection[]>()
-  for (const item of items) {
-    const category = item.provider.applies ? item.provider.category : UNUSED_GROUP
-    groups.set(category, [...(groups.get(category) ?? []), item])
-  }
-  const entries = [...groups].map(([category, items]) => ({ category, items }))
-  return [...entries.filter((group) => group.category !== UNUSED_GROUP), ...entries.filter((group) => group.category === UNUSED_GROUP)]
+function sortByUse(items: IntegrationConnection[]): IntegrationConnection[] {
+  return [...items.filter((i) => i.provider.applies), ...items.filter((i) => !i.provider.applies)]
 }
 
 function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationConnection; onConnect: (p: ProviderInfo) => void; isOwner: boolean; canConnect: boolean }) {
@@ -119,12 +111,8 @@ export function IntegrationsPage() {
               <h2 id="int-catalog" className="text-lg font-extrabold">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
               {integrations.data.length === 0
                 ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-sm text-ink-soft">Não tem integrações para ligar.</p>
-                : groupByCategory(integrations.data).map(({ category, items }) => (
-                  <div key={category} className="flex flex-col gap-2">
-                    <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">{category}</h3>
-                    <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>
-                  </div>
-                ))}
+                // One grid: each card already names its category, and the ones the company does not use come last.
+                : <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{sortByUse(integrations.data).map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>}
             </section>
           )}
           {isOwner && (
@@ -139,7 +127,7 @@ export function IntegrationsPage() {
               <EvidenceList items={evidence.data ?? []} providerName={providerName} />
             </section>
           )}
-          <Note>Todas as ligações são só de leitura. As credenciais ficam num cofre cifrado (OpenBao) e nunca aparecem no ecrã. Cada ligação, leitura e decisão fica no histórico.</Note>
+          <Note>Todas as ligações são só de leitura. As credenciais ficam guardadas cifradas e nunca aparecem no ecrã. Cada ligação, leitura e decisão fica no histórico.</Note>
         </>
       )}
       <ConnectModal key={connecting?.id ?? 'none'} provider={connecting} open={!!connecting} onClose={() => setConnecting(null)} />

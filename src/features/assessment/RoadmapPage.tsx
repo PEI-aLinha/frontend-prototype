@@ -102,6 +102,8 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   const byRisk = view === 'riscos'
   const ranked = actions.data ? prioritizeRoadmap(actions.data, byRisk ? signals : []) : []
   const raised = ranked.filter((r) => r.reason).length
+  // The banner above the plan already labels it as AI-proposed; a badge per row only tells apart a mixed plan.
+  const allFromAi = ranked.length > 0 && ranked.every((r) => !!r.action.aiOutputId)
   // Links can exist without moving anything, so the count the message needs is not the count of moves.
   const linked = ranked.filter((r) => r.topRisk).length
   // An action only falls when a risk-linked one passes it, so every fall has a cause worth naming.
@@ -212,7 +214,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
           <>
             <RoadmapMap items={ranked.map((r) => r.action)} />
             <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
-              {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} />)}
+              {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk} consultant={consultant} validated={validated} aiBadge={!allFromAi} />)}
             </ol>
           </>
         )}
@@ -268,7 +270,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   )
 }
 
-function ActionRow({ item, users, showMovement, consultant, validated }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined }) {
+function ActionRow({ item, users, showMovement, consultant, validated, aiBadge }: { item: PrioritizedAction<RemediationAction>; users: User[]; showMovement: boolean; consultant: boolean; validated: boolean | undefined; aiBadge: boolean }) {
   const { action: a, rank, baseRank, topRisk, reason } = item
   const moved = showMovement ? baseRank - rank : 0
   const rose = moved > 0
@@ -313,7 +315,7 @@ function ActionRow({ item, users, showMovement, consultant, validated }: { item:
           </p>
         )}
 
-        {a.aiOutputId && !validated && <div className="mt-2"><AIBadge /></div>}
+        {aiBadge && a.aiOutputId && !validated && <div className="mt-2"><AIBadge /></div>}
         {a.proposedBy && <div className="mt-2"><Chip tone="outline">Proposta pela consultora</Chip></div>}
       </div>
     </li>

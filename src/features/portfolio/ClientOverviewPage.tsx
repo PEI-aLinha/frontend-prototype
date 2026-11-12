@@ -4,7 +4,7 @@ import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
 import { authorNames, dateTime } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { applicableFrameworks, nis2Status } from '../organization/public'
-import { Button, Chip, HighlightCard, NextSteps, PageHeader, StatCard } from '../../ui'
+import { Chip, HighlightCard, NextSteps, PageHeader, StatCard } from '../../ui'
 
 /** Client overview (consultant). Entry point for scenario 2. */
 export function ClientOverviewPage() {
@@ -40,14 +40,9 @@ export function ClientOverviewPage() {
           ]} />
         </>
       ) : (<>
-      <HighlightCard
-        eyebrow={validated ? 'Roadmap validado' : 'Avaliação concluída'}
-        title={validated ? 'Acompanhe as ações de risco alto' : 'Registe os riscos e valide o roadmap'}
-        action={<Link to={`${base}/riscos`}><Button variant="inverse" tabIndex={-1}>Abrir Riscos →</Button></Link>}
-      >
-        {roadmap.data?.assessmentCompletedAt ? `Avaliação submetida pelo ${users.data?.find((u) => u.id === org.scope?.answeredBy)?.name ?? 'responsável designado'} a ${dateTime(roadmap.data.assessmentCompletedAt)} · inventário de ativos completo` : 'A avaliação ainda está em curso.'}
-      </HighlightCard>
-      <NextSteps title="Passos para este cliente" steps={[
+      <NextSteps title="Passos para este cliente"
+        description={roadmap.data?.assessmentCompletedAt ? `Avaliação submetida pelo ${users.data?.find((u) => u.id === org.scope?.answeredBy)?.name ?? 'responsável designado'} a ${dateTime(roadmap.data.assessmentCompletedAt)}.` : 'A avaliação ainda está em curso.'}
+        steps={[
         { label: 'Rever o inventário de ativos', hint: 'Confirme que estão lá os sistemas críticos. Pode deixar comentários.', done: true, to: `${base}/ativos`, cta: 'Ver ativos' },
         { label: 'Registar riscos sobre os ativos críticos', hint: `${covered} de ${criticalAssets.length} ativos de criticidade alta já têm riscos.`, done: highRisks.length > 0, to: `${base}/riscos?novo=1&ativo=ast-servidor`, cta: 'Registar risco' },
         { label: 'Ligar os riscos altos a ações do roadmap', hint: 'As ações ligadas sobem de prioridade.', done: highRisks.length > 0 && highRisks.every((r) => links.data?.some((l) => l.riskId === r.id)), to: `${base}/riscos`, cta: 'Abrir riscos' },
