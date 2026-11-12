@@ -45,8 +45,8 @@ export function PortfolioPage() {
               </div>
             )
             return (
-              // Clients waiting on the consultant keep a signal edge even when dimmed as out of the prototype.
-              <li key={c.organization.id} className={cn('border-b border-line-soft last:border-b-0', c.stageTone === 'signal' && 'shadow-[inset_3px_0_0_var(--color-signal)]')}>
+              // Clients waiting on the consultant keep a signal tint even when dimmed as out of the prototype.
+              <li key={c.organization.id} className={cn('border-b border-line-soft last:border-b-0', c.stageTone === 'signal' && 'bg-signal-soft/40')}>
                 {active ? (
                   <button type="button" className="block w-full" onClick={() => navigate(`/clientes/${c.organization.slug}/visao-geral`)} aria-label={`Abrir ${c.organization.name}`}>{row}</button>
                 ) : (

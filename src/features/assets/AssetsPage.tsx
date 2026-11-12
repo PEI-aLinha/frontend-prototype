@@ -148,6 +148,7 @@ export function AssetsPage() {
       ) : (
         <>
           {/* One summary line instead of three stat cards: the table is the content, this only frames it. */}
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <dl data-tour="asset-summary" className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-[0.9375rem]" aria-label="Resumo do inventário">
             <div className="flex items-baseline gap-1.5">
               <dt className="sr-only">Ativos registados</dt>
@@ -166,20 +167,24 @@ export function AssetsPage() {
               <dd className="text-ink-soft">{state === 'done' ? 'Inventário completo' : `Por registar: ${task?.scope ?? 'servidores, rede e sistemas de produção'}`}</dd>
             </div>
           </dl>
+          {/* File actions sit with the summary they act on, not in the filter row. */}
+          {(!consultant || can('create', 'asset')) && data.assets.length > 0 && (
+            <div className="-mx-2 flex flex-wrap items-center gap-1">
+              {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
+              {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
+            </div>
+          )}
+          </div>
 
           {data.assets.length > 0 && (
-            <div className="flex flex-col gap-3" data-tour="asset-filters">
-              <AssetFilters value={filters} inventory={data} shown={visible.length} total={data.assets.length}
-                onChange={(n: Partial<AssetFilterState>) => update(n as Record<string, string>)}
-                onClear={() => update(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))} />
-               <div className="flex flex-wrap items-center justify-end gap-1 text-sm">
-                 {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
-                 {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
-                 <span className="ml-2 max-md:ml-0 max-md:w-full">
-                   <Segmented ariaLabel="Vista" value={params.get('vista') === 'servicos' ? 'servicos' : 'tabela'} onChange={(v) => update({ vista: v === 'tabela' ? null : v })}
-                     options={[{ value: 'tabela', label: 'Tabela' }, { value: 'servicos', label: 'Por serviço' }]} />
-                 </span>
-               </div>
+            <div className="flex flex-wrap items-start gap-2.5" data-tour="asset-filters">
+              <div className="min-w-0 flex-1 basis-[320px]">
+                <AssetFilters value={filters} inventory={data} shown={visible.length} total={data.assets.length}
+                  onChange={(n: Partial<AssetFilterState>) => update(n as Record<string, string>)}
+                  onClear={() => update(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))} />
+              </div>
+              <Segmented size="sm" ariaLabel="Vista" value={params.get('vista') === 'servicos' ? 'servicos' : 'tabela'} onChange={(v) => update({ vista: v === 'tabela' ? null : v })}
+                options={[{ value: 'tabela', label: 'Tabela' }, { value: 'servicos', label: 'Por serviço' }]} />
             </div>
           )}
 

@@ -25,8 +25,8 @@ export const TOURS: Record<TourId, TourStepDef[]> = {
   'ativos-cliente': [
     { target: 'asset-add', title: 'Registe o que conhece', intro: 'Comece pelos sistemas sem os quais a empresa para: faturação, produção, email.' },
     { target: 'asset-assign', title: 'Delegue a parte técnica', intro: 'Servidores e rede ficam com o técnico. Ele recebe uma tarefa e só vê esses ativos.' },
-    { target: 'asset-summary', title: 'Ponto da situação', intro: 'Quantos ativos já estão registados e quantos faltam.' },
-    { target: 'asset-filters', title: 'Encontre e organize', intro: 'Pesquise, filtre ou veja os ativos agrupados por serviço crítico. Daqui também importa e exporta.' },
+    { target: 'asset-summary', title: 'Ponto da situação', intro: 'Quantos ativos já estão registados e quantos faltam. Ao lado, importa de Excel ou exporta a Lista de Ativos.' },
+    { target: 'asset-filters', title: 'Encontre e organize', intro: 'Pesquise, filtre ou veja os ativos agrupados por serviço crítico.' },
     { target: 'asset-table', title: 'O inventário', intro: 'Clique numa linha para ver ou editar um ativo.' },
   ],
   'ativos-consultor': [

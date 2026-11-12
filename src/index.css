@@ -60,6 +60,10 @@
 :root { --shadow-rgb: 32 33 36; }
 :root[data-theme='dark'] { --shadow-rgb: 0 0 0; }
 
+/* Browser surfaces carry the palette too: text selection, caret and native control accents. */
+:root { accent-color: var(--color-brand); caret-color: var(--color-brand); }
+::selection { background: var(--color-signal-soft); color: var(--color-ink); }
+
 /*
  * Appearance: two independent axes on <html>.
  *   data-theme="dark"  → dark surfaces (light is the @theme default).
