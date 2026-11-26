@@ -13,7 +13,7 @@ export function ReopenRoadmapModal({ org, open, onClose, manager }: { org: strin
   const submit = () => {
     if (!reason.trim()) { setError('Diga ao cliente porque reabre o roadmap.'); input.current?.focus(); return }
     reopen.mutate(reason, {
-      onSuccess: () => { close(); toast.show(`Roadmap reaberto · ${manager ? `o ${manager.split(' ')[0]}` : 'o cliente'} foi avisado`) },
+      onSuccess: () => { close(); toast.show(`Roadmap reaberto · notificação enviada a ${manager ?? 'o cliente'}`) },
       onError: (e) => toast.show(e.message, 'error'),
     })
   }
