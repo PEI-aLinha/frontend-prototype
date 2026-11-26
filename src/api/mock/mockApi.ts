@@ -249,15 +249,21 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       restoreAsset: (org, removed) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        const caller = actor()
+        if (caller.role !== 'responsavel' || caller.organizationId !== org) deny()
         const { asset, riskIds, dependantIds } = removed
         write((s, me) => {
+          requireOrg(s, org)
+          // The payload comes from the browser: it can only put back this organization's asset and links.
+          if (asset.organizationId !== org) throw new ApiError('Ativo não encontrado', 404)
           if (s.assets.some((x) => x.id === asset.id)) throw new ApiError('O ativo já existe.', 409)
+          const ownRisk = new Set(s.risks.filter((r) => r.organizationId === org && riskIds.includes(r.id)).map((r) => r.id))
+          const ownDependant = new Set(s.assets.filter((x) => x.organizationId === org && dependantIds.includes(x.id)).map((x) => x.id))
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'create', entityType: 'asset', entityId: asset.id, summary: `Repôs o ativo "${asset.name}"`, before: null, after: pickAsset(asset) })
           return {
             ...s,
-            assets: [...s.assets.map((x) => (dependantIds.includes(x.id) ? { ...x, dependsOn: [...(x.dependsOn ?? []), asset.id] } : x)), asset],
-            risks: s.risks.map((r) => (riskIds.includes(r.id) && r.assetId === null ? { ...r, assetId: asset.id } : r)),
+            assets: [...s.assets.map((x) => (ownDependant.has(x.id) ? { ...x, dependsOn: [...(x.dependsOn ?? []), asset.id] } : x)), asset],
+            risks: s.risks.map((r) => (ownRisk.has(r.id) && r.assetId === null ? { ...r, assetId: asset.id } : r)),
             audit: [...s.audit, entry],
           }
         })

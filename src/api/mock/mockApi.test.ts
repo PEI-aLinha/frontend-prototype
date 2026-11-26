@@ -97,6 +97,22 @@ describe('mock API permissions', () => {
     expect((await api.assets.listRisks(ORG_ID)).filter((r) => r.assetId === 'ast-servidor').map((r) => r.id).sort()).toEqual([...linked].sort())
   })
 
+  it('restores only an asset of the caller\'s organization, and only its own links', async () => {
+    resetDemo('c3')
+    who = RUI
+    const removed = await api.assets.deleteAsset(ORG_ID, 'ast-servidor')
+    // An asset claiming another organization is refused and changes nothing.
+    await expect(api.assets.restoreAsset(ORG_ID, { ...removed, asset: { ...removed.asset, organizationId: 'org-other' } }))
+      .rejects.toMatchObject({ status: 404 })
+    expect((await api.assets.listAssets(ORG_ID)).some((a) => a.id === 'ast-servidor')).toBe(false)
+    // Calling it for another organization is refused before anything else.
+    await expect(api.assets.restoreAsset('org-other', removed)).rejects.toMatchObject({ status: 403 })
+    // Unknown risk and asset ids in the payload are ignored, the rest is put back.
+    const restored = await api.assets.restoreAsset(ORG_ID, { ...removed, riskIds: [...removed.riskIds, 'risk-unknown'], dependantIds: [...removed.dependantIds, 'ast-unknown'] })
+    expect(restored.id).toBe('ast-servidor')
+    expect((await api.assets.listAssets(ORG_ID)).some((a) => a.id === 'ast-unknown')).toBe(false)
+  })
+
   it('cancelling an integration request makes the system available to connect again', async () => {
     who = RUI
     const task = await api.integrations.assign(ORG_ID, 'backups', PEDRO)
