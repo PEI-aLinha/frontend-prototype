@@ -20,7 +20,7 @@ export function PageHeader({ title, subtitle, actions, help }: PageHeaderProps) 
           <h1 className="text-[1.875rem] font-extrabold title-tight max-md:text-[1.625rem]">{title}</h1>
           {subtitle && <p className="text-[1rem] text-ink-soft max-md:text-[0.9375rem]">{subtitle}</p>}
         </div>
-        {(actions || help) && <div className="flex flex-wrap items-center gap-3 max-md:w-full max-md:[&>*]:flex-1">{help}{actions}</div>}
+        {(actions || help) && <div className="flex flex-wrap items-center gap-3 max-md:w-full max-md:flex-col max-md:items-stretch">{help && <span className="max-md:order-last max-md:self-start">{help}</span>}{actions}</div>}
       </div>
     </div>
   )

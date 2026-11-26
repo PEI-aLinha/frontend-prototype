@@ -4,6 +4,7 @@ import { CommandMenu, Kbd } from './CommandMenu'
 import { MOD_KEY, useCommandMenu } from './useCommandMenu'
 import { Link, matchPath, useLocation } from 'react-router'
 import { Avatar, Logo, SkeletonRows, cn } from '../ui'
+import { AppearanceMenu } from './AppearanceMenu'
 import { openExpandedChat } from '../features/chatbot/ChatControl'
 import { MobileTabBar } from './MobileTabBar'
 
@@ -50,7 +51,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
       </a>
 
       <aside aria-label="Barra lateral" className="sticky top-0 hidden h-dvh w-[232px] shrink-0 flex-col border-r border-line-soft bg-paper-soft px-5 pb-7 pt-8 md:flex">
-        <div className="flex items-center justify-between pl-1"><Logo /><div className="flex items-center gap-1">{tools}</div></div>
+        <div className="flex items-center justify-between pl-1"><Logo /><div className="flex items-center gap-1">{tools}<AppearanceMenu /></div></div>
         <button type="button" onClick={() => cmd.setOpen(true)} className="mt-8 flex h-10 items-center gap-2 rounded-[10px] border border-line-soft bg-paper px-3 text-[0.9375rem] font-semibold text-muted transition-colors hover:border-line hover:text-ink-soft">
           <Search className="size-4" aria-hidden /><span className="flex-1 text-left">Procurar</span><Kbd>{MOD_KEY}</Kbd><Kbd>K</Kbd>
         </button>
@@ -100,7 +101,7 @@ export function AppShell({ sections, user, tabs, tools, children }: AppShellProp
         <div className="flex items-center gap-1">
           <button type="button" onClick={() => cmd.setOpen(true)} aria-label="Procurar" className="grid size-11 place-items-center rounded-full text-ink-soft"><Search className="size-5" aria-hidden /></button>
           <button type="button" onClick={() => openExpandedChat()} aria-label="Assistente IA" className="grid size-11 place-items-center rounded-full text-brand"><Sparkles className="size-5" aria-hidden /></button>
-          {tools}<Avatar initials={user.initials} size={28} label={user.name} /></div>
+          {tools}<AppearanceMenu account={user} /></div>
       </header>
 
       <main id="conteudo" className="min-w-0 flex-1 px-14 pb-16 pt-11 max-lg:px-8 max-md:px-5 max-md:pb-28 max-md:pt-6">
