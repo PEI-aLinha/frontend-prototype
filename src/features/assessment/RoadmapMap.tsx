@@ -63,6 +63,8 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
   const d = pathThrough(line?.points ?? [])
   const solid = progressPercent(items)
 
+  // With every action still to start and no deadline close, the circles would only repeat the list's numbers.
+  if (items.every((a) => a.status === 'por_iniciar' && !urgency(a))) return null
   return (
     <div className="hidden rounded-[16px] border border-line-soft bg-paper px-5 py-5 md:block">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-ink-soft">
