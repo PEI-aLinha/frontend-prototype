@@ -6,12 +6,11 @@ import { usePortfolio } from '../api/queries'
 import { useSession } from '../core/session'
 import { cn } from '../ui'
 import type { NavSection } from './AppShell'
+import { matchesQuery } from './commandSearch'
 import { MOD_KEY } from './useCommandMenu'
 
 interface Entry { id: string; label: string; hint?: string; group: string; icon: React.ReactNode; to: string }
 
-/** Normalises for accent-insensitive matching ("ambito" finds "Âmbito"). */
-const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 
 export function Kbd({ children, className }: { children: React.ReactNode; className?: string }) {
   return <kbd className={cn('num inline-grid h-5 min-w-5 place-items-center rounded-[5px] border border-line-soft bg-paper px-1 font-sans text-[0.6875rem] font-bold text-muted', className)}>{children}</kbd>
@@ -26,7 +25,10 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
 
   const entries = useMemo<Entry[]>(() => {
     const pages = sections.flatMap((s) => s.items).map((i) => ({ id: i.to, label: i.label, group: 'Ir para', icon: <i.icon className="size-4" aria-hidden />, to: i.to }))
-    const active = persona.role === 'consultor' ? (portfolio.data ?? []).filter((c) => c.organization.profile) : []
+    const all = persona.role === 'consultor' ? (portfolio.data ?? []) : []
+    const active = all.filter((c) => c.organization.profile)
+    // Demo clients without data cannot be opened: they are still found, and lead to the portfolio row.
+    const samples = all.filter((c) => !c.organization.profile).map((c) => ({ id: c.organization.id, label: c.organization.name, hint: 'Cliente de exemplo', group: 'Clientes', icon: <Building2 className="size-4" aria-hidden />, to: '/carteira' }))
     const CLIENT_PAGES: Array<[string, string]> = [['visao-geral', 'Visão geral'], ['roadmap', 'Resultados e roadmap'], ['ativos', 'Ativos'], ['riscos', 'Riscos'], ['integracoes', 'Integrações'], ['historico', 'Histórico']]
     const clients = active.flatMap((c) => {
       const base = `/clientes/${c.organization.slug}`
@@ -42,10 +44,14 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
       { id: 'novo-ativo', label: 'Adicionar ativo', group: 'Ações', icon: <Plus className="size-4" aria-hidden />, to: `${org}/ativos?novo=1` },
       { id: 'convidar', label: 'Convidar analista', group: 'Ações', icon: <Plus className="size-4" aria-hidden />, to: `${org}/equipa?convidar=1` },
     ] : []
-    return [...pages, ...clients, ...actions]
+    return [...pages, ...clients, ...samples, ...actions]
   }, [sections, portfolio.data, persona.role])
 
-  const results = useMemo(() => (q ? entries.filter((e) => fold(`${e.label} ${e.hint ?? ''}`).includes(fold(q))) : entries.filter((e) => e.group !== 'Clientes' || !e.id.includes('-'))), [entries, q])
+  // Every word must match somewhere, in any order: "agueda riscos" finds "Riscos · Componentes Águeda".
+  const results = useMemo(() => {
+    if (!q.trim()) return entries.filter((e) => e.group !== 'Clientes' || !e.id.includes('-'))
+    return entries.filter((e) => matchesQuery(`${e.label} ${e.hint ?? ''}`, q))
+  }, [entries, q])
   const groups = [...new Set(results.map((r) => r.group))]
 
   const go = (e: Entry | undefined) => { if (!e) return; onOpenChange(false); setQ(''); navigate(e.to) }
