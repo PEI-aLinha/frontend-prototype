@@ -94,8 +94,14 @@ export function TeamPage() {
   const tasks = useTasks(org.id)
   const today = useToday()
   const [params, setParams] = useSearchParams()
-  const [invite, setInviteState] = useState(params.get('convidar') === '1')
-  const setInvite = (v: boolean) => { setInviteState(v); if (!v && params.has('convidar')) setParams((p) => { p.delete('convidar'); return p }, { replace: true }) }
+  // The URL holds the dialog's state, so ?convidar=1 opens it even when the page is already showing.
+  const invite = params.get('convidar') === '1'
+  const setInvite = (v: boolean) => setParams((p) => {
+    const next = new URLSearchParams(p)
+    if (v) next.set('convidar', '1')
+    else next.delete('convidar')
+    return next
+  }, { replace: true })
   const [confirming, setConfirming] = useState<TeamMember | null>(null)
   const [assigning, setAssigning] = useState<{ to?: string } | null>(null)
   const analysts = (members.data ?? []).filter((m) => m.role === 'analista' && m.status === 'ativo')

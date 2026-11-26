@@ -1,5 +1,5 @@
 import {
-  ApiError, type Api, type Asset, type AssetInput, type AuditEntry, type CriticalService, type DemoActor,
+  ALL_SERVICES, ApiError, type Api, type Asset, type AssetInput, type AuditEntry, type CriticalService, type DemoActor,
   type DeletedAsset, type Id, type RemediationAction, type Risk, type RiskInput, type Task, type User,
 } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
@@ -33,6 +33,12 @@ function designatedManager(s: Readonly<DemoState>, org: Id): User | undefined {
 /** Base path of the organization's client area, e.g. "/org/componentes-agueda". */
 function orgPath(s: Readonly<DemoState>, org: Id): string {
   return `/org/${s.organizations.find((o) => o.id === org)?.slug ?? org}`
+}
+
+/** Only the consultant assigned to the organization acts on its roadmap (as listPortfolio shows them only theirs). */
+function requireAssignedConsultant(s: Readonly<DemoState>, org: Id, me: User): void {
+  requireOrg(s, org)
+  if (me.role !== 'consultor' || s.organizations.find((o) => o.id === org)?.consultantId !== me.id) deny()
 }
 
 function deny(): never {
@@ -249,19 +255,37 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       restoreAsset: (org, removed) => simulate(() => {
-        if (actor().role !== 'responsavel') deny()
+        const caller = actor()
+        if (caller.role !== 'responsavel' || caller.organizationId !== org) deny()
         const { asset, riskIds, dependantIds } = removed
+        let result!: Asset
         write((s, me) => {
+          requireOrg(s, org)
+          // The payload comes from the browser: it can only put back this organization's asset and links.
+          if (asset.organizationId !== org) throw new ApiError('Ativo não encontrado', 404)
           if (s.assets.some((x) => x.id === asset.id)) throw new ApiError('O ativo já existe.', 409)
-          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'create', entityType: 'asset', entityId: asset.id, summary: `Repôs o ativo "${asset.name}"`, before: null, after: pickAsset(asset) })
+          const ownRisk = new Set(s.risks.filter((r) => r.organizationId === org && riskIds.includes(r.id)).map((r) => r.id))
+          const ownDependant = new Set(s.assets.filter((x) => x.organizationId === org && dependantIds.includes(x.id)).map((x) => x.id))
+          const ownAsset = new Set(s.assets.filter((x) => x.organizationId === org).map((x) => x.id))
+          const { criticalServiceId, ownerId, taskId } = asset
+          // Every reference in the payload must still point at this organization's data; anything else is dropped.
+          const restoredAsset: Asset = {
+            ...asset,
+            dependsOn: asset.dependsOn?.filter((d) => ownAsset.has(d)),
+            criticalServiceId: criticalServiceId === null || criticalServiceId === ALL_SERVICES || s.services.some((x) => x.id === criticalServiceId && x.organizationId === org) ? criticalServiceId : null,
+            ownerId: ownerId && s.users.some((u) => u.id === ownerId && u.organizationId === org) ? ownerId : null,
+            taskId: taskId && s.tasks.some((t) => t.id === taskId && t.organizationId === org) ? taskId : undefined,
+          }
+          result = restoredAsset
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'create', entityType: 'asset', entityId: asset.id, summary: `Repôs o ativo "${asset.name}"`, before: null, after: pickAsset(restoredAsset) })
           return {
             ...s,
-            assets: [...s.assets.map((x) => (dependantIds.includes(x.id) ? { ...x, dependsOn: [...(x.dependsOn ?? []), asset.id] } : x)), asset],
-            risks: s.risks.map((r) => (riskIds.includes(r.id) && r.assetId === null ? { ...r, assetId: asset.id } : r)),
+            assets: [...s.assets.map((x) => (ownDependant.has(x.id) ? { ...x, dependsOn: [...(x.dependsOn ?? []), asset.id] } : x)), restoredAsset],
+            risks: s.risks.map((r) => (ownRisk.has(r.id) && r.assetId === null ? { ...r, assetId: asset.id } : r)),
             audit: [...s.audit, entry],
           }
         })
-        return asset
+        return result
       }),
 
       listTasks: (org) => simulate(() => {
@@ -483,8 +507,9 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       validateRoadmap: (org) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        requireAssignedConsultant(getState(), org, actor())
         const current = getState().roadmap[org]
+        if (!current) throw new ApiError('Organização não encontrada', 404)
         if (current?.validated) return current
         if (!current?.assessmentCompletedAt) throw new ApiError('A avaliação ainda não foi submetida.', 422)
         let status = current
@@ -500,10 +525,11 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       reopenRoadmap: (org, reason) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        requireAssignedConsultant(getState(), org, actor())
         if (!reason.trim()) throw new ApiError('Diga ao cliente porque reabre o roadmap.', 422)
         const current = getState().roadmap[org]
-        if (!current?.validated) return current
+        if (!current) throw new ApiError('Organização não encontrada', 404)
+        if (!current.validated) return current
         let status = current
         write((s, me) => {
           status = { ...s.roadmap[org], validated: false, validatedAt: null, validatedBy: null }
