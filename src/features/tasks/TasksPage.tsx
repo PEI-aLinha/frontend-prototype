@@ -43,8 +43,12 @@ export function TasksPage() {
       action = <Tooltip content="A submissão de evidências ainda não está disponível nesta versão."><Button variant="secondary" aria-disabled className="aria-disabled:cursor-not-allowed aria-disabled:bg-paper-soft aria-disabled:text-muted">Submeter</Button></Tooltip>
     } else if (t.kind === 'tarefa') {
       action = t.status === 'pendente' && <Button variant="secondary" loading={complete.isPending && complete.variables === t.id} onClick={() => complete.mutate(t.id, { onSuccess: () => toast.show('Tarefa concluída. O Responsável designado foi avisado.'), onError: (e) => toast.show(e.message, 'error') })}>Marcar como feita</Button>
+    } else if (t.status === 'concluida') {
+      // Finished work stays reachable: the answer or the assets can be read (and the assets corrected).
+      const to = t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : t.kind === 'integracao' ? `/org/${org.slug}/integracoes` : `/org/${org.slug}/tarefas/${t.id}/pergunta`
+      action = <Button variant="secondary" onClick={() => navigate(to)}>{t.kind === 'ativos' ? 'Ver ativos' : t.kind === 'integracao' ? 'Ver ligação' : 'Ver resposta'}</Button>
     } else {
-      action = <Button variant={t.id === lead ? 'primary' : 'secondary'} onClick={() => navigate(t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : t.kind === 'integracao' ? `/org/${org.slug}/integracoes` : `/org/${org.slug}/tarefas/${t.id}/pergunta`)}>{t.kind === 'integracao' ? 'Ligar' : t.kind === 'pergunta' ? (t.status === 'concluida' ? 'Ver resposta' : 'Responder') : 'Registar'}</Button>
+      action = <Button variant={t.id === lead ? 'primary' : 'secondary'} onClick={() => navigate(t.kind === 'ativos' ? `/org/${org.slug}/tarefas/${t.id}/ativos` : t.kind === 'integracao' ? `/org/${org.slug}/integracoes` : `/org/${org.slug}/tarefas/${t.id}/pergunta`)}>{t.kind === 'integracao' ? 'Ligar' : t.kind === 'pergunta' ? 'Responder' : 'Registar'}</Button>
     }
     return (
       <TaskCard
