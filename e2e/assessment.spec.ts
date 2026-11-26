@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test'
-import { ORG, start } from './helpers'
+import { ORG, openTopic, start } from './helpers'
 
 test('Assessment — Rui answers a question and the progress is kept', async ({ page }) => {
   await start(page, `${ORG}/avaliacao`, 'rui')
+  await expect(page.getByRole('link', { name: 'Responder à próxima pergunta' })).toHaveAttribute('href', `${ORG}/avaliacao/sec-acessos/q-acessos-wifi`)
+  await openTopic(page, 'Controlo de acessos')
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '7')
-  await page.getByRole('link', { name: 'Ver perguntas de Controlo de acessos', exact: true }).click()
+  await page.getByRole('link', { name: /de Controlo de acessos$/ }).click()
 
   await expect(page.getByRole('heading', { level: 1, name: 'Controlo de acessos' })).toBeVisible()
   await expect(page.getByText('7 de 9 perguntas respondidas')).toBeVisible()
@@ -13,7 +15,6 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
 
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 23 de 41' })).toBeVisible()
   await expect(page.getByRole('progressbar', { name: 'Progresso da avaliação' })).toHaveAttribute('aria-valuenow', '34')
-  await expect(page.getByText('Avaliação de maturidade · NIS2 + RGPD')).toBeVisible()
   await expect(page.getByText('Pergunta técnica', { exact: true })).toBeVisible()
   await expect(page.getByText(/Progresso guardado/)).toHaveCount(0)
   const help = page.getByRole('region', { name: 'O que significa esta pergunta?' })
@@ -23,22 +24,23 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await expect(help.getByText('Gerado por IA · apenas informativo')).toBeVisible()
 
   // Without an answer, "Seguinte" skips the question; the flow continues into the next section.
-  await page.getByRole('button', { name: 'Seguinte →' }).click()
+  await page.getByRole('button', { name: 'Seguinte', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 24 de 41' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Voltar a Continuidade do negócio' })).toBeVisible()
   await expect(page.getByRole('progressbar', { name: 'Progresso da avaliação' })).toHaveAttribute('aria-valuenow', '34')
-  await page.getByRole('button', { name: '← Anterior' }).click()
+  await page.getByRole('button', { name: 'Anterior', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 23 de 41' })).toBeVisible()
 
   await page.getByText('Sim', { exact: true }).click()
   await page.getByLabel('Comentário').fill('Rede de visitantes separada desde 2025.')
   await page.getByRole('button', { name: 'Guardar e continuar depois' }).click()
   await expect(page.getByRole('status').filter({ hasText: 'Progresso guardado. Pode continuar quando quiser.' })).toBeVisible()
+  await openTopic(page, 'Controlo de acessos')
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
 
   // The answer survives a reload and can be changed later.
   await page.reload()
-  await page.getByRole('link', { name: 'Ver perguntas de Controlo de acessos', exact: true }).click()
+  await openTopic(page, 'Controlo de acessos')
+  await page.getByRole('link', { name: /de Controlo de acessos$/ }).click()
   await expect(page.getByText('8 de 9 perguntas respondidas')).toBeVisible()
   await page.getByRole('link', { name: /Wi-Fi para visitantes/ }).click()
   await expect(page.getByRole('radio', { name: /^Sim/ })).toBeChecked()
@@ -47,12 +49,12 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
 
   // "Anterior" also saves a changed answer.
   await page.getByText('Em parte', { exact: true }).click()
-  await page.getByRole('button', { name: '← Anterior' }).click()
+  await page.getByRole('button', { name: 'Anterior', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 22 de 41' })).toBeVisible()
-  await page.getByRole('button', { name: 'Seguinte →' }).click()
+  await page.getByRole('button', { name: 'Seguinte', exact: true }).click()
   await expect(page.getByRole('radio', { name: /^Em parte/ })).toBeChecked()
-  await page.getByRole('link', { name: 'Voltar a Controlo de acessos' }).click()
   await page.getByRole('link', { name: 'Voltar à Avaliação' }).click()
+  await openTopic(page, 'Controlo de acessos')
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
 
   // The consultant sees the answers in the history, labelled as Assessment.
@@ -73,20 +75,19 @@ test('Assessment — Rui delegates a question, Pedro answers it and Rui sees the
 
   await page.goto(`${ORG}/tarefas?as=pedro`)
   await page.getByRole('article').filter({ hasText: question }).getByRole('button', { name: 'Responder' }).click()
-  await expect(page.getByText('Avaliação de maturidade · Gestão de incidentes')).toBeVisible()
   await expect(page.getByRole('region', { name: 'Ajuda' }).getByText(/Exemplo: O Microsoft Defender/)).toBeVisible()
   await page.getByText('Em parte', { exact: true }).click()
   await page.getByLabel('Comentário').fill('Falta nos portáteis.')
   await page.getByRole('button', { name: 'Enviar resposta' }).click()
-  await expect(page.getByRole('status').filter({ hasText: 'Resposta enviada ao Rui Santos' })).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Resposta enviada a Rui Santos' })).toBeVisible()
 
   await page.goto(`${ORG}/avaliacao/sec-incidentes/q-inc-antivirus?as=rui`)
   const analystAnswer = page.getByRole('region', { name: 'Resposta do analista' })
   await expect(analystAnswer.getByText('Resposta de Pedro Almeida')).toBeVisible()
   await expect(analystAnswer.getByText('"Falta nos portáteis."')).toBeVisible()
-  await page.getByRole('link', { name: 'Voltar a Gestão de incidentes' }).click()
-  await expect(page.getByText('5 de 6 perguntas respondidas')).toBeVisible()
-  await expect(page.getByText('Respondida por Pedro Almeida:').first()).toBeVisible()
+  await page.getByRole('link', { name: 'Voltar à Avaliação' }).click()
+  await openTopic(page, 'Gestão de incidentes')
+  await expect(page.getByRole('progressbar', { name: 'Progresso de Gestão de incidentes' })).toHaveAttribute('aria-valuenow', '5')
 })
 
 test('Assessment — the analyst cannot open it and it is read-only after submission', async ({ page }) => {
@@ -98,20 +99,20 @@ test('Assessment — the analyst cannot open it and it is read-only after submis
   await expect(page.getByRole('button', { name: 'Guardar e continuar depois' })).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^Delegar/ })).toHaveCount(0)
   // Read-only, but still browsable.
-  await expect(page.getByRole('button', { name: '← Anterior' })).toBeDisabled()
-  await page.getByRole('button', { name: 'Seguinte →' }).click()
+  await expect(page.getByRole('button', { name: 'Anterior', exact: true })).toBeDisabled()
+  await page.getByRole('button', { name: 'Seguinte', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Pergunta 2 de 41' })).toBeVisible()
 })
 
 test('Assessment — Rui answers the last questions and submits the assessment', async ({ page }) => {
   await start(page, `${ORG}/avaliacao`, 'rui')
-  await expect(page.getByText('Faltam 7 perguntas.')).toBeVisible()
+  await expect(page.getByText('34 de 41 perguntas respondidas')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Submeter avaliação' })).toHaveCount(0)
 
   // The home page always opens the next open question (the one waiting for Pedro is skipped).
   for (let i = 0; i < 6; i++) {
     await page.goto(`${ORG}/inicio?as=rui`)
-    await page.getByRole('button', { name: 'Continuar avaliação →' }).click()
+    await page.getByRole('link', { name: 'Continuar avaliação' }).click()
     await page.getByText('Sim', { exact: true }).click()
     await page.getByRole('button', { name: 'Guardar e continuar depois' }).click()
     await expect(page).toHaveURL(new RegExp(`${ORG}/avaliacao$`))
@@ -138,7 +139,7 @@ test('Assessment — the home page shows the real progress and continues where R
   await start(page, `${ORG}/inicio`, 'rui')
   await expect(page.getByRole('heading', { name: '34 de 41 perguntas respondidas' })).toBeVisible()
   await expect(page.getByText('1 pergunta atribuída a Pedro Almeida')).toBeVisible()
-  await page.getByRole('button', { name: 'Continuar avaliação →' }).click()
+  await page.getByRole('link', { name: 'Continuar avaliação' }).click()
   await expect(page).toHaveURL(/\/avaliacao\/sec-acessos\/q-acessos-wifi$/)
   await expect(page.getByRole('heading', { level: 2, name: /Wi-Fi para visitantes/ })).toBeVisible()
 })

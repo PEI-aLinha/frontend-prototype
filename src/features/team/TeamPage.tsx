@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { useSearchParams, Link } from 'react-router'
 import { BellRing, CalendarClock, ClipboardPlus, ExternalLink, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
 import type { Task, TeamMember } from '../../api/contracts'
 import { useCancelInvite, useInviteAnalyst, useMembers, useRemindTask, useRemoveMember, useResendInvite, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
@@ -22,10 +22,10 @@ interface TaskCount { open: number; late: number; done: number }
 
 /** Tasks of one analyst (US14): to do, of which late, and done. */
 function TaskCountCell({ c }: { c?: TaskCount }) {
-  if (!c) return <span className="text-[0.875rem] text-muted">—</span>
-  if (c.open === 0 && c.done === 0) return <span className="text-[0.875rem] text-ink-soft">Sem tarefas</span>
+  if (!c) return <span className="text-[0.8125rem] text-muted">—</span>
+  if (c.open === 0 && c.done === 0) return <span className="text-[0.8125rem] text-ink-soft">Sem tarefas</span>
   return (
-    <span className="flex flex-col text-[0.875rem] leading-snug">
+    <span className="flex flex-col text-[0.8125rem] leading-snug">
       <span className="font-bold text-ink">{c.open === 0 ? 'Nada por fazer' : `${c.open} por fazer`}</span>
       <span className="text-[0.75rem] text-muted">
         {c.late > 0 && <span className="font-bold text-risk-high-ink">{c.late} {c.late === 1 ? 'atrasada' : 'atrasadas'} · </span>}
@@ -93,7 +93,15 @@ export function TeamPage() {
   const members = useMembers(org.id)
   const tasks = useTasks(org.id)
   const today = useToday()
-  const [invite, setInvite] = useState(false)
+  const [params, setParams] = useSearchParams()
+  // The URL holds the dialog's state, so ?convidar=1 opens it even when the page is already showing.
+  const invite = params.get('convidar') === '1'
+  const setInvite = (v: boolean) => setParams((p) => {
+    const next = new URLSearchParams(p)
+    if (v) next.set('convidar', '1')
+    else next.delete('convidar')
+    return next
+  }, { replace: true })
   const [confirming, setConfirming] = useState<TeamMember | null>(null)
   const [assigning, setAssigning] = useState<{ to?: string } | null>(null)
   const analysts = (members.data ?? []).filter((m) => m.role === 'analista' && m.status === 'ativo')
@@ -115,7 +123,7 @@ export function TeamPage() {
     { id: 'acoes', header: () => <span className="sr-only">Ações</span>, enableSorting: false, meta: { width: 220, align: 'right' }, cell: ({ row }) => actions(row.original) },
   ]
 
-  if (users.isError || tasks.isError) return <ErrorState error={users.error ?? tasks.error} onRetry={() => { users.refetch(); tasks.refetch() }} />
+  if (users.isError || tasks.isError) return <ErrorState error={users.error ?? tasks.error} onRetry={() => { void users.refetch(); void tasks.refetch() }} />
   const list = tasks.data ?? []
   const pending = list.filter((t) => t.status === 'pendente')
   const closed = list.filter((t) => t.status !== 'pendente')
@@ -143,7 +151,7 @@ export function TeamPage() {
       <section aria-labelledby="assigned" className="flex flex-col gap-3">
         <h2 id="assigned" className="section-title">Tarefas atribuídas</h2>
         {!tasks.data || !today.data ? <SkeletonRows rows={3} /> : pending.length === 0 ? (
-          <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[0.875rem] text-ink-soft">Não há tarefas por fazer. Atribua o registo de ativos em <Link className="font-bold text-brand hover:underline" to={`/org/${org.slug}/ativos?atribuir=1`}>Ativos</Link>.</p>
+          <p className="rounded-[14px] border border-dashed border-line px-5 py-6 text-[0.9375rem] text-ink-soft">Não há tarefas por fazer. Atribua o registo de ativos em <Link className="font-bold text-brand hover:underline" to={`/org/${org.slug}/ativos?atribuir=1`}>Ativos</Link>.</p>
         ) : (
           <ul role="list" aria-label="Tarefas por fazer" className="flex flex-col gap-3">
             {pending.map((t) => <li key={t.id}><TaskRow task={t} today={today.data} assignee={users.data?.find((u) => u.id === t.assigneeId)?.name ?? '—'} onEdit={() => setEditing(t)} /></li>)}
@@ -154,7 +162,7 @@ export function TeamPage() {
             <Eyebrow as="h3"><span id="closed">Concluídas ou canceladas</span></Eyebrow>
             <ul role="list" className="flex flex-col gap-3">
               {closed.map((t) => (
-                <li key={t.id} className="flex items-center gap-3 rounded-[14px] bg-paper-soft px-5 py-3 text-[0.875rem]">
+                <li key={t.id} className="flex items-center gap-3 rounded-[14px] bg-paper-soft px-5 py-3 text-[0.8125rem]">
                   <span className="flex-1 text-ink-soft">{t.title}</span>
                   <span className="text-[0.8125rem] text-muted">{users.data?.find((u) => u.id === t.assigneeId)?.name}</span>
                   <Chip tone="neutral">{t.status === 'concluida' ? 'Concluída' : 'Cancelada'}</Chip>

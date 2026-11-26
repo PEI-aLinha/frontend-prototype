@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
-import { ArrowLeft, Check, UserRound } from 'lucide-react'
-import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '../../api/contracts'
-import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUsers } from '../../api/queries'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link, useBlocker, useNavigate, useParams } from 'react-router'
+import { ArrowLeft, Check, UserRound, ArrowRight } from 'lucide-react'
+import { ApiError, type AnswerChoice, type AssessmentQuestion, type Task, type TeamMember, type User } from '../../api/contracts'
+import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
 import { dateTime, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { AIBadge, Button, Card, Chip, DateInput, EmptyState, ErrorState, Eyebrow, Field, Modal, Note, OptionGroup, PageHeader, ProgressBar, Select, SkeletonRows, TextArea, useToast } from '../../ui'
@@ -11,9 +11,11 @@ import { CHOICE_LABEL, CHOICES } from './choices'
 const KIND_LABEL = { tecnica: 'Pergunta técnica', gestao: 'Pergunta de gestão' } as const
 
 /** "às 17:44" when saved today, otherwise "a 16 out. · 15:40". */
-function savedLabel(iso: string) {
+/** "às 14:05" when saved on the demo's today (the scenario's date, not the computer's), otherwise the full date. */
+function savedLabel(iso: string, today?: string) {
   const d = new Date(iso)
-  if (d.toDateString() !== new Date().toDateString()) return `a ${dateTime(iso)}`
+  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  if (day !== (today ?? new Date().toISOString().slice(0, 10))) return `a ${dateTime(iso)}`
   return `às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
@@ -32,6 +34,7 @@ export function AssessmentQuestionPage() {
   const questions = useAssessmentQuestions(org.id, sectionId)
   const tasks = useTasks(org.id)
   const users = useUsers(org.id)
+  const today = useToday()
   const base = `/org/${org.slug}/avaliacao`
   const sections = assessment.data?.sections ?? []
   const at = sections.findIndex((s) => s.id === sectionId)
@@ -42,7 +45,7 @@ export function AssessmentQuestionPage() {
   const nextQuestions = useAssessmentQuestions(nextSection && org.id, nextSection?.id ?? '')
 
   const error = assessment.error ?? questions.error
-  if (error) return <ErrorState error={error} onRetry={() => { assessment.refetch(); questions.refetch() }} />
+  if (error) return <ErrorState error={error} onRetry={() => { void assessment.refetch(); void questions.refetch() }} />
   if (!assessment.data || !questions.data) return <SkeletonRows rows={4} />
   const section = sections[at]
   const index = questions.data.findIndex((q) => q.id === questionId)
@@ -64,12 +67,12 @@ export function AssessmentQuestionPage() {
 
   return (
     <>
-      <Link to={`${base}/${sectionId}`} className="-mb-4 inline-flex items-center gap-1.5 text-[0.875rem] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar a </span>{section.name}</Link>
+      <Link to={base} className="-mb-4 inline-flex items-center gap-1.5 text-[0.9375rem] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar à </span>Avaliação</Link>
       <PageHeader eyebrow="Avaliação de maturidade · NIS2 + RGPD" title={`Pergunta ${number} de ${total}`}
         actions={
           // Always rendered, so screen readers announce it when a save fills it in.
           <p role="status" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold text-ink-soft">
-            {savedAt && <><Check className="size-4 text-signal" aria-hidden />Progresso guardado {savedLabel(savedAt)}</>}
+            {savedAt && <><Check className="size-4 text-signal" aria-hidden />Progresso guardado {savedLabel(savedAt, today.data)}</>}
           </p>
         } />
       <ProgressBar value={answered} max={total} label="Progresso da avaliação" className="-mt-2" />
@@ -80,7 +83,7 @@ export function AssessmentQuestionPage() {
               <Chip tone={question.kind === 'tecnica' ? 'dark' : 'neutral'}>{KIND_LABEL[question.kind]}</Chip>
               <span className="text-[0.8125rem] font-semibold text-ink-soft">{section.name}</span>
             </p>
-            <h2 className="text-[1.25rem] font-extrabold leading-snug">{question.text}</h2>
+            <h2 className="text-[1.0625rem] font-extrabold leading-snug">{question.text}</h2>
           </div>
           {open
             ? <AnswerForm key={question.id} question={question} nav={nav} overviewPath={base} />
@@ -89,7 +92,7 @@ export function AssessmentQuestionPage() {
                 <div className="rounded-[14px] bg-paper-soft p-4">
                   <Eyebrow>Resposta</Eyebrow>
                   <p className="mt-1 text-[1rem] font-bold">{question.answer ? CHOICE_LABEL[question.answer.choice] : 'Sem resposta'}</p>
-                  {question.answer?.note && <p className="mt-1 text-[0.875rem] text-ink-soft">"{question.answer.note}"</p>}
+                  {question.answer?.note && <p className="mt-1 text-[0.8125rem] text-ink-soft">"{question.answer.note}"</p>}
                   <p className="mt-3 text-[0.8125rem] text-muted">A avaliação já foi submetida. As respostas já não podem ser alteradas.</p>
                 </div>
                 <QuestionNav nav={nav} onGo={(path) => navigate(path)} />
@@ -108,19 +111,18 @@ export function AssessmentQuestionPage() {
 /** US33 explanation panel (mockup 04/05): AI help pre-generated per question, informational only. */
 function AIHelp({ question }: { question: AssessmentQuestion }) {
   return (
-    <section aria-labelledby="ajuda-ia" className="flex flex-col gap-3.5 rounded-[18px] bg-brand-deep p-[26px] max-md:p-5">
-      <Eyebrow className="text-[0.75rem] text-signal-soft">Ajuda da IA</Eyebrow>
-      <h2 id="ajuda-ia" className="text-[1.1875rem] font-extrabold leading-snug text-white">O que significa esta pergunta?</h2>
-      <p className="text-[0.875rem] leading-relaxed text-brand-soft">{question.explanation}</p>
-      <div className="rounded-[12px] bg-brand px-4 py-3.5">
-        <h3 className="text-[0.8125rem] font-bold text-white">Exemplo</h3>
-        <p className="text-[0.8125rem] leading-relaxed text-brand-soft">{question.example}</p>
+    <section aria-labelledby="ajuda-ia" className="flex flex-col gap-3 rounded-[14px] border border-line-soft bg-paper p-5">
+      <h2 id="ajuda-ia" className="section-title">O que significa esta pergunta?</h2>
+      <p className="text-[0.9375rem] leading-relaxed text-ink-soft">{question.explanation}</p>
+      <div className="rounded-[10px] bg-paper-soft px-4 py-3">
+        <h3 className="text-[0.8125rem] font-bold">Exemplo</h3>
+        <p className="text-[0.8125rem] leading-relaxed text-ink-soft">{question.example}</p>
       </div>
       <div>
-        <h3 className="text-[0.8125rem] font-bold text-white">Porque é importante</h3>
-        <p className="text-[0.8125rem] leading-relaxed text-brand-soft">{question.whyItMatters}</p>
+        <h3 className="text-[0.8125rem] font-bold">Porque é importante</h3>
+        <p className="text-[0.8125rem] leading-relaxed text-ink-soft">{question.whyItMatters}</p>
       </div>
-      <div><AIBadge kind="info" onDark /></div>
+      <div><AIBadge kind="info" /></div>
     </section>
   )
 }
@@ -138,38 +140,108 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
   // Only a new or changed answer is saved. Without an answer, moving on skips the question ("Por responder").
   const changed = !!choice && (choice !== question.answer?.choice || note.trim() !== (question.answer?.note ?? ''))
 
-  const leave = (action: Leaving, path: string, message?: string) => {
-    const go = () => { if (message) toast.show(message); navigate(path) }
+  // A comment typed before choosing an answer cannot be saved on its own, but it is still work the person did.
+  const noteOnly = !choice && note.trim() !== (question.answer?.note ?? '')
+  // Leaving by the sidebar, the browser's back button or a link saves the answer too: nothing typed is lost.
+  const saving = useRef(false)
+  // Which button led here, so the comment dialog names the move the person is making.
+  const [intent, setIntent] = useState<Leaving>()
+  const blocker = useBlocker(() => (changed || noteOnly) && !saving.current)
+  useEffect(() => {
+    // The effect runs again while the blocker is still "blocked": the ref makes sure one save, one proceed.
+    if (blocker.state !== 'blocked' || !choice || saving.current) return
+    saving.current = true
+    save.mutateAsync({ questionId: question.id, answer: { choice, note } })
+      .then(() => { toast.show('Resposta guardada.'); blocker.proceed?.() })
+      .catch((e: unknown) => { saving.current = false; blocker.reset?.(); toast.show(saveError(e), 'error') })
+  }, [blocker, choice, note, question.id, save, toast])
+  // Keys 1–4 pick an answer and Enter goes on to the next question, except while typing or in a dialog.
+  const form = useRef<HTMLFormElement>(null)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || !/^([1-4]|Enter)$/.test(e.key)) return
+      const t = e.target as HTMLElement
+      if (t.closest('textarea, input:not([type="radio"]), select, [contenteditable="true"], [role="dialog"]')) return
+      if (document.querySelector('[role="dialog"]')) return
+      if (e.key === 'Enter') {
+        // A focused button or link keeps its own Enter; anywhere else, Enter is "Seguinte".
+        if (t.closest('button, a')) return
+        e.preventDefault()
+        form.current?.requestSubmit()
+        return
+      }
+      const option = CHOICES[Number(e.key) - 1]
+      if (!option) return
+      e.preventDefault()
+      setChoice(option.value)
+      document.querySelector<HTMLInputElement>(`input[name="resposta"][value="${option.value}"]`)?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+  // Closing the tab cannot wait for a save, so the browser asks first.
+  useEffect(() => {
+    if (!changed && !noteOnly) return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [changed, noteOnly])
+
+  const leave = (action: Leaving, path: string, message?: string, tone: 'success' | 'info' = 'success') => {
+    setIntent(action)
+    const go = () => { if (message && !noteOnly) toast.show(message, tone); void navigate(path) }
     if (!choice || !changed) { go(); return }
+    saving.current = true
     setLeaving(action)
     // mutateAsync: navigating unmounts this form, and mutate() callbacks would be dropped.
     save.mutateAsync({ questionId: question.id, answer: { choice, note } })
       .then(go)
-      .catch((e: Error) => { setLeaving(undefined); toast.show(e.message, 'error') })
+      .catch((e: unknown) => { saving.current = false; setLeaving(undefined); toast.show(saveError(e), 'error') })
   }
 
   return (
-    <form noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (nav.next && !leaving) leave('next', nav.next) }}>
+    <form ref={form} noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (nav.next && !leaving) leave('next', nav.next) }}>
       <OptionGroup name="resposta" legend="A sua resposta" value={choice} onChange={setChoice} options={CHOICES} columns={2} />
+      <p className="-mt-3 text-[0.75rem] text-muted max-md:hidden">Pelo teclado: 1 a 4 escolhem a resposta, Enter passa à seguinte.</p>
       <Field label="Comentário" optional hint="Ajuda a consultora a perceber a resposta. Ex.: em que sistemas falta.">
         {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />}
       </Field>
-      <QuestionNav nav={nav} leaving={leaving} onGo={(path, action) => leave(action, path)}>
+      {/* Moving on without an answer is allowed, but said: the question stays in the overview as "Por responder". */}
+      <QuestionNav nav={nav} leaving={leaving} onGo={(path, action) => leave(action, path, action === 'next' && !choice && !question.answer ? 'Pergunta deixada por responder. Pode voltar a ela na Avaliação.' : undefined, 'info')}>
         <Button variant="secondary" loading={leaving === 'later'} disabled={!!leaving}
           onClick={() => leave('later', overviewPath, 'Progresso guardado. Pode continuar quando quiser.')}>Guardar e continuar depois</Button>
       </QuestionNav>
+      <Modal open={blocker.state === 'blocked' && !choice} onOpenChange={(o) => { if (!o) { setIntent(undefined); blocker.reset?.() } }} width={440} title={MOVE[intent ?? 'away'].title}
+        description="Escreveu um comentário mas ainda não escolheu uma resposta. Só é guardado com uma resposta."
+        focusOnClose={() => document.querySelector<HTMLElement>('input[name="resposta"]')}
+        footer={<>
+          <Button variant="secondary" onClick={() => { setIntent(undefined); blocker.reset?.() }}>Escolher uma resposta</Button>
+          <Button variant="danger" onClick={() => blocker.proceed?.()}>{MOVE[intent ?? 'away'].confirm}</Button>
+        </>} />
     </form>
   )
+}
+
+const MOVE: Record<Leaving | 'away', { title: string; confirm: string }> = {
+  next: { title: 'Avançar sem guardar o comentário?', confirm: 'Avançar sem guardar' },
+  prev: { title: 'Recuar sem guardar o comentário?', confirm: 'Recuar sem guardar' },
+  later: { title: 'Sair sem guardar o comentário?', confirm: 'Sair sem guardar' },
+  away: { title: 'Sair sem guardar o comentário?', confirm: 'Sair sem guardar' },
+}
+
+/** Errors from the API are already written for people; anything else gets a plain sentence instead of developer text. */
+function saveError(e: unknown): string {
+  return e instanceof ApiError ? e.message : 'Não foi possível guardar a resposta. Tente de novo.'
 }
 
 /** ← Anterior on the left; Seguinte → (and any extra action) on the right. */
 function QuestionNav({ nav, leaving, onGo, children }: { nav: Neighbours; leaving?: Leaving; onGo: (path: string, action: 'prev' | 'next') => void; children?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <Button variant="secondary" loading={leaving === 'prev'} disabled={!nav.prev || !!leaving} onClick={() => nav.prev && onGo(nav.prev, 'prev')}>← Anterior</Button>
+      <Button variant="secondary" loading={leaving === 'prev'} disabled={!nav.prev || !!leaving} icon={<ArrowLeft className="size-4" aria-hidden />} onClick={() => nav.prev && onGo(nav.prev, 'prev')}>Anterior</Button>
       <div className="flex flex-wrap justify-end gap-2">
         {children}
-        <Button loading={leaving === 'next'} disabled={!nav.next || !!leaving} onClick={() => nav.next && onGo(nav.next, 'next')}>Seguinte →</Button>
+        <Button loading={leaving === 'next'} disabled={!nav.next || !!leaving} onClick={() => nav.next && onGo(nav.next, 'next')}>Seguinte <ArrowRight className="size-4" aria-hidden /></Button>
       </div>
     </div>
   )
@@ -179,14 +251,22 @@ function Delegation({ question, task, assignee, open }: { question: AssessmentQu
   const org = useTenant()
   const members = useMembers(org.id)
   const [delegating, setDelegating] = useState(false)
+  const toast = useToast()
+  const cancel = useUpdateTask(org.id)
   const analysts = members.data?.filter((m) => m.role === 'analista' && m.status === 'ativo' && m.userId) ?? []
   const who = assignee?.name ?? 'analista'
 
   if (task?.status === 'pendente') {
+    // Withdrawing the request gives the question back, to answer here or delegate to someone else.
+    const withdraw = () => cancel.mutate({ id: task.id, change: { status: 'cancelada' } }, {
+      onSuccess: () => toast.show(`Pedido a ${who} cancelado. Pode responder aqui ou delegar a outra pessoa.`),
+      onError: (e) => toast.show(e.message, 'error'),
+    })
     return (
       <Note icon={false}>
-        <span className="flex items-start gap-2"><UserRound className="mt-[2px] size-4 shrink-0" aria-hidden />
-          <span>Delegada a {who}: à espera de resposta{task.dueDate ? ` (prazo ${shortDay(task.dueDate)})` : ''}. Só vê esta pergunta.</span>
+        <span className="flex flex-wrap items-start gap-2"><UserRound className="mt-[2px] size-4 shrink-0" aria-hidden />
+          <span className="min-w-0 flex-1">Delegada a {who}: à espera de resposta{task.dueDate ? ` (prazo ${shortDay(task.dueDate)})` : ''}. Só vê esta pergunta.</span>
+          {open && <Button size="sm" variant="ghost" loading={cancel.isPending} onClick={withdraw}>Cancelar pedido</Button>}
         </span>
       </Note>
     )
@@ -196,7 +276,7 @@ function Delegation({ question, task, assignee, open }: { question: AssessmentQu
       <section aria-label="Resposta do analista" className="flex flex-col gap-1.5 rounded-[16px] border border-line-soft bg-paper p-5">
         <Eyebrow>Resposta de {who}</Eyebrow>
         <p className="text-[1rem] font-bold">{task.answer ? CHOICE_LABEL[task.answer.choice] : '—'}</p>
-        {task.answer?.note && <p className="text-[0.875rem] text-ink-soft">"{task.answer.note}"</p>}
+        {task.answer?.note && <p className="text-[0.8125rem] text-ink-soft">"{task.answer.note}"</p>}
         {open && <p className="mt-1 text-[0.75rem] text-muted">Pode guardar esta resposta ou responder de outra forma.</p>}
       </section>
     )
@@ -209,7 +289,7 @@ function Delegation({ question, task, assignee, open }: { question: AssessmentQu
   return (
     <section aria-label="Delegar" className="flex flex-col gap-2.5 rounded-[16px] border border-line-soft bg-paper p-5">
       <h2 className="text-[0.9375rem] font-extrabold">Não sabe responder?</h2>
-      <p className="text-[0.875rem] text-ink-soft">Envie a pergunta a quem saiba. Recebe a resposta aqui.</p>
+      <p className="text-[0.8125rem] text-ink-soft">Envie a pergunta a quem saiba. Recebe a resposta aqui.</p>
       <Button variant="secondary" onClick={() => setDelegating(true)}>{analysts.length === 1 ? `Delegar a ${analysts[0].name}` : 'Delegar a um analista'}</Button>
       {delegating && <DelegateModal question={question} analysts={analysts} onClose={() => setDelegating(false)} />}
     </section>
@@ -248,7 +328,7 @@ function DelegateModal({ question, analysts, onClose }: { question: AssessmentQu
           {(p) => <Select id={p.id} describedBy={p.describedBy} invalid={p.invalid} value={assignee} placeholder="Escolher o analista…" onChange={setAssignee} options={analysts.map((a) => ({ value: a.userId!, label: a.name, hint: a.email }))} />}
         </Field>
       ) : (
-        <p className="text-[0.875rem]">Para: <strong>{analysts[0].name}</strong></p>
+        <p className="text-[0.9375rem]">Para: <strong>{analysts[0].name}</strong></p>
       )}
       <Field label="Prazo" optional hint="Sem prazo, a pergunta fica sem data limite." error={errors.due} className="max-w-[260px]">
         {(p) => <DateInput id={p.id} aria-describedby={p.describedBy} invalid={p.invalid} min={today.data} value={due} onChange={(e) => setDue(e.target.value)} />}

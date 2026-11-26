@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router'
-import { Boxes, Download, FileUp, Layers, Plus, ShieldPlus } from 'lucide-react'
+import { Boxes, Download, FileUp, Layers, Plus, CirclePlus } from 'lucide-react'
 import { useTasks } from '../../api/queries'
 import type { Asset, Task } from '../../api/contracts'
 import { ASSET_TYPE_LABEL, authorNames, shortDay } from '../../config/labels'
@@ -10,8 +10,8 @@ import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import { PageTour } from '../../core/onboarding/PageTour'
 import {
-  Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
-  Segmented, SkeletonRows, StatCard, type ColumnDef,
+  Button, buttonClass, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
+  Segmented, SkeletonRows, type ColumnDef,
 } from '../../ui'
 import { AssetDrawer } from './AssetDrawer'
 import { AssetFilters } from './AssetFilters'
@@ -41,8 +41,8 @@ function columns(inv: Inventory, opts: { risks: boolean; riskLink?: (a: Asset) =
     if (opts.riskLink) {
       const href = opts.riskLink
       cols.push({ id: 'action', header: 'Ação', enableSorting: false, meta: { align: 'right' }, cell: (c) => (
-        <Link to={href(c.row.original)} onClick={(e) => e.stopPropagation()} aria-label={`Registar risco sobre ${c.row.original.name}`} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-sm font-bold text-brand hover:bg-brand-soft">
-          <ShieldPlus className="size-4" aria-hidden />Registar risco
+        <Link data-tour="register-risk" to={href(c.row.original)} onClick={(e) => e.stopPropagation()} aria-label={`Registar risco sobre ${c.row.original.name}`} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-[9px] px-2.5 py-1.5 text-sm font-bold text-brand hover:bg-brand-soft">
+          <CirclePlus className="size-4" aria-hidden />Registar risco
         </Link>
       ) })
     }
@@ -121,7 +121,7 @@ export function AssetsPage() {
     <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>
   ) : (
     <>
-      {can('assign', 'asset_task') && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
+      {can('assign', 'asset_task') && analysts.length > 0 && state === 'done' && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
       {can('create', 'asset') && <Button data-tour="asset-add" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1' })}>Adicionar ativo</Button>}
     </>
   )
@@ -131,11 +131,13 @@ export function AssetsPage() {
       assigned={state === 'assigned'}
       title={task?.scope ?? 'Servidores, rede e sistemas de produção'}
       text={state === 'assigned'
-        ? `Registo atribuído ao ${analystName}. ${byAnalyst.length ? `${byAnalyst.length} de ${task?.expectedCount ?? 4} já registados.` : 'Aparece aqui quando ele os registar.'}`
-        : 'Ainda não registados. O Pedro conhece estes sistemas: atribua-lhe o registo.'}
+        ? `Registo atribuído a ${analystName}. ${byAnalyst.length ? `${byAnalyst.length} de ${task?.expectedCount ?? 4} já registados.` : 'Os ativos aparecem aqui à medida que forem registados.'}`
+        : analysts.length ? `Ainda não registados. ${analysts[0].name.split(' ')[0]} conhece estes sistemas: atribua-lhe o registo.` : 'Ainda não registados. Convide o técnico de informática que conhece estes sistemas e atribua-lhe o registo.'}
       action={state === 'assigned' && task
         ? <Chip>Atribuído{task.dueDate ? ` · até ${shortDay(task.dueDate)}` : ''}</Chip>
-        : <Button variant="secondary" onClick={() => update({ atribuir: '1' })}>Atribuir ao Pedro</Button>}
+        : analysts.length
+          ? <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir o registo</Button>
+          : <Link to={`/org/${org.slug}/equipa?convidar=1`} className={buttonClass({ variant: 'secondary' })}>Convidar analista</Link>}
     />
   )
 
@@ -144,34 +146,55 @@ export function AssetsPage() {
       <PageHeader eyebrow={org.name} title={consultant ? 'Ativos' : 'Ativos e serviços críticos'} subtitle={consultant ? `Inventário preenchido${authors ? ` por ${authors}` : ''}. Use-o para registar os riscos.` : undefined} help={<PageTour id={consultant ? 'ativos-consultor' : 'ativos-cliente'} ready={!!data} />} actions={actions} />
       <Note>Este inventário é a base da análise de <Term k="risco">riscos</Term> e da <Term k="listaAtivos">Lista de Ativos</Term> que a empresa tem de comunicar ao CNCS.</Note>
       {inv.error ? <ErrorState error={inv.error} onRetry={inv.refetch} /> : !data ? (
-        <div className="flex flex-col gap-4"><div className="flex gap-4">{[0, 1, 2].map((i) => <div key={i} className="h-[104px] flex-1 animate-pulse rounded-[14px] bg-paper-soft" />)}</div><SkeletonRows rows={5} /></div>
+        <div className="flex flex-col gap-4"><div className="h-6 w-2/3 animate-pulse rounded-[8px] bg-paper-soft" /><SkeletonRows rows={5} /></div>
       ) : (
         <>
-          <div className="flex gap-4 max-md:flex-col">
-            <StatCard label="Serviços críticos" value={data.services.length} caption={data.services.map((s) => s.name).join(' · ') || 'Ainda não definidos'} onClick={() => update({ servicos: '1' })} />
-            <StatCard label="Ativos registados" value={data.assets.length} caption={byAnalyst.length && analystName ? `${byAnalyst.length} registados pelo ${analystName}` : consultant ? 'Pelo cliente' : 'Registados por si'} />
-            <StatCard label="Por registar" value={state === 'done' ? '0' : '—'} caption={state === 'done' ? 'Inventário completo' : task?.scope ?? 'Servidores, rede e sistemas de produção'} />
+          {/* One summary line instead of three stat cards: the table is the content, this only frames it. */}
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <dl data-tour="asset-summary" className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-[0.9375rem]" aria-label="Resumo do inventário">
+            <div className="flex items-baseline gap-1.5">
+              <dt className="sr-only">Ativos registados</dt>
+              <dd><strong className="font-extrabold">{data.assets.length} {data.assets.length === 1 ? 'ativo' : 'ativos'}</strong> <span className="text-ink-soft">{byAnalyst.length && analystName ? `· ${byAnalyst.length} registados por ${analystName}` : consultant ? '· registados pelo cliente' : '· registados por si'}</span></dd>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <dt className="sr-only">Serviços críticos</dt>
+              <dd>
+                <Button variant="link" className="!p-0 font-extrabold" icon={<Layers className="size-4" aria-hidden />} onClick={() => update({ servicos: '1' })}>
+                  {data.services.length ? `${data.services.length} ${data.services.length === 1 ? 'serviço crítico' : 'serviços críticos'}` : 'Definir serviços críticos'}
+                </Button>
+              </dd>
+            </div>
+            {/* What is still missing is said once, in the row under the table that also offers the action. */}
+            {state === 'done' && (
+              <div className="flex items-baseline gap-1.5">
+                <dt className="sr-only">Estado</dt>
+                <dd className="text-ink-soft">Inventário completo</dd>
+              </div>
+            )}
+          </dl>
+          {/* File actions sit with the summary they act on, not in the filter row. */}
+          {(!consultant || can('create', 'asset')) && data.assets.length > 0 && (
+            <div className="-mx-2 flex flex-wrap items-center gap-1">
+              {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
+              {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
+            </div>
+          )}
           </div>
 
           {data.assets.length > 0 && (
-            <div className="flex flex-col gap-3">
-              <AssetFilters value={filters} inventory={data} shown={visible.length} total={data.assets.length}
-                onChange={(n: Partial<AssetFilterState>) => update(n as Record<string, string>)}
-                onClear={() => update(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))} />
-               <div className="flex flex-wrap items-center justify-end gap-1 text-sm">
-                 <Button variant="ghost" size="sm" icon={<Layers className="size-4" aria-hidden />} onClick={() => update({ servicos: '1' })}>Serviços críticos</Button>
-                 {!consultant && <Button variant="ghost" size="sm" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>}
-                 {can('create', 'asset') && <Button variant="ghost" size="sm" icon={<FileUp className="size-4" aria-hidden />} onClick={() => update({ importar: '1' })}>Importar de Excel (CSV)</Button>}
-                 <span className="ml-2 max-md:ml-0 max-md:w-full">
-                   <Segmented ariaLabel="Vista" value={params.get('vista') === 'servicos' ? 'servicos' : 'tabela'} onChange={(v) => update({ vista: v === 'tabela' ? null : v })}
-                     options={[{ value: 'tabela', label: 'Tabela' }, { value: 'servicos', label: 'Por serviço' }]} />
-                 </span>
-               </div>
+            <div className="flex flex-wrap items-start gap-2.5" data-tour="asset-filters">
+              <div className="min-w-0 flex-1 basis-[320px]">
+                <AssetFilters value={filters} inventory={data} shown={visible.length} total={data.assets.length}
+                  onChange={(n: Partial<AssetFilterState>) => update(n as Record<string, string>)}
+                  onClear={() => update(Object.fromEntries(FILTER_KEYS.map((k) => [k, null])))} />
+              </div>
+              <Segmented size="sm" ariaLabel="Vista" value={params.get('vista') === 'servicos' ? 'servicos' : 'tabela'} onChange={(v) => update({ vista: v === 'tabela' ? null : v })}
+                options={[{ value: 'tabela', label: 'Tabela' }, { value: 'servicos', label: 'Por serviço' }]} />
             </div>
           )}
 
           {picked.length > 0 && can('edit', 'asset') && <BulkBar ids={picked} inventory={data} onDone={() => setPicked([])} />}
-          {params.get('vista') === 'servicos' ? <ServiceMap assets={visible} inventory={data} onOpen={(a) => update({ ativo: a.id })} /> : <DataTable
+          <div data-tour="asset-table">{params.get('vista') === 'servicos' ? <ServiceMap assets={visible} inventory={data} onOpen={(a) => update({ ativo: a.id })} /> : <DataTable
             caption="Ativos da organização"
             data={visible}
             columns={columns(data, { risks: inv.seeRisks, riskLink: consultant && can('create', 'risk') ? (a) => `/clientes/${org.slug}/riscos?novo=1&ativo=${a.id}` : undefined })}
@@ -185,14 +208,14 @@ export function AssetsPage() {
                : <p className="px-5 py-8 text-center text-sm text-ink-soft">Nenhum ativo corresponde aos filtros.</p>}
              selected={picked}
              onSelectedChange={can('edit', 'asset') && !consultant ? setPicked : undefined}
-           />}
+           />}</div>
 
           <AssetDrawer key={`new-${params.get('novo')}`} inventory={data} asset={null} mode="new" open={params.get('novo') === '1'} onClose={() => update({ novo: null })} />
           <AssetDrawer key={selected?.id ?? 'none'} inventory={data} asset={selected} mode="view" open={!!selected} onClose={() => update({ ativo: null })} />
           <ServicesDrawer open={params.get('servicos') === '1'} onClose={() => update({ servicos: null })} inventory={data} />
-          {can('create', 'asset') && <ImportModal key={String(params.get('importar'))} open={params.get('importar') === '1'} onClose={() => update({ importar: null })} inventory={data} />}
+          {can('create', 'asset') && <ImportModal key={`import-${params.get('importar')}`} open={params.get('importar') === '1'} onClose={() => update({ importar: null })} inventory={data} />}
           <ExportModal open={params.get('exportar') === '1'} onClose={() => update({ exportar: null })} inventory={data} />
-          {can('assign', 'asset_task') && <AssignTaskModal key={String(params.get('atribuir'))} open={params.get('atribuir') === '1'} onClose={() => update({ atribuir: null })} analysts={analysts} />}
+          {can('assign', 'asset_task') && <AssignTaskModal key={`assign-${params.get('atribuir')}`} open={params.get('atribuir') === '1'} onClose={() => update({ atribuir: null })} analysts={analysts} />}
         </>
       )}
     </>

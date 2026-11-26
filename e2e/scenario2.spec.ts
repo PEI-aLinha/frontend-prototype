@@ -7,7 +7,8 @@ test('Portfolio — no illustrative client can be opened before the first regist
   await startEmpty(page)
   await page.goto('/carteira?as=marta')
   await expect(page.getByRole('list', { name: 'Clientes' }).getByRole('listitem')).toHaveCount(11)
-  await expect(page.getByRole('list', { name: 'Clientes' }).getByRole('button', { name: /^Abrir / })).toHaveCount(0)
+  await expect(page.getByRole('list', { name: 'Clientes' }).getByRole('button')).toHaveCount(11)
+  await expect(page.getByRole('list', { name: 'Clientes' }).locator('button:not([disabled])')).toHaveCount(0)
 })
 
 test('Scenario 2 — Marta registers the ransomware risk, links actions and the roadmap is reprioritized', async ({ page }) => {
@@ -18,7 +19,7 @@ test('Scenario 2 — Marta registers the ransomware risk, links actions and the 
   await expect(page.getByRole('heading', { name: 'Carteira de clientes' })).toBeVisible()
   await expect(page.getByText('Avaliação concluída').first()).toBeVisible()
   await shot(page, 'c2-01-carteira')
-  await page.getByRole('button', { name: 'Abrir Componentes Águeda, Lda.' }).click()
+  await page.getByRole('button', { name: /^Componentes Águeda, Lda\./ }).click()
   await expect(page.getByRole('heading', { name: 'Componentes Águeda, Lda.' })).toBeVisible()
   await shot(page, 'c2-02-visao-geral')
 
@@ -74,27 +75,29 @@ test('Scenario 2 — Marta registers the ransomware risk, links actions and the 
   // 6. Validation
   await page.getByRole('button', { name: 'Validar roadmap' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Validar roadmap' }).click()
-  await expect(page.getByText('Roadmap validado · o Rui foi notificado')).toBeVisible()
+  await expect(page.getByText('Roadmap validado · notificação enviada a Rui Santos')).toBeVisible()
   await expect(page.getByText('Proposta pela IA · por validar').first()).toBeHidden()
   await expect(page.getByText(/Roadmap validado por Marta Ferreira/)).toBeVisible()
-  await expect(page.getByText('2 → 3 de 5')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Resumo do plano' })).toContainText('2 → 3')
 })
 
 test('Scenario 2 — Marta gets the same numbers, and links only to the pages she can reach', async ({ page }) => {
   await start(page, `${CLIENT}/roadmap`, 'marta', 'c3')
   await page.goto(`${CLIENT}/roadmap?as=marta`)
 
-  // There is no assessment route under /clientes, so the level is a card, not a dead link.
-  await expect(page.getByText('2 → 3 de 5')).toBeVisible()
-  await expect(page.getByRole('link', { name: /2 → 3 de 5/ })).toHaveCount(0)
+  // There is no assessment route under /clientes, so the level is a plain figure, not a dead link.
+  const summary = page.getByRole('region', { name: 'Resumo do plano' })
+  await expect(summary).toContainText('2 → 3')
+  await expect(summary).toContainText('de 5')
+  await expect(summary.getByRole('link', { name: /Maturidade/ })).toHaveCount(0)
 
-  await expect(page.getByRole('link', { name: /Nenhum risco sem ação/ })).toHaveAttribute('href', `${CLIENT}/riscos`)
-  await expect(page.getByRole('link', { name: /1 de 7 recolhidas/ })).toHaveAttribute('href', `${CLIENT}/integracoes`)
+  await expect(summary.getByRole('link', { name: /Riscos em aberto/ })).toHaveAttribute('href', `${CLIENT}/riscos`)
+  await expect(summary.getByRole('link', { name: /Riscos em aberto/ })).toContainText('nenhum risco sem ação')
+  await expect(summary.getByRole('link', { name: /Evidências recolhidas/ })).toHaveAttribute('href', `${CLIENT}/integracoes`)
+  await expect(summary.getByRole('link', { name: /Evidências recolhidas/ })).toContainText('de 7')
 
   // The consultant reads the threat, where the client reads the consequence.
-  const topRisks = page.getByRole('list', { name: 'Riscos mais graves' }).locator('li')
-  await expect(topRisks).toHaveCount(3)
-  await expect(topRisks.first()).toContainText('Ransomware')
+  await expect(page.getByText('Prioridade aumentada pelo risco: Ransomware').first()).toBeVisible()
   await expect(page.getByRole('list', { name: 'Ações do roadmap por prioridade' }).locator('li')).toHaveCount(7)
   if ((page.viewportSize()?.width ?? 0) >= 768) await expect(page.getByRole('list', { name: 'Progresso do plano' }).locator('li')).toHaveCount(7)
   else await expect(page.getByRole('list', { name: 'Progresso do plano' })).toHaveCount(0)

@@ -10,7 +10,7 @@ function List({ items, inv, empty }: { items: Asset[]; inv: Inventory; empty: st
     <ul className="flex flex-col gap-2">
       {items.map((a) => (
         <li key={a.id} className="flex items-center gap-3 rounded-[10px] border border-line-soft px-3 py-2">
-          <span className="min-w-0 flex-1"><span className="block truncate text-[0.875rem] font-semibold">{a.name}</span><span className="block text-[0.75rem] text-muted">{inv.serviceName(a.criticalServiceId)}</span></span>
+          <span className="min-w-0 flex-1"><span className="block truncate text-[0.9375rem] font-semibold">{a.name}</span><span className="block text-[0.75rem] text-muted">{inv.serviceName(a.criticalServiceId)}</span></span>
           <CriticalityChip level={a.criticality} />
         </li>
       ))}
@@ -33,11 +33,11 @@ export function AssetDependencies({ asset, inventory }: { asset: Asset; inventor
         </div>
       )}
       <section className="flex flex-col gap-2">
-        <h3 className="flex items-center gap-1.5 text-[0.875rem] font-bold"><ArrowDownRight className="size-4 text-brand" aria-hidden />Depende de</h3>
+        <h3 className="flex items-center gap-1.5 text-[0.9375rem] font-bold"><ArrowDownRight className="size-4 text-brand" aria-hidden />Depende de</h3>
         <List items={deps} inv={inventory} empty="Não indicou dependências. Edite o ativo para as acrescentar." />
       </section>
       <section className="flex flex-col gap-2">
-        <h3 className="flex items-center gap-1.5 text-[0.875rem] font-bold"><ArrowUpRight className="size-4 text-brand" aria-hidden />Precisam dele</h3>
+        <h3 className="flex items-center gap-1.5 text-[0.9375rem] font-bold"><ArrowUpRight className="size-4 text-brand" aria-hidden />Precisam dele</h3>
         <List items={direct} inv={inventory} empty="Nenhum outro ativo depende deste." />
       </section>
       <Note>As dependências ajudam a consultora a avaliar o impacto real de um risco: uma falha na rede afeta tudo o que depende dela.</Note>

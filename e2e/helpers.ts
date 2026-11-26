@@ -53,3 +53,11 @@ export async function openAsset(page: Page, name: string) {
   const card = page.getByRole('button', { name: new RegExp(`^${name}`) })
   await row.or(card).first().click()
 }
+
+/** Assessment overview: makes sure the topic table is open and expands one topic (the current one starts expanded). */
+export async function openTopic(page: Page, name: string) {
+  const table = page.getByRole('button', { name: /^Perguntas por tópico/ })
+  if ((await table.getAttribute('aria-expanded')) !== 'true') await table.click()
+  const topic = page.getByRole('button', { name: new RegExp(`${name}`) })
+  if ((await topic.getAttribute('aria-expanded')) !== 'true') await topic.click()
+}

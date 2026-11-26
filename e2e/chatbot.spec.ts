@@ -12,7 +12,9 @@ const CLIENT_MARTA = '/clientes/componentes-agueda/visao-geral'
 const SAVE_SETTLE_MS = 1500
 
 async function openChat(page: Page, name: string): Promise<Locator> {
-  await page.getByRole('button', { name: `Abrir ${name}` }).click()
+  // On a phone the floating button is gone: the header carries the assistant button instead.
+  const narrow = (page.viewportSize()?.width ?? 0) < 768
+  await (narrow ? page.getByRole('button', { name: 'Assistente IA', exact: true }) : page.getByRole('button', { name: `Abrir ${name}` })).click()
   const dialog = page.getByRole('dialog', { name })
   await expect(dialog).toBeVisible()
   return dialog
@@ -58,7 +60,7 @@ test('US03 - Marta revê o rascunho pedido pelo Rui e o Rui recebe a resposta', 
 
   await expect(chat.getByText('Está a ajudar um cliente.')).toBeVisible()
   await expect(chat.getByText('Cliente', { exact: true })).toBeVisible()
-  await expect(chat.getByText('Assistente IA', { exact: true }).first()).toBeVisible()
+  await expect(chat.getByText('Gerado por IA · apenas informativo').first()).toBeVisible()
 
   await chat.getByRole('textbox', { name: /Escreva a sua resposta ao cliente/ }).fill(CONSULTANT_REPLY)
   await chat.getByRole('button', { name: 'Enviar mensagem' }).click()

@@ -30,7 +30,7 @@ test('first visit opens the guided tour, Esc closes it, the button reopens it', 
 test('consultant tour walks the risk register to the end', async ({ page }) => {
   await start(page, '/clientes/componentes-agueda/riscos?tour=1', 'marta', 'c2')
   await expect(page.getByRole('dialog', { name: 'Novo risco' })).toBeVisible()
-  for (const title of ['Matriz de risco', 'Por nível', 'Registo']) {
+  for (const title of ['Matriz de risco', 'Registo']) {
     await page.getByRole('button', { name: 'Seguinte' }).click()
     await expect(page.getByRole('dialog', { name: title })).toBeVisible()
   }

@@ -44,6 +44,20 @@ test('Invite — Ana accepts the invitation, sets a password and MFA, and lands 
   await expect(page.getByText('Ainda não tem tarefas')).toBeVisible()
 })
 
+test('Invite — "Convidar analista" from the search opens the dialog on the Team page already showing, and closing it clears the link', async ({ page }) => {
+  await start(page, `${ORG}/equipa`, 'rui')
+  await expect(page.getByRole('heading', { name: 'Equipa', level: 1 })).toBeVisible()
+  await page.getByRole('button', { name: 'Procurar' }).first().click()
+  await page.getByRole('combobox', { name: 'Procurar' }).or(page.getByRole('textbox', { name: 'Procurar' })).fill('Convidar analista')
+  await page.keyboard.press('Enter')
+  const dialog = page.getByRole('dialog', { name: 'Convidar analista' })
+  await expect(dialog).toBeVisible()
+  await expect(page).toHaveURL(/[?&]convidar=1/)
+  await dialog.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(page).not.toHaveURL(/convidar=/)
+})
+
 test('Assign work — Rui gives Pedro a technical question, a duplicate is refused, and Pedro sees it', async ({ page }) => {
   await start(page, `${ORG}/equipa`, 'rui')
   await page.getByRole('button', { name: 'Atribuir tarefa' }).click()

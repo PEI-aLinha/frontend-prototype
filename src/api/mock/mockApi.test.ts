@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMockApi } from './mockApi'
-import { resetDemo } from './store'
+import { resetDemo, setState } from './store'
 import { ORG_ID, PEDRO, RUI, MARTA, ASSET_TASK_ID } from './seed'
 
 let who = RUI
@@ -32,6 +32,35 @@ describe('mock API permissions', () => {
     expect((await api.assets.listRisks(ORG_ID)).length).toBeGreaterThan(0)
   })
 
+  it('refuses to validate the roadmap while the assessment is still being answered', async () => {
+    resetDemo('c1')
+    who = MARTA
+    await expect(api.assessment.validateRoadmap(ORG_ID)).rejects.toMatchObject({ status: 422 })
+  })
+
+  it('lets only the consultant reopen a validated roadmap, with a reason, and hides the risks again', async () => {
+    who = MARTA
+    await api.assessment.validateRoadmap(ORG_ID)
+    who = RUI
+    await expect(api.assessment.reopenRoadmap(ORG_ID, 'Rever')).rejects.toMatchObject({ status: 403 })
+    who = MARTA
+    await expect(api.assessment.reopenRoadmap(ORG_ID, '  ')).rejects.toMatchObject({ status: 422 })
+    expect(await api.assessment.reopenRoadmap(ORG_ID, 'Falta ligar um risco')).toMatchObject({ validated: false, validatedBy: null })
+    expect((await api.audit.list(ORG_ID)).map((e) => e.summary)).toContain('Reabriu o roadmap: Falta ligar um risco')
+    who = RUI
+    await expect(api.assets.listRisks(ORG_ID)).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('lets only the consultant assigned to the organization validate or reopen its roadmap', async () => {
+    who = MARTA
+    await api.assessment.validateRoadmap(ORG_ID)
+    setState((s) => ({ ...s, organizations: s.organizations.map((o) => (o.id === ORG_ID ? { ...o, consultantId: 'u-other-consultant' } : o)) }))
+    await expect(api.assessment.reopenRoadmap(ORG_ID, 'Rever')).rejects.toMatchObject({ status: 403 })
+    await expect(api.assessment.validateRoadmap(ORG_ID)).rejects.toMatchObject({ status: 403 })
+    expect((await api.assessment.getRoadmapStatus(ORG_ID)).validated).toBe(true)
+    await expect(api.assessment.reopenRoadmap('org-unknown', 'Rever')).rejects.toMatchObject({ status: 404 })
+  })
+
   it('requires a linked action to mitigate and a justification to accept', async () => {
     who = MARTA
     const base = { assetId: 'ast-servidor', threat: 'Ransomware', description: '', ownerId: RUI, probability: 2, impact: 3 }
@@ -57,6 +86,68 @@ describe('mock API permissions', () => {
     await expect(api.assets.saveRisk(ORG_ID, { ...base, residualProbability: 3, residualImpact: 3 })).rejects.toMatchObject({ status: 422 })
     await expect(api.assets.saveRisk(ORG_ID, { ...base, residualProbability: 1 })).rejects.toMatchObject({ status: 422 })
     expect(await api.assets.saveRisk(ORG_ID, { ...base, residualProbability: 1, residualImpact: 3 })).toMatchObject({ residualProbability: 1 })
+  })
+
+  it('puts a removed asset back as it was, with its risks and dependants', async () => {
+    resetDemo('c3')
+    who = MARTA
+    const linked = (await api.assets.listRisks(ORG_ID)).filter((r) => r.assetId === 'ast-servidor').map((r) => r.id)
+    expect(linked.length).toBeGreaterThan(0)
+    who = RUI
+    const before = await api.assets.listAssets(ORG_ID)
+    const dependants = before.filter((a) => a.dependsOn?.includes('ast-servidor')).map((a) => a.id)
+    const removed = await api.assets.deleteAsset(ORG_ID, 'ast-servidor')
+    expect(removed.riskIds.sort()).toEqual([...linked].sort())
+    expect(removed.dependantIds.sort()).toEqual([...dependants].sort())
+    const restored = await api.assets.restoreAsset(ORG_ID, removed)
+    expect(restored.id).toBe('ast-servidor')
+    const after = await api.assets.listAssets(ORG_ID)
+    expect(after.filter((a) => a.dependsOn?.includes('ast-servidor')).map((a) => a.id).sort()).toEqual([...dependants].sort())
+    who = MARTA
+    expect((await api.assets.listRisks(ORG_ID)).filter((r) => r.assetId === 'ast-servidor').map((r) => r.id).sort()).toEqual([...linked].sort())
+  })
+
+  it('restores only an asset of the caller\'s organization, and only its own links', async () => {
+    resetDemo('c3')
+    who = RUI
+    const removed = await api.assets.deleteAsset(ORG_ID, 'ast-servidor')
+    // An asset claiming another organization is refused and changes nothing.
+    await expect(api.assets.restoreAsset(ORG_ID, { ...removed, asset: { ...removed.asset, organizationId: 'org-other' } }))
+      .rejects.toMatchObject({ status: 404 })
+    expect((await api.assets.listAssets(ORG_ID)).some((a) => a.id === 'ast-servidor')).toBe(false)
+    // Calling it for another organization is refused before anything else.
+    await expect(api.assets.restoreAsset('org-other', removed)).rejects.toMatchObject({ status: 403 })
+    // Unknown risk and asset ids in the payload are ignored, the rest is put back.
+    const restored = await api.assets.restoreAsset(ORG_ID, { ...removed, riskIds: [...removed.riskIds, 'risk-unknown'], dependantIds: [...removed.dependantIds, 'ast-unknown'] })
+    expect(restored.id).toBe('ast-servidor')
+    expect((await api.assets.listAssets(ORG_ID)).some((a) => a.id === 'ast-unknown')).toBe(false)
+  })
+
+  it('drops references to other organizations\' data when an asset is restored', async () => {
+    resetDemo('c3')
+    who = RUI
+    const removed = await api.assets.deleteAsset(ORG_ID, 'ast-servidor')
+    const keep = removed.asset.dependsOn ?? []
+    const restored = await api.assets.restoreAsset(ORG_ID, {
+      ...removed,
+      asset: { ...removed.asset, dependsOn: [...keep, 'ast-unknown', 'ast-of-another-org'], criticalServiceId: 'svc-of-another-org', ownerId: 'u-of-another-org', taskId: 'task-of-another-org' },
+    })
+    expect(restored.dependsOn).toEqual(keep)
+    expect(restored.criticalServiceId).toBeNull()
+    expect(restored.ownerId).toBeNull()
+    expect(restored.taskId).toBeUndefined()
+    const stored = (await api.assets.listAssets(ORG_ID)).find((a) => a.id === 'ast-servidor')
+    expect(stored?.dependsOn).toEqual(keep)
+  })
+
+  it('cancelling an integration request makes the system available to connect again', async () => {
+    who = RUI
+    const task = await api.integrations.assign(ORG_ID, 'backups', PEDRO)
+    expect((await api.integrations.list(ORG_ID)).find((c) => c.provider.id === 'backups')?.status).toBe('pedido')
+    await api.assets.updateTask(ORG_ID, task.id, { status: 'cancelada' })
+    const after = (await api.integrations.list(ORG_ID)).find((c) => c.provider.id === 'backups')
+    expect(after?.status).not.toBe('pedido')
+    expect(after?.assignedTo ?? null).toBeNull()
   })
 
   it('denies consultants editing assets', async () => {

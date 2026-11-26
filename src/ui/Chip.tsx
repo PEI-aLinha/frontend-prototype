@@ -36,7 +36,7 @@ export function RiskLevelBadge({ level, prefix, size = 'md' }: { level: Level; p
   const cls = riskCellClass(level)
   const Icon = RISK_ICON[level]
   return (
-    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full font-bold leading-[1.2]', cls, size === 'lg' ? 'px-3 py-1.5 text-[0.875rem]' : 'px-2.5 py-1 text-[0.75rem]')}>
+    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full font-bold leading-[1.2]', cls, size === 'lg' ? 'px-3 py-1.5 text-[0.9375rem]' : 'px-2.5 py-1 text-[0.75rem]')}>
       <Icon className={size === 'lg' ? 'size-4' : 'size-3.5'} strokeWidth={2.25} aria-hidden />
       {prefix}
       {RISK_LEVEL_LABEL[level]}

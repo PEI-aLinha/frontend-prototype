@@ -24,6 +24,14 @@ export const TREATMENT_LABEL: Record<Treatment, string> = {
   partilhar: 'Partilhar',
 }
 
+/** The treatment as the client reads it: what is being done, not the ISO verb. */
+export const TREATMENT_PLAIN: Record<Treatment, string> = {
+  mitigar: 'Reduzir o risco com as ações do roadmap',
+  aceitar: 'A empresa aceita o risco como está',
+  evitar: 'Deixar de fazer a atividade que cria o risco',
+  partilhar: 'Passar parte do risco a um seguro ou fornecedor',
+}
+
 export const TREATMENT_HINT: Record<Treatment, string> = {
   mitigar: 'Reduzir o risco com ações do roadmap (ISO/IEC 27005: modificar).',
   aceitar: 'Manter o risco como está, com uma justificação (reter).',

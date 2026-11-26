@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
+import { RedirectHome } from './RedirectHome'
+import { HelpMenu } from './HelpMenu'
 import {
-  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Lock, Map, Plug, Scale, Settings, ShieldAlert, Users,
+  Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Ban, Map, Plug, Scale, Settings, Grid3x3, Users,
 } from 'lucide-react'
 import { useOrganization, useRoadmapStatus } from '../api/queries'
 import { homePath } from '../core/personas'
@@ -12,17 +14,22 @@ import { ApiError } from '../api/contracts'
 import { EmptyState, ErrorState, SkeletonRows } from '../ui'
 import { AppShell, type NavItem, type NavSection } from './AppShell'
 import { NotificationBell } from './NotificationBell'
-import { AppearanceMenu } from './AppearanceMenu'
 
 function OrgGate({ slug, children }: { slug: string; children: (org: NonNullable<ReturnType<typeof useOrganization>['data']>) => ReactNode }) {
   const org = useOrganization(slug)
+  const { persona } = useSession()
+  // A responsible person whose organization is not registered yet belongs in the registration flow, not on an error.
+  // Only for their own organization: a mistyped slug is a plain "not found".
+  const ownOrg = homePath(persona.key).startsWith(`/org/${slug}/`)
+  if (org.isError && org.error instanceof ApiError && org.error.status === 404 && persona.role === 'responsavel' && ownOrg) return <Navigate to="/registo" replace />
   if (org.isPending) return <div className="p-14"><SkeletonRows /></div>
-  if (org.isError) {
+  // A failed refetch keeps the organization already on screen: the shell and navigation stay, each page shows its own error.
+  if (org.isError && !org.data) {
     // No access (e.g. an analyst removed from the team): explain instead of offering a retry.
     if (org.error instanceof ApiError && org.error.status === 403) {
-      return <div className="p-14 max-md:p-6"><EmptyState icon={<Lock className="size-5" aria-hidden />} title="Sem acesso a esta organização">{org.error.message}</EmptyState></div>
+      return <div className="p-14 max-md:p-6"><EmptyState icon={<Ban className="size-5" aria-hidden />} title="Sem acesso a esta organização">{org.error.message}</EmptyState></div>
     }
-    return <div className="p-14"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
+    return <div className="p-14 max-md:p-6"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
   }
   return <TenantProvider org={org.data}>{children(org.data)}</TenantProvider>
 }
@@ -51,33 +58,41 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
     const seesRisks = canRole(persona.role, 'view', 'risk', { roadmapValidated: roadmap.data?.validated })
     items = [
       { to: `${base}/inicio`, label: 'Início', icon: Home },
-      { to: `${base}/ambito`, label: 'Âmbito regulatório', shortLabel: 'Leis', icon: Scale },
+      { to: `${base}/ambito`, label: 'Âmbito regulatório', shortLabel: 'Âmbito', icon: Scale },
       { to: `${base}/avaliacao`, label: 'Avaliação', icon: ClipboardCheck },
       { to: `${base}/roadmap`, label: 'Resultados e roadmap', shortLabel: 'Resultados', icon: Map },
       { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
-      ...(seesRisks ? [{ to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert }] : []),
+      ...(seesRisks ? [{ to: `${base}/riscos`, label: 'Riscos', icon: Grid3x3 }] : []),
       { to: `${base}/integracoes`, label: 'Integrações', icon: Plug },
       { to: `${base}/equipa`, label: 'Equipa', icon: Users },
       { to: `${base}/definicoes`, label: 'Definições', icon: Settings },
     ]
   }
+  // Mobile keeps the plugin's core (Ativos, Riscos) in the bar; the less frequent entries go to "Mais".
+  const order = [`${base}/inicio`, `${base}/avaliacao`, `${base}/ativos`, `${base}/riscos`, `${base}/roadmap`]
+  const tabs = persona.role === 'analista' ? undefined : [...items].sort((a, b) => rank(order, a.to) - rank(order, b.to))
   return (
-    <AppShell tools={<><AppearanceMenu /><NotificationBell /></>} sections={[{ items }]} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
+    <AppShell tools={<><HelpMenu /><NotificationBell /></>} sections={[{ items }]} tabs={tabs} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
       <Outlet />
     </AppShell>
   )
+}
+
+function rank(order: string[], to: string): number {
+  const i = order.indexOf(to)
+  return i === -1 ? order.length : i
 }
 
 /** Marta (Consultora): /carteira e /clientes/:org/* */
 export function ConsultantLayout() {
   const { org } = useParams()
   const { persona } = useSession()
-  if (persona.role !== 'consultor') return <Navigate to={homePath(persona.key)} replace />
+  if (persona.role !== 'consultor') return <RedirectHome reason="A carteira de clientes é da consultora. Voltou ao seu início." />
   const user = { initials: persona.initials, name: persona.name, subtitle: 'Consultora aLinha' }
   const portfolio: NavItem = { to: '/carteira', label: 'Carteira de clientes', shortLabel: 'Clientes', icon: Briefcase, end: true }
   if (!org) {
     return (
-      <AppShell tools={<><AppearanceMenu /><NotificationBell /></>} sections={[{ items: [portfolio] }]} user={user}>
+      <AppShell tools={<><HelpMenu /><NotificationBell /></>} sections={[{ items: [portfolio] }]} user={user}>
         <Outlet />
       </AppShell>
     )
@@ -90,13 +105,13 @@ export function ConsultantLayout() {
           { to: `${base}/visao-geral`, label: 'Visão geral', shortLabel: 'Geral', icon: LayoutDashboard },
           { to: `${base}/roadmap`, label: 'Resultados e roadmap', shortLabel: 'Resultados', icon: ClipboardList },
           { to: `${base}/ativos`, label: 'Ativos', icon: Boxes },
-          { to: `${base}/riscos`, label: 'Riscos', icon: ShieldAlert },
+          { to: `${base}/riscos`, label: 'Riscos', icon: Grid3x3 },
           { to: `${base}/integracoes`, label: 'Evidências automáticas', shortLabel: 'Evidências', icon: Plug },
           { to: `${base}/historico`, label: 'Histórico', icon: History },
         ]
         const sections: NavSection[] = [{ items: [portfolio] }, { heading: o.name.replace(', Lda.', ''), items: client }]
         return (
-          <AppShell tools={<><AppearanceMenu /><NotificationBell /></>} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[0], client[4], client[5]]}>
+          <AppShell tools={<><HelpMenu /><NotificationBell /></>} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[0], client[4], client[5]]}>
             <Outlet />
           </AppShell>
         )

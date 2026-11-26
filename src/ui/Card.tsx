@@ -1,5 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react'
-import { Info } from 'lucide-react'
+import { Info, TriangleAlert } from 'lucide-react'
 import { cn } from './cn'
 
 export function Card({ className, soft, ...rest }: HTMLAttributes<HTMLDivElement> & { soft?: boolean }) {
@@ -28,10 +28,10 @@ export function StatCard({ label, value, caption, children, onClick, accent, cla
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <Eyebrow as={labelAs}>{label}</Eyebrow>
+        {(() => { const L = labelAs; return <L className="text-sm font-bold text-ink-soft">{label}</L> })()}
         {accent}
       </div>
-      <p className="mt-1.5 text-lg font-extrabold leading-tight">{value}</p>
+      <p className={cn('num font-extrabold', typeof value === 'number' ? 'mt-1.5 text-[1.75rem] leading-none tracking-[-0.02em]' : 'mt-1.5 text-lg leading-tight')}>{value}</p>
       {caption && <p className="mt-1.5 text-sm text-ink-soft">{caption}</p>}
       {children && <div className="mt-3">{children}</div>}
     </>
@@ -51,8 +51,8 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
   return (
     <section className="flex flex-col gap-6 rounded-[20px] bg-brand-deep px-8 py-[30px] text-white md:flex-row md:items-center">
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-        <Eyebrow className="text-signal-soft">{eyebrow}</Eyebrow>
         <h2 className="text-3xl font-extrabold title-tight">{title}</h2>
+        <p className="text-sm font-semibold text-signal-soft">{eyebrow}</p>
         {children && <div className="text-sm font-semibold text-brand-soft">{children}</div>}
       </div>
       {action}
@@ -60,11 +60,13 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
   )
 }
 
-/** Aviso: fundo signal-soft, texto brand SemiBold 13, a toda a largura. */
-export function Note({ children, icon = true, className }: { children: ReactNode; icon?: boolean; className?: string }) {
+/** Aviso: fundo signal-soft, texto brand SemiBold 13, a toda a largura. `warning` usa a tinta de risco médio
+ *  e um triângulo, para pedir atenção antes de uma decisão (nunca para erros). */
+export function Note({ children, icon = true, tone = 'info', className }: { children: ReactNode; icon?: boolean; tone?: 'info' | 'warning'; className?: string }) {
+  const Icon = tone === 'warning' ? TriangleAlert : Info
   return (
-    <div role="note" className={cn('flex items-start gap-2.5 rounded-[10px] bg-signal-soft px-3.5 py-2.5 text-sm font-semibold text-brand', className)}>
-      {icon && <Info className="mt-[2px] size-4 shrink-0" aria-hidden />}
+    <div role="note" className={cn('flex items-start gap-2.5 rounded-[10px] px-3.5 py-2.5 text-sm font-semibold', tone === 'warning' ? 'bg-risk-medium text-risk-medium-ink' : 'bg-signal-soft text-brand', className)}>
+      {icon && <Icon className="mt-[2px] size-4 shrink-0" aria-hidden />}
       <div className="min-w-0">{children}</div>
     </div>
   )

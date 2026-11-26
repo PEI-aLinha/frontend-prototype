@@ -17,7 +17,7 @@ test('Import assets from CSV with preview and per-row errors', async ({ page }) 
   await shot(page, 'a-01-importar')
   await dialog.getByRole('button', { name: 'Importar 4 ativos' }).click()
   await expect(page.getByText('4 ativos importados')).toBeVisible()
-  await expect(page.getByText('11', { exact: true })).toBeVisible()
+  await expect(page.getByText('11 ativos', { exact: true })).toBeVisible()
 })
 
 test('By-service view, dependencies and bulk actions', async ({ page }, info) => {

@@ -60,7 +60,7 @@ export function MfaSetup({ email, submitLabel = 'Confirmar e continuar', onVerif
           <li>
             <section aria-labelledby={`${ids}-app`} className="flex flex-col gap-1.5">
               <h2 id={`${ids}-app`} className="text-[1rem] font-bold"><span aria-hidden>1. </span>Instale uma aplicação de autenticação</h2>
-              <p className="text-[0.875rem] text-ink-soft">No telemóvel, por exemplo {APPS}.</p>
+              <p className="text-[0.8125rem] text-ink-soft">No telemóvel, por exemplo {APPS}.</p>
             </section>
           </li>
 
@@ -70,7 +70,7 @@ export function MfaSetup({ email, submitLabel = 'Confirmar e continuar', onVerif
               <div className="flex items-center gap-6 max-sm:flex-col max-sm:items-start">
                 <SimulatedQr seed={email} />
                 <div className="flex min-w-0 flex-col gap-2">
-                  <p className="text-[0.875rem] text-ink-soft">Não consegue ler o código? Escreva esta chave na aplicação.</p>
+                  <p className="text-[0.8125rem] text-ink-soft">Não consegue ler o código? Escreva esta chave na aplicação.</p>
                   <code className="w-fit rounded-[10px] bg-paper-soft px-3 py-2 font-mono text-[0.9375rem] tracking-[0.08em] text-ink">{key}</code>
                   <Button variant="secondary" size="sm" className="w-fit" icon={<Copy className="size-4" aria-hidden />} onClick={copyKey}>Copiar chave</Button>
                 </div>
@@ -87,7 +87,7 @@ export function MfaSetup({ email, submitLabel = 'Confirmar e continuar', onVerif
                     ref={input} id={p.id} aria-describedby={p.describedBy} invalid={p.invalid}
                     inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="000000"
                     value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(undefined) }}
-                    className="max-w-[220px] font-mono text-[1.25rem] tracking-[0.4em]"
+                    className="max-w-[220px] font-mono text-[1.125rem] tracking-[0.4em]"
                   />
                 )}
               </Field>

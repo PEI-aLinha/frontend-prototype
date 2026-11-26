@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import * as Menu from '@radix-ui/react-dropdown-menu'
 import { useQueryClient } from '@tanstack/react-query'
 import { BookOpen, Check, ChevronUp, FlaskConical, RotateCcw, WifiOff } from 'lucide-react'
@@ -15,6 +15,8 @@ const itemCls = 'flex cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 p
 /** Unobtrusive persona switcher for the demo (bottom-right corner, or ⌥P / Alt+P). */
 export function PersonaSwitcher() {
   const { persona, setPersona } = useSession()
+  // On the registration pages the bottom-left corner holds the brand panel's steps.
+  const onboarding = useLocation().pathname.startsWith('/registo')
   const navigate = useNavigate()
   const qc = useQueryClient()
   const toast = useToast()
@@ -35,22 +37,23 @@ export function PersonaSwitcher() {
 
   const switchTo = (key: PersonaKey) => {
     setPersona(key)
-    navigate(homePath(key))
+    void navigate(homePath(key))
   }
 
   const jump = (id: SnapshotId) => {
     resetDemo(id)
     clearRegistrationDraft()
-    qc.clear()
+    // reset, not clear: screens already open refetch at once instead of keeping the previous scenario's data.
+    void qc.resetQueries()
     if (id === 'c0') {
       // No account exists yet: drop any identity from the previous run (e.g. an accepted invite), keeping the
       // current persona so its layout does not redirect before reaching the registration.
       setPersona(persona.key)
-      navigate('/registo/conta')
+      void navigate('/registo/conta')
     } else {
       const target: PersonaKey = id === 'c2' ? 'marta' : 'rui'
       setPersona(target)
-      navigate(homePath(target))
+      void navigate(homePath(target))
     }
     toast.show(`Dados repostos: ${SNAPSHOTS.find((s) => s.id === id)?.label}`)
   }
@@ -66,7 +69,9 @@ export function PersonaSwitcher() {
   const toggleFailure = () => {
     setFailureMode(!failing)
     setFailing(!failing)
-    qc.invalidateQueries()
+    // Turning it on leaves what is on screen (and any unsaved input) alone: the next load or save fails.
+    // Turning it off reloads, so the pages that failed recover.
+    if (failing) void qc.invalidateQueries()
   }
 
   return (
@@ -74,7 +79,7 @@ export function PersonaSwitcher() {
     <DemoGuide open={guide} onClose={() => setGuide(false)} onGo={go} />
     <Menu.Root open={open} onOpenChange={setOpen}>
       <Menu.Trigger
-        className="fixed bottom-[76px] left-5 z-[85] md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[0.75rem] font-bold text-ink-soft shadow-[0_6px_20px_rgb(var(--shadow-rgb)/0.12)] backdrop-blur transition-colors hover:text-ink max-md:bottom-[84px] max-md:left-auto max-md:right-3"
+        className={cn('fixed z-[85]', onboarding ? 'bottom-5 right-5' : 'bottom-[76px] left-5 max-md:bottom-[84px] max-md:left-auto max-md:right-3', 'md:max-w-[192px] flex items-center gap-2 rounded-full border border-line-soft bg-paper/95 py-1.5 pl-1.5 pr-3 text-[0.75rem] font-bold text-ink-soft shadow-[0_6px_20px_rgb(var(--shadow-rgb)/0.12)] backdrop-blur transition-colors hover:text-ink')}
       >
         <Avatar initials={persona.initials} size={24} />
         {/* Name from content, starting with the visible text so voice control finds it (WCAG 2.5.3). */}

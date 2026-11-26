@@ -58,7 +58,7 @@ export function OrganizationSettingsPage() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <h2 id="qualificacao-titulo" className="section-title">Qualificação NIS2</h2>
           {canEdit && suggested && suggested !== 'nao_abrangida' && !official && today.data && (
-            <Button icon={<BadgeCheck className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Registar qual uma oficial</Button>
+            <Button icon={<BadgeCheck className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Registar a qualificação oficial</Button>
           )}
           {canEdit && official && today.data && (
             <Button variant="secondary" icon={<Pencil className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Corrigir</Button>
@@ -81,7 +81,7 @@ export function OrganizationSettingsPage() {
               <span className="text-[0.9375rem] font-bold">{suggested ? NIS2_LABEL[suggested] : '—'}</span>
               <Nis2Badge official={false} />
             </div>
-            <p className="text-[0.875rem] text-ink-soft">
+            <p className="text-[0.8125rem] text-ink-soft">
               {suggested === 'nao_abrangida'
                 ? 'Pela sugestão do aLinha, a empresa não está abrangida, por isso não deve receber um Ato de Qualificação.'
                 : 'É a sugestão do aLinha. Quando receber o Ato de Qualificação do CNCS, registe aqui a classificação oficial.'}{' '}

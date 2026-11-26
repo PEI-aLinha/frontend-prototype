@@ -17,7 +17,7 @@ interface BaseProps {
  * The dialogs are controlled (no Dialog.Trigger), so Radix has nowhere to send focus on close and
  * it lands on <body>. Remember what had focus when the dialog opened and give it back (WCAG 2.4.3).
  */
-function useReturnFocus(open: boolean) {
+function useReturnFocus(open: boolean, focusOnClose?: () => HTMLElement | null | undefined) {
   const opener = useRef<HTMLElement | null>(null)
   useLayoutEffect(() => {
     if (open && document.activeElement instanceof HTMLElement && document.activeElement !== document.body) opener.current = document.activeElement
@@ -25,7 +25,9 @@ function useReturnFocus(open: boolean) {
   return (e: Event) => {
     // The opener can be gone by now (e.g. "Delegar" is replaced once the question is delegated):
     // fall back to the page heading rather than <body>.
-    const el = opener.current?.isConnected ? opener.current : document.querySelector<HTMLElement>('main h1')
+    // A caller can send focus somewhere more useful than the opener (e.g. back to the field the dialog was about).
+    const target = focusOnClose?.()
+    const el = target ?? (opener.current?.isConnected ? opener.current : document.querySelector<HTMLElement>('main h1'))
     opener.current = null
     if (!el) return
     e.preventDefault()
@@ -35,8 +37,8 @@ function useReturnFocus(open: boolean) {
 }
 
 /** Modal: ink 45% overlay, white window radius 20, padding 28/32, gap 18, width 540. */
-export function Modal({ open, onOpenChange, title, description, chip, children, footer, width = 540 }: BaseProps & { width?: number }) {
-  const returnFocus = useReturnFocus(open)
+export function Modal({ open, onOpenChange, title, description, chip, children, footer, width = 540, focusOnClose }: BaseProps & { width?: number; focusOnClose?: () => HTMLElement | null | undefined }) {
+  const returnFocus = useReturnFocus(open, focusOnClose)
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -80,8 +82,8 @@ export function Drawer({ open, onOpenChange, title, description, chip, children,
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               {eyebrow && <div className="eyebrow text-[0.6875rem] text-muted">{eyebrow}</div>}
               {chip && <div className="flex flex-wrap gap-2">{chip}</div>}
-              <Dialog.Title className="text-[1.375rem] font-extrabold title-tight">{title}</Dialog.Title>
-              {description ? <Dialog.Description className="text-[0.875rem] text-ink-soft">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
+              <Dialog.Title className="text-[1.625rem] font-extrabold title-tight">{title}</Dialog.Title>
+              {description ? <Dialog.Description className="text-[0.9375rem] text-ink-soft">{description}</Dialog.Description> : <Dialog.Description className="sr-only">{title}</Dialog.Description>}
             </div>
             <Dialog.Close className="-mr-2 rounded-full p-2 text-muted hover:bg-paper-soft hover:text-ink" aria-label="Fechar painel">
               <X className="size-5" aria-hidden />

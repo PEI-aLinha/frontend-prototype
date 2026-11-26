@@ -9,23 +9,28 @@ interface FieldProps {
   hint?: ReactNode
   error?: string
   optional?: boolean
+  /** Glossary help (a Term) next to the label: kept outside <label> so the control's name stays just the label. */
+  term?: ReactNode
   /** `required` is true unless the field is optional: pass it on as aria-required (WCAG 3.3.2). */
   children: (props: { id: string; describedBy?: string; invalid: boolean; required: boolean }) => ReactNode
   className?: string
 }
 
 /** Etiqueta SemiBold 13 ink-soft por cima (gap 6), ajuda e erro por baixo. */
-export function Field({ label, hint, error, optional, children, className }: FieldProps) {
+export function Field({ label, hint, error, optional, term, children, className }: FieldProps) {
   const id = useId()
   const hintId = hint ? `${id}-hint` : undefined
   const errorId = error ? `${id}-error` : undefined
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined
   return (
     <div className={cn('flex min-w-0 flex-col gap-1.5', className)}>
-      <label htmlFor={id} className="text-[0.8125rem] font-semibold text-ink-soft">
-        {label}
-        {optional && <span className="font-normal text-muted"> (opcional)</span>}
-      </label>
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <label id={`${id}-label`} htmlFor={id} className="text-[0.8125rem] font-semibold text-ink-soft">
+          {label}
+          {optional && <span className="font-normal text-muted"> (opcional)</span>}
+        </label>
+        {term && <span className="text-[0.8125rem] text-muted">{term}</span>}
+      </div>
       {children({ id, describedBy, invalid: !!error, required: !optional })}
       {hint && !error && <p id={hintId} className="text-[0.8125rem] text-muted">{hint}</p>}
       {error && <p id={errorId} role="alert" className="text-[0.8125rem] font-semibold text-danger">{error}</p>}
@@ -68,6 +73,8 @@ export function Select({ id, value, onChange, options, placeholder = 'Escolherâ€
       <RSelect.Trigger
         id={id}
         aria-label={ariaLabel}
+        // Inside a Field the label carries `${id}-label`: name the custom trigger by it, as a native select would be.
+        aria-labelledby={ariaLabel || !id ? undefined : `${id}-label`}
         aria-describedby={describedBy}
         aria-invalid={invalid || undefined}
         aria-required={required || undefined}
@@ -82,7 +89,7 @@ export function Select({ id, value, onChange, options, placeholder = 'Escolherâ€
         <RSelect.Content position="popper" sideOffset={6} className="z-[80] max-h-[320px] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[12px] border border-line-soft bg-paper shadow-[0_12px_32px_rgb(var(--shadow-rgb)/0.14)] animate-pop-in">
           <RSelect.Viewport className="p-1.5">
             {options.map((o) => (
-              <RSelect.Item key={o.value} value={o.value} className="flex cursor-pointer items-start gap-2 rounded-[8px] px-3 py-2 text-[0.875rem] text-ink outline-none data-[highlighted]:bg-paper-soft data-[state=checked]:font-bold data-[state=checked]:text-brand">
+              <RSelect.Item key={o.value} value={o.value} className="flex cursor-pointer items-start gap-2 rounded-[8px] px-3 py-2 text-[0.9375rem] text-ink outline-none data-[highlighted]:bg-paper-soft data-[state=checked]:font-bold data-[state=checked]:text-brand">
                 <span className="flex-1">
                   <RSelect.ItemText>{o.label}</RSelect.ItemText>
                   {o.hint && <span className="block text-[0.75rem] font-normal text-muted">{o.hint}</span>}

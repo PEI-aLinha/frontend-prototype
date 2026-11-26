@@ -291,6 +291,13 @@ export interface AssetFilter {
   ownerId?: Id
 }
 
+/** What a removal took with it, so it can be undone exactly: same id, same risk links, same dependants. */
+export interface DeletedAsset {
+  asset: Asset
+  riskIds: Id[]
+  dependantIds: Id[]
+}
+
 export interface AssetsApi {
   listServices(org: Id): Promise<CriticalService[]>
   saveService(org: Id, input: Omit<CriticalService, 'id' | 'organizationId'>, id?: Id): Promise<CriticalService>
@@ -298,7 +305,8 @@ export interface AssetsApi {
   listAssets(org: Id): Promise<Asset[]>
   getAsset(org: Id, id: Id): Promise<Asset>
   saveAsset(org: Id, input: AssetInput, id?: Id): Promise<Asset>
-  deleteAsset(org: Id, id: Id): Promise<void>
+  deleteAsset(org: Id, id: Id): Promise<DeletedAsset>
+  restoreAsset(org: Id, removed: DeletedAsset): Promise<Asset>
   importAssets(org: Id, inputs: AssetInput[]): Promise<Asset[]>
   bulkUpdateAssets(org: Id, ids: Id[], change: AssetBulkChange): Promise<void>
   bulkDeleteAssets(org: Id, ids: Id[]): Promise<void>
@@ -425,6 +433,8 @@ export interface AssessmentApi {
   proposeAction(org: Id, input: ProposeActionInput): Promise<RemediationAction>
   getRoadmapStatus(org: Id): Promise<RoadmapStatus>
   validateRoadmap(org: Id): Promise<RoadmapStatus>
+  /** Consultant only: takes the validation back so the plan can be changed; the client loses the read-only view until it is validated again. */
+  reopenRoadmap(org: Id, reason: string): Promise<RoadmapStatus>
   listPortfolio(): Promise<PortfolioClient[]>
   listQuestions(org: Id, sectionId: Id): Promise<AssessmentQuestion[]>
   /** Saves the designated manager's answer; the progress is kept between visits. */

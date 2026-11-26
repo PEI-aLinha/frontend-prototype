@@ -39,7 +39,7 @@ export function LiveLevel({ probability, impact, label = 'Nível de risco', comp
     <div aria-live="polite" className={cn('flex items-center justify-between gap-3 rounded-[14px] border border-dashed border-line px-4', compact ? 'py-2.5' : 'py-3.5')}>
       <div>
         <p className="eyebrow text-[0.6875rem] text-muted">{label} · calculado pelo sistema</p>
-        <p className="mt-0.5 text-[0.875rem] font-semibold">{ready ? describeRule(probability, impact) : 'Escolha a probabilidade e o impacto'}</p>
+        <p className="mt-0.5 text-[0.9375rem] font-semibold">{ready ? describeRule(probability, impact) : 'Escolha a probabilidade e o impacto'}</p>
         {result && !compact && <p className="text-[0.75rem] text-muted">Regra: probabilidade × impacto = {probability} × {impact} = {result.score}</p>}
       </div>
       {result ? <RiskLevelBadge level={result.level} size="lg" /> : <span className="text-[0.8125rem] text-muted">—</span>}
@@ -53,10 +53,10 @@ function IdentifyFields({ values: v, onChange, errors, assets }: StepProps) {
   const set = <K extends keyof RiskFormValues>(k: K, val: RiskFormValues[K]) => onChange({ ...v, [k]: val })
   return (
     <div className="flex flex-col gap-5">
-      <Field label={<><Term k="ativo">Ativo</Term> afetado</>} optional hint={v.assetId === NO_ASSET ? 'Sem ativo: o risco é sobre a organização no seu todo.' : undefined}>
+      <Field label="Ativo afetado" term={<Term k="ativo" icon>O que é?</Term>} optional hint={v.assetId === NO_ASSET ? 'Sem ativo: o risco é sobre a organização no seu todo.' : undefined}>
         {(p) => <Select id={p.id} value={v.assetId} onChange={(x) => set('assetId', x)} options={[{ value: NO_ASSET, label: 'Sem ativo concreto' }, ...assets.map((a) => ({ value: a.id, label: a.name, hint: ASSET_TYPE_LABEL[a.type] }))]} />}
       </Field>
-      <Field label={<Term k="ameaca" />} error={errors.threat} hint="O que pode correr mal, em poucas palavras.">
+      <Field label="Ameaça" term={<Term k="ameaca" icon>O que é?</Term>} error={errors.threat} hint="O que pode correr mal, em poucas palavras.">
         {(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={v.threat} onChange={(e) => set('threat', e.target.value)} placeholder="Ex.: Ransomware no servidor de produção" />}
       </Field>
       <Field label="Descrição" optional hint="O que pode acontecer e porquê. Para a equipa técnica.">
@@ -104,7 +104,7 @@ function TreatFields({ values: v, onChange, errors, assets, actions }: StepProps
       )}
 
       <div className="flex flex-col gap-3 rounded-[14px] bg-paper-soft p-4">
-        <label className="flex cursor-pointer items-center gap-2.5 text-[0.875rem] font-semibold">
+        <label className="flex cursor-pointer items-center gap-2.5 text-[0.9375rem] font-semibold">
           <input type="checkbox" checked={v.hasResidual} onChange={(e) => set('hasResidual', e.target.checked)} className="size-4 accent-[var(--color-brand)]" />
           Indicar o <Term k="riscoResidual">risco residual</Term> previsto <span className="font-normal text-muted">(opcional)</span>
         </label>

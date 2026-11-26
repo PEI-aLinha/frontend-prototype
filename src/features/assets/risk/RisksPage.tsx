@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ArrowRight, Download, FileSpreadsheet, Plus, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Download, FileSpreadsheet, Plus, ArrowUp } from 'lucide-react'
 import type { Level, Risk } from '../../../api/contracts'
 import { useActions, useAssets, useRiskLinks, useRisks, useRoadmapStatus, useToday, useUsers } from '../../../api/queries'
 import { RISK_MATRIX } from '../../../config/riskMatrix'
-import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from '../../../config/labels'
+import { RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
 import { PageTour } from '../../../core/onboarding/PageTour'
 import {
-  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, StatCard, useToast,
-  type ColumnDef,
+  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, useToast,
+  cn, type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
 import { RiskEditDrawer, RiskReadDrawer } from './RiskDrawer'
@@ -106,32 +106,32 @@ export function RisksPage() {
         help={<PageTour id={editable ? 'riscos-consultor' : 'riscos-cliente'} ready={!!ready} />}
         actions={<>
           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! }, editable ? 'consultant' : 'client', org.slug)}>Exportar registo</Button>}
-          {can('create', 'risk') && <Button icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
           {editable && <Button variant="secondary" data-tour="risk-template" icon={<FileSpreadsheet className="size-4" aria-hidden />} onClick={() => downloadRiskTemplate().catch(() => toast.show('Não foi possível gerar o template. Tente outra vez.', 'error'))}>Template Excel</Button>}
-           {ready && all.length > 0 && <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => exportRiskRegister(all, { assets: assets.data!, users: users.data!, actions: actions.data!, links: links.data! }, 'client', org.slug)}>Exportar registo</Button>}
-           {/* With no risks yet, the empty state's button is the primary action; this one steps back. */}
-           {can('create', 'risk') && <Button variant={ready && all.length === 0 ? 'secondary' : 'primary'} data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
+          {/* With no risks yet, the empty state's button is the primary action; this one steps back. */}
+          {can('create', 'risk') && <Button variant={ready && all.length === 0 ? 'secondary' : 'primary'} data-tour="risk-new" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1', ativo: null })}>Novo risco</Button>}
         </>}
       />
 
       {raisedBy && (
         <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-brand/30 bg-signal-soft px-4 py-3 animate-pop-in" role="status">
-          <ShieldCheck className="size-5 text-brand" aria-hidden />
-          <p className="flex-1 text-[0.875rem] font-semibold text-brand">As ações ligadas ao risco "{raisedBy}" subiram no roadmap.</p>
-          <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[0.875rem] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
+          <ArrowUp className="size-5 text-brand" aria-hidden />
+          <p className="flex-1 text-[0.9375rem] font-semibold text-brand">As ações ligadas ao risco "{raisedBy}" subiram no roadmap.</p>
+          <Link to={`${base}/roadmap`} className="inline-flex items-center gap-1 text-[0.9375rem] font-bold text-brand hover:underline">Ver antes e depois <ArrowRight className="size-4" aria-hidden /></Link>
         </div>
       )}
       {!editable && <Note>Registo validado pela consultora{validator ? ` ${validator}` : ''}. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
-      {error ? <ErrorState error={error} onRetry={() => { risks.refetch(); links.refetch(); assets.refetch(); actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
+      {error ? <ErrorState error={error} onRetry={() => { void risks.refetch(); void links.refetch(); void assets.refetch(); void actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
         <>
           {nextAction}
-          {!editable && <Note>Registo validado pela consultora Marta Ferreira. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className={cn('grid gap-4', !editable && 'order-last')}>
             <Card aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5" data-tour="risk-matrix">
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-xs font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
-                {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
+                <p data-tour="risk-summary" className="num flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+                  {(['alto', 'medio', 'baixo'] as Level[]).map((l) => <span key={l} className="inline-flex items-center gap-1.5"><RiskLevelBadge level={l} /><b className="text-ink">{counts(l)}</b></span>)}
+                  {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
+                </p>
               </div>
               <div className="mb-3 flex flex-wrap items-center gap-3">
                 <Segmented ariaLabel="Mostrar risco" value={residual ? 'residual' : 'inerente'} onChange={(v) => update({ matriz: v === 'residual' ? 'residual' : null, p: null, i: null })}
@@ -145,14 +145,6 @@ export function RisksPage() {
                 count={(p, i) => all.filter((r) => pos(r).p === p && pos(r).i === i).length}
                 selected={cell} onSelect={(c) => update({ p: c ? String(c.probability) : null, i: c ? String(c.impact) : null })} compact />
             </Card>
-            <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1" data-tour="risk-summary">
-              <h2 id="risk-summary-title" className="sr-only">Resumo por nível{residual ? ' depois das ações' : ''}</h2>
-                {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
-                  <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)}
-                    className="max-md:px-3.5 max-md:py-3"
-                    accent={<span className="max-md:hidden"><RiskLevelBadge level={l} /></span>} />
-                ))}
-            </section>
           </div>
 
           <section aria-labelledby="risk-table-title" className="flex flex-col gap-3" data-tour="risk-table">
@@ -170,7 +162,7 @@ export function RisksPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{editable ? r.threat : r.plainLanguage ?? r.threat}</p>
                   <p className="text-[0.8125rem] text-ink-soft">{assetName(r.assetId)}</p>
-                  <p className="mt-1 text-[0.75rem] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} ações</p>
+                  <p className="mt-1 text-[0.75rem] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} {linkedActions(r).length === 1 ? 'ação' : 'ações'}</p>
                   {editable && r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado' && <p className="text-[0.75rem] font-bold text-risk-high-ink">Revisão atrasada</p>}
                 </div>
                 <RiskLevelBadge level={levelOf(r.probability, r.impact)} />
@@ -178,7 +170,7 @@ export function RisksPage() {
             )}
             empty={all.length === 0
               ? <EmptyState className="m-4" title="Ainda não há riscos registados" action={can('create', 'risk') && <Button onClick={() => update({ novo: '1' })}>Registar o primeiro risco</Button>}>Comece pelos ativos de criticidade alta.</EmptyState>
-              : <p className="px-5 py-8 text-center text-[0.875rem] text-ink-soft">Nenhum risco nesta célula da matriz.</p>}
+              : <p className="px-5 py-8 text-center text-[0.8125rem] text-ink-soft">Nenhum risco nesta célula da matriz.</p>}
           />
           </section>
           {cell && <p className="-mt-4 text-[0.8125rem] text-ink-soft">A mostrar {visible.length} de {all.length} riscos (filtro da matriz).</p>}

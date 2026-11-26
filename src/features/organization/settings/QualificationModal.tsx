@@ -76,7 +76,7 @@ export function QualificationModal({ suggested, today, current, onClose }: { sug
             <div className={cn('flex items-center gap-3 rounded-[12px] border px-4 py-3', errors.document ? 'border-danger' : 'border-line-soft')}>
               <FileText className="size-5 shrink-0 text-brand" aria-hidden />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[0.875rem] font-bold">{doc.name}</span>
+                <span className="block truncate text-[0.9375rem] font-bold">{doc.name}</span>
                 <span className="block text-[0.75rem] text-muted">{kb(doc.size)}</span>
               </span>
               <Button variant="link" size="sm" onClick={() => { setDoc(null); setFile(null) }}>{current ? 'Substituir' : 'Remover'}</Button>

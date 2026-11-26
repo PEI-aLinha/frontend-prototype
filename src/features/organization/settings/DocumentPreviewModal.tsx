@@ -17,7 +17,7 @@ export function DocumentPreviewModal({ org, q, onClose }: { org: Organization; q
       <Note>O protótipo não guarda ficheiros. No produto, abre o PDF que anexou.</Note>
       <article aria-label="Documento simulado" className="flex flex-col gap-5 rounded-[12px] border border-line-soft bg-paper-soft px-8 py-8 max-sm:px-5">
         <p className="eyebrow text-[0.6875rem] text-muted">Documento de exemplo</p>
-        <h3 className="text-[1.375rem] font-extrabold title-tight">Ato de Qualificação</h3>
+        <h3 className="text-[1.625rem] font-extrabold title-tight">Ato de Qualificação</h3>
         <dl className="grid gap-x-6 gap-y-2.5 sm:grid-cols-[140px_1fr]">
           {rows.map(([label, value]) => (
             <div key={label} className="contents">

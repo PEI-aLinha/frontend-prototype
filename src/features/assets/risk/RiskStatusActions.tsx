@@ -21,7 +21,7 @@ export function RiskStatusActions({ risk, onDone }: { risk: Risk; onDone: () => 
   if (risk.status === 'tratado' || risk.status === 'arquivado') {
     return (
       <div className="flex flex-col gap-2 rounded-[14px] bg-paper-soft p-4">
-        <p className="text-[0.875rem] font-bold">{risk.status === 'tratado' ? 'Este risco está tratado.' : `Arquivado: ${risk.archivedReason ?? ''}`}</p>
+        <p className="text-[0.9375rem] font-bold">{risk.status === 'tratado' ? 'Este risco está tratado.' : `Arquivado: ${risk.archivedReason ?? ''}`}</p>
         <p className="text-[0.8125rem] text-ink-soft">Se a situação mudou, reabra-o para voltar a avaliar.</p>
         <Button size="sm" variant="secondary" className="self-start" icon={<RotateCcw className="size-4" aria-hidden />} loading={set.isPending} onClick={() => run({ status: 'reaberto' }, 'Risco reaberto')}>Reabrir risco</Button>
       </div>
@@ -30,13 +30,13 @@ export function RiskStatusActions({ risk, onDone }: { risk: Risk; onDone: () => 
 
   return (
     <div className="flex flex-col gap-3 rounded-[14px] bg-paper-soft p-4">
-      <p className="text-[0.875rem] font-bold">Fechar o risco</p>
+      <p className="text-[0.9375rem] font-bold">Fechar o risco</p>
       <p className="text-[0.8125rem] text-ink-soft">Marque como tratado quando as ações ligadas estiverem feitas. Arquive se o risco deixou de existir (ex.: o equipamento foi abatido).</p>
       {archiving ? (
         <form noValidate className="flex flex-col gap-2" onSubmit={(e) => {
           e.preventDefault()
           if (reason.trim().length < 5) { setError('Explique em poucas palavras porque arquiva.'); return }
-          run({ status: 'arquivado', reason }, 'Risco arquivado')
+          void run({ status: 'arquivado', reason }, 'Risco arquivado')
         }}>
           <Field label="Motivo do arquivo" error={error}>{(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={reason} onChange={(e) => { setReason(e.target.value); setError(undefined) }} placeholder="Ex.: servidor desativado em novembro" autoFocus />}</Field>
           <div className="flex gap-2">

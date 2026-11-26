@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router'
+import { NotFoundPage } from './NotFoundPage'
 import { HomeRedirect } from './HomeRedirect'
 import { DesignPage } from './DesignPage'
 import { ClientLayout, ConsultantLayout } from './layouts'
@@ -46,7 +47,7 @@ export const router = createBrowserRouter([
           { path: 'tarefas/:taskId/pergunta', handle: { title: 'Pergunta técnica' }, element: <AnalystOnly><QuestionPage /></AnalystOnly> },
           { path: 'tarefas/:taskId/ativos', handle: { title: 'Registar ativos' }, element: <AnalystOnly><RegisterAssetsPage /></AnalystOnly> },
           { path: 'roadmap', handle: { title: 'Roadmap' }, element: <Guard resource="roadmap"><ConsultantRoadmap /></Guard> },
-          { path: 'riscos', handle: { title: 'Riscos' }, element: <Guard resource="risk" reason="O registo de riscos fica visível depois de a consultora validar o roadmap."><RisksPage /></Guard> },
+          { path: 'riscos', handle: { title: 'Riscos' }, element: <Guard resource="risk" reason="Os riscos são tratados pelo responsável designado e pela consultora. As suas tarefas estão em As minhas tarefas."><RisksPage /></Guard> },
           { path: 'avaliacao', handle: { title: 'Avaliação' }, element: <Guard resource="roadmap"><AssessmentPage /></Guard> },
           { path: 'avaliacao/:sectionId', handle: { title: 'Secção da avaliação' }, element: <Guard resource="roadmap"><SectionPage /></Guard> },
           { path: 'avaliacao/:sectionId/:questionId', handle: { title: 'Pergunta da avaliação' }, element: <Guard resource="roadmap"><AssessmentQuestionPage /></Guard> },
@@ -74,7 +75,7 @@ export const router = createBrowserRouter([
           { path: 'historico', handle: { title: 'Histórico' }, element: <HistoryPage /> },
         ],
       },
-      { path: '*', element: <HomeRedirect /> },
+      { path: '*', handle: { title: 'Página não encontrada' }, element: <NotFoundPage /> },
     ],
   },
 ])

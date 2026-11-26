@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
-import { CloudOff } from 'lucide-react'
+import { Link } from 'react-router'
+import { CloudOff, SearchX } from 'lucide-react'
+import { ApiError } from '../api/contracts'
 import { Button } from './Button'
 import { cn } from './cn'
 
-export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden className={cn('animate-pulse rounded-[8px] bg-paper-deep/70', className)} />
+export function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <div aria-hidden style={style} className={cn('animate-pulse rounded-[8px] bg-paper-deep/70', className)} />
 }
 
 export function SkeletonRows({ rows = 4, label = 'A carregar…' }: { rows?: number; label?: string }) {
@@ -29,13 +31,24 @@ export function EmptyState({ icon, title, children, action, className, headingLe
     <div className={cn('flex flex-col items-center gap-3 rounded-[16px] border border-dashed border-line px-6 py-12 text-center', className)}>
       {icon && <div className="grid size-11 place-items-center rounded-full bg-paper-soft text-ink-soft">{icon}</div>}
       <Heading className="text-[1.0625rem] font-bold">{title}</Heading>
-      {children && <div className="max-w-[440px] text-[0.875rem] text-ink-soft">{children}</div>}
+      {children && <div className="max-w-[440px] text-[0.9375rem] text-ink-soft">{children}</div>}
       {action && <div className="mt-1">{action}</div>}
     </div>
   )
 }
 
+/** A page or record that does not exist: retrying cannot help, so offer a way out instead. */
+export function NotFoundState({ headingLevel = 2, children }: { headingLevel?: 1 | 2 | 3; children?: ReactNode }) {
+  return (
+    <EmptyState headingLevel={headingLevel} icon={<SearchX className="size-5" aria-hidden />} title="Não encontrámos esta página"
+      action={<Link to="/" className="font-bold text-brand hover:underline">Ir para o início</Link>}>
+      {children ?? 'O endereço pode estar incompleto, ou o que procurava foi removido.'}
+    </EmptyState>
+  )
+}
+
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  if (error instanceof ApiError && error.status === 404) return <NotFoundState>{error.message}. O endereço pode estar incompleto, ou foi removido.</NotFoundState>
   const detail = error instanceof Error ? error.message : null
   return (
     <EmptyState icon={<CloudOff className="size-5" aria-hidden />} title="Não conseguimos carregar estes dados" action={onRetry && <Button variant="secondary" size="sm" onClick={onRetry}>Tentar de novo</Button>}>

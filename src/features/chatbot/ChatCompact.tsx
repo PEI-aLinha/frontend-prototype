@@ -45,7 +45,7 @@ export function ConversationBadges({ conversation: c, selected }: { conversation
       )}
       {c.unread && !selected && (
         <>
-          <span className="size-2 flex-none rounded-full bg-red-500" aria-hidden />
+          <span className="size-2 flex-none rounded-full bg-danger" aria-hidden />
           <span className="sr-only">novas mensagens</span>
         </>
       )}
@@ -74,7 +74,7 @@ export function RenameField({ initial, onDone, className }: { initial: string; o
         // Esc só cancela a edição: não deixa chegar ao atalho que minimiza o assistente
         if (e.key === 'Escape') { e.stopPropagation(); finish(null) }
       }}
-      className={`min-w-0 rounded-[8px] border border-brand bg-paper px-2.5 text-[0.8125rem] font-bold text-brand outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand ${className ?? ''}`}
+      className={`min-w-0 rounded-[8px] border border-brand bg-paper px-2.5 text-[0.8125rem] font-bold text-brand outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-signal ${className ?? ''}`}
     />
   )
 }
@@ -128,7 +128,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
               title={label}
               onClick={() => onSelect(c.id)}
               onDoubleClick={() => renamable && rename.start(c.id)}
-              className={`flex min-h-10 max-w-[170px] min-w-0 items-center gap-1.5 rounded-full pl-3.5 text-[0.8125rem] font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${conversations.length > 1 || (selected && renamable) ? 'pr-1.5' : 'pr-3.5'}`}
+              className={`flex min-h-10 max-w-[170px] min-w-0 items-center gap-1.5 rounded-full pl-3.5 text-[0.8125rem] font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal ${conversations.length > 1 || (selected && renamable) ? 'pr-1.5' : 'pr-3.5'}`}
             >
               <span className="truncate">{label}</span>
               <ConversationBadges conversation={c} selected={selected} />
@@ -139,7 +139,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
                 onClick={() => rename.start(c.id)}
                 aria-label={`Mudar o nome da conversa ${label}`}
                 title="Mudar o nome"
-                className={`flex size-9 flex-none items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-brand ${conversations.length > 1 ? '' : 'mr-1'}`}
+                className={`flex size-9 flex-none items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-signal ${conversations.length > 1 ? '' : 'mr-1'}`}
               >
                 <Pencil className="size-3.5" aria-hidden />
               </button>
@@ -149,7 +149,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
                 type="button"
                 onClick={() => onClose(c.id)}
                 aria-label={`Fechar conversa ${label}`}
-                className="mr-1 flex size-9 flex-none items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-brand"
+                className="mr-1 flex size-9 flex-none items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-2 focus-visible:outline-signal"
               >
                 <X className="size-3.5" aria-hidden />
               </button>
@@ -162,7 +162,7 @@ export function ConversationTabs({ conversations, activeId, canAdd, onSelect, on
           type="button"
           onClick={onAdd}
           aria-label="Nova conversa"
-          className="flex size-10 flex-none items-center justify-center rounded-full border border-dashed border-brand-soft bg-paper text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-brand"
+          className="flex size-10 flex-none items-center justify-center rounded-full border border-dashed border-brand-soft bg-paper text-brand hover:bg-paper-soft focus-visible:outline-2 focus-visible:outline-signal"
         >
           <Plus className="size-4" aria-hidden />
         </button>

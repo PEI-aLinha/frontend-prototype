@@ -5,8 +5,8 @@ test('Integrations — Rui asks Pedro, Pedro connects, Rui decides on the sugges
   await start(page, `${ORG}/integracoes`, 'rui', 'c2')
   await page.goto(`${ORG}/integracoes?as=rui`)
   const intune = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: 'Microsoft Intune' }) })
-  await intune.getByRole('button', { name: 'Pedir ao Pedro' }).click()
-  await expect(page.getByText('Pedido enviado ao Pedro Almeida')).toBeVisible()
+  await intune.getByRole('button', { name: 'Pedir ao técnico' }).click()
+  await expect(page.getByText('Pedido enviado a Pedro Almeida')).toBeVisible()
   await expect(intune.getByText('Pedido enviado', { exact: true })).toBeVisible()
   await shot(page, 'i-01-catalogo')
 
@@ -18,12 +18,14 @@ test('Integrations — Rui asks Pedro, Pedro connects, Rui decides on the sugges
   const dialog = page.getByRole('dialog', { name: 'Ligar Microsoft Intune' })
   await dialog.getByRole('button', { name: 'Continuar' }).click()
   const authorize = dialog.getByRole('button', { name: 'Autorizar acesso só de leitura' })
-  await expect(authorize).toBeDisabled()
+  // Authorizing without the confirmation says what is missing instead of doing nothing.
+  await authorize.click()
+  await expect(dialog.getByRole('alert')).toContainText('Confirme que é administrador')
   await dialog.getByLabel(/autorizo o aLinha/).check()
   await shot(page, 'i-02-autorizar')
   await authorize.click()
   await expect(dialog.getByText('Ligação feita. Primeira leitura concluída.')).toBeVisible()
-  await dialog.getByRole('button', { name: 'Ver o que foi encontrado' }).click()
+  await dialog.getByRole('button', { name: 'Concluir' }).click()
   await expect(page.getByText('Microsoft Intune ligado (só leitura)')).toBeVisible()
 
   await switchPersona(page, 'Rui Santos')

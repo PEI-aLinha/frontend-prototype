@@ -1,6 +1,6 @@
 import {
-  ApiError, type Api, type Asset, type AssetInput, type AuditEntry, type CriticalService, type DemoActor,
-  type Id, type RemediationAction, type Risk, type RiskInput, type Task, type User,
+  ALL_SERVICES, ApiError, type Api, type Asset, type AssetInput, type AuditEntry, type CriticalService, type DemoActor,
+  type DeletedAsset, type Id, type RemediationAction, type Risk, type RiskInput, type Task, type User,
 } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
@@ -33,6 +33,12 @@ function designatedManager(s: Readonly<DemoState>, org: Id): User | undefined {
 /** Base path of the organization's client area, e.g. "/org/componentes-agueda". */
 function orgPath(s: Readonly<DemoState>, org: Id): string {
   return `/org/${s.organizations.find((o) => o.id === org)?.slug ?? org}`
+}
+
+/** Only the consultant assigned to the organization acts on its roadmap (as listPortfolio shows them only theirs). */
+function requireAssignedConsultant(s: Readonly<DemoState>, org: Id, me: User): void {
+  requireOrg(s, org)
+  if (me.role !== 'consultor' || s.organizations.find((o) => o.id === org)?.consultantId !== me.id) deny()
 }
 
 function deny(): never {
@@ -103,7 +109,8 @@ export function createMockApi(getActor: ActorProvider): Api {
     },
 
     notifications: {
-      list: () => simulate(() => getState().notifications.filter((n) => n.userId === getActor().userId)),
+      // Newest first, whatever order they were created in.
+      list: () => simulate(() => getState().notifications.filter((n) => n.userId === getActor().userId).toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))),
       markRead: (id) => simulate(() => {
         setState((s) => ({ ...s, notifications: s.notifications.map((n) => (n.id === id && n.userId === getActor().userId ? { ...n, read: true } : n)) }))
       }),
@@ -230,11 +237,13 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       deleteAsset: (org, id) => simulate(() => {
+        let removed!: DeletedAsset
         if (actor().role !== 'responsavel') deny()
         write((s, me) => {
           const a = s.assets.find((x) => x.id === id)
           if (!a) throw new ApiError('Ativo não encontrado', 404)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'delete', entityType: 'asset', entityId: id, summary: `Removeu o ativo "${a.name}"`, before: pickAsset(a), after: null })
+          removed = { asset: a, riskIds: s.risks.filter((r) => r.assetId === id).map((r) => r.id), dependantIds: s.assets.filter((x) => x.dependsOn?.includes(id)).map((x) => x.id) }
           return {
             ...s,
             assets: s.assets.filter((x) => x.id !== id).map((x) => ({ ...x, dependsOn: x.dependsOn?.filter((d) => d !== id) })),
@@ -242,6 +251,41 @@ export function createMockApi(getActor: ActorProvider): Api {
             audit: [...s.audit, entry],
           }
         })
+        return removed
+      }),
+
+      restoreAsset: (org, removed) => simulate(() => {
+        const caller = actor()
+        if (caller.role !== 'responsavel' || caller.organizationId !== org) deny()
+        const { asset, riskIds, dependantIds } = removed
+        let result!: Asset
+        write((s, me) => {
+          requireOrg(s, org)
+          // The payload comes from the browser: it can only put back this organization's asset and links.
+          if (asset.organizationId !== org) throw new ApiError('Ativo não encontrado', 404)
+          if (s.assets.some((x) => x.id === asset.id)) throw new ApiError('O ativo já existe.', 409)
+          const ownRisk = new Set(s.risks.filter((r) => r.organizationId === org && riskIds.includes(r.id)).map((r) => r.id))
+          const ownDependant = new Set(s.assets.filter((x) => x.organizationId === org && dependantIds.includes(x.id)).map((x) => x.id))
+          const ownAsset = new Set(s.assets.filter((x) => x.organizationId === org).map((x) => x.id))
+          const { criticalServiceId, ownerId, taskId } = asset
+          // Every reference in the payload must still point at this organization's data; anything else is dropped.
+          const restoredAsset: Asset = {
+            ...asset,
+            dependsOn: asset.dependsOn?.filter((d) => ownAsset.has(d)),
+            criticalServiceId: criticalServiceId === null || criticalServiceId === ALL_SERVICES || s.services.some((x) => x.id === criticalServiceId && x.organizationId === org) ? criticalServiceId : null,
+            ownerId: ownerId && s.users.some((u) => u.id === ownerId && u.organizationId === org) ? ownerId : null,
+            taskId: taskId && s.tasks.some((t) => t.id === taskId && t.organizationId === org) ? taskId : undefined,
+          }
+          result = restoredAsset
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'create', entityType: 'asset', entityId: asset.id, summary: `Repôs o ativo "${asset.name}"`, before: null, after: pickAsset(restoredAsset) })
+          return {
+            ...s,
+            assets: [...s.assets.map((x) => (ownDependant.has(x.id) ? { ...x, dependsOn: [...(x.dependsOn ?? []), asset.id] } : x)), restoredAsset],
+            risks: s.risks.map((r) => (ownRisk.has(r.id) && r.assetId === null ? { ...r, assetId: asset.id } : r)),
+            audit: [...s.audit, entry],
+          }
+        })
+        return result
       }),
 
       listTasks: (org) => simulate(() => {
@@ -305,7 +349,12 @@ export function createMockApi(getActor: ActorProvider): Api {
           const assignee = s.users.find((u) => u.id === t.assigneeId)
           const summary = change.status === 'cancelada' ? `Cancelou a tarefa "${t.title}"` : `Mudou o prazo da tarefa "${t.title}" para ${shortDayPt(change.dueDate!)}`
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'update', entityType: 'task', entityId: id, summary, before: { dueDate: t.dueDate, status: t.status }, after: { dueDate: task.dueDate, status: task.status } })
-          const next = { ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }
+          let next = { ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }
+          // A withdrawn request to connect a system leaves it available again, as before the request.
+          if (change.status === 'cancelada' && t.kind === 'integracao' && t.provider && s.connections[t.provider]?.status === 'pedido') {
+            const provider = t.provider
+            next = { ...next, connections: Object.fromEntries(Object.entries(s.connections).filter(([k]) => k !== provider)) as typeof s.connections }
+          }
           return assignee ? notify(next, { organizationId: org, userId: assignee.id, kind: 'tarefa', title: change.status === 'cancelada' ? 'Tarefa cancelada' : 'Prazo alterado', body: change.status === 'cancelada' ? `${me.name} cancelou: ${t.title}.` : `${t.title} · novo prazo ${shortDayPt(change.dueDate!)}`, link: `${orgPath(s, org)}/tarefas` }) : next
         })
         return task
@@ -458,9 +507,11 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       validateRoadmap: (org) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        requireAssignedConsultant(getState(), org, actor())
         const current = getState().roadmap[org]
+        if (!current) throw new ApiError('Organização não encontrada', 404)
         if (current?.validated) return current
+        if (!current?.assessmentCompletedAt) throw new ApiError('A avaliação ainda não foi submetida.', 422)
         let status = current
         write((s, me) => {
           status = { ...s.roadmap[org], validated: true, validatedAt: now(), validatedBy: me.id }
@@ -473,11 +524,39 @@ export function createMockApi(getActor: ActorProvider): Api {
         return status
       }),
 
+      reopenRoadmap: (org, reason) => simulate(() => {
+        requireAssignedConsultant(getState(), org, actor())
+        if (!reason.trim()) throw new ApiError('Diga ao cliente porque reabre o roadmap.', 422)
+        const current = getState().roadmap[org]
+        if (!current) throw new ApiError('Organização não encontrada', 404)
+        if (!current.validated) return current
+        let status = current
+        write((s, me) => {
+          status = { ...s.roadmap[org], validated: false, validatedAt: null, validatedBy: null }
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'update', entityType: 'roadmap', entityId: org, summary: `Reabriu o roadmap: ${reason.trim()}`, before: { validated: true }, after: { validated: false } })
+          const portfolio = s.portfolio.map((p) => (p.organization.id === org ? { ...p, stage: 'Avaliação concluída', stageTone: 'signal' as const, nextStep: 'Rever e validar de novo o roadmap' } : p))
+          const owner = designatedManager(s, org)
+          const next = { ...s, roadmap: { ...s.roadmap, [org]: status }, portfolio, audit: [...s.audit, entry] }
+          return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'roadmap', title: 'Roadmap em revisão', body: `${me.name} reabriu o plano de ação: ${reason.trim()}`, link: `${orgPath(s, org)}/roadmap` }) : next
+        })
+        return status
+      }),
+
       listPortfolio: () => simulate(() => {
         const me = actor()
         if (me.role !== 'consultor') deny()
         // Each consultant only sees the organizations assigned to them.
-        return getState().portfolio.filter((p) => p.organization.consultantId === me.id)
+        // The phase is read from the same roadmap record the client's screens use, so both sides always agree.
+        const s = getState()
+        return s.portfolio.filter((p) => p.organization.consultantId === me.id).map((p) => {
+          const r = s.roadmap[p.organization.id]
+          if (!r || !p.organization.profile) return p
+          if (r.validated) return { ...p, stage: 'Roadmap validado', stageTone: 'neutral' as const, nextStep: p.stage === 'Roadmap validado' ? p.nextStep : 'Acompanhar ações de risco alto' }
+          if (r.assessmentCompletedAt) return { ...p, stage: 'Avaliação concluída', stageTone: 'signal' as const, nextStep: p.stage === 'Avaliação concluída' ? p.nextStep : 'Rever e validar o roadmap' }
+          // Earlier phases (just registered, answering) keep their own wording; only a later claim is corrected.
+          if (p.stage !== 'Avaliação concluída' && p.stage !== 'Roadmap validado') return p
+          return { ...p, stage: 'Avaliação em curso', stageTone: 'neutral' as const, nextStep: 'Esperar que o cliente submeta a avaliação' }
+        })
       }),
     },
   }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { CheckCircle2, CircleAlert, Plug, RefreshCw, ShieldCheck, Unplug, UserPlus } from 'lucide-react'
+import { CheckCircle2, CircleAlert, Plug, RefreshCw, KeyRound, Unplug, UserPlus } from 'lucide-react'
 import type { CollectedEvidence, IntegrationConnection, ProviderInfo } from '../../api/contracts'
-import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveries, useEvidence, useIntegrations, useServices, useSyncIntegration, useUsers } from '../../api/queries'
+import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveries, useEvidence, useIntegrations, useServices, useSyncIntegration, useTasks, useUpdateTask, useUsers } from '../../api/queries'
 import { dateTime, EVIDENCE_STRENGTH_LABEL } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
@@ -11,16 +11,8 @@ import { DiscoveryList } from './DiscoveryList'
 
 const STATUS: Record<IntegrationConnection['status'], string> = { disponivel: 'Por ligar', pedido: 'Pedido enviado', ligado: 'Ligado', erro: 'Erro' }
 
-const UNUSED_GROUP = 'Não usa'
-
-function groupByCategory(items: IntegrationConnection[]): { category: string; items: IntegrationConnection[] }[] {
-  const groups = new Map<string, IntegrationConnection[]>()
-  for (const item of items) {
-    const category = item.provider.applies ? item.provider.category : UNUSED_GROUP
-    groups.set(category, [...(groups.get(category) ?? []), item])
-  }
-  const entries = [...groups].map(([category, items]) => ({ category, items }))
-  return [...entries.filter((group) => group.category !== UNUSED_GROUP), ...entries.filter((group) => group.category === UNUSED_GROUP)]
+function sortByUse(items: IntegrationConnection[]): IntegrationConnection[] {
+  return [...items.filter((i) => i.provider.applies), ...items.filter((i) => !i.provider.applies)]
 }
 
 function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationConnection; onConnect: (p: ProviderInfo) => void; isOwner: boolean; canConnect: boolean }) {
@@ -30,10 +22,16 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   const sync = useSyncIntegration(org.id)
   const disconnect = useDisconnectIntegration(org.id)
   const assign = useAssignIntegration(org.id)
+  const cancelTask = useUpdateTask(org.id)
+  const tasks = useTasks(org.id)
   const [confirmOff, setConfirmOff] = useState(false)
   const analyst = users.data?.find((u) => u.role === 'analista')
   const assignee = users.data?.find((u) => u.id === c.assignedTo)
+  const { persona } = useSession()
   const on = c.status === 'ligado'
+  const forMe = c.status === 'pedido' && c.assignedTo === persona?.userId
+  const request = tasks.data?.find((t) => t.kind === 'integracao' && t.provider === c.provider.id && t.status === 'pendente')
+  const withdraw = (taskId: string, name: string) => cancelTask.mutate({ id: taskId, change: { status: 'cancelada' } }, { onSuccess: () => toast.show(`Pedido a ${name} cancelado`), onError: fail })
   const fail = (e: Error) => toast.show(e.message, 'error')
 
   return (
@@ -44,11 +42,11 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
             <Eyebrow>{c.provider.category}</Eyebrow>
              <h3 className="mt-1 text-base font-extrabold truncate">{c.provider.name}</h3>
            </div>
-           {c.provider.applies ? <Chip tone={on ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
+           {c.provider.applies ? <Chip tone={on || forMe ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{forMe ? 'Pedido para si' : STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
           </div>
           <p className="text-sm text-ink-soft">{c.provider.description}</p>
-          {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <Lock /> credencial no cofre</>}</p>}
-          {c.status === 'pedido' && assignee && <p className="text-xs text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
+          {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <VaultKey /> credencial no cofre</>}</p>}
+          {c.status === 'pedido' && assignee && <p className="text-xs text-muted">{assignee.id === persona?.userId ? 'Pedido a si: autorize a ligação aqui.' : `Pedido a ${assignee.name}, que recebe uma tarefa para autorizar.`}</p>}
         {c.provider.applies && (
           <div className="mt-auto flex flex-wrap gap-2 pt-1">
             {on ? (
@@ -60,8 +58,14 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
               </>
             ) : (
               <>
-                {canConnect && <Button size="sm" icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>Ligar</Button>}
-                {isOwner && analyst && c.status !== 'pedido' && <Button size="sm" variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} loading={assign.isPending} onClick={() => assign.mutate({ provider: c.provider.id, userId: analyst.id }, { onSuccess: () => toast.show(`Pedido enviado ao ${analyst.name}`), onError: fail })}>Pedir ao {analyst.name.split(' ')[0]}</Button>}
+                {/* The responsible person is rarely the system's administrator: asking the technician comes first. */}
+                {isOwner && analyst && c.status !== 'pedido' && <Button size="sm" variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} loading={assign.isPending}
+                  onClick={() => assign.mutate({ provider: c.provider.id, userId: analyst.id }, {
+                    onSuccess: (task) => toast.show(`Pedido enviado a ${analyst.name}`, 'success', { label: 'Anular', onClick: () => withdraw(task.id, analyst.name) }),
+                    onError: fail,
+                  })}>Pedir ao técnico</Button>}
+                {canConnect && <Button size="sm" variant={isOwner && analyst ? 'ghost' : 'primary'} icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>{isOwner && analyst ? 'Ligar eu' : 'Ligar'}</Button>}
+                {isOwner && c.status === 'pedido' && request && assignee && <Button size="sm" variant="ghost" loading={cancelTask.isPending} onClick={() => withdraw(request.id, assignee.name)}>Cancelar pedido</Button>}
               </>
             )}
           </div>
@@ -71,8 +75,8 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   )
 }
 
-function Lock() {
-  return <ShieldCheck className="inline size-3.5 align-[-2px]" aria-hidden />
+function VaultKey() {
+  return <KeyRound className="inline size-3.5 align-[-2px]" aria-hidden />
 }
 
 function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; providerName: (p: CollectedEvidence['provider']) => string }) {
@@ -94,6 +98,37 @@ function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; pro
 }
 
 /** Integrations with the company's systems (RF37 / US37). Read-only; a human decides what gets in. */
+/** The usual case in one click: the technician is asked for every system the company uses and nobody has asked for yet. */
+function AskAll({ items }: { items: IntegrationConnection[] }) {
+  const org = useTenant()
+  const toast = useToast()
+  const users = useUsers(org.id)
+  const assign = useAssignIntegration(org.id)
+  const cancelTask = useUpdateTask(org.id)
+  const [busy, setBusy] = useState(false)
+  const analyst = users.data?.find((u) => u.role === 'analista')
+  const open = items.filter((c) => c.provider.applies && (c.status === 'disponivel' || c.status === 'erro'))
+  if (!analyst || open.length < 2) return null
+  const askAll = () => {
+    setBusy(true)
+    Promise.all(open.map((c) => assign.mutateAsync({ provider: c.provider.id, userId: analyst.id })))
+      .then((tasks) => toast.show(`${tasks.length} pedidos enviados a ${analyst.name}`, 'success', {
+        label: 'Anular',
+        onClick: () => Promise.all(tasks.map((t) => cancelTask.mutateAsync({ id: t.id, change: { status: 'cancelada' } })))
+          .then(() => toast.show('Pedidos cancelados'))
+          .catch((e: Error) => toast.show(e.message, 'error')),
+      }))
+      .catch((e: Error) => toast.show(e.message, 'error'))
+      .finally(() => setBusy(false))
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
+      <p className="min-w-0 flex-1 text-sm text-ink-soft">{open.length} sistemas por ligar. Quem os administra costuma ser o técnico, {analyst.name}: recebe uma tarefa para cada um.</p>
+      <Button size="sm" icon={<UserPlus className="size-4" aria-hidden />} loading={busy} onClick={askAll}>Pedir tudo ao técnico</Button>
+    </div>
+  )
+}
+
 export function IntegrationsPage() {
   const org = useTenant()
   const { persona } = useSession()
@@ -111,20 +146,16 @@ export function IntegrationsPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
-      {error ? <ErrorState error={error} onRetry={() => { integrations.refetch(); discoveries.refetch(); evidence.refetch() }} /> : !integrations.data ? <SkeletonRows rows={4} /> : (
+      <PageHeader title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
+      {error ? <ErrorState error={error} onRetry={() => { void integrations.refetch(); void discoveries.refetch(); void evidence.refetch() }} /> : !integrations.data ? <SkeletonRows rows={4} /> : (
         <>
           {!isConsultant && (
             <section aria-labelledby="int-catalog" className="flex flex-col gap-3">
               <h2 id="int-catalog" className="text-lg font-extrabold">{persona.role === 'analista' ? 'Pedidos para si' : 'Sistemas disponíveis'}</h2>
               {integrations.data.length === 0
                 ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-sm text-ink-soft">Não tem integrações para ligar.</p>
-                : groupByCategory(integrations.data).map(({ category, items }) => (
-                  <div key={category} className="flex flex-col gap-2">
-                    <h3 className="text-sm font-extrabold uppercase tracking-wide text-muted">{category}</h3>
-                    <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{items.map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>
-                  </div>
-                ))}
+                // One grid: each card already names its category, and the ones the company does not use come last.
+                : <>{isOwner && <AskAll items={integrations.data} />}<ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{sortByUse(integrations.data).map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul></>}
             </section>
           )}
           {isOwner && (
@@ -139,10 +170,11 @@ export function IntegrationsPage() {
               <EvidenceList items={evidence.data ?? []} providerName={providerName} />
             </section>
           )}
-          <Note>Todas as ligações são só de leitura. As credenciais ficam num cofre cifrado (OpenBao) e nunca aparecem no ecrã. Cada ligação, leitura e decisão fica no histórico.</Note>
+          <Note>Todas as ligações são só de leitura. As credenciais ficam guardadas cifradas e nunca aparecem no ecrã. Cada ligação, leitura e decisão fica no histórico.</Note>
         </>
       )}
-      <ConnectModal key={connecting?.id ?? 'none'} provider={connecting} open={!!connecting} onClose={() => setConnecting(null)} />
+      <ConnectModal key={connecting?.id ?? 'none'} provider={connecting} open={!!connecting} canReview={isOwner}
+        onClose={(review) => { setConnecting(null); if (review) requestAnimationFrame(() => document.getElementById('int-disc')?.scrollIntoView({ block: 'start' })) }} />
     </>
   )
 }

@@ -72,14 +72,17 @@ export function RegisterOrganizationPage() {
         const name = account!.name.trim()
         const parts = name.split(/\s+/)
         signInAs('rui', { userId: org.registeredBy!, name, firstName: parts[0], initials: (parts[0][0] + (parts.length > 1 ? parts.at(-1)![0] : '')).toUpperCase() })
-        navigate('/registo/concluido')
+        void navigate('/registo/concluido')
       },
     })
   }
 
   const saveForLater = () => {
     setOrganization(form)
-    toast.show('Guardado. Pode fechar a página e continuar mais tarde a partir daqui.')
+    // Say how far along the draft is, so saving an empty form is not mistaken for progress.
+    const fields = Object.values(form).filter((v) => typeof v === 'string')
+    const filled = fields.filter((v) => v.trim()).length
+    toast.show(`Guardado: ${filled} de ${fields.length} campos preenchidos. Pode continuar mais tarde a partir daqui.`)
   }
 
   const text = (key: keyof OrganizationForm, extra: Partial<Parameters<typeof TextInput>[0]> = {}) => (p: { id: string; describedBy?: string; invalid: boolean; required: boolean }) => (
@@ -92,7 +95,7 @@ export function RegisterOrganizationPage() {
         <StepBadge>Passo 3 de 3</StepBadge>
         <h1 className="text-[1.875rem] font-extrabold title-tight">Registe a sua organização</h1>
         <p className="text-[1rem] text-ink-soft">Com estes dados indicamos que leis se aplicam à empresa. Encontra a maioria na certidão permanente.</p>
-        <p className="text-[0.875rem] text-ink-soft">Todos os campos são obrigatórios.</p>
+        <p className="text-[0.8125rem] text-ink-soft">Todos os campos são obrigatórios.</p>
       </header>
 
       {restored && organization && <Note>Retomámos o registo que deixou a meio. Confirme os dados e termine quando quiser.</Note>}
