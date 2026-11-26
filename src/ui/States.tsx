@@ -3,8 +3,8 @@ import { CloudOff } from 'lucide-react'
 import { Button } from './Button'
 import { cn } from './cn'
 
-export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden className={cn('animate-pulse rounded-[8px] bg-paper-deep/70', className)} />
+export function Skeleton({ className, style }: { className?: string; style?: React.CSSProperties }) {
+  return <div aria-hidden style={style} className={cn('animate-pulse rounded-[8px] bg-paper-deep/70', className)} />
 }
 
 export function SkeletonRows({ rows = 4, label = 'A carregar…' }: { rows?: number; label?: string }) {
