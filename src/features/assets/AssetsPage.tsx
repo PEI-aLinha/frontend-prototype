@@ -121,7 +121,7 @@ export function AssetsPage() {
     <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>
   ) : (
     <>
-      {can('assign', 'asset_task') && analysts.length > 0 && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
+      {can('assign', 'asset_task') && analysts.length > 0 && state === 'done' && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
       {can('create', 'asset') && <Button data-tour="asset-add" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1' })}>Adicionar ativo</Button>}
     </>
   )
@@ -131,12 +131,12 @@ export function AssetsPage() {
       assigned={state === 'assigned'}
       title={task?.scope ?? 'Servidores, rede e sistemas de produção'}
       text={state === 'assigned'
-        ? `Registo atribuído ao ${analystName}. ${byAnalyst.length ? `${byAnalyst.length} de ${task?.expectedCount ?? 4} já registados.` : 'Aparece aqui quando ele os registar.'}`
-        : analysts.length ? `Ainda não registados. O ${analysts[0].name.split(' ')[0]} conhece estes sistemas: atribua-lhe o registo.` : 'Ainda não registados. Convide o técnico de informática que conhece estes sistemas e atribua-lhe o registo.'}
+        ? `Registo atribuído a ${analystName}. ${byAnalyst.length ? `${byAnalyst.length} de ${task?.expectedCount ?? 4} já registados.` : 'Os ativos aparecem aqui à medida que forem registados.'}`
+        : analysts.length ? `Ainda não registados. ${analysts[0].name.split(' ')[0]} conhece estes sistemas: atribua-lhe o registo.` : 'Ainda não registados. Convide o técnico de informática que conhece estes sistemas e atribua-lhe o registo.'}
       action={state === 'assigned' && task
         ? <Chip>Atribuído{task.dueDate ? ` · até ${shortDay(task.dueDate)}` : ''}</Chip>
         : analysts.length
-          ? <Button variant="secondary" onClick={() => update({ atribuir: '1' })}>Atribuir ao {analysts[0].name.split(' ')[0]}</Button>
+          ? <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir a {analysts[0].name.split(' ')[0]}</Button>
           : <Link to={`/org/${org.slug}/equipa?convidar=1`} className={buttonClass({ variant: 'secondary' })}>Convidar analista</Link>}
     />
   )
@@ -154,7 +154,7 @@ export function AssetsPage() {
           <dl data-tour="asset-summary" className="flex flex-wrap items-baseline gap-x-6 gap-y-2 text-[0.9375rem]" aria-label="Resumo do inventário">
             <div className="flex items-baseline gap-1.5">
               <dt className="sr-only">Ativos registados</dt>
-              <dd><strong className="font-extrabold">{data.assets.length} {data.assets.length === 1 ? 'ativo' : 'ativos'}</strong> <span className="text-ink-soft">{byAnalyst.length && analystName ? `· ${byAnalyst.length} registados pelo ${analystName}` : consultant ? '· registados pelo cliente' : '· registados por si'}</span></dd>
+              <dd><strong className="font-extrabold">{data.assets.length} {data.assets.length === 1 ? 'ativo' : 'ativos'}</strong> <span className="text-ink-soft">{byAnalyst.length && analystName ? `· ${byAnalyst.length} registados por ${analystName}` : consultant ? '· registados pelo cliente' : '· registados por si'}</span></dd>
             </div>
             <div className="flex items-baseline gap-1.5">
               <dt className="sr-only">Serviços críticos</dt>
@@ -164,10 +164,13 @@ export function AssetsPage() {
                 </Button>
               </dd>
             </div>
-            <div className="flex items-baseline gap-1.5">
-              <dt className="sr-only">Por registar</dt>
-              <dd className="text-ink-soft">{state === 'done' ? 'Inventário completo' : `Por registar: ${task?.scope ?? 'servidores, rede e sistemas de produção'}`}</dd>
-            </div>
+            {/* What is still missing is said once, in the row under the table that also offers the action. */}
+            {state === 'done' && (
+              <div className="flex items-baseline gap-1.5">
+                <dt className="sr-only">Estado</dt>
+                <dd className="text-ink-soft">Inventário completo</dd>
+              </div>
+            )}
           </dl>
           {/* File actions sit with the summary they act on, not in the filter row. */}
           {(!consultant || can('create', 'asset')) && data.assets.length > 0 && (
@@ -210,9 +213,9 @@ export function AssetsPage() {
           <AssetDrawer key={`new-${params.get('novo')}`} inventory={data} asset={null} mode="new" open={params.get('novo') === '1'} onClose={() => update({ novo: null })} />
           <AssetDrawer key={selected?.id ?? 'none'} inventory={data} asset={selected} mode="view" open={!!selected} onClose={() => update({ ativo: null })} />
           <ServicesDrawer open={params.get('servicos') === '1'} onClose={() => update({ servicos: null })} inventory={data} />
-          {can('create', 'asset') && <ImportModal key={String(params.get('importar'))} open={params.get('importar') === '1'} onClose={() => update({ importar: null })} inventory={data} />}
+          {can('create', 'asset') && <ImportModal key={`import-${params.get('importar')}`} open={params.get('importar') === '1'} onClose={() => update({ importar: null })} inventory={data} />}
           <ExportModal open={params.get('exportar') === '1'} onClose={() => update({ exportar: null })} inventory={data} />
-          {can('assign', 'asset_task') && <AssignTaskModal key={String(params.get('atribuir'))} open={params.get('atribuir') === '1'} onClose={() => update({ atribuir: null })} analysts={analysts} />}
+          {can('assign', 'asset_task') && <AssignTaskModal key={`assign-${params.get('atribuir')}`} open={params.get('atribuir') === '1'} onClose={() => update({ atribuir: null })} analysts={analysts} />}
         </>
       )}
     </>

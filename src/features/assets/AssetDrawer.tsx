@@ -8,7 +8,7 @@ import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  Avatar, Button, CriticalityChip, Drawer, Field, HistoryList, Note, RiskLevelBadge, Tabs, TextArea, useToast, type TabDef,
+  Avatar, Button, CriticalityChip, DiscardDialog, Drawer, focusFirstInvalid, Field, HistoryList, Note, RiskLevelBadge, Tabs, TextArea, useToast, type TabDef,
 } from '../../ui'
 import { AssetFields, FormShell } from './AssetForm'
 import { emptyValues, toInput, valuesFromAsset } from './assetFormModel'
@@ -36,9 +36,14 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
   const editable = mode === 'new' ? can('create', 'asset') : can('edit', 'asset')
   const form = useAssetForm(asset ? valuesFromAsset(asset) : emptyValues({ ownerId: 'u-rui' }))
   const owners = inventory.users.filter((u) => u.role !== 'consultor')
+  const [initial] = useState(form.values)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const dirty = editable && JSON.stringify(form.values) !== JSON.stringify(initial)
+  const requestClose = () => (dirty ? setConfirmDiscard(true) : onClose())
+  const discard = <DiscardDialog open={confirmDiscard} isNew={mode === 'new'} what="o novo ativo" onKeep={() => setConfirmDiscard(false)} onDiscard={() => { setConfirmDiscard(false); onClose() }} />
 
   const submit = () => {
-    if (!form.check()) return
+    if (!form.check()) { focusFirstInvalid('asset-form'); return }
     save.mutate({ input: toInput(form.values, asset?.taskId), id: asset?.id }, {
       onSuccess: (a) => { toast.show(mode === 'new' ? `Ativo "${a.name}" registado` : 'Alterações guardadas'); onClose() },
       onError: (e) => toast.show(e.message, 'error'),
@@ -47,22 +52,19 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
 
   const doDelete = () => {
     if (!asset) return
-    remove.mutate(asset.id, {
-      onSuccess: (removed) => {
-        // Say what the removal touched, so "Anular" is an informed choice, and put it all back if chosen.
-        const risks = removed.riskIds.length
-        const touched = risks ? ` · ${risks} ${risks === 1 ? 'risco ficou' : 'riscos ficaram'} sem ativo` : ''
-        toast.show(`"${asset.name}" removido${touched}`, 'success', {
-          label: 'Anular',
-          onClick: () => restore.mutate(removed, {
-            onSuccess: () => toast.show(`"${asset.name}" reposto`),
-            onError: (e) => toast.show(e.message, 'error'),
-          }),
-        })
-        onClose()
-      },
-      onError: (e) => toast.show(e.message, 'error'),
-    })
+    // mutateAsync: closing the drawer unmounts it, and mutate() callbacks would be dropped.
+    remove.mutateAsync(asset.id).then((removed) => {
+      // Say what the removal touched, so "Anular" is an informed choice, and put it all back if chosen.
+      const risks = removed.riskIds.length
+      const touched = risks ? ` · ${risks} ${risks === 1 ? 'risco ficou' : 'riscos ficaram'} sem ativo` : ''
+      toast.show(`"${asset.name}" removido${touched}`, 'info', {
+        label: 'Anular',
+        onClick: () => restore.mutateAsync(removed)
+          .then(() => toast.show(`"${asset.name}" reposto`))
+          .catch((e: Error) => toast.show(e.message, 'error')),
+      })
+      onClose()
+    }).catch((e: Error) => toast.show(e.message, 'error'))
   }
 
   const formBody = (
@@ -73,10 +75,10 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
 
   if (mode === 'new') {
     return (
-      <Drawer open={open} onOpenChange={(o) => !o && onClose()} eyebrow="Inventário de ativos" title="Adicionar ativo" description="Registe um sistema, equipamento ou serviço de que a empresa depende."
-        footer={<><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button type="submit" form="asset-form" loading={save.isPending}>Guardar ativo</Button></>}>
+      <>{discard}<Drawer open={open} onOpenChange={(o) => !o && requestClose()} eyebrow="Inventário de ativos" title="Adicionar ativo" description="Registe um sistema, equipamento ou serviço de que a empresa depende."
+        footer={<><Button variant="secondary" onClick={requestClose}>Cancelar</Button><Button type="submit" form="asset-form" loading={save.isPending}>Guardar ativo</Button></>}>
         {formBody}
-      </Drawer>
+      </Drawer></>
     )
   }
   if (!asset) return null
@@ -90,17 +92,17 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
   if (can('view', 'history')) tabs.push({ value: 'historico', label: 'Histórico', content: <AssetHistory asset={asset} inventory={inventory} /> })
 
   return (
-    <Drawer open={open} onOpenChange={(o) => !o && onClose()} eyebrow={`${ASSET_TYPE_LABEL[asset.type]} · ${inventory.serviceName(asset.criticalServiceId)}`} title={asset.name}
+    <>{discard}<Drawer open={open} onOpenChange={(o) => !o && requestClose()} eyebrow={`${ASSET_TYPE_LABEL[asset.type]} · ${inventory.serviceName(asset.criticalServiceId)}`} title={asset.name}
       chip={<><CriticalityChip level={asset.criticality} />{inventory.topRisk(asset.id) && <RiskLevelBadge level={inventory.topRisk(asset.id)!} prefix="Risco " />}</>}
       footer={editable ? (
         <>
           {can('delete', 'asset') && <Button variant="ghost" className="mr-auto max-sm:mr-0" onClick={doDelete} loading={remove.isPending}>Remover</Button>}
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+          <Button variant="secondary" onClick={requestClose}>Cancelar</Button>
           <Button type="submit" form="asset-form" loading={save.isPending}>Guardar alterações</Button>
         </>
       ) : undefined}>
       <Tabs tabs={tabs} />
-    </Drawer>
+    </Drawer></>
   )
 }
 

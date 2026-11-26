@@ -23,7 +23,7 @@ export function AssignTaskModal({ open, onClose, analysts }: { open: boolean; on
     assign.mutate({ assigneeId: assignee, title: scope.trim(), dueDate: due }, {
       onSuccess: () => {
         const who = analysts.find((a) => a.id === assignee)?.name
-        toast.show(`Tarefa enviada ao ${who}`)
+        toast.show(`Tarefa enviada a ${who}`)
         onClose()
       },
       onError: (e) => toast.show(e.message, 'error'),

@@ -6,7 +6,7 @@ import { useCompleteTask, useSaveAsset } from '../../api/queries'
 import { ASSET_TYPE_LABEL, shortDay } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
-import { Button, CriticalityChip, EmptyState, ErrorState, Note, PageHeader, ProgressBar, SkeletonRows, useToast, cn } from '../../ui'
+import { Button, CriticalityChip, EmptyState, ErrorState, Note, PageHeader, ProgressBar, SkeletonRows, useToast, cn, focusFirstInvalid } from '../../ui'
 import { AssetFields, FormShell } from './AssetForm'
 import { emptyValues, toInput, valuesFromAsset } from './assetFormModel'
 import { useAssetForm } from './useAssetForm'
@@ -49,7 +49,7 @@ export function RegisterAssetsPage() {
   const assignerSubject = assigner ?? 'O responsável designado'
 
   const persist = (then: 'another' | 'finish') => {
-    if (!form.check()) return
+    if (!form.check()) { focusFirstInvalid('register-form'); return }
     save.mutate({ input: toInput(form.values, task.id), id: editing?.id }, {
       onSuccess: (a) => {
         if (then === 'another') {
@@ -60,7 +60,7 @@ export function RegisterAssetsPage() {
           return
         }
         complete.mutate(task.id, {
-          onSuccess: () => { toast.show('Tarefa concluída · o Rui foi notificado'); navigate(`/org/${org.slug}/tarefas`) },
+          onSuccess: () => { toast.show(`Tarefa concluída · notificação enviada a ${assigner ?? 'quem a pediu'}`); navigate(`/org/${org.slug}/tarefas`) },
           onError: (e) => toast.show(e.message, 'error'),
         })
       },
@@ -69,7 +69,7 @@ export function RegisterAssetsPage() {
   }
 
   const finishWithoutNew = () => complete.mutate(task.id, {
-    onSuccess: () => { toast.show('Tarefa concluída · o Rui foi notificado'); navigate(`/org/${org.slug}/tarefas`) },
+    onSuccess: () => { toast.show(`Tarefa concluída · notificação enviada a ${assigner ?? 'quem a pediu'}`); navigate(`/org/${org.slug}/tarefas`) },
     onError: (e) => toast.show(e.message, 'error'),
   })
 

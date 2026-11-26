@@ -3,7 +3,7 @@ import type { Asset, RemediationAction, Risk, RiskActionLink, User } from '../..
 import { useAudit, useSaveRisk } from '../../../api/queries'
 import { RISK_STATUS_LABEL, TREATMENT_PLAIN } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
-import { Button, Chip, Drawer, GlossaryText, HistoryList, Modal, Note, RiskLevelBadge, Tabs, useToast } from '../../../ui'
+import { Button, Chip, DiscardDialog, Drawer, focusFirstInvalid, GlossaryText, HistoryList, Note, RiskLevelBadge, Tabs, useToast } from '../../../ui'
 import { toHistory } from '../history'
 import { computeRiskLevel, describeRule } from './computeRiskLevel'
 import { RiskFields, RiskStepFields } from './RiskFields'
@@ -23,17 +23,6 @@ interface Props {
   actions: RemediationAction[]
   links: RiskActionLink[]
   onSaved?: (risk: Risk, linkedHigh: boolean) => void
-}
-
-/** Brings the first problem into view and focus: a field marked invalid, or else an error message (e.g. the action picker). */
-function focusFirstInvalid() {
-  window.requestAnimationFrame(() => {
-    const target = document.querySelector<HTMLElement>('#risk-form [aria-invalid="true"], #risk-form [role="alert"]')
-    if (!target) return
-    if (target.getAttribute('role') === 'alert') target.tabIndex = -1
-    target.scrollIntoView({ block: 'center' })
-    target.focus({ preventScroll: true })
-  })
 }
 
 /** Novo risco / editar risco (consultora). */
@@ -75,7 +64,7 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
     if (Object.keys(e).length) {
       if (isWizard) setStep(RISK_STEPS.findIndex((_, i) => Object.keys(validateRiskStep(values, i)).length > 0))
       // The inline messages carry the error; focus goes to the first one so it is read out and fixable at once.
-      focusFirstInvalid()
+      focusFirstInvalid('risk-form')
       return
     }
     save.mutate({ input: toRiskInput(values), id: risk?.id }, {
@@ -114,12 +103,7 @@ export function RiskEditDrawer({ open, onClose, risk, initialAssetId, assets, us
         </>}>
         {risk ? <Tabs tabs={[{ value: 'risco', label: 'Risco', content: form }, { value: 'estado', label: 'Estado', content: <RiskStatusActions risk={risk} onDone={onClose} /> }, { value: 'historico', label: 'Histórico', content: <RiskHistory riskId={risk.id} users={users} /> }]} /> : form}
       </Drawer>
-      <Modal open={confirmDiscard} onOpenChange={setConfirmDiscard} width={440} title={risk ? 'Descartar as alterações?' : 'Descartar o novo risco?'}
-        description="O que preencheu ainda não foi guardado e perde-se ao fechar."
-        footer={<>
-          <Button variant="secondary" onClick={() => setConfirmDiscard(false)}>Continuar a editar</Button>
-          <Button variant="danger" onClick={() => { setConfirmDiscard(false); onClose() }}>Descartar</Button>
-        </>} />
+      <DiscardDialog open={confirmDiscard} isNew={!risk} what="o novo risco" onKeep={() => setConfirmDiscard(false)} onDiscard={() => { setConfirmDiscard(false); onClose() }} />
     </>
   )
 }
