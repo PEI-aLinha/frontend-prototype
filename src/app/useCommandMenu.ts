@@ -8,7 +8,10 @@ export function useCommandMenu() {
   const [open, setOpen] = useState(false)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setOpen((o) => !o) }
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'k') return
+      e.preventDefault()
+      // Another dialog asking a question keeps the focus: search does not open on top of it.
+      setOpen((o) => (o ? false : !document.querySelector('[role="dialog"], [role="alertdialog"]')))
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
