@@ -31,7 +31,7 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   const on = c.status === 'ligado'
   const forMe = c.status === 'pedido' && c.assignedTo === persona?.userId
   const request = tasks.data?.find((t) => t.kind === 'integracao' && t.provider === c.provider.id && t.status === 'pendente')
-  const withdraw = (taskId: string, name: string) => cancelTask.mutate({ id: taskId, change: { status: 'cancelada' } }, { onSuccess: () => toast.show(`Pedido ao ${name} cancelado`), onError: fail })
+  const withdraw = (taskId: string, name: string) => cancelTask.mutate({ id: taskId, change: { status: 'cancelada' } }, { onSuccess: () => toast.show(`Pedido a ${name} cancelado`), onError: fail })
   const fail = (e: Error) => toast.show(e.message, 'error')
 
   return (
@@ -46,7 +46,7 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
           </div>
           <p className="text-sm text-ink-soft">{c.provider.description}</p>
           {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <VaultKey /> credencial no cofre</>}</p>}
-          {c.status === 'pedido' && assignee && <p className="text-xs text-muted">{assignee.id === persona?.userId ? 'Pedido a si: autorize a ligação aqui.' : `Pedido ao ${assignee.name}. Recebe uma tarefa para autorizar.`}</p>}
+          {c.status === 'pedido' && assignee && <p className="text-xs text-muted">{assignee.id === persona?.userId ? 'Pedido a si: autorize a ligação aqui.' : `Pedido a ${assignee.name}, que recebe uma tarefa para autorizar.`}</p>}
         {c.provider.applies && (
           <div className="mt-auto flex flex-wrap gap-2 pt-1">
             {on ? (
@@ -59,12 +59,12 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
             ) : (
               <>
                 {/* The responsible person is rarely the system's administrator: asking the technician comes first. */}
-                {isOwner && analyst && c.status !== 'pedido' && <Button size="sm" icon={<UserPlus className="size-4" aria-hidden />} loading={assign.isPending}
+                {isOwner && analyst && c.status !== 'pedido' && <Button size="sm" variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} loading={assign.isPending}
                   onClick={() => assign.mutate({ provider: c.provider.id, userId: analyst.id }, {
-                    onSuccess: (task) => toast.show(`Pedido enviado ao ${analyst.name}`, 'success', { label: 'Anular', onClick: () => withdraw(task.id, analyst.name) }),
+                    onSuccess: (task) => toast.show(`Pedido enviado a ${analyst.name}`, 'success', { label: 'Anular', onClick: () => withdraw(task.id, analyst.name) }),
                     onError: fail,
-                  })}>Pedir ao {analyst.name.split(' ')[0]}</Button>}
-                {canConnect && <Button size="sm" variant={isOwner && analyst ? 'secondary' : 'primary'} icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>{isOwner && analyst ? 'Ligar eu' : 'Ligar'}</Button>}
+                  })}>Pedir a {analyst.name.split(' ')[0]}</Button>}
+                {canConnect && <Button size="sm" variant={isOwner && analyst ? 'ghost' : 'primary'} icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>{isOwner && analyst ? 'Ligar eu' : 'Ligar'}</Button>}
                 {isOwner && c.status === 'pedido' && request && assignee && <Button size="sm" variant="ghost" loading={cancelTask.isPending} onClick={() => withdraw(request.id, assignee.name)}>Cancelar pedido</Button>}
               </>
             )}
@@ -98,6 +98,38 @@ function EvidenceList({ items, providerName }: { items: CollectedEvidence[]; pro
 }
 
 /** Integrations with the company's systems (RF37 / US37). Read-only; a human decides what gets in. */
+/** The usual case in one click: the technician is asked for every system the company uses and nobody has asked for yet. */
+function AskAll({ items }: { items: IntegrationConnection[] }) {
+  const org = useTenant()
+  const toast = useToast()
+  const users = useUsers(org.id)
+  const assign = useAssignIntegration(org.id)
+  const cancelTask = useUpdateTask(org.id)
+  const [busy, setBusy] = useState(false)
+  const analyst = users.data?.find((u) => u.role === 'analista')
+  const open = items.filter((c) => c.provider.applies && (c.status === 'disponivel' || c.status === 'erro'))
+  if (!analyst || open.length < 2) return null
+  const first = analyst.name.split(' ')[0]
+  const askAll = () => {
+    setBusy(true)
+    Promise.all(open.map((c) => assign.mutateAsync({ provider: c.provider.id, userId: analyst.id })))
+      .then((tasks) => toast.show(`${tasks.length} pedidos enviados a ${analyst.name}`, 'success', {
+        label: 'Anular',
+        onClick: () => Promise.all(tasks.map((t) => cancelTask.mutateAsync({ id: t.id, change: { status: 'cancelada' } })))
+          .then(() => toast.show('Pedidos cancelados'))
+          .catch((e: Error) => toast.show(e.message, 'error')),
+      }))
+      .catch((e: Error) => toast.show(e.message, 'error'))
+      .finally(() => setBusy(false))
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
+      <p className="min-w-0 flex-1 text-sm text-ink-soft">{open.length} sistemas por ligar. Quem os administra costuma ser {first}: recebe uma tarefa para cada um.</p>
+      <Button size="sm" icon={<UserPlus className="size-4" aria-hidden />} loading={busy} onClick={askAll}>Pedir tudo a {first}</Button>
+    </div>
+  )
+}
+
 export function IntegrationsPage() {
   const org = useTenant()
   const { persona } = useSession()
@@ -124,7 +156,7 @@ export function IntegrationsPage() {
               {integrations.data.length === 0
                 ? <p className="rounded-[14px] bg-paper-soft px-4 py-5 text-center text-sm text-ink-soft">Não tem integrações para ligar.</p>
                 // One grid: each card already names its category, and the ones the company does not use come last.
-                : <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{sortByUse(integrations.data).map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul>}
+                : <>{isOwner && <AskAll items={integrations.data} />}<ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{sortByUse(integrations.data).map((c) => <ConnectionCard key={c.provider.id} c={c} onConnect={setConnecting} isOwner={isOwner} canConnect={isOwner || c.assignedTo === persona.userId} />)}</ul></>}
             </section>
           )}
           {isOwner && (
