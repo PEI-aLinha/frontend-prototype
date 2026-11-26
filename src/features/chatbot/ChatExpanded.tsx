@@ -128,7 +128,7 @@ export function ChatExpanded({
         />
         {context && (
           <aside aria-label="Contexto do cliente" className="hidden w-[280px] flex-none flex-col gap-3 overflow-y-auto border-l border-brand-soft bg-paper p-4 xl:flex">
-            <span className="font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-muted">Contexto do cliente</span>
+            <span className="text-[0.75rem] font-bold text-muted">Contexto do cliente</span>
             {context}
           </aside>
         )}

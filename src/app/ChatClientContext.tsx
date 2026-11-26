@@ -6,7 +6,7 @@ import { computeRiskLevel } from '../features/assets/public'
 import { applicableFrameworks, nis2Status, sectorById } from '../features/organization/public'
 import { Chip } from '../ui'
 
-const LABEL = 'font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-muted'
+const LABEL = 'text-[0.75rem] font-bold text-muted'
 
 function Row({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -72,7 +72,7 @@ export function ChatClientContext({ orgSlug, ownerId }: { orgSlug: string; owner
       </dl>
 
       <Link to={`/clientes/${org.slug}/visao-geral`} className="text-[0.8125rem] font-bold text-brand hover:underline">
-        Abrir visão geral do cliente →
+        Abrir visão geral do cliente
       </Link>
     </div>
   )

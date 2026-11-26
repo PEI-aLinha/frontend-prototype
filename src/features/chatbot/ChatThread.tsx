@@ -29,7 +29,7 @@ type ChatThreadProps = {
   context?: ReactNode
 }
 
-const LABEL = 'font-mono text-[0.6875rem] uppercase tracking-[0.06em]'
+const LABEL = 'text-[0.75rem] font-bold'
 
 const COMMON_DOCUMENTS = ['Política de segurança', 'Plano de resposta a incidentes', 'Contrato com fornecedor', 'Plano de cópias de segurança']
 
@@ -174,7 +174,7 @@ function MessageTable({ table }: { table: ChatTable }) {
         <thead className="bg-paper">
           <tr>
             {table.columns.map((c) => (
-              <th key={c} scope="col" className="px-3 py-2 font-mono text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-ink-soft">{c}</th>
+              <th key={c} scope="col" className="px-3 py-2 text-[0.75rem] font-bold text-ink-soft">{c}</th>
             ))}
           </tr>
         </thead>
@@ -325,9 +325,9 @@ export function ChatThread({ conversation: active, expanded, suggestions, onSend
                 {m.table && <MessageTable table={m.table} />}
                 {m.source && (
                   <Link to={m.source.to} className="flex max-w-[85%] flex-col gap-1.5 self-start rounded-[12px] border border-brand-soft bg-paper px-3.5 py-3 text-brand no-underline hover:underline">
-                    <span className="font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-muted">{m.source.label}</span>
+                    <span className="text-[0.75rem] font-semibold text-muted">{m.source.label}</span>
                     <strong className="text-[0.9375rem] font-extrabold">{m.source.title}</strong>
-                    <span className="text-[0.8125rem] font-bold">{m.source.cta ?? 'Abrir →'}</span>
+                    <span className="text-[0.8125rem] font-bold">{m.source.cta ?? 'Abrir'}</span>
                   </Link>
                 )}
               </div>

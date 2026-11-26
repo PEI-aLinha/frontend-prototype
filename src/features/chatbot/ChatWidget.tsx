@@ -409,7 +409,7 @@ export function ChatWidget({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Abrir ${title}`}
-        className="group fixed bottom-6 right-6 z-50 inline-flex h-[52px] items-center rounded-full bg-brand px-4 text-white shadow-[0_10px_28px_rgb(var(--shadow-rgb)/0.35)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal max-sm:bottom-[calc(132px+env(safe-area-inset-bottom))] max-sm:right-3"
+        className="group fixed bottom-6 right-6 z-50 inline-flex h-[52px] items-center rounded-full bg-brand px-4 text-white shadow-[0_10px_28px_rgb(var(--shadow-rgb)/0.35)] transition hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal max-md:hidden"
       >
         <Sparkles className="size-5 flex-none" aria-hidden />
         <span
@@ -496,7 +496,7 @@ export function ChatWidget({
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
           <strong className="text-[0.9375rem] font-extrabold">{title}</strong>
-          <span className="font-mono text-[0.6875rem] uppercase tracking-[0.06em] text-white/70">{subtitle}</span>
+          <span className="text-[0.75rem] font-semibold text-white/75">{subtitle}</span>
         </div>
         <button
           type="button"
