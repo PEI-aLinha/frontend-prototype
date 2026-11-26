@@ -4,13 +4,13 @@ import { ArrowRight, Download, FileSpreadsheet, Plus, ArrowUp } from 'lucide-rea
 import type { Level, Risk } from '../../../api/contracts'
 import { useActions, useAssets, useRiskLinks, useRisks, useRoadmapStatus, useToday, useUsers } from '../../../api/queries'
 import { RISK_MATRIX } from '../../../config/riskMatrix'
-import { RISK_LEVEL_LABEL, RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from '../../../config/labels'
+import { RISK_STATUS_LABEL, shortDate, TREATMENT_LABEL } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
 import { useCan } from '../../../core/useCan'
 import { PageTour } from '../../../core/onboarding/PageTour'
 import {
-  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, StatCard, useToast,
-  type ColumnDef,
+  Button, Card, Chip, Segmented, DataTable, EmptyState, ErrorState, NextAction, Note, PageHeader, Term, Person, RiskLevelBadge, RiskMatrix, SkeletonRows, useToast,
+  cn, type ColumnDef,
 } from '../../../ui'
 import { computeRiskLevel } from './computeRiskLevel'
 import { RiskEditDrawer, RiskReadDrawer } from './RiskDrawer'
@@ -124,11 +124,14 @@ export function RisksPage() {
         <>
           {nextAction}
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className={cn('grid gap-4', !editable && 'order-last')}>
             <Card aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5" data-tour="risk-matrix">
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-xs font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
-                {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
+                <p className="num flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+                  {(['alto', 'medio', 'baixo'] as Level[]).map((l) => <span key={l} className="inline-flex items-center gap-1.5"><RiskLevelBadge level={l} /><b className="text-ink">{counts(l)}</b></span>)}
+                  {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
+                </p>
               </div>
               <div className="mb-3 flex flex-wrap items-center gap-3">
                 <Segmented ariaLabel="Mostrar risco" value={residual ? 'residual' : 'inerente'} onChange={(v) => update({ matriz: v === 'residual' ? 'residual' : null, p: null, i: null })}
@@ -142,14 +145,6 @@ export function RisksPage() {
                 count={(p, i) => all.filter((r) => pos(r).p === p && pos(r).i === i).length}
                 selected={cell} onSelect={(c) => update({ p: c ? String(c.probability) : null, i: c ? String(c.impact) : null })} compact />
             </Card>
-            <section aria-labelledby="risk-summary-title" className="grid grid-cols-3 content-start gap-3 lg:grid-cols-1" data-tour="risk-summary">
-              <h2 id="risk-summary-title" className="sr-only">Resumo por nível{residual ? ' depois das ações' : ''}</h2>
-                {(['alto', 'medio', 'baixo'] as Level[]).map((l) => (
-                  <StatCard key={l} label={`Risco ${RISK_LEVEL_LABEL[l].toLowerCase()}`} value={counts(l)}
-                    className="max-md:px-3.5 max-md:py-3"
-                    accent={<span className="max-md:hidden"><RiskLevelBadge level={l} /></span>} />
-                ))}
-            </section>
           </div>
 
           <section aria-labelledby="risk-table-title" className="flex flex-col gap-3" data-tour="risk-table">
@@ -167,7 +162,7 @@ export function RisksPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{editable ? r.threat : r.plainLanguage ?? r.threat}</p>
                   <p className="text-[0.8125rem] text-ink-soft">{assetName(r.assetId)}</p>
-                  <p className="mt-1 text-[0.75rem] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} ações</p>
+                  <p className="mt-1 text-[0.75rem] text-muted">{r.treatment ? TREATMENT_LABEL[r.treatment] : 'Sem tratamento'} · {linkedActions(r).length} {linkedActions(r).length === 1 ? 'ação' : 'ações'}</p>
                   {editable && r.reviewDate && today.data && r.reviewDate < today.data && r.status !== 'arquivado' && <p className="text-[0.75rem] font-bold text-risk-high-ink">Revisão atrasada</p>}
                 </div>
                 <RiskLevelBadge level={levelOf(r.probability, r.impact)} />
