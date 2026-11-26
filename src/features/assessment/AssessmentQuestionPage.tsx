@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { ArrowLeft, Check, UserRound, ArrowRight } from 'lucide-react'
 import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '../../api/contracts'
 import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
@@ -137,14 +137,33 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
   // Only a new or changed answer is saved. Without an answer, moving on skips the question ("Por responder").
   const changed = !!choice && (choice !== question.answer?.choice || note.trim() !== (question.answer?.note ?? ''))
 
-  const leave = (action: Leaving, path: string, message?: string) => {
-    const go = () => { if (message) toast.show(message); navigate(path) }
+  // Leaving by the sidebar, the browser's back button or a link saves the answer too: nothing typed is lost.
+  const saving = useRef(false)
+  const blocker = useBlocker(() => changed && !saving.current)
+  useEffect(() => {
+    if (blocker.state !== 'blocked' || !choice) return
+    saving.current = true
+    save.mutateAsync({ questionId: question.id, answer: { choice, note } })
+      .then(() => { toast.show('Resposta guardada.'); blocker.proceed() })
+      .catch((e: Error) => { saving.current = false; blocker.reset(); toast.show(e.message, 'error') })
+  }, [blocker, choice, note, question.id, save, toast])
+  // Closing the tab cannot wait for a save, so the browser asks first.
+  useEffect(() => {
+    if (!changed) return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [changed])
+
+  const leave = (action: Leaving, path: string, message?: string, tone: 'success' | 'info' = 'success') => {
+    const go = () => { if (message) toast.show(message, tone); navigate(path) }
     if (!choice || !changed) { go(); return }
+    saving.current = true
     setLeaving(action)
     // mutateAsync: navigating unmounts this form, and mutate() callbacks would be dropped.
     save.mutateAsync({ questionId: question.id, answer: { choice, note } })
       .then(go)
-      .catch((e: Error) => { setLeaving(undefined); toast.show(e.message, 'error') })
+      .catch((e: Error) => { saving.current = false; setLeaving(undefined); toast.show(e.message, 'error') })
   }
 
   return (
@@ -154,7 +173,7 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
         {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />}
       </Field>
       {/* Moving on without an answer is allowed, but said: the question stays in the overview as "Por responder". */}
-      <QuestionNav nav={nav} leaving={leaving} onGo={(path, action) => leave(action, path, action === 'next' && !choice && !question.answer ? 'Pergunta deixada por responder. Pode voltar a ela na Avaliação.' : undefined)}>
+      <QuestionNav nav={nav} leaving={leaving} onGo={(path, action) => leave(action, path, action === 'next' && !choice && !question.answer ? 'Pergunta deixada por responder. Pode voltar a ela na Avaliação.' : undefined, 'info')}>
         <Button variant="secondary" loading={leaving === 'later'} disabled={!!leaving}
           onClick={() => leave('later', overviewPath, 'Progresso guardado. Pode continuar quando quiser.')}>Guardar e continuar depois</Button>
       </QuestionNav>

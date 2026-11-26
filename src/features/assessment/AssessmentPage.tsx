@@ -114,12 +114,15 @@ function SectionsTable({ current, sections, userName, initials }: { current?: st
             const complete = s.answered === s.total
             const isOpen = expanded === s.id
             const panel = `section-${s.id}`
+            // Questions waiting on someone else are not "por responder" for this person.
+            const waiting = s.delegated.filter((d) => d.status !== 'concluida').length
+            const missing = Math.max(0, s.total - s.answered - waiting)
             return (
               <li key={s.id} className="border-b border-line-soft last:border-b-0">
                 <button type="button" onClick={() => setExpanded(isOpen ? null : s.id)} aria-expanded={isOpen} aria-controls={panel} className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-paper-soft">
                   {complete ? <CheckCircle2 className="size-4 shrink-0 text-brand" role="img" aria-label="Completa" /> : <Clock className="size-4 shrink-0 text-muted" role="img" aria-label="Por completar" />}
                   <span className="min-w-0 flex-1 text-sm font-bold">{s.name}</span>
-                  <span className="hidden shrink-0 text-sm text-ink-soft sm:inline">{s.total} perguntas</span>
+                  {missing > 0 && !complete ? <span className="shrink-0 text-sm font-semibold text-ink-soft max-sm:hidden">{missing} por responder</span> : <span className="hidden shrink-0 text-sm text-ink-soft sm:inline">{s.total} perguntas</span>}
                   <span className="w-12 shrink-0 text-right text-sm font-semibold">{s.answered}/{s.total}</span>
                   <ChevronDown className={cn('size-4 shrink-0 text-ink-soft transition-transform', isOpen && 'rotate-180')} aria-hidden />
                 </button>
@@ -132,11 +135,11 @@ function SectionsTable({ current, sections, userName, initials }: { current?: st
                       return (
                         <p key={d.taskId} className="flex items-center gap-2 text-sm text-ink-soft">
                           {i && <Avatar initials={i} size={24} />}
-                          <span>1 pergunta delegada {n ? `ao ${n}` : ''}: <strong className={d.status === 'concluida' ? 'text-brand' : 'text-ink'}>{d.status === 'concluida' ? 'respondida' : 'à espera de resposta'}</strong></span>
+                          <span>1 pergunta delegada{n ? ` a ${n}` : ''}: <strong className={d.status === 'concluida' ? 'text-brand' : 'text-ink'}>{d.status === 'concluida' ? 'respondida' : 'à espera de resposta'}</strong></span>
                         </p>
                       )
                     })}
-                    <Link to={s.id} className="self-start text-sm font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span></Link>
+                    <Link to={s.id} className="self-start text-sm font-bold text-brand hover:underline">{missing === 1 ? 'Ver a pergunta por responder' : missing > 1 ? `Ver as ${missing} por responder` : 'Ver perguntas'}<span className="sr-only"> de {s.name}</span></Link>
                   </div>
                 )}
               </li>
