@@ -18,7 +18,7 @@ export function NextAction({ title, text, cta, to, onClick }: NextActionProps) {
   return (
     <section aria-label="Próxima ação" className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-[16px] bg-brand px-6 py-5 text-white">
       <div className="min-w-0 flex-1">
-        <p className="text-[0.75rem] font-extrabold uppercase tracking-wide opacity-80">Próxima ação</p>
+        <p className="text-[0.8125rem] font-bold opacity-85">Próxima ação</p>
         <h2 className="mt-1 text-[1.125rem] font-extrabold">{title}</h2>
         <p className="mt-0.5 max-w-[640px] text-[0.9375rem] opacity-90">{text}</p>
       </div>

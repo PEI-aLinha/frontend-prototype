@@ -28,10 +28,10 @@ export function StatCard({ label, value, caption, children, onClick, accent, cla
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <Eyebrow as={labelAs}>{label}</Eyebrow>
+        {(() => { const L = labelAs; return <L className="text-sm font-bold text-ink-soft">{label}</L> })()}
         {accent}
       </div>
-      <p className="mt-1.5 text-lg font-extrabold leading-tight">{value}</p>
+      <p className={cn('num font-extrabold', typeof value === 'number' ? 'mt-1.5 text-[1.75rem] leading-none tracking-[-0.02em]' : 'mt-1.5 text-lg leading-tight')}>{value}</p>
       {caption && <p className="mt-1.5 text-sm text-ink-soft">{caption}</p>}
       {children && <div className="mt-3">{children}</div>}
     </>
@@ -51,8 +51,8 @@ export function HighlightCard({ eyebrow, title, children, action }: { eyebrow: s
   return (
     <section className="flex flex-col gap-6 rounded-[20px] bg-brand-deep px-8 py-[30px] text-white md:flex-row md:items-center">
       <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-        <Eyebrow className="text-signal-soft">{eyebrow}</Eyebrow>
         <h2 className="text-3xl font-extrabold title-tight">{title}</h2>
+        <p className="text-sm font-semibold text-signal-soft">{eyebrow}</p>
         {children && <div className="text-sm font-semibold text-brand-soft">{children}</div>}
       </div>
       {action}
