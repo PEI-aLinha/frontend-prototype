@@ -5,16 +5,18 @@ import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/c
 import { useActions, useAssessment, useAudit, useEvidence, useRiskLinks, useRisks, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
 import { ACTION_STATUS_LABEL, dateTime, MATURITY_LABEL, shortDate } from '../../config/labels'
 import { useSession } from '../../core/session'
+import { PageTour } from '../../core/onboarding/PageTour'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import {
-  AIBadge, Button, Chip, EmptyState, ErrorState, HistoryList, Modal, Note, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
+  AIBadge, Button, GlossaryText, Chip, EmptyState, ErrorState, HistoryList, Modal, Note, PageHeader, RiskLevelBadge, Segmented, SkeletonRows, cn, useToast,
 } from '../../ui'
 import { computeRiskLevel } from '../assets/public'
 import { evidenceState } from './evidenceState'
 import { printResults } from './exportResults'
 import { planGaps, planSummary } from './planSummary'
 import { ProposeActionModal } from './ProposeActionModal'
+import { ReopenRoadmapModal } from './ReopenRoadmapModal'
 import { RoadmapMap } from './RoadmapMap'
 import { prioritizeRoadmap, type PrioritizedAction, type RiskSignal } from './prioritizeRoadmap'
 import { roadmapHistory } from './roadmapHistory'
@@ -41,6 +43,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   const audit = useAudit(org.id)
   const [params, setParams] = useSearchParams()
   const [confirm, setConfirm] = useState(false)
+  const [reopening, setReopening] = useState(false)
   const [proposing, setProposing] = useState(false)
   const view: View = params.get('ordem') === 'base' ? 'base' : 'riscos'
   const showHistory = params.get('historico') === '1'
@@ -114,13 +117,14 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   return (
     <>
       <PageHeader
-        eyebrow={org.name}
         title="Resultados e roadmap"
+        help={<PageTour id={consultant ? 'roadmap-consultor' : 'roadmap-cliente'} ready={!pending && !!actions.data} />}
         subtitle={`Ações para fechar as lacunas da avaliação, ordenadas por prioridade.${frameworks.length ? ` Âmbito: ${frameworks.join(' · ')}.` : ''}`}
         actions={<div className="flex flex-wrap items-center gap-3 max-md:w-full">
           {canExport && <Button className="max-md:flex-1" variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA', consultant ? 'consultant' : 'client', { frameworks, validated: !!validated, validator, validatedAt: status.data?.validatedAt ?? undefined })} title="Abre a janela de impressão: escolha Guardar como PDF">Exportar PDF</Button>}
           {can('create', 'roadmap') && <Button className="max-md:flex-1" variant="secondary" icon={<Plus className="size-4" aria-hidden />} onClick={() => setProposing(true)}>Propor ação</Button>}
           {can('view', 'history') && <Button variant="link" onClick={() => setShowHistory(true)}>Histórico</Button>}
+          {!pending && can('validate', 'roadmap') && validated && <Button variant="secondary" onClick={() => setReopening(true)}>Reabrir validação</Button>}
           {!pending && !!actions.data && can('validate', 'roadmap') && !validated && <Button className="max-md:ml-auto" icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
         </div>}
       />
@@ -137,7 +141,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
 
 
       {!pending && (
-        <section aria-labelledby="resumo-titulo" className="grid overflow-hidden rounded-[14px] border border-line-soft md:grid-cols-3 md:divide-x divide-line-soft max-md:divide-y">
+        <section aria-labelledby="resumo-titulo" data-tour="roadmap-summary" className="grid overflow-hidden rounded-[14px] border border-line-soft md:grid-cols-3 md:divide-x divide-line-soft max-md:divide-y">
           <h2 id="resumo-titulo" className="sr-only">Resumo do plano</h2>
           {[
             { to: consultant ? undefined : `${base}/avaliacao`, label: 'Maturidade', value: assessment.isError || !assessment.data ? '—' : `${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'}`, unit: 'de 5', caption: assessment.isError ? 'Não foi possível carregar a avaliação' : !assessment.data ? 'A carregar a avaliação' : `Objetivo: ${summary.targetMaturity ? MATURITY_LABEL[summary.targetMaturity] : '—'}` },
@@ -160,7 +164,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
 
 
       {!pending && !consultant && gaps.length > 0 && (
-        <section aria-labelledby="lacunas-titulo" className="flex flex-col gap-3">
+        <section data-tour="roadmap-gaps" aria-labelledby="lacunas-titulo" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="lacunas-titulo" className="text-lg font-extrabold">O que falta à empresa <span className="font-semibold text-ink-soft">· {gaps.length}</span></h2>
             <p className="text-sm text-ink-soft">Nível de maturidade {summary.maturity ?? '—'} de 5 hoje; o objetivo é {summary.targetMaturity ?? '—'}{summary.targetMaturity ? ` (${MATURITY_LABEL[summary.targetMaturity].toLowerCase()})` : ''}.</p>
@@ -168,8 +172,8 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
           <ul className="grid gap-x-8 rounded-[14px] border border-line-soft px-5 md:grid-cols-2">
             {gaps.map((g) => (
               <li key={g.actionId} className="flex flex-col gap-0.5 border-b border-line-soft py-3 last:border-b-0 md:[&:nth-last-child(2)]:border-b-0">
-                <span className="font-bold">{g.findingTitle}</span>
-                <span className="text-sm text-ink-soft">Fica resolvido com: {g.description}</span>
+                <span className="font-bold"><GlossaryText>{g.findingTitle}</GlossaryText></span>
+                <span className="text-sm text-ink-soft">Fica resolvido com: <GlossaryText>{g.description}</GlossaryText></span>
               </li>
             ))}
           </ul>
@@ -194,7 +198,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
         ) : (
           <>
             <RoadmapMap items={ranked.map((r) => r.action)} />
-            <ol className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
+            <ol data-tour="roadmap-actions" className="flex flex-col gap-2.5" aria-label={consultant ? 'Ações do roadmap por prioridade' : 'O plano da empresa, por ordem de prioridade'}>
               {ranked.map((r) => <ActionRow key={`${view}-${r.action.id}`} item={r} users={users.data} showMovement={byRisk && consultant} consultant={consultant} validated={validated} aiBadge={!allFromAi} />)}
             </ol>
           </>
@@ -209,6 +213,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
         {audit.isError ? <ErrorState error={audit.error} onRetry={() => audit.refetch()} /> : !audit.data || !users.data ? <SkeletonRows rows={4} /> : <HistoryList items={roadmapHistory(audit.data, users.data)} />}
       </Modal>
 
+       <ReopenRoadmapModal org={org.id} open={reopening} onClose={() => setReopening(false)} manager={manager} />
        <Modal open={confirm} onOpenChange={setConfirm} chip={<Chip>Decisão da consultora</Chip>} title="Validar o roadmap?"
          description={`${manager ? `O ${manager}` : 'O cliente'} passa a ver o roadmap e o registo de riscos em só leitura, com linguagem simples. Se mudar alguma coisa depois, o cliente vê a alteração e fica registada no histórico.`}
          footer={<><Button variant="secondary" onClick={() => setConfirm(false)}>Cancelar</Button><Button loading={validate.isPending} onClick={() => validate.mutate(undefined, {
@@ -253,7 +258,7 @@ function ActionRow({ item, users, showMovement, consultant, validated, aiBadge }
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <h3 className="text-base font-bold">{a.description}</h3>
+          <h3 className="text-base font-bold"><GlossaryText>{a.description}</GlossaryText></h3>
           <div className="flex flex-wrap gap-1.5">
             {topRisk && <RiskLevelBadge level={topRisk.level} prefix="Risco " />}
             <Chip tone={a.status === 'concluida' ? 'dark' : a.status === 'em_curso' ? 'signal' : 'neutral'} icon={a.status === 'concluida' ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{ACTION_STATUS_LABEL[a.status]}</Chip>

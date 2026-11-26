@@ -14,12 +14,14 @@ export type TourId =
   | 'riscos-consultor'
   | 'riscos-cliente'
   | 'avaliacao'
+  | 'roadmap-cliente'
+  | 'roadmap-consultor'
 
 export const TOURS: Record<TourId, TourStepDef[]> = {
   inicio: [
     { title: 'Bem-vindo ao aLinha', intro: 'Em menos de um minuto mostramos onde está cada coisa. Pode sair a qualquer momento com Esc.' },
     { target: 'home-steps', title: 'O que fazer a seguir', intro: 'A lista diz-lhe o próximo passo e marca-se sozinha à medida que avança.' },
-    { target: 'home-summary', title: 'Resumo', intro: 'Ativos, riscos e a consultora que o acompanha. Clique num cartão para abrir o ecrã.' },
+    { target: 'home-summary', title: 'Contexto', intro: 'Em que categoria da NIS2 a empresa fica e a consultora que o acompanha, com o contacto dela.' },
     { target: 'nav', title: 'Navegação', intro: 'Ativos, riscos e avaliação ficam sempre aqui à mão.' },
   ],
   'ativos-cliente': [
@@ -36,15 +38,23 @@ export const TOURS: Record<TourId, TourStepDef[]> = {
   ],
   'riscos-consultor': [
     { target: 'risk-new', title: 'Novo risco', intro: 'Três passos, segundo a ISO/IEC 27005: identificar, avaliar e tratar. O nível é calculado pelo sistema.' },
-    { target: 'risk-matrix', title: 'Matriz de risco', intro: 'Cada quadrado conta os riscos com essa probabilidade e impacto. Clique para filtrar; alterne para ver o risco depois das ações.' },
-    { target: 'risk-summary', title: 'Por nível', intro: 'Os riscos altos vêm primeiro: são os que fazem subir as ações no roadmap.' },
+    { target: 'risk-matrix', title: 'Matriz de risco', intro: 'Cada quadrado conta os riscos com essa probabilidade e impacto; o cabeçalho diz quantos há por nível. Clique para filtrar; alterne para ver o risco depois das ações. Os altos fazem subir as ações no roadmap.' },
     { target: 'risk-table', title: 'Registo', intro: 'Abra um risco para decidir o tratamento, ligar ações ou mudar o estado.' },
     { target: 'risk-template', title: 'Trabalhar em Excel', intro: 'Descarregue o template com as fórmulas do nível, ou exporte o registo completo.' },
   ],
   'riscos-cliente': [
     { title: 'Os riscos da empresa', intro: 'A consultora identificou o que pode correr mal e o que está a ser feito. Esta página é só de leitura.' },
-    { target: 'risk-summary', title: 'Comece pelos altos', intro: 'O nível é calculado por regra: probabilidade × impacto.' },
-    { target: 'risk-table', title: 'Em linguagem simples', intro: 'Cada linha explica o risco e as ações do roadmap que o reduzem. Abra uma para ver o detalhe.' },
+    { target: 'risk-table', title: 'Em linguagem simples', intro: 'Cada linha explica o risco e as ações do roadmap que o reduzem. Comece pelos altos; abra uma linha para ver o detalhe.' },
+    { target: 'risk-matrix', title: 'O nível é calculado', intro: 'Probabilidade × impacto, por regra. A matriz mostra onde cada risco fica.' },
+  ],
+  'roadmap-cliente': [
+    { target: 'roadmap-summary', title: 'Onde está a empresa', intro: 'Nível de maturidade hoje e o objetivo, riscos em aberto e evidências já recolhidas.' },
+    { target: 'roadmap-gaps', title: 'O que falta', intro: 'Cada lacuna da avaliação, em linguagem simples, e a ação do plano que a resolve.' },
+    { target: 'roadmap-actions', title: 'O plano', intro: 'As ações por ordem de prioridade, com responsável e prazo. Os prazos também aparecem no mapa acima.' },
+  ],
+  'roadmap-consultor': [
+    { target: 'roadmap-summary', title: 'Antes de validar', intro: 'Maturidade, riscos em aberto e evidências. Riscos sem ação aparecem também no diálogo de validação.' },
+    { target: 'roadmap-actions', title: 'Ações propostas', intro: 'Proposta da IA, reordenada pelos riscos que registou. Reveja, proponha ações e valide: só então o cliente vê o plano.' },
   ],
   avaliacao: [
     { target: 'assessment-progress', title: 'Progresso', intro: 'Quantas perguntas já respondeu. O progresso fica guardado.' },
