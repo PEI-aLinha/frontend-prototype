@@ -1,16 +1,20 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import type { ActionStatus, Id } from '../../api/contracts'
-import { ACTION_STATUS_LABEL } from '../../config/labels'
+import { useToday } from '../../api/queries'
+import { ACTION_STATUS_LABEL, shortDate } from '../../config/labels'
 import { cn } from '../../ui'
 import { pathThrough, progressPercent, type Pt } from './roadmapPath'
 
-export interface MapNode { id: Id; description: string; status: ActionStatus }
+export interface MapNode { id: Id; description: string; status: ActionStatus; dueDate?: string | null }
 
 interface Line { w: number; h: number; points: Pt[] }
 
-/** Where the plan stands: one circle per action, in the order on screen, each one jumping to its row. */
+/** Where the plan stands: one circle per action, in the order on screen, each one jumping to its row.
+ *  Under each circle goes what the list does not show at a glance: the deadline, and whether it has passed. */
 export function RoadmapMap({ items }: { items: MapNode[] }) {
+  const today = useToday().data
+  const late = (a: MapNode) => !!(today && a.dueDate && a.status !== 'concluida' && a.dueDate < today)
   const wrap = useRef<HTMLDivElement>(null)
   const grid = useRef<HTMLOListElement>(null)
   // The grid places the circles (breakpoints, stagger, labels); the line just follows their real centres.
@@ -72,7 +76,7 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
                   type="button"
                   onClick={() => jumpTo(a.id)}
                   title={a.description}
-                  aria-label={`Ação ${i + 1} de ${items.length}: ${a.description}. ${ACTION_STATUS_LABEL[a.status]}.`}
+                  aria-label={`${i + 1} ${a.description}. ${ACTION_STATUS_LABEL[a.status]}${a.dueDate ? `, prazo ${shortDate(a.dueDate)}${late(a) ? ', em atraso' : ''}` : ''}, ação ${i + 1} de ${items.length}.`}
                   className="group flex flex-col items-center gap-1.5"
                 >
                    <span className={cn(
@@ -81,8 +85,9 @@ export function RoadmapMap({ items }: { items: MapNode[] }) {
                    )}>
                      {a.status === 'concluida' ? <Check className="size-6" strokeWidth={3} aria-hidden /> : i + 1}
                    </span>
-                   <span className="hidden max-w-[15ch] md:block">
-                     <span className="line-clamp-2 text-center text-xs leading-tight text-ink-soft">{a.description}</span>
+                   <span className={cn('num hidden text-center text-xs leading-tight md:block', late(a) ? 'font-bold text-risk-high-ink' : 'text-ink-soft')}>
+                     {a.status === 'concluida' ? 'Feita' : a.dueDate ? shortDate(a.dueDate) : 'Sem prazo'}
+                     {late(a) && <span className="block">em atraso</span>}
                    </span>
                 </button>
               </li>
