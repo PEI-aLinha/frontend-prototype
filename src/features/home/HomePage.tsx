@@ -61,7 +61,7 @@ export function HomePage() {
   const steps = [
     { label: 'Registar os ativos que conhece', hint: 'Programas e serviços do dia a dia: ERP, email, portáteis.', done: (assets.data?.length ?? 0) > 0, to: `${base}/ativos?novo=1`, cta: 'Adicionar ativo' },
     ...(analyst || assetTask ? [] : [{ label: 'Convidar o técnico de informática', hint: 'Quem trata dos servidores e da rede. Recebe um convite por email e só vê o que lhe pedir.', done: false, to: `${base}/equipa?convidar=1`, cta: 'Convidar' }]),
-    { label: 'Pedir ao técnico o registo técnico', hint: `Servidores, rede e máquinas da fábrica.${analyst ? ` ${analyst.name} recebe uma tarefa.` : ''}`, done: !!assetTask, to: `${base}/ativos?atribuir=1`, cta: 'Atribuir' },
+    { label: 'Pedir ao técnico o registo dos sistemas', hint: `Servidores, rede e máquinas da fábrica.${analyst ? ` ${analyst.name} recebe uma tarefa.` : ''}`, done: !!assetTask, to: `${base}/ativos?atribuir=1`, cta: 'Atribuir' },
     { label: 'Esperar que o técnico conclua o registo', hint: assetTask ? `${assetTask.dueDate ? `Prazo: ${assetTask.dueDate.split('-').reverse().slice(0, 2).join('/')}. ` : ''}Recebe uma notificação quando o registo estiver concluído.` : undefined, done: inventoryDone, to: `${base}/ativos`, cta: 'Ver inventário' },
     { label: 'Terminar e submeter a avaliação', hint: 'O questionário de maturidade NIS2 + RGPD.', done: submitted, to: `${base}/avaliacao`, cta: 'Continuar' },
     { label: 'A consultora valida resultados, roadmap e riscos', hint: 'Não precisa de fazer nada: é avisado quando terminar.', done: !!validated },
