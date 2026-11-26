@@ -100,7 +100,10 @@ export function HomePage() {
         ) : heroOwnsAction ? (
           <Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{submitted ? 'Ver avaliação' : notStarted ? 'Começar avaliação' : 'Continuar avaliação'}</Button>
         ) : (
-          <Link to={assessmentPath} className="text-[0.9375rem] font-bold text-white underline decoration-white/40 underline-offset-4 hover:decoration-white">{submitted ? 'Ver avaliação' : notStarted ? 'Ver a avaliação' : 'Continuar avaliação'}</Link>
+          // Until the assessment loads the next question is unknown: no link yet, so it never lands on the overview by mistake.
+          assessment.data
+            ? <Link to={assessmentPath} className="text-[0.9375rem] font-bold text-white underline decoration-white/40 underline-offset-4 hover:decoration-white">{submitted ? 'Ver avaliação' : notStarted ? 'Ver a avaliação' : 'Continuar avaliação'}</Link>
+            : <span className="text-[0.9375rem] font-bold text-white/60">A carregar…</span>
         )}
       >
         {/* Only while answering: once submitted the bar is always full and says nothing. */}
