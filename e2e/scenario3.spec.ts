@@ -4,12 +4,12 @@ import { ORG, shot, start } from './helpers'
 test('Scenario 3 — Rui sees the risks read-only after validation', async ({ page }) => {
   await start(page, `${ORG}/inicio`, 'rui', 'c3')
   await page.goto(`${ORG}/inicio`)
-  await expect(page.getByText('1 risco alto · em tratamento')).toBeVisible()
+  await expect(page.getByText('1 risco alto em tratamento')).toBeVisible()
   await shot(page, 'c3-01-inicio')
 
   // Only the validated home CTA leads somewhere real: it hands Rui the plan he just got validated.
-  await expect(page.getByRole('link', { name: 'Ver roadmap →' })).toHaveAttribute('href', `${ORG}/roadmap`)
-  await page.getByRole('link', { name: 'Ver roadmap →' }).click()
+  await expect(page.getByRole('link', { name: 'Ver roadmap' })).toHaveAttribute('href', `${ORG}/roadmap`)
+  await page.getByRole('link', { name: 'Ver roadmap' }).click()
   await expect(page).toHaveURL(`${ORG}/roadmap`)
   await expect(page.getByRole('heading', { name: 'Roadmap validado' })).toBeVisible()
 
@@ -35,68 +35,58 @@ test('Scenario 3 — Rui reads the plan in plain language, without the legal cit
   await expect(page.getByText('CA.03', { exact: false })).toHaveCount(0)
   await expect(page.getByText('Origem:', { exact: false })).toHaveCount(0)
   await expect(page.getByText('Como os riscos mudam o roadmap')).toHaveCount(0)
-  await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeVisible()
-  // The switch works for the client too: the base order is the gap order, where MyCiber is first.
-  await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
-  await expect(page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' }).getByRole('listitem').first()).toContainText('MyCiber')
+  // The client reads the plan in the order the consultant validated; the before/after switch is hers.
+  await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toHaveCount(0)
+  await expect(page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' }).getByRole('listitem').first()).toContainText('autenticação multifator')
   await shot(page, 'c3-04-roadmap-plano')
 })
 
-test('Scenario 3 — Rui gets three cards, each sending him to the page its number belongs to', async ({ page }) => {
+test('Scenario 3 — Rui gets three figures, each sending him to the page its number belongs to', async ({ page }) => {
   await start(page, `${ORG}/roadmap`, 'rui', 'c3')
   await page.goto(`${ORG}/roadmap?as=rui`)
 
-  const level = page.getByRole('link', { name: /2 → 3 de 5/ })
+  const summary = page.getByRole('region', { name: 'Resumo do plano' })
+  const level = summary.getByRole('link', { name: /Maturidade/ })
   await expect(level).toHaveAttribute('href', `${ORG}/avaliacao`)
-  await expect(level).toContainText('Definido · 41 de 41 perguntas respondidas')
+  await expect(level).toContainText('2 → 3')
+  await expect(level).toContainText('de 5')
+  await expect(level).toContainText('Objetivo: Definido')
 
-  const gaps = page.getByRole('link', { name: /Nenhum risco sem ação/ })
-  await expect(gaps).toHaveAttribute('href', `${ORG}/riscos`)
-  await expect(gaps).toContainText('5 riscos')
-  await expect(gaps).toContainText('6 ações por resolver, 1 concluída')
+  const risks = summary.getByRole('link', { name: /Riscos em aberto/ })
+  await expect(risks).toHaveAttribute('href', `${ORG}/riscos`)
+  await expect(risks).toContainText('5')
+  await expect(risks).toContainText('de 6')
+  await expect(risks).toContainText('nenhum risco sem ação')
 
-  const evidence = page.getByRole('link', { name: /1 de 7 recolhidas/ })
+  const evidence = summary.getByRole('link', { name: /Evidências recolhidas/ })
   await expect(evidence).toHaveAttribute('href', `${ORG}/integracoes`)
-  await expect(evidence).toContainText('1 comprovada, 0 não comprovadas, 6 sem prova recolhida')
+  await expect(evidence).toContainText('1')
+  await expect(evidence).toContainText('de 7')
+  await expect(evidence).toContainText('1 comprovada')
 
-  // Each card previews three rows and says how many it left out.
-  await expect(level.getByRole('list', { name: 'Lacunas identificadas' }).locator('li')).toHaveCount(3)
-  await expect(level.getByText('+4')).toBeVisible()
-  await expect(gaps.getByRole('list', { name: 'Riscos mais graves' }).locator('li')).toHaveCount(3)
-  await expect(gaps.getByText('+3')).toBeVisible()
-  await expect(evidence.getByRole('list', { name: 'Ações com a prova por resolver' }).locator('li')).toHaveCount(3)
-  await expect(evidence.getByText('+3')).toBeVisible()
+  // The client also reads what is missing, one line per gap, with what fixes it.
+  await expect(page.getByRole('heading', { name: /O que falta à empresa/ })).toBeVisible()
 
-  // The plan comes first; the three result cards sit below it, in one line on a wide screen.
+  // The three figures sit in one line on a wide screen, above the plan.
   const heading = page.getByRole('heading', { name: 'Roadmap validado' })
   await expect(heading).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Resumo do plano' })).toBeVisible()
-
-  // The links wrap their cards, and each card's label is a heading under "Resumo do plano".
-  const cardBoxes = await Promise.all([
-    level.getByRole('heading', { name: 'Nível de maturidade' }).boundingBox(),
-    gaps.getByRole('heading', { name: 'Riscos em aberto' }).boundingBox(),
-    evidence.getByRole('heading', { name: 'Evidências' }).boundingBox(),
-  ])
-  expect(cardBoxes.every(Boolean)).toBeTruthy()
-  const headingBox = await heading.boundingBox()
-  expect(headingBox).toBeTruthy()
+  const boxes = await Promise.all([level.boundingBox(), risks.boundingBox(), evidence.boundingBox(), heading.boundingBox()])
+  expect(boxes.every(Boolean)).toBeTruthy()
   const wide = (page.viewportSize()?.width ?? 0) >= 768
   if (wide) {
-    // One line: same top, left to right.
-    expect(Math.abs(cardBoxes[0]!.y - cardBoxes[2]!.y)).toBeLessThan(2)
-    expect(cardBoxes[0]!.x).toBeLessThan(cardBoxes[2]!.x)
+    expect(Math.abs(boxes[0]!.y - boxes[2]!.y)).toBeLessThan(2)
+    expect(boxes[0]!.x).toBeLessThan(boxes[2]!.x)
   } else {
-    expect(cardBoxes[0]!.y).toBeLessThan(cardBoxes[2]!.y)
+    expect(boxes[0]!.y).toBeLessThan(boxes[2]!.y)
   }
-  expect(cardBoxes[0]!.y).toBeGreaterThan(headingBox!.y)
+  expect(boxes[0]!.y).toBeLessThan(boxes[3]!.y)
 
   if (wide) {
     // The map is the overview above the list: one circle per action, in the order on screen.
     const map = page.getByRole('list', { name: 'Progresso do plano' })
     const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' })
     await expect(map.locator('li')).toHaveCount(7)
-    await expect(map.getByRole('button').first()).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
+    await expect(map.getByRole('button').first()).toHaveAccessibleName(/Implementar autenticação multifator.*ação 1 de 7\./)
     expect((await map.boundingBox())!.y).toBeLessThan((await rows.boundingBox())!.y)
 
     // Each circle carries the action's name under it.
@@ -146,33 +136,38 @@ test('Scenario 3 — Rui can read the plan history and export it, but not change
   await popup.close()
 })
 
-test('Scenario 3 — the plan follows the order switch', async ({ page }) => {
-  await start(page, `${ORG}/roadmap`, 'rui', 'c3')
-  await page.goto(`${ORG}/roadmap?as=rui`)
-  const rows = page.getByRole('list', { name: 'O plano da empresa, por ordem de prioridade' }).locator('li')
+test('Scenario 3 — the plan follows the order switch (the consultant\'s)', async ({ page }) => {
+  await start(page, '/clientes/componentes-agueda/roadmap', 'marta', 'c3')
+  await page.goto('/clientes/componentes-agueda/roadmap?as=marta')
+  const rows = page.getByRole('list', { name: 'Ações do roadmap por prioridade' }).locator('li')
   const mapFirst = page.getByRole('list', { name: 'Progresso do plano' }).getByRole('button').first()
   const wide = (page.viewportSize()?.width ?? 0) >= 768
   await expect(page.getByRole('radio', { name: 'Priorizado pelos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Implementar autenticação multifator')
-  if (wide) await expect(mapFirst).toHaveAccessibleName(/Ação 1 de 7: Implementar autenticação multifator/)
+  if (wide) await expect(mapFirst).toHaveAccessibleName(/Implementar autenticação multifator.*ação 1 de 7\./)
 
   await page.getByRole('radio', { name: 'Antes dos riscos' }).click()
   await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
   await expect(page).toHaveURL(/ordem=base/)
   await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
-  if (wide) await expect(mapFirst).toHaveAccessibleName(/Ação 1 de 7: Registar a entidade no MyCiber\. Por iniciar\.$/)
+  if (wide) await expect(mapFirst).toHaveAccessibleName(/Registar a entidade no MyCiber\. Por iniciar.*ação 1 de 7\./)
 
   await page.reload()
   await expect(page.getByRole('radio', { name: 'Antes dos riscos' })).toBeChecked()
   await expect(rows.first()).toContainText('Registar a entidade no MyCiber')
 })
 
-test('Scenario 3 — the risk register moves actions down as well as up', async ({ page }) => {
-  await start(page, `${ORG}/roadmap`, 'rui', 'c3')
-  await page.goto(`${ORG}/roadmap?as=rui`)
+test('Scenario 3 — the risk register moves actions down as well as up, for the consultant only', async ({ page }) => {
+  await start(page, '/clientes/componentes-agueda/roadmap', 'marta', 'c3')
+  await page.goto('/clientes/componentes-agueda/roadmap?as=marta')
   await expect(page.getByText(/subiram.*desceram por causa dos riscos registados/)).toBeVisible()
   await expect(page.getByText(/Subiu \d+ posições/).first()).toBeVisible()
   await expect(page.getByText(/Desceu \d+ posições/).first()).toBeVisible()
+
+  // The client gets the validated order and the reason per action, without the before/after movement.
+  await page.goto(`${ORG}/roadmap?as=rui`)
+  await expect(page.getByText('Esta ação está ligada a um risco:', { exact: false }).first()).toBeVisible()
+  await expect(page.getByText(/Subiu \d+ posições/)).toHaveCount(0)
 })
 
 test('Permissions — before validation Rui cannot see risks and Pedro never can', async ({ page }) => {
