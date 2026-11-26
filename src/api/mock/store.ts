@@ -90,11 +90,8 @@ export function newId(prefix: string): Id {
 
 /** The scenario's day at the real time of day: writes line up with the seeded dates and deadlines. */
 export function now(): string {
-  const real = new Date()
-  const [y, m, d] = state.today.split('-').map(Number)
-  const stamp = new Date(real)
-  stamp.setFullYear(y, m - 1, d)
-  return stamp.toISOString()
+  // Built in UTC: in local time the stamp can fall on the day before or after `today` near midnight.
+  return `${state.today}T${new Date().toISOString().slice(11)}`
 }
 
 export function auditEntry(entry: Omit<AuditEntry, 'id' | 'createdAt' | 'actorType'> & { actorType?: AuditEntry['actorType'] }): AuditEntry {
