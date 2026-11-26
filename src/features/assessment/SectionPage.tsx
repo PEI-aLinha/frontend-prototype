@@ -20,12 +20,12 @@ export function SectionPage() {
   if (error) return <>{back}<ErrorState error={error} onRetry={() => { assessment.refetch(); questions.refetch() }} /></>
   if (!assessment.data || !questions.data) return <SkeletonRows rows={6} />
   const section = assessment.data.sections.find((s) => s.id === sectionId)
-  if (!section) return <>{back}<EmptyState headingLevel={1} title="Secção não encontrada">Volte à avaliação e escolha uma secção.</EmptyState></>
+  if (!section) return <>{back}<EmptyState headingLevel={1} title="Secção não encontrada" action={<Link to={`/org/${org.slug}/avaliacao`} className="text-[0.9375rem] font-bold text-brand hover:underline">Voltar à Avaliação</Link>}>Esta secção não existe nesta avaliação. Escolha outra na lista.</EmptyState></>
 
   return (
     <>
       {back}
-      <PageHeader eyebrow="Avaliação de maturidade" title={section.name} subtitle={`${section.answered} de ${section.total} perguntas respondidas`} />
+      <PageHeader title={section.name} subtitle={`${section.answered} de ${section.total} perguntas respondidas`} />
       <div className="flex max-w-[760px] flex-col gap-4">
         <ProgressBar value={section.answered} max={section.total} label={`Progresso de ${section.name}`} />
         {assessment.data.status !== 'em_curso' && <Note>A avaliação já foi submetida. As respostas já não podem ser alteradas.</Note>}

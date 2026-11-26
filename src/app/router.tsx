@@ -1,4 +1,5 @@
 import { createBrowserRouter } from 'react-router'
+import { NotFoundPage } from './NotFoundPage'
 import { HomeRedirect } from './HomeRedirect'
 import { DesignPage } from './DesignPage'
 import { ClientLayout, ConsultantLayout } from './layouts'
@@ -74,7 +75,7 @@ export const router = createBrowserRouter([
           { path: 'historico', handle: { title: 'Histórico' }, element: <HistoryPage /> },
         ],
       },
-      { path: '*', element: <HomeRedirect /> },
+      { path: '*', handle: { title: 'Página não encontrada' }, element: <NotFoundPage /> },
     ],
   },
 ])

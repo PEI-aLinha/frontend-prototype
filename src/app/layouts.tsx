@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, Outlet, useParams } from 'react-router'
+import { RedirectHome } from './RedirectHome'
+import { HelpMenu } from './HelpMenu'
 import {
   Boxes, Briefcase, ClipboardCheck, ClipboardList, History, Home, LayoutDashboard, ListChecks, Ban, Map, Plug, Scale, Settings, Grid3x3, Users,
 } from 'lucide-react'
@@ -16,13 +18,19 @@ import { AppearanceMenu } from './AppearanceMenu'
 
 function OrgGate({ slug, children }: { slug: string; children: (org: NonNullable<ReturnType<typeof useOrganization>['data']>) => ReactNode }) {
   const org = useOrganization(slug)
+  const { persona } = useSession()
+  // A responsible person whose organization is not registered yet belongs in the registration flow, not on an error.
+  // Only for their own organization: a mistyped slug is a plain "not found".
+  const ownOrg = homePath(persona.key).startsWith(`/org/${slug}/`)
+  if (org.isError && org.error instanceof ApiError && org.error.status === 404 && persona.role === 'responsavel' && ownOrg) return <Navigate to="/registo" replace />
   if (org.isPending) return <div className="p-14"><SkeletonRows /></div>
-  if (org.isError) {
+  // A failed refetch keeps the organization already on screen: the shell and navigation stay, each page shows its own error.
+  if (org.isError && !org.data) {
     // No access (e.g. an analyst removed from the team): explain instead of offering a retry.
     if (org.error instanceof ApiError && org.error.status === 403) {
       return <div className="p-14 max-md:p-6"><EmptyState icon={<Ban className="size-5" aria-hidden />} title="Sem acesso a esta organização">{org.error.message}</EmptyState></div>
     }
-    return <div className="p-14"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
+    return <div className="p-14 max-md:p-6"><ErrorState error={org.error} onRetry={() => org.refetch()} /></div>
   }
   return <TenantProvider org={org.data}>{children(org.data)}</TenantProvider>
 }
@@ -65,7 +73,7 @@ function ClientShell({ orgId, slug, orgName }: { orgId: string; slug: string; or
   const order = [`${base}/inicio`, `${base}/avaliacao`, `${base}/ativos`, `${base}/riscos`, `${base}/roadmap`]
   const tabs = persona.role === 'analista' ? undefined : [...items].sort((a, b) => rank(order, a.to) - rank(order, b.to))
   return (
-    <AppShell tools={<><AppearanceMenu /><NotificationBell /></>} sections={[{ items }]} tabs={tabs} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
+    <AppShell tools={<><HelpMenu /><AppearanceMenu /><NotificationBell /></>} sections={[{ items }]} tabs={tabs} user={{ initials: persona.initials, name: persona.name, subtitle: persona.role === 'analista' ? 'Analista' : orgName.replace(', Lda.', '') }}>
       <Outlet />
     </AppShell>
   )
@@ -80,12 +88,12 @@ function rank(order: string[], to: string): number {
 export function ConsultantLayout() {
   const { org } = useParams()
   const { persona } = useSession()
-  if (persona.role !== 'consultor') return <Navigate to={homePath(persona.key)} replace />
+  if (persona.role !== 'consultor') return <RedirectHome reason="A carteira de clientes é da consultora. Voltou ao seu início." />
   const user = { initials: persona.initials, name: persona.name, subtitle: 'Consultora aLinha' }
   const portfolio: NavItem = { to: '/carteira', label: 'Carteira de clientes', shortLabel: 'Clientes', icon: Briefcase, end: true }
   if (!org) {
     return (
-      <AppShell tools={<><AppearanceMenu /><NotificationBell /></>} sections={[{ items: [portfolio] }]} user={user}>
+      <AppShell tools={<><HelpMenu /><AppearanceMenu /><NotificationBell /></>} sections={[{ items: [portfolio] }]} user={user}>
         <Outlet />
       </AppShell>
     )
@@ -104,7 +112,7 @@ export function ConsultantLayout() {
         ]
         const sections: NavSection[] = [{ items: [portfolio] }, { heading: o.name.replace(', Lda.', ''), items: client }]
         return (
-          <AppShell tools={<><AppearanceMenu /><NotificationBell /></>} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[0], client[4], client[5]]}>
+          <AppShell tools={<><HelpMenu /><AppearanceMenu /><NotificationBell /></>} sections={sections} user={user} tabs={[portfolio, client[3], client[1], client[2], client[0], client[4], client[5]]}>
             <Outlet />
           </AppShell>
         )
