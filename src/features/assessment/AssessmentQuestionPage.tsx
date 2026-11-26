@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { ArrowLeft, Check, UserRound, ArrowRight } from 'lucide-react'
-import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '../../api/contracts'
+import { ApiError, type AnswerChoice, type AssessmentQuestion, type Task, type TeamMember, type User } from '../../api/contracts'
 import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
 import { dateTime, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
@@ -137,33 +137,36 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
   // Only a new or changed answer is saved. Without an answer, moving on skips the question ("Por responder").
   const changed = !!choice && (choice !== question.answer?.choice || note.trim() !== (question.answer?.note ?? ''))
 
+  // A comment typed before choosing an answer cannot be saved on its own, but it is still work the person did.
+  const noteOnly = !choice && note.trim() !== (question.answer?.note ?? '')
   // Leaving by the sidebar, the browser's back button or a link saves the answer too: nothing typed is lost.
   const saving = useRef(false)
-  const blocker = useBlocker(() => changed && !saving.current)
+  const blocker = useBlocker(() => (changed || noteOnly) && !saving.current)
   useEffect(() => {
-    if (blocker.state !== 'blocked' || !choice) return
+    // The effect runs again while the blocker is still "blocked": the ref makes sure one save, one proceed.
+    if (blocker.state !== 'blocked' || !choice || saving.current) return
     saving.current = true
     save.mutateAsync({ questionId: question.id, answer: { choice, note } })
-      .then(() => { toast.show('Resposta guardada.'); blocker.proceed() })
-      .catch((e: Error) => { saving.current = false; blocker.reset(); toast.show(e.message, 'error') })
+      .then(() => { toast.show('Resposta guardada.'); blocker.proceed?.() })
+      .catch((e: unknown) => { saving.current = false; blocker.reset?.(); toast.show(saveError(e), 'error') })
   }, [blocker, choice, note, question.id, save, toast])
   // Closing the tab cannot wait for a save, so the browser asks first.
   useEffect(() => {
-    if (!changed) return
+    if (!changed && !noteOnly) return
     const warn = (e: BeforeUnloadEvent) => e.preventDefault()
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
-  }, [changed])
+  }, [changed, noteOnly])
 
   const leave = (action: Leaving, path: string, message?: string, tone: 'success' | 'info' = 'success') => {
-    const go = () => { if (message) toast.show(message, tone); navigate(path) }
+    const go = () => { if (message && !noteOnly) toast.show(message, tone); navigate(path) }
     if (!choice || !changed) { go(); return }
     saving.current = true
     setLeaving(action)
     // mutateAsync: navigating unmounts this form, and mutate() callbacks would be dropped.
     save.mutateAsync({ questionId: question.id, answer: { choice, note } })
       .then(go)
-      .catch((e: Error) => { saving.current = false; setLeaving(undefined); toast.show(e.message, 'error') })
+      .catch((e: unknown) => { saving.current = false; setLeaving(undefined); toast.show(saveError(e), 'error') })
   }
 
   return (
@@ -177,8 +180,19 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
         <Button variant="secondary" loading={leaving === 'later'} disabled={!!leaving}
           onClick={() => leave('later', overviewPath, 'Progresso guardado. Pode continuar quando quiser.')}>Guardar e continuar depois</Button>
       </QuestionNav>
+      <Modal open={blocker.state === 'blocked' && !choice} onOpenChange={(o) => !o && blocker.reset?.()} width={440} title="Sair sem guardar o comentário?"
+        description="Escreveu um comentário mas ainda não escolheu uma resposta. Só é guardado com uma resposta."
+        footer={<>
+          <Button variant="secondary" onClick={() => blocker.reset?.()}>Escolher uma resposta</Button>
+          <Button variant="danger" onClick={() => blocker.proceed?.()}>Sair sem guardar</Button>
+        </>} />
     </form>
   )
+}
+
+/** Errors from the API are already written for people; anything else gets a plain sentence instead of developer text. */
+function saveError(e: unknown): string {
+  return e instanceof ApiError ? e.message : 'Não foi possível guardar a resposta. Tente de novo.'
 }
 
 /** ← Anterior on the left; Seguinte → (and any extra action) on the right. */
