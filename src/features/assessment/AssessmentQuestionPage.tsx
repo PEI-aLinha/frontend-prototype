@@ -11,9 +11,11 @@ import { CHOICE_LABEL, CHOICES } from './choices'
 const KIND_LABEL = { tecnica: 'Pergunta técnica', gestao: 'Pergunta de gestão' } as const
 
 /** "às 17:44" when saved today, otherwise "a 16 out. · 15:40". */
-function savedLabel(iso: string) {
+/** "às 14:05" when saved on the demo's today (the scenario's date, not the computer's), otherwise the full date. */
+function savedLabel(iso: string, today?: string) {
   const d = new Date(iso)
-  if (d.toDateString() !== new Date().toDateString()) return `a ${dateTime(iso)}`
+  const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  if (day !== (today ?? new Date().toISOString().slice(0, 10))) return `a ${dateTime(iso)}`
   return `às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
@@ -32,6 +34,7 @@ export function AssessmentQuestionPage() {
   const questions = useAssessmentQuestions(org.id, sectionId)
   const tasks = useTasks(org.id)
   const users = useUsers(org.id)
+  const today = useToday()
   const base = `/org/${org.slug}/avaliacao`
   const sections = assessment.data?.sections ?? []
   const at = sections.findIndex((s) => s.id === sectionId)
@@ -69,7 +72,7 @@ export function AssessmentQuestionPage() {
         actions={
           // Always rendered, so screen readers announce it when a save fills it in.
           <p role="status" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold text-ink-soft">
-            {savedAt && <><Check className="size-4 text-signal" aria-hidden />Progresso guardado {savedLabel(savedAt)}</>}
+            {savedAt && <><Check className="size-4 text-signal" aria-hidden />Progresso guardado {savedLabel(savedAt, today.data)}</>}
           </p>
         } />
       <ProgressBar value={answered} max={total} label="Progresso da avaliação" className="-mt-2" />
