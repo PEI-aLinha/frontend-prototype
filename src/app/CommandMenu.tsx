@@ -71,7 +71,7 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
           <div className="flex items-center gap-3 border-b border-line-soft px-4">
             <Search className="size-4 text-muted" aria-hidden />
             <input
-              autoFocus value={q} placeholder={persona.role === 'consultor' ? 'Procurar páginas, clientes, ativos e riscos…' : 'Procurar páginas, ativos, riscos e ações…'} aria-label="Procurar"
+              value={q} placeholder={persona.role === 'consultor' ? 'Procurar páginas, clientes, ativos e riscos…' : 'Procurar páginas, ativos, riscos e ações…'} aria-label="Procurar"
               role="combobox" aria-expanded aria-controls="cmd-list" aria-activedescendant={results[active] ? `cmd-${results[active].id}` : undefined}
               onChange={(e) => { setQ(e.target.value); setActive(0) }}
               onKeyDown={(e) => {
@@ -91,7 +91,7 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
                 {results.filter((r) => r.group === g).map((r) => {
                   const i = results.indexOf(r)
                   return (
-                    <div key={r.id} id={`cmd-${r.id}`} role="option" aria-selected={i === active} onMouseMove={() => setActive(i)} onClick={() => go(r)}
+                    <div key={r.id} id={`cmd-${r.id}`} role="option" tabIndex={-1} aria-selected={i === active} onMouseMove={() => setActive(i)} onClick={() => go(r)}
                       className={cn('flex h-11 cursor-pointer items-center gap-3 rounded-[10px] px-3 text-[0.9375rem]', i === active ? 'bg-brand-soft text-brand' : 'text-ink')}>
                       <span className={i === active ? 'text-brand' : 'text-muted'}>{r.icon}</span>
                       <span className="flex-1 truncate font-semibold">{r.label}</span>

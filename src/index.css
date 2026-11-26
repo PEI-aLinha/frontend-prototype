@@ -278,7 +278,8 @@ p, li { text-wrap: pretty; }
 /* Numbers that sit in columns or change in place keep the same width. */
 @utility num { font-variant-numeric: tabular-nums lining-nums; }
 /* Bigger touch target than the visible control (hit slop). */
-@utility hit-slop { position: relative; &::after { content: ''; position: absolute; inset: -10px; } }
+@utility hit-slop { position: relative; }
+.hit-slop::after { content: ''; position: absolute; inset: -10px; }
 /* Continuous (squircle) corners where the browser supports them; plain radius elsewhere. */
 @supports (corner-shape: squircle) {
   .rounded-\[14px\], .rounded-\[16px\], .rounded-\[20px\] { corner-shape: squircle; }
