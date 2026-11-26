@@ -25,7 +25,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState('')
   const terms = searchGlossary(q)
   return (
-    <Modal open onOpenChange={(o) => !o && onClose()} title="Ajuda" description="Significado das palavras técnicas, atalhos e a quem perguntar." width={600}>
+    <Modal open onOpenChange={(o) => !o && onClose()} title="Ajuda" description="Palavras técnicas, como fazer as tarefas principais e a quem perguntar." width={600}>
       <div className="flex flex-col gap-6">
         <section aria-labelledby="help-glossary" className="flex flex-col gap-3">
           <h3 id="help-glossary" className="text-[0.9375rem] font-extrabold">Glossário</h3>
@@ -40,10 +40,11 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
             ))}
           </dl>
         </section>
+        <HowTo />
         <section aria-labelledby="help-keys" className="flex flex-col gap-2">
           <h3 id="help-keys" className="text-[0.9375rem] font-extrabold">Atalhos</h3>
           <ul className="flex flex-col gap-1.5 text-sm text-ink-soft">
-            <li className="flex items-center gap-2"><Kbd>{MOD_KEY}</Kbd><Kbd>K</Kbd> Procurar páginas, clientes e ações</li>
+            <li className="flex items-center gap-2"><Kbd>{MOD_KEY}</Kbd><Kbd>K</Kbd> Procurar páginas, ativos, riscos e ações</li>
             <li className="flex items-center gap-2"><Kbd>esc</Kbd> Fechar uma janela ou um painel</li>
           </ul>
         </section>
@@ -54,6 +55,46 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
         <Contact />
       </div>
     </Modal>
+  )
+}
+
+type Guide = [question: string, answer: string]
+
+const HOW_TO: Record<'responsavel' | 'analista' | 'consultor', Guide[]> = {
+  responsavel: [
+    ['Como respondo à avaliação?', 'Em Avaliação, abra a próxima pergunta. A resposta fica guardada quando passa à seguinte ou sai da pergunta. Se não souber, deixe-a por responder e volte depois.'],
+    ['Como peço ajuda ao técnico?', 'Numa pergunta técnica, escolha "Delegar". O técnico recebe uma tarefa com prazo e só vê essa pergunta.'],
+    ['O que acontece quando submeto?', 'As respostas deixam de poder ser alteradas. A consultora revê-as, regista os riscos e valida o roadmap. Recebe uma notificação quando terminar.'],
+    ['Porque não posso alterar o roadmap?', 'Depois de validado, o roadmap e os riscos ficam em só leitura. Para mudar alguma coisa, fale com a consultora: só ela o pode reabrir.'],
+  ],
+  analista: [
+    ['Como respondo a uma pergunta?', 'Em As minhas tarefas, escolha Responder. Se não tiver como confirmar, escolha "Não sei": quem lhe pediu decide como responder.'],
+    ['Como registo ativos?', 'Abra a tarefa de registo e preencha um ativo de cada vez. Quando terminar, escolha "Guardar e concluir".'],
+    ['Posso ver o resto da avaliação?', 'Não. Vê só o que lhe foi pedido. O resto continua com o responsável designado.'],
+  ],
+  consultor: [
+    ['Quando posso validar o roadmap?', 'Depois de o cliente submeter a avaliação. Antes de validar, ligue os riscos altos a uma ação.'],
+    ['Como corrijo um roadmap já validado?', 'Em Resultados e roadmap, escolha "Reabrir validação" e diga porquê. O cliente recebe a explicação e deixa de ver o plano até o validar de novo.'],
+    ['Como encontro um cliente?', 'Use Procurar (⌘K) e escreva parte do nome, com ou sem acentos.'],
+  ],
+}
+
+function HowTo() {
+  const { persona } = useSession()
+  const guides = HOW_TO[persona.role as keyof typeof HOW_TO] ?? []
+  if (!guides.length) return null
+  return (
+    <section aria-labelledby="help-how" className="flex flex-col gap-1">
+      <h3 id="help-how" className="text-[0.9375rem] font-extrabold">Como fazer</h3>
+      {guides.map(([q, a]) => (
+        <details key={q} className="group border-b border-line-soft py-2 last:border-0">
+          <summary className="cursor-pointer list-none text-sm font-bold text-ink marker:hidden hover:text-brand [&::-webkit-details-marker]:hidden">
+            <span aria-hidden className="mr-2 inline-block text-muted transition-transform group-open:rotate-90">›</span>{q}
+          </summary>
+          <p className="mt-1.5 pl-5 text-sm leading-relaxed text-ink-soft">{a}</p>
+        </details>
+      ))}
+    </section>
   )
 }
 
