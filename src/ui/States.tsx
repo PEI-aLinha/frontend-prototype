@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
-import { CloudOff } from 'lucide-react'
+import { Link } from 'react-router'
+import { CloudOff, SearchX } from 'lucide-react'
+import { ApiError } from '../api/contracts'
 import { Button } from './Button'
 import { cn } from './cn'
 
@@ -35,7 +37,18 @@ export function EmptyState({ icon, title, children, action, className, headingLe
   )
 }
 
+/** A page or record that does not exist: retrying cannot help, so offer a way out instead. */
+export function NotFoundState({ headingLevel = 2, children }: { headingLevel?: 1 | 2 | 3; children?: ReactNode }) {
+  return (
+    <EmptyState headingLevel={headingLevel} icon={<SearchX className="size-5" aria-hidden />} title="Não encontrámos esta página"
+      action={<Link to="/" className="font-bold text-brand hover:underline">Ir para o início</Link>}>
+      {children ?? 'O endereço pode estar incompleto, ou o que procurava foi removido.'}
+    </EmptyState>
+  )
+}
+
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  if (error instanceof ApiError && error.status === 404) return <NotFoundState>{error.message}. O endereço pode estar incompleto, ou foi removido.</NotFoundState>
   const detail = error instanceof Error ? error.message : null
   return (
     <EmptyState icon={<CloudOff className="size-5" aria-hidden />} title="Não conseguimos carregar estes dados" action={onRetry && <Button variant="secondary" size="sm" onClick={onRetry}>Tentar de novo</Button>}>

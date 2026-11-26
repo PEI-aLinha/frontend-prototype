@@ -81,6 +81,41 @@ export const GLOSSARY = {
     term: 'NIS2',
     short: 'Diretiva europeia de cibersegurança, aplicada em Portugal pelo Regime Jurídico da Cibersegurança. Obriga a gerir riscos, registar ativos e notificar incidentes.',
   },
+  mfa: {
+    term: 'MFA',
+    short: 'Autenticação multifator: além da palavra-passe, pede um segundo código, por exemplo no telemóvel. Uma palavra-passe roubada deixa de bastar para entrar.',
+  },
+  myciber: {
+    term: 'MyCiber',
+    short: 'A plataforma do Centro Nacional de Cibersegurança onde as empresas abrangidas se registam e comunicam incidentes.',
+  },
+  rjc: {
+    term: 'RJC',
+    short: 'Regime Jurídico da Cibersegurança: a lei portuguesa (Decreto-Lei 125/2025) que aplica a diretiva NIS2.',
+  },
+  ot: {
+    term: 'OT',
+    short: 'Tecnologia operacional: as máquinas e os sistemas que controlam a produção (autómatos, robôs), por oposição aos computadores do escritório.',
+  },
+  ransomware: {
+    term: 'Ransomware',
+    short: 'Programa malicioso que cifra os ficheiros da empresa e pede um resgate para os devolver.',
+  },
+  cncs: {
+    term: 'CNCS',
+    short: 'Centro Nacional de Cibersegurança: a entidade que supervisiona o cumprimento da NIS2 em Portugal.',
+  },
 } satisfies Record<string, GlossaryEntry>
+
+/** Abbreviations and loan words that get an inline explanation wherever they appear in running text. */
+export const INLINE_TERMS: Array<[RegExp, GlossaryKey]> = [
+  [/\bMFA\b/, 'mfa'],
+  [/\bMyCiber\b/, 'myciber'],
+  [/\bRJC\b/, 'rjc'],
+  [/\bOT\b/, 'ot'],
+  [/\b[Rr]ansomware\b/, 'ransomware'],
+  [/\bCNCS\b/, 'cncs'],
+  [/\bNIS2\b/, 'nis2'],
+]
 
 export type GlossaryKey = keyof typeof GLOSSARY
