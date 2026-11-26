@@ -128,7 +128,7 @@ export function RisksPage() {
             <Card aria-labelledby="risk-matrix-title" className="rounded-[16px] px-6 py-5" data-tour="risk-matrix">
               <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h2 id="risk-matrix-title" className="section-title"><Term k="matriz">Matriz de risco</Term> <span className="eyebrow text-xs font-medium text-muted">{RISK_MATRIX.probability.length}×{RISK_MATRIX.impact.length}</span></h2>
-                <p className="num flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+                <p data-tour="risk-summary" className="num flex flex-wrap items-center gap-2 text-sm text-ink-soft">
                   {(['alto', 'medio', 'baixo'] as Level[]).map((l) => <span key={l} className="inline-flex items-center gap-1.5"><RiskLevelBadge level={l} /><b className="text-ink">{counts(l)}</b></span>)}
                   {cell && <Button variant="link" size="sm" onClick={() => update({ p: null, i: null })}>Mostrar todos</Button>}
                 </p>

@@ -12,7 +12,9 @@ const CLIENT_MARTA = '/clientes/componentes-agueda/visao-geral'
 const SAVE_SETTLE_MS = 1500
 
 async function openChat(page: Page, name: string): Promise<Locator> {
-  await page.getByRole('button', { name: `Abrir ${name}` }).click()
+  // On a phone the floating button is gone: the header carries the assistant button instead.
+  const narrow = (page.viewportSize()?.width ?? 0) < 768
+  await (narrow ? page.getByRole('button', { name: 'Assistente IA', exact: true }) : page.getByRole('button', { name: `Abrir ${name}` })).click()
   const dialog = page.getByRole('dialog', { name })
   await expect(dialog).toBeVisible()
   return dialog
