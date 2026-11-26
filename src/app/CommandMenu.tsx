@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { useQueries } from '@tanstack/react-query'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useNavigate } from 'react-router'
-import { Boxes, Building2, ClipboardList, CornerDownLeft, Plus, Search, ShieldAlert } from 'lucide-react'
-import { useAssessment, useAssets, usePortfolio, useRisks, useRoadmapStatus } from '../api/queries'
+import { Boxes, Building2, ClipboardList, CornerDownLeft, ListChecks, MessageCircleQuestion, Plus, Search, ShieldAlert } from 'lucide-react'
+import { api } from '../api/client'
+import { useActions, useAssessment, useAssets, usePortfolio, useRisks, useRoadmapStatus } from '../api/queries'
 import { useOptionalTenant } from '../core/tenant'
 import { useCan } from '../core/useCan'
 import { useSession } from '../core/session'
@@ -124,12 +126,25 @@ function useContentEntries(open: boolean, sections: NavSection[]): Entry[] {
   const risksOn = on && can('view', 'risk') && (persona.role === 'consultor' || !!status.data?.validated)
   const risks = useRisks(org?.id, risksOn)
   const assessment = useAssessment(on && persona.role !== 'analista' ? org?.id : undefined)
+  const asks = persona.role === 'responsavel'
+  // Same keys as the section pages, so these are usually already cached.
+  const questions = useQueries({
+    queries: (asks && on ? assessment.data?.sections ?? [] : []).map((sec) => ({
+      queryKey: ['assessment', org?.id, 'questions', sec.id],
+      queryFn: () => api.assessment.listQuestions(org!.id, sec.id),
+    })),
+  })
+  const roadmapOn = on && can('view', 'roadmap') && (persona.role === 'consultor' || !!status.data?.validated)
+  const actions = useActions(org?.id, roadmapOn)
+  const questionList = questions.flatMap((q) => q.data ?? [])
   return useMemo(() => {
     if (!base) return []
     return [
       ...(assets.data ?? []).map((a) => ({ id: `a-${a.id}`, label: a.name, hint: 'Ativo', group: 'Ativos', icon: <Boxes className="size-4" aria-hidden />, to: `${base}/ativos?ativo=${a.id}`, content: true })),
       ...(risksOn ? risks.data ?? [] : []).map((r) => ({ id: `r-${r.id}`, label: r.plainLanguage ?? r.threat, hint: r.plainLanguage ? r.threat : 'Risco', group: 'Riscos', icon: <ShieldAlert className="size-4" aria-hidden />, to: `${base}/riscos?risco=${r.id}`, content: true })),
       ...(persona.role === 'responsavel' ? assessment.data?.sections ?? [] : []).map((sec) => ({ id: `s-${sec.id}`, label: sec.name, hint: `${sec.answered} de ${sec.total} respondidas`, group: 'Avaliação', icon: <ClipboardList className="size-4" aria-hidden />, to: `${base}/avaliacao/${sec.id}`, content: true })),
+      ...questionList.map((qn) => ({ id: `q-${qn.id}`, label: qn.text, hint: assessment.data?.sections.find((sec) => sec.id === qn.sectionId)?.name, group: 'Perguntas', icon: <MessageCircleQuestion className="size-4" aria-hidden />, to: `${base}/avaliacao/${qn.sectionId}/${qn.id}`, content: true })),
+      ...(roadmapOn ? actions.data ?? [] : []).map((ac) => ({ id: `ac-${ac.id}`, label: ac.description, hint: 'Ação do roadmap', group: 'Roadmap', icon: <ListChecks className="size-4" aria-hidden />, to: `${base}/roadmap`, content: true })),
     ]
-  }, [base, assets.data, risks.data, risksOn, assessment.data, persona.role])
+  }, [base, assets.data, risks.data, risksOn, assessment.data, persona.role, questionList, roadmapOn, actions.data])
 }

@@ -43,7 +43,8 @@ export function PersonaSwitcher() {
   const jump = (id: SnapshotId) => {
     resetDemo(id)
     clearRegistrationDraft()
-    qc.clear()
+    // reset, not clear: screens already open refetch at once instead of keeping the previous scenario's data.
+    void qc.resetQueries()
     if (id === 'c0') {
       // No account exists yet: drop any identity from the previous run (e.g. an accepted invite), keeping the
       // current persona so its layout does not redirect before reaching the registration.
