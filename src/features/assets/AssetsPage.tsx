@@ -10,7 +10,7 @@ import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import { PageTour } from '../../core/onboarding/PageTour'
 import {
-  Button, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
+  Button, buttonClass, Chip, CriticalityChip, DataTable, EmptyState, ErrorState, Note, Term, PageHeader, PendingRow, Person, RiskLevelBadge,
   Segmented, SkeletonRows, type ColumnDef,
 } from '../../ui'
 import { AssetDrawer } from './AssetDrawer'
@@ -121,7 +121,7 @@ export function AssetsPage() {
     <Button variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => update({ exportar: '1' })}>Exportar Lista de Ativos</Button>
   ) : (
     <>
-      {can('assign', 'asset_task') && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
+      {can('assign', 'asset_task') && analysts.length > 0 && <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir registo</Button>}
       {can('create', 'asset') && <Button data-tour="asset-add" icon={<Plus className="size-4" aria-hidden />} onClick={() => update({ novo: '1' })}>Adicionar ativo</Button>}
     </>
   )
@@ -132,10 +132,12 @@ export function AssetsPage() {
       title={task?.scope ?? 'Servidores, rede e sistemas de produção'}
       text={state === 'assigned'
         ? `Registo atribuído ao ${analystName}. ${byAnalyst.length ? `${byAnalyst.length} de ${task?.expectedCount ?? 4} já registados.` : 'Aparece aqui quando ele os registar.'}`
-        : 'Ainda não registados. O Pedro conhece estes sistemas: atribua-lhe o registo.'}
+        : analysts.length ? `Ainda não registados. O ${analysts[0].name.split(' ')[0]} conhece estes sistemas: atribua-lhe o registo.` : 'Ainda não registados. Convide o técnico de informática que conhece estes sistemas e atribua-lhe o registo.'}
       action={state === 'assigned' && task
         ? <Chip>Atribuído{task.dueDate ? ` · até ${shortDay(task.dueDate)}` : ''}</Chip>
-        : <Button variant="secondary" onClick={() => update({ atribuir: '1' })}>Atribuir ao Pedro</Button>}
+        : analysts.length
+          ? <Button variant="secondary" onClick={() => update({ atribuir: '1' })}>Atribuir ao {analysts[0].name.split(' ')[0]}</Button>
+          : <Link to={`/org/${org.slug}/equipa?convidar=1`} className={buttonClass({ variant: 'secondary' })}>Convidar analista</Link>}
     />
   )
 

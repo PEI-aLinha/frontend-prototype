@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { useSearchParams, Link } from 'react-router'
 import { BellRing, CalendarClock, ClipboardPlus, ExternalLink, Send, UserMinus, UserPlus, XCircle } from 'lucide-react'
 import type { Task, TeamMember } from '../../api/contracts'
 import { useCancelInvite, useInviteAnalyst, useMembers, useRemindTask, useRemoveMember, useResendInvite, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
@@ -93,7 +93,9 @@ export function TeamPage() {
   const members = useMembers(org.id)
   const tasks = useTasks(org.id)
   const today = useToday()
-  const [invite, setInvite] = useState(false)
+  const [params, setParams] = useSearchParams()
+  const [invite, setInviteState] = useState(params.get('convidar') === '1')
+  const setInvite = (v: boolean) => { setInviteState(v); if (!v && params.has('convidar')) setParams((p) => { p.delete('convidar'); return p }, { replace: true }) }
   const [confirming, setConfirming] = useState<TeamMember | null>(null)
   const [assigning, setAssigning] = useState<{ to?: string } | null>(null)
   const analysts = (members.data ?? []).filter((m) => m.role === 'analista' && m.status === 'ativo')
