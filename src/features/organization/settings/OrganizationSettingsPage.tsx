@@ -58,7 +58,7 @@ export function OrganizationSettingsPage() {
         <header className="flex flex-wrap items-start justify-between gap-3">
           <h2 id="qualificacao-titulo" className="section-title">Qualificação NIS2</h2>
           {canEdit && suggested && suggested !== 'nao_abrangida' && !official && today.data && (
-            <Button icon={<BadgeCheck className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Registar qual uma oficial</Button>
+            <Button icon={<BadgeCheck className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Registar a qualificação oficial</Button>
           )}
           {canEdit && official && today.data && (
             <Button variant="secondary" icon={<Pencil className="size-4" aria-hidden />} onClick={() => setRegistering(true)}>Corrigir</Button>

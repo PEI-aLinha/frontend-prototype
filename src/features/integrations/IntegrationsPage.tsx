@@ -25,6 +25,7 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   const [confirmOff, setConfirmOff] = useState(false)
   const analyst = users.data?.find((u) => u.role === 'analista')
   const assignee = users.data?.find((u) => u.id === c.assignedTo)
+  const { persona } = useSession()
   const on = c.status === 'ligado'
   const fail = (e: Error) => toast.show(e.message, 'error')
 
@@ -40,7 +41,7 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
           </div>
           <p className="text-sm text-ink-soft">{c.provider.description}</p>
           {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <VaultKey /> credencial no cofre</>}</p>}
-          {c.status === 'pedido' && assignee && <p className="text-xs text-muted">Pedido ao {assignee.name}. Recebe uma tarefa para autorizar.</p>}
+          {c.status === 'pedido' && assignee && <p className="text-xs text-muted">{assignee.id === persona?.userId ? 'Pedido a si: autorize a ligação aqui.' : `Pedido ao ${assignee.name}. Recebe uma tarefa para autorizar.`}</p>}
         {c.provider.applies && (
           <div className="mt-auto flex flex-wrap gap-2 pt-1">
             {on ? (

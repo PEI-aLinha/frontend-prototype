@@ -119,7 +119,7 @@ export function DesignPage() {
           <StatCard label="Ativos registados" value="3" caption="Registados por si" />
           <StatCard label="Por registar" value="—" caption="Servidores, rede e sistemas de produção" onClick={() => toast.show('Cartão clicável')} />
         </div>
-        <HighlightCard eyebrow="Avaliação de maturidade · NIS2 + RGPD" title="8 de 18 perguntas respondidas" action={<Button variant="inverse">Continuar avaliação →</Button>}>
+        <HighlightCard eyebrow="Avaliação de maturidade · NIS2 + RGPD" title="8 de 18 perguntas respondidas" action={<Button variant="inverse">Continuar avaliação</Button>}>
           <ProgressBar value={8} max={18} label="Progresso" track="dark" className="mb-3 max-w-[420px]" />
           1 pergunta atribuída a Pedro Almeida · guardado às 17:44
         </HighlightCard>
