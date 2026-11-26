@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ArrowLeft, Check, UserRound } from 'lucide-react'
+import { ArrowLeft, Check, UserRound, ArrowRight } from 'lucide-react'
 import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '../../api/contracts'
 import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUsers } from '../../api/queries'
 import { dateTime, shortDay } from '../../config/labels'
@@ -108,19 +108,18 @@ export function AssessmentQuestionPage() {
 /** US33 explanation panel (mockup 04/05): AI help pre-generated per question, informational only. */
 function AIHelp({ question }: { question: AssessmentQuestion }) {
   return (
-    <section aria-labelledby="ajuda-ia" className="flex flex-col gap-3.5 rounded-[18px] bg-brand-deep p-[26px] max-md:p-5">
-      <Eyebrow className="text-[0.75rem] text-signal-soft">Ajuda da IA</Eyebrow>
-      <h2 id="ajuda-ia" className="text-[1.0625rem] font-extrabold leading-snug text-white">O que significa esta pergunta?</h2>
-      <p className="text-[0.9375rem] leading-relaxed text-brand-soft">{question.explanation}</p>
-      <div className="rounded-[12px] bg-brand px-4 py-3.5">
-        <h3 className="text-[0.8125rem] font-bold text-white">Exemplo</h3>
-        <p className="text-[0.8125rem] leading-relaxed text-brand-soft">{question.example}</p>
+    <section aria-labelledby="ajuda-ia" className="flex flex-col gap-3 rounded-[14px] border border-line-soft bg-paper p-5">
+      <h2 id="ajuda-ia" className="section-title">O que significa esta pergunta?</h2>
+      <p className="text-[0.9375rem] leading-relaxed text-ink-soft">{question.explanation}</p>
+      <div className="rounded-[10px] bg-paper-soft px-4 py-3">
+        <h3 className="text-[0.8125rem] font-bold">Exemplo</h3>
+        <p className="text-[0.8125rem] leading-relaxed text-ink-soft">{question.example}</p>
       </div>
       <div>
-        <h3 className="text-[0.8125rem] font-bold text-white">Porque é importante</h3>
-        <p className="text-[0.8125rem] leading-relaxed text-brand-soft">{question.whyItMatters}</p>
+        <h3 className="text-[0.8125rem] font-bold">Porque é importante</h3>
+        <p className="text-[0.8125rem] leading-relaxed text-ink-soft">{question.whyItMatters}</p>
       </div>
-      <div><AIBadge kind="info" onDark /></div>
+      <div><AIBadge kind="info" /></div>
     </section>
   )
 }
@@ -166,10 +165,10 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
 function QuestionNav({ nav, leaving, onGo, children }: { nav: Neighbours; leaving?: Leaving; onGo: (path: string, action: 'prev' | 'next') => void; children?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <Button variant="secondary" loading={leaving === 'prev'} disabled={!nav.prev || !!leaving} onClick={() => nav.prev && onGo(nav.prev, 'prev')}>← Anterior</Button>
+      <Button variant="secondary" loading={leaving === 'prev'} disabled={!nav.prev || !!leaving} icon={<ArrowLeft className="size-4" aria-hidden />} onClick={() => nav.prev && onGo(nav.prev, 'prev')}>Anterior</Button>
       <div className="flex flex-wrap justify-end gap-2">
         {children}
-        <Button loading={leaving === 'next'} disabled={!nav.next || !!leaving} onClick={() => nav.next && onGo(nav.next, 'next')}>Seguinte →</Button>
+        <Button loading={leaving === 'next'} disabled={!nav.next || !!leaving} onClick={() => nav.next && onGo(nav.next, 'next')}>Seguinte <ArrowRight className="size-4" aria-hidden /></Button>
       </div>
     </div>
   )

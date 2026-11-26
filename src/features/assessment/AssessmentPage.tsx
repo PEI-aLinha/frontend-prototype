@@ -132,7 +132,7 @@ function SectionsTable({ sections, userName, initials }: { sections: AssessmentS
                         </p>
                       )
                     })}
-                    <Link to={s.id} className="self-start text-sm font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span> <span aria-hidden>→</span></Link>
+                    <Link to={s.id} className="self-start text-sm font-bold text-brand hover:underline">Ver perguntas<span className="sr-only"> de {s.name}</span></Link>
                   </div>
                 )}
               </li>
