@@ -1,15 +1,18 @@
 import { useMemo, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useNavigate } from 'react-router'
-import { Building2, CornerDownLeft, Plus, Search } from 'lucide-react'
-import { usePortfolio } from '../api/queries'
+import { Boxes, Building2, ClipboardList, CornerDownLeft, Plus, Search, ShieldAlert } from 'lucide-react'
+import { useAssessment, useAssets, usePortfolio, useRisks, useRoadmapStatus } from '../api/queries'
+import { useOptionalTenant } from '../core/tenant'
+import { useCan } from '../core/useCan'
 import { useSession } from '../core/session'
 import { cn } from '../ui'
 import type { NavSection } from './AppShell'
 import { matchesQuery } from './commandSearch'
 import { MOD_KEY } from './useCommandMenu'
 
-interface Entry { id: string; label: string; hint?: string; group: string; icon: React.ReactNode; to: string }
+/** `content` entries (assets, risks, sections) only appear once something is typed: the empty list stays a short menu. */
+interface Entry { id: string; label: string; hint?: string; group: string; icon: React.ReactNode; to: string; content?: boolean }
 
 
 export function Kbd({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -22,6 +25,7 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
   const portfolio = usePortfolio()
   const [q, setQ] = useState('')
   const [active, setActive] = useState(0)
+  const content = useContentEntries(open, sections)
 
   const entries = useMemo<Entry[]>(() => {
     const pages = sections.flatMap((s) => s.items).map((i) => ({ id: i.to, label: i.label, group: 'Ir para', icon: <i.icon className="size-4" aria-hidden />, to: i.to }))
@@ -44,12 +48,12 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
       { id: 'novo-ativo', label: 'Adicionar ativo', group: 'Ações', icon: <Plus className="size-4" aria-hidden />, to: `${org}/ativos?novo=1` },
       { id: 'convidar', label: 'Convidar analista', group: 'Ações', icon: <Plus className="size-4" aria-hidden />, to: `${org}/equipa?convidar=1` },
     ] : []
-    return [...pages, ...clients, ...samples, ...actions]
-  }, [sections, portfolio.data, persona.role])
+    return [...pages, ...clients, ...samples, ...actions, ...content]
+  }, [sections, portfolio.data, persona.role, content])
 
   // Every word must match somewhere, in any order: "agueda riscos" finds "Riscos · Componentes Águeda".
   const results = useMemo(() => {
-    if (!q.trim()) return entries.filter((e) => e.group !== 'Clientes' || !e.id.includes('-'))
+    if (!q.trim()) return entries.filter((e) => !e.content && (e.group !== 'Clientes' || !e.id.includes('-')))
     return entries.filter((e) => matchesQuery(`${e.label} ${e.hint ?? ''}`, q))
   }, [entries, q])
   const groups = [...new Set(results.map((r) => r.group))]
@@ -65,7 +69,7 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
           <div className="flex items-center gap-3 border-b border-line-soft px-4">
             <Search className="size-4 text-muted" aria-hidden />
             <input
-              autoFocus value={q} placeholder="Procurar páginas, clientes e ações…" aria-label="Procurar"
+              autoFocus value={q} placeholder={persona.role === 'consultor' ? 'Procurar páginas, clientes, ativos e riscos…' : 'Procurar páginas, ativos, riscos e ações…'} aria-label="Procurar"
               role="combobox" aria-expanded aria-controls="cmd-list" aria-activedescendant={results[active] ? `cmd-${results[active].id}` : undefined}
               onChange={(e) => { setQ(e.target.value); setActive(0) }}
               onKeyDown={(e) => {
@@ -106,4 +110,26 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
       </Dialog.Portal>
     </Dialog.Root>
   )
+}
+
+/** Assets, risks and assessment sections of the organization on screen, loaded only while the menu is open. */
+function useContentEntries(open: boolean, sections: NavSection[]): Entry[] {
+  const org = useOptionalTenant()
+  const can = useCan()
+  const { persona } = useSession()
+  const base = sections.flatMap((s) => s.items).map((i) => i.to.match(/^\/(org|clientes)\/[^/]+/)?.[0]).find(Boolean)
+  const on = open && !!org && !!base
+  const status = useRoadmapStatus(on && persona.role !== 'analista' ? org?.id : undefined)
+  const assets = useAssets(on && can('view', 'asset') ? org?.id : undefined)
+  const risksOn = on && can('view', 'risk') && (persona.role === 'consultor' || !!status.data?.validated)
+  const risks = useRisks(org?.id, risksOn)
+  const assessment = useAssessment(on && persona.role !== 'analista' ? org?.id : undefined)
+  return useMemo(() => {
+    if (!base) return []
+    return [
+      ...(assets.data ?? []).map((a) => ({ id: `a-${a.id}`, label: a.name, hint: 'Ativo', group: 'Ativos', icon: <Boxes className="size-4" aria-hidden />, to: `${base}/ativos?ativo=${a.id}`, content: true })),
+      ...(risksOn ? risks.data ?? [] : []).map((r) => ({ id: `r-${r.id}`, label: r.plainLanguage ?? r.threat, hint: r.plainLanguage ? r.threat : 'Risco', group: 'Riscos', icon: <ShieldAlert className="size-4" aria-hidden />, to: `${base}/riscos?risco=${r.id}`, content: true })),
+      ...(persona.role === 'responsavel' ? assessment.data?.sections ?? [] : []).map((sec) => ({ id: `s-${sec.id}`, label: sec.name, hint: `${sec.answered} de ${sec.total} respondidas`, group: 'Avaliação', icon: <ClipboardList className="size-4" aria-hidden />, to: `${base}/avaliacao/${sec.id}`, content: true })),
+    ]
+  }, [base, assets.data, risks.data, risksOn, assessment.data, persona.role])
 }
