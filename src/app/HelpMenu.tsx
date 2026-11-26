@@ -45,6 +45,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
           <h3 id="help-keys" className="text-[0.9375rem] font-extrabold">Atalhos</h3>
           <ul className="flex flex-col gap-1.5 text-sm text-ink-soft">
             <li className="flex items-center gap-2"><Kbd>{MOD_KEY}</Kbd><Kbd>K</Kbd> Procurar páginas, ativos, riscos e ações</li>
+            <li className="flex items-center gap-2"><Kbd>1</Kbd>–<Kbd>4</Kbd> Escolher a resposta numa pergunta da avaliação; <Kbd>↵</Kbd> passa à seguinte</li>
             <li className="flex items-center gap-2"><Kbd>esc</Kbd> Fechar uma janela ou um painel</li>
           </ul>
         </section>

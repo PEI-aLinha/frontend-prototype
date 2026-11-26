@@ -141,6 +141,8 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
   const noteOnly = !choice && note.trim() !== (question.answer?.note ?? '')
   // Leaving by the sidebar, the browser's back button or a link saves the answer too: nothing typed is lost.
   const saving = useRef(false)
+  // Which button led here, so the comment dialog names the move the person is making.
+  const [intent, setIntent] = useState<Leaving>()
   const blocker = useBlocker(() => (changed || noteOnly) && !saving.current)
   useEffect(() => {
     // The effect runs again while the blocker is still "blocked": the ref makes sure one save, one proceed.
@@ -150,6 +152,22 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
       .then(() => { toast.show('Resposta guardada.'); blocker.proceed?.() })
       .catch((e: unknown) => { saving.current = false; blocker.reset?.(); toast.show(saveError(e), 'error') })
   }, [blocker, choice, note, question.id, save, toast])
+  // Keys 1–4 pick an answer (Enter already goes on to the next question), except while typing or in a dialog.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || !/^[1-4]$/.test(e.key)) return
+      const t = e.target as HTMLElement
+      if (t.closest('textarea, input:not([type="radio"]), select, [contenteditable="true"], [role="dialog"]')) return
+      if (document.querySelector('[role="dialog"]')) return
+      const option = CHOICES[Number(e.key) - 1]
+      if (!option) return
+      e.preventDefault()
+      setChoice(option.value)
+      document.querySelector<HTMLInputElement>(`input[name="resposta"][value="${option.value}"]`)?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
   // Closing the tab cannot wait for a save, so the browser asks first.
   useEffect(() => {
     if (!changed && !noteOnly) return
@@ -159,6 +177,7 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
   }, [changed, noteOnly])
 
   const leave = (action: Leaving, path: string, message?: string, tone: 'success' | 'info' = 'success') => {
+    setIntent(action)
     const go = () => { if (message && !noteOnly) toast.show(message, tone); navigate(path) }
     if (!choice || !changed) { go(); return }
     saving.current = true
@@ -172,6 +191,7 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
   return (
     <form noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (nav.next && !leaving) leave('next', nav.next) }}>
       <OptionGroup name="resposta" legend="A sua resposta" value={choice} onChange={setChoice} options={CHOICES} columns={2} />
+      <p className="-mt-3 text-[0.75rem] text-muted max-md:hidden">Pelo teclado: 1 a 4 escolhem a resposta, Enter passa à seguinte.</p>
       <Field label="Comentário" optional hint="Ajuda a consultora a perceber a resposta. Ex.: em que sistemas falta.">
         {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />}
       </Field>
@@ -180,14 +200,22 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
         <Button variant="secondary" loading={leaving === 'later'} disabled={!!leaving}
           onClick={() => leave('later', overviewPath, 'Progresso guardado. Pode continuar quando quiser.')}>Guardar e continuar depois</Button>
       </QuestionNav>
-      <Modal open={blocker.state === 'blocked' && !choice} onOpenChange={(o) => !o && blocker.reset?.()} width={440} title="Sair sem guardar o comentário?"
+      <Modal open={blocker.state === 'blocked' && !choice} onOpenChange={(o) => { if (!o) { setIntent(undefined); blocker.reset?.() } }} width={440} title={MOVE[intent ?? 'away'].title}
         description="Escreveu um comentário mas ainda não escolheu uma resposta. Só é guardado com uma resposta."
+        focusOnClose={() => document.querySelector<HTMLElement>('input[name="resposta"]')}
         footer={<>
-          <Button variant="secondary" onClick={() => blocker.reset?.()}>Escolher uma resposta</Button>
-          <Button variant="danger" onClick={() => blocker.proceed?.()}>Sair sem guardar</Button>
+          <Button variant="secondary" onClick={() => { setIntent(undefined); blocker.reset?.() }}>Escolher uma resposta</Button>
+          <Button variant="danger" onClick={() => blocker.proceed?.()}>{MOVE[intent ?? 'away'].confirm}</Button>
         </>} />
     </form>
   )
+}
+
+const MOVE: Record<Leaving | 'away', { title: string; confirm: string }> = {
+  next: { title: 'Avançar sem guardar o comentário?', confirm: 'Avançar sem guardar' },
+  prev: { title: 'Recuar sem guardar o comentário?', confirm: 'Recuar sem guardar' },
+  later: { title: 'Sair sem guardar o comentário?', confirm: 'Sair sem guardar' },
+  away: { title: 'Sair sem guardar o comentário?', confirm: 'Sair sem guardar' },
 }
 
 /** Errors from the API are already written for people; anything else gets a plain sentence instead of developer text. */
