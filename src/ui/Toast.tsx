@@ -6,10 +6,13 @@ interface ToastItem {
   id: number
   message: string
   tone: 'success' | 'error'
+  action?: ToastAction
 }
 
+export interface ToastAction { label: string; onClick: () => void }
+
 interface ToastApi {
-  show: (message: string, tone?: ToastItem['tone']) => void
+  show: (message: string, tone?: ToastItem['tone'], action?: ToastAction) => void
   /** Drops every visible toast, e.g. when the demo switches persona and old messages no longer apply. */
   clear: () => void
 }
@@ -18,15 +21,17 @@ const ToastContext = createContext<ToastApi | null>(null)
 /** Success toasts go away on their own; errors stay until closed, so nobody misses them (WCAG 2.2.1). */
 const DURATION_MS = 4200
 const MAX_VISIBLE = 3
+/** An undo toast stays a little longer: enough time to read it and reach the button. */
+const UNDO_MS = 6000
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([])
   const seq = useRef(0)
-  const show = useCallback((message: string, tone: ToastItem['tone'] = 'success') => {
+  const show = useCallback((message: string, tone: ToastItem['tone'] = 'success', action?: ToastAction) => {
     seq.current += 1
     const id = seq.current
-    setItems((prev) => [...prev.slice(-(MAX_VISIBLE - 1)), { id, message, tone }])
-    if (tone === 'success') window.setTimeout(() => setItems((prev) => prev.filter((t) => t.id !== id)), DURATION_MS)
+    setItems((prev) => [...prev.slice(-(MAX_VISIBLE - 1)), { id, message, tone, action }])
+    if (tone === 'success') window.setTimeout(() => setItems((prev) => prev.filter((t) => t.id !== id)), action ? UNDO_MS : DURATION_MS)
   }, [])
   const dismiss = useCallback((id: number) => setItems((prev) => prev.filter((t) => t.id !== id)), [])
   const clear = useCallback(() => setItems([]), [])
@@ -41,10 +46,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             role={t.tone === 'error' ? 'alert' : 'status'}
-            className={cn('pointer-events-auto flex items-center gap-2.5 rounded-[12px] px-4 py-3 text-[0.9375rem] font-bold text-white shadow-[0_12px_32px_rgb(var(--shadow-rgb)/0.25)] animate-pop-in', t.tone === 'error' ? 'bg-risk-high-ink pr-2' : 'bg-brand-deep')}
+            className={cn('pointer-events-auto relative flex items-center overflow-hidden gap-2.5 rounded-[12px] px-4 py-3 text-[0.9375rem] font-bold text-white shadow-[0_12px_32px_rgb(var(--shadow-rgb)/0.25)] animate-pop-in', t.tone === 'error' ? 'bg-risk-high-ink pr-2' : 'bg-brand-deep')}
           >
             <span aria-hidden className="font-extrabold text-signal-soft">{t.tone === 'error' ? '!' : '✓'}</span>
             <span className="min-w-0 flex-1">{t.message}</span>
+            {t.action && (
+              <>
+                <button type="button" onClick={() => { t.action!.onClick(); dismiss(t.id) }} className="hit-slop -my-1 ml-2 rounded-[8px] px-2.5 py-1 text-signal-soft underline-offset-4 hover:bg-white/10 hover:underline focus-visible:outline-white">{t.action.label}</button>
+                <span aria-hidden className="absolute inset-x-0 bottom-0 h-[3px] origin-left bg-signal-soft/60" style={{ animation: `drain ${UNDO_MS}ms linear forwards` }} />
+              </>
+            )}
             {t.tone === 'error' && (
               <button type="button" onClick={() => dismiss(t.id)} aria-label="Fechar aviso" className="-my-1 grid size-8 shrink-0 place-items-center rounded-full text-white/90 hover:bg-white/15 hover:text-white focus-visible:outline-white">
                 <X className="size-4" aria-hidden />

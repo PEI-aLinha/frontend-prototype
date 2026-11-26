@@ -35,7 +35,6 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
   const editable = mode === 'new' ? can('create', 'asset') : can('edit', 'asset')
   const form = useAssetForm(asset ? valuesFromAsset(asset) : emptyValues({ ownerId: 'u-rui' }))
   const owners = inventory.users.filter((u) => u.role !== 'consultor')
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const submit = () => {
     if (!form.check()) return
@@ -48,7 +47,10 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
   const doDelete = () => {
     if (!asset) return
     remove.mutate(asset.id, {
-      onSuccess: () => { toast.show(`Ativo "${asset.name}" removido`); onClose() },
+      onSuccess: () => {
+        toast.show(`"${asset.name}" removido`, 'success', { label: 'Anular', onClick: () => save.mutate({ input: toInput(valuesFromAsset(asset), asset.taskId) }) })
+        onClose()
+      },
       onError: (e) => toast.show(e.message, 'error'),
     })
   }
@@ -82,9 +84,7 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
       chip={<><CriticalityChip level={asset.criticality} />{inventory.topRisk(asset.id) && <RiskLevelBadge level={inventory.topRisk(asset.id)!} prefix="Risco " />}</>}
       footer={editable ? (
         <>
-          {can('delete', 'asset') && (confirmDelete
-            ? <Button variant="danger" onClick={doDelete} loading={remove.isPending}>Confirmar remoção</Button>
-            : <Button variant="ghost" className="mr-auto max-sm:mr-0" onClick={() => setConfirmDelete(true)}>Remover</Button>)}
+          {can('delete', 'asset') && <Button variant="ghost" className="mr-auto max-sm:mr-0" onClick={doDelete} loading={remove.isPending}>Remover</Button>}
           <Button variant="secondary" onClick={onClose}>Cancelar</Button>
           <Button type="submit" form="asset-form" loading={save.isPending}>Guardar alterações</Button>
         </>
