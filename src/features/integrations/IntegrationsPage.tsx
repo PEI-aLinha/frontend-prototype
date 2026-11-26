@@ -63,7 +63,7 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
                   onClick={() => assign.mutate({ provider: c.provider.id, userId: analyst.id }, {
                     onSuccess: (task) => toast.show(`Pedido enviado a ${analyst.name}`, 'success', { label: 'Anular', onClick: () => withdraw(task.id, analyst.name) }),
                     onError: fail,
-                  })}>Pedir a {analyst.name.split(' ')[0]}</Button>}
+                  })}>Pedir ao técnico</Button>}
                 {canConnect && <Button size="sm" variant={isOwner && analyst ? 'ghost' : 'primary'} icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>{isOwner && analyst ? 'Ligar eu' : 'Ligar'}</Button>}
                 {isOwner && c.status === 'pedido' && request && assignee && <Button size="sm" variant="ghost" loading={cancelTask.isPending} onClick={() => withdraw(request.id, assignee.name)}>Cancelar pedido</Button>}
               </>
@@ -109,7 +109,6 @@ function AskAll({ items }: { items: IntegrationConnection[] }) {
   const analyst = users.data?.find((u) => u.role === 'analista')
   const open = items.filter((c) => c.provider.applies && (c.status === 'disponivel' || c.status === 'erro'))
   if (!analyst || open.length < 2) return null
-  const first = analyst.name.split(' ')[0]
   const askAll = () => {
     setBusy(true)
     Promise.all(open.map((c) => assign.mutateAsync({ provider: c.provider.id, userId: analyst.id })))
@@ -124,8 +123,8 @@ function AskAll({ items }: { items: IntegrationConnection[] }) {
   }
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
-      <p className="min-w-0 flex-1 text-sm text-ink-soft">{open.length} sistemas por ligar. Quem os administra costuma ser {first}: recebe uma tarefa para cada um.</p>
-      <Button size="sm" icon={<UserPlus className="size-4" aria-hidden />} loading={busy} onClick={askAll}>Pedir tudo a {first}</Button>
+      <p className="min-w-0 flex-1 text-sm text-ink-soft">{open.length} sistemas por ligar. Quem os administra costuma ser o técnico, {analyst.name}: recebe uma tarefa para cada um.</p>
+      <Button size="sm" icon={<UserPlus className="size-4" aria-hidden />} loading={busy} onClick={askAll}>Pedir tudo ao técnico</Button>
     </div>
   )
 }

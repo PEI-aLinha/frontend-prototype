@@ -136,7 +136,7 @@ export function AssetsPage() {
       action={state === 'assigned' && task
         ? <Chip>Atribuído{task.dueDate ? ` · até ${shortDay(task.dueDate)}` : ''}</Chip>
         : analysts.length
-          ? <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir a {analysts[0].name.split(' ')[0]}</Button>
+          ? <Button variant="secondary" data-tour="asset-assign" onClick={() => update({ atribuir: '1' })}>Atribuir o registo</Button>
           : <Link to={`/org/${org.slug}/equipa?convidar=1`} className={buttonClass({ variant: 'secondary' })}>Convidar analista</Link>}
     />
   )

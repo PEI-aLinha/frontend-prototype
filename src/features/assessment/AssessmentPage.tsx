@@ -23,7 +23,7 @@ export function AssessmentPage() {
   const name = (id: string) => users.data?.find((u) => u.id === id)
   // Whoever the questions were delegated to; the step stays generic until someone is.
   const delegate = a?.sections.flatMap((s) => s.delegated)[0]
-  const delegateFirst = delegate ? name(delegate.assigneeId)?.name.split(' ')[0] : undefined
+  const delegateName = delegate ? name(delegate.assigneeId)?.name : undefined
 
   return (
     <>
@@ -52,7 +52,7 @@ export function AssessmentPage() {
           <aside className="flex flex-col gap-4" data-tour="assessment-next">
             {/* The progress card already counts the answers; this list only holds what happens outside this page. */}
             <NextSteps title="Depois das suas respostas" steps={[
-              ...(delegate ? [{ label: `Receber as respostas do ${delegateFirst ?? 'técnico'}`, done: a.sections.every((s) => s.delegated.every((d) => d.status === 'concluida')) }] : []),
+              ...(delegate ? [{ label: 'Receber as respostas delegadas', hint: delegateName ? `Pedidas a ${delegateName}.` : undefined, done: a.sections.every((s) => s.delegated.every((d) => d.status === 'concluida')) }] : []),
               { label: 'Submeter a avaliação', done: a.status !== 'em_curso', hint: a.status === 'em_curso' ? 'Fica disponível quando todas as perguntas tiverem resposta.' : undefined },
               { label: 'A consultora valida o roadmap', done: a.status === 'validada', hint: a.status === 'validada' ? undefined : 'Não precisa de fazer nada: é avisado quando terminar.', to: a.status === 'validada' ? `/org/${org.slug}/roadmap` : undefined, cta: 'Ver roadmap' },
             ]} />
