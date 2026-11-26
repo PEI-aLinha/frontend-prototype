@@ -20,7 +20,7 @@ interface ToastApi {
 const ToastContext = createContext<ToastApi | null>(null)
 /** Success toasts go away on their own; errors stay until closed, so nobody misses them (WCAG 2.2.1). */
 const DURATION_MS = 4200
-const MAX_VISIBLE = 3
+const MAX_VISIBLE = 2
 /** An undo toast stays a little longer: enough time to read it and reach the button. */
 const UNDO_MS = 6000
 
@@ -41,7 +41,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {/* Bottom-left corner of the content area (after the 232 px navigation). Errors are alerts (assertive),
           successes are status messages (polite) — WCAG 4.1.3. */}
-      <div className="pointer-events-none fixed bottom-6 left-[288px] z-[90] flex flex-col gap-2 max-md:bottom-auto max-md:left-5 max-md:right-5 max-md:top-[72px]">
+      {/* Top centre: clear of form buttons (bottom), header actions and drawers (right), the assistant (bottom right). */}
+      <div className="pointer-events-none fixed left-1/2 top-5 z-[90] flex w-[min(400px,calc(100vw-40px))] -translate-x-1/2 flex-col gap-2 max-md:top-[72px]">
         {items.map((t) => (
           <div
             key={t.id}

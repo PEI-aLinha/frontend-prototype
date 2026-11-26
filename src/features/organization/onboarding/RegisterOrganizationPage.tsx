@@ -79,7 +79,10 @@ export function RegisterOrganizationPage() {
 
   const saveForLater = () => {
     setOrganization(form)
-    toast.show('Guardado. Pode fechar a página e continuar mais tarde a partir daqui.')
+    // Say how far along the draft is, so saving an empty form is not mistaken for progress.
+    const fields = Object.values(form).filter((v) => typeof v === 'string')
+    const filled = fields.filter((v) => v.trim()).length
+    toast.show(`Guardado: ${filled} de ${fields.length} campos preenchidos. Pode continuar mais tarde a partir daqui.`)
   }
 
   const text = (key: keyof OrganizationForm, extra: Partial<Parameters<typeof TextInput>[0]> = {}) => (p: { id: string; describedBy?: string; invalid: boolean; required: boolean }) => (
