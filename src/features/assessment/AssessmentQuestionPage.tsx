@@ -152,13 +152,21 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
       .then(() => { toast.show('Resposta guardada.'); blocker.proceed?.() })
       .catch((e: unknown) => { saving.current = false; blocker.reset?.(); toast.show(saveError(e), 'error') })
   }, [blocker, choice, note, question.id, save, toast])
-  // Keys 1–4 pick an answer (Enter already goes on to the next question), except while typing or in a dialog.
+  // Keys 1–4 pick an answer and Enter goes on to the next question, except while typing or in a dialog.
+  const form = useRef<HTMLFormElement>(null)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || !/^[1-4]$/.test(e.key)) return
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey || !/^([1-4]|Enter)$/.test(e.key)) return
       const t = e.target as HTMLElement
       if (t.closest('textarea, input:not([type="radio"]), select, [contenteditable="true"], [role="dialog"]')) return
       if (document.querySelector('[role="dialog"]')) return
+      if (e.key === 'Enter') {
+        // A focused button or link keeps its own Enter; anywhere else, Enter is "Seguinte".
+        if (t.closest('button, a')) return
+        e.preventDefault()
+        form.current?.requestSubmit()
+        return
+      }
       const option = CHOICES[Number(e.key) - 1]
       if (!option) return
       e.preventDefault()
@@ -189,7 +197,7 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
   }
 
   return (
-    <form noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (nav.next && !leaving) leave('next', nav.next) }}>
+    <form ref={form} noValidate className="flex flex-col gap-5" onSubmit={(e) => { e.preventDefault(); if (nav.next && !leaving) leave('next', nav.next) }}>
       <OptionGroup name="resposta" legend="A sua resposta" value={choice} onChange={setChoice} options={CHOICES} columns={2} />
       <p className="-mt-3 text-[0.75rem] text-muted max-md:hidden">Pelo teclado: 1 a 4 escolhem a resposta, Enter passa à seguinte.</p>
       <Field label="Comentário" optional hint="Ajuda a consultora a perceber a resposta. Ex.: em que sistemas falta.">
