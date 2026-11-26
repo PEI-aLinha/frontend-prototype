@@ -8,12 +8,13 @@ import { Button, Chip, Modal, Note, cn, useToast } from '../../ui'
 const STEPS = ['O que lemos', 'Autorizar', 'Primeira leitura'] as const
 
 /** Simulated three-step connection. In the real version, step 2 opens the provider's consent page (OAuth). */
-export function ConnectModal({ provider, open, onClose }: { provider: ProviderInfo | null; open: boolean; onClose: () => void }) {
+export function ConnectModal({ provider, open, onClose, canReview }: { provider: ProviderInfo | null; open: boolean; onClose: (review?: boolean) => void; canReview: boolean }) {
   const org = useTenant()
   const toast = useToast()
   const connect = useConnectIntegration(org.id)
   const [step, setStep] = useState(0)
   const [agreed, setAgreed] = useState(false)
+  const [missing, setMissing] = useState(false)
   if (!provider) return null
 
   const authorize = () => {
@@ -25,11 +26,12 @@ export function ConnectModal({ provider, open, onClose }: { provider: ProviderIn
   }
 
   const footer = step === 0 ? (
-    <><Button variant="secondary" onClick={onClose}>Cancelar</Button><Button onClick={() => setStep(1)}>Continuar</Button></>
+    <><Button variant="secondary" onClick={() => onClose()}>Cancelar</Button><Button onClick={() => setStep(1)}>Continuar</Button></>
   ) : step === 1 ? (
-    <><Button variant="secondary" onClick={() => setStep(0)}>Voltar</Button><Button disabled={!agreed} onClick={authorize}>Autorizar acesso só de leitura</Button></>
+    <><Button variant="secondary" onClick={() => setStep(0)}>Voltar</Button><Button onClick={() => (agreed ? authorize() : setMissing(true))}>Autorizar acesso só de leitura</Button></>
   ) : (
-    <Button disabled={connect.isPending} onClick={onClose}>{connect.isPending ? 'A ler…' : 'Ver o que foi encontrado'}</Button>
+    // Only the responsible person decides what enters the inventory; the analyst just finishes here.
+    <Button disabled={connect.isPending} onClick={() => onClose(canReview)}>{connect.isPending ? 'A ler…' : canReview ? 'Rever o que foi encontrado' : 'Concluir'}</Button>
   )
 
   return (
@@ -64,13 +66,14 @@ export function ConnectModal({ provider, open, onClose }: { provider: ProviderIn
             <KeyRound className="mt-0.5 size-5 shrink-0 text-brand" aria-hidden />
             <div className="text-[0.8125rem] text-ink-soft">
               <p className="text-[0.9375rem] font-bold text-ink">Simulação da página de autorização de {provider.name}</p>
-              <p className="mt-1">Na versão real abre-se a página do fornecedor, onde um administrador aprova o acesso. A credencial fica guardada num cofre cifrado (OpenBao) e <strong>nunca</strong> é mostrada no aLinha.</p>
+              <p className="mt-1">Na versão real abre-se a página do fornecedor, onde um administrador aprova o acesso. A credencial fica guardada num cofre cifrado e <strong>nunca</strong> é mostrada no aLinha.</p>
             </div>
           </div>
           <label className="flex items-start gap-2 text-[0.9375rem]">
-            <input type="checkbox" className="mt-0.5 size-4 accent-[var(--color-brand)]" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+            <input type="checkbox" className="mt-0.5 size-4 accent-[var(--color-brand)]" checked={agreed} aria-invalid={missing && !agreed ? true : undefined} aria-describedby={missing && !agreed ? 'authorize-error' : undefined} onChange={(e) => { setAgreed(e.target.checked); setMissing(false) }} />
             Sou administrador de {provider.name} e autorizo o aLinha a ler estes dados.
           </label>
+          {missing && !agreed && <p id="authorize-error" role="alert" className="text-[0.8125rem] font-semibold text-danger">Confirme que é administrador e autoriza a leitura, ou peça a quem seja.</p>}
         </div>
       )}
 
@@ -78,7 +81,7 @@ export function ConnectModal({ provider, open, onClose }: { provider: ProviderIn
         <div className="flex flex-col items-center gap-2 py-4 text-center" role="status">
           {connect.isPending ? <RefreshCw className="size-6 animate-spin text-brand" aria-hidden /> : <KeyRound className="size-6 text-brand" aria-hidden />}
           <p className="text-[0.9375rem] font-bold">{connect.isPending ? 'A fazer a primeira leitura…' : 'Ligação feita. Primeira leitura concluída.'}</p>
-          {!connect.isPending && <p className="text-[0.8125rem] text-ink-soft">Os ativos sugeridos e as evidências recolhidas estão na página de integrações.</p>}
+          {!connect.isPending && <p className="text-[0.8125rem] text-ink-soft">{canReview ? 'Os ativos encontrados ficam como sugestões: decide quais entram no inventário.' : 'Os ativos encontrados ficam à espera da decisão do Responsável. A sua tarefa fica concluída.'}</p>}
         </div>
       )}
       {step < 2 && <Note>Pode desligar a qualquer momento. Ao desligar, a credencial é apagada do cofre.</Note>}

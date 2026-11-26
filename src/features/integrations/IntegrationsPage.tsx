@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CheckCircle2, CircleAlert, Plug, RefreshCw, KeyRound, Unplug, UserPlus } from 'lucide-react'
 import type { CollectedEvidence, IntegrationConnection, ProviderInfo } from '../../api/contracts'
-import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveries, useEvidence, useIntegrations, useServices, useSyncIntegration, useUsers } from '../../api/queries'
+import { useAssets, useAssignIntegration, useDisconnectIntegration, useDiscoveries, useEvidence, useIntegrations, useServices, useSyncIntegration, useTasks, useUpdateTask, useUsers } from '../../api/queries'
 import { dateTime, EVIDENCE_STRENGTH_LABEL } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
@@ -22,11 +22,16 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
   const sync = useSyncIntegration(org.id)
   const disconnect = useDisconnectIntegration(org.id)
   const assign = useAssignIntegration(org.id)
+  const cancelTask = useUpdateTask(org.id)
+  const tasks = useTasks(org.id)
   const [confirmOff, setConfirmOff] = useState(false)
   const analyst = users.data?.find((u) => u.role === 'analista')
   const assignee = users.data?.find((u) => u.id === c.assignedTo)
   const { persona } = useSession()
   const on = c.status === 'ligado'
+  const forMe = c.status === 'pedido' && c.assignedTo === persona?.userId
+  const request = tasks.data?.find((t) => t.kind === 'integracao' && t.provider === c.provider.id && t.status === 'pendente')
+  const withdraw = (taskId: string, name: string) => cancelTask.mutate({ id: taskId, change: { status: 'cancelada' } }, { onSuccess: () => toast.show(`Pedido ao ${name} cancelado`), onError: fail })
   const fail = (e: Error) => toast.show(e.message, 'error')
 
   return (
@@ -37,7 +42,7 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
             <Eyebrow>{c.provider.category}</Eyebrow>
              <h3 className="mt-1 text-base font-extrabold truncate">{c.provider.name}</h3>
            </div>
-           {c.provider.applies ? <Chip tone={on ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
+           {c.provider.applies ? <Chip tone={on || forMe ? 'signal' : 'neutral'} icon={on ? <CheckCircle2 className="size-3.5" aria-hidden /> : undefined}>{forMe ? 'Pedido para si' : STATUS[c.status]}</Chip> : <Chip tone="neutral">Não usa</Chip>}
           </div>
           <p className="text-sm text-ink-soft">{c.provider.description}</p>
           {on && <p className="text-xs text-muted">Última leitura: {c.lastSyncAt ? dateTime(c.lastSyncAt) : '—'}{c.secretRef && <> · <VaultKey /> credencial no cofre</>}</p>}
@@ -53,8 +58,14 @@ function ConnectionCard({ c, onConnect, isOwner, canConnect }: { c: IntegrationC
               </>
             ) : (
               <>
-                {canConnect && <Button size="sm" icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>Ligar</Button>}
-                {isOwner && analyst && c.status !== 'pedido' && <Button size="sm" variant="secondary" icon={<UserPlus className="size-4" aria-hidden />} loading={assign.isPending} onClick={() => assign.mutate({ provider: c.provider.id, userId: analyst.id }, { onSuccess: () => toast.show(`Pedido enviado ao ${analyst.name}`), onError: fail })}>Pedir ao {analyst.name.split(' ')[0]}</Button>}
+                {/* The responsible person is rarely the system's administrator: asking the technician comes first. */}
+                {isOwner && analyst && c.status !== 'pedido' && <Button size="sm" icon={<UserPlus className="size-4" aria-hidden />} loading={assign.isPending}
+                  onClick={() => assign.mutate({ provider: c.provider.id, userId: analyst.id }, {
+                    onSuccess: (task) => toast.show(`Pedido enviado ao ${analyst.name}`, 'success', { label: 'Anular', onClick: () => withdraw(task.id, analyst.name) }),
+                    onError: fail,
+                  })}>Pedir ao {analyst.name.split(' ')[0]}</Button>}
+                {canConnect && <Button size="sm" variant={isOwner && analyst ? 'secondary' : 'primary'} icon={<Plug className="size-4" aria-hidden />} onClick={() => onConnect(c.provider)}>{isOwner && analyst ? 'Ligar eu' : 'Ligar'}</Button>}
+                {isOwner && c.status === 'pedido' && request && assignee && <Button size="sm" variant="ghost" loading={cancelTask.isPending} onClick={() => withdraw(request.id, assignee.name)}>Cancelar pedido</Button>}
               </>
             )}
           </div>
@@ -104,7 +115,7 @@ export function IntegrationsPage() {
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
+      <PageHeader title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
       {error ? <ErrorState error={error} onRetry={() => { integrations.refetch(); discoveries.refetch(); evidence.refetch() }} /> : !integrations.data ? <SkeletonRows rows={4} /> : (
         <>
           {!isConsultant && (
@@ -131,7 +142,8 @@ export function IntegrationsPage() {
           <Note>Todas as ligações são só de leitura. As credenciais ficam guardadas cifradas e nunca aparecem no ecrã. Cada ligação, leitura e decisão fica no histórico.</Note>
         </>
       )}
-      <ConnectModal key={connecting?.id ?? 'none'} provider={connecting} open={!!connecting} onClose={() => setConnecting(null)} />
+      <ConnectModal key={connecting?.id ?? 'none'} provider={connecting} open={!!connecting} canReview={isOwner}
+        onClose={(review) => { setConnecting(null); if (review) requestAnimationFrame(() => document.getElementById('int-disc')?.scrollIntoView({ block: 'start' })) }} />
     </>
   )
 }
