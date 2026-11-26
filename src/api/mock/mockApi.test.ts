@@ -123,6 +123,23 @@ describe('mock API permissions', () => {
     expect((await api.assets.listAssets(ORG_ID)).some((a) => a.id === 'ast-unknown')).toBe(false)
   })
 
+  it('drops references to other organizations\' data when an asset is restored', async () => {
+    resetDemo('c3')
+    who = RUI
+    const removed = await api.assets.deleteAsset(ORG_ID, 'ast-servidor')
+    const keep = removed.asset.dependsOn ?? []
+    const restored = await api.assets.restoreAsset(ORG_ID, {
+      ...removed,
+      asset: { ...removed.asset, dependsOn: [...keep, 'ast-unknown', 'ast-of-another-org'], criticalServiceId: 'svc-of-another-org', ownerId: 'u-of-another-org', taskId: 'task-of-another-org' },
+    })
+    expect(restored.dependsOn).toEqual(keep)
+    expect(restored.criticalServiceId).toBeNull()
+    expect(restored.ownerId).toBeNull()
+    expect(restored.taskId).toBeUndefined()
+    const stored = (await api.assets.listAssets(ORG_ID)).find((a) => a.id === 'ast-servidor')
+    expect(stored?.dependsOn).toEqual(keep)
+  })
+
   it('cancelling an integration request makes the system available to connect again', async () => {
     who = RUI
     const task = await api.integrations.assign(ORG_ID, 'backups', PEDRO)
