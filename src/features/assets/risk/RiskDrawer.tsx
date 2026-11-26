@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { Asset, RemediationAction, Risk, RiskActionLink, User } from '../../../api/contracts'
 import { useAudit, useSaveRisk } from '../../../api/queries'
 import { RISK_STATUS_LABEL, TREATMENT_PLAIN } from '../../../config/labels'
 import { useTenant } from '../../../core/tenant'
-import { Button, Chip, Drawer, HistoryList, Modal, Note, RiskLevelBadge, Tabs, useToast } from '../../../ui'
+import { Button, Chip, Drawer, GlossaryText, HistoryList, Modal, Note, RiskLevelBadge, Tabs, useToast } from '../../../ui'
 import { toHistory } from '../history'
 import { computeRiskLevel, describeRule } from './computeRiskLevel'
 import { RiskFields, RiskStepFields } from './RiskFields'
 import { RiskWizardSteps } from './RiskWizardSteps'
 import { RiskStatusActions } from './RiskStatusActions'
+import { prioritizeRoadmap } from '../../assessment/public'
+import { useRiskSignals } from '../useRiskSignals'
 import { emptyRisk, RISK_STEPS, riskToValues, toRiskInput, validateRisk, validateRiskStep, type RiskErrors } from './riskFormModel'
 
 interface Props {
@@ -23,8 +25,15 @@ interface Props {
   onSaved?: (risk: Risk, linkedHigh: boolean) => void
 }
 
+/** Brings the first problem into view and focus: a field marked invalid, or else an error message (e.g. the action picker). */
 function focusFirstInvalid() {
-  window.requestAnimationFrame(() => document.querySelector<HTMLElement>('#risk-form [aria-invalid="true"]')?.focus())
+  window.requestAnimationFrame(() => {
+    const target = document.querySelector<HTMLElement>('#risk-form [aria-invalid="true"], #risk-form [role="alert"]')
+    if (!target) return
+    if (target.getAttribute('role') === 'alert') target.tabIndex = -1
+    target.scrollIntoView({ block: 'center' })
+    target.focus({ preventScroll: true })
+  })
 }
 
 /** Novo risco / editar risco (consultora). */
@@ -137,6 +146,9 @@ function RiskHistory({ riskId, users }: { riskId: string; users: User[] }) {
 
 /** Client view (D3): read-only, plain language. */
 export function RiskReadDrawer({ open, onClose, risk, assets, users, actions, links }: Omit<Props, 'initialAssetId' | 'onSaved'>) {
+  // The position the roadmap shows (after the risks raise their actions), not the AI's base order.
+  const signals = useRiskSignals()
+  const rank = useMemo(() => new Map(prioritizeRoadmap(actions, signals).map((r) => [r.action.id, r.rank])), [actions, signals])
   if (!risk) return null
   const { level } = computeRiskLevel(risk.probability, risk.impact)
   const asset = assets.find((a) => a.id === risk.assetId)
@@ -144,14 +156,17 @@ export function RiskReadDrawer({ open, onClose, risk, assets, users, actions, li
   const owner = users.find((u) => u.id === risk.ownerId)
   const author = users.find((u) => u.id === risk.createdBy)?.name
   return (
-    <Drawer open={open} onOpenChange={(o) => !o && onClose()} width={560} eyebrow={asset ? asset.name : 'Toda a empresa'} title={risk.threat} chip={<RiskLevelBadge level={level} prefix="Risco " />}
+    <Drawer open={open} onOpenChange={(o) => !o && onClose()} width={560} eyebrow={asset ? asset.name : 'Toda a empresa'} title={risk.plainLanguage ?? risk.threat} chip={<RiskLevelBadge level={level} prefix="Risco " />}
       footer={<Button variant="secondary" onClick={onClose}>Fechar</Button>}>
       <div className="flex flex-col gap-6">
         <section className="rounded-[16px] bg-brand-deep px-6 py-5 text-white">
-          <p className="eyebrow text-[0.6875rem] text-signal-soft">O que isto significa para a empresa</p>
-          <p className="mt-2 text-[1.0625rem] font-bold leading-snug">{risk.plainLanguage ?? risk.description}</p>
+          {/* The title is the plain sentence the list showed; here, what lies behind it. */}
+          <p className="eyebrow text-[0.75rem] text-signal-soft">Em mais detalhe</p>
+          <p className="mt-2 text-[1rem] font-semibold leading-snug"><GlossaryText>{risk.description || risk.threat}</GlossaryText></p>
         </section>
         <dl className="grid grid-cols-[150px_1fr] gap-x-4 gap-y-3 text-[0.9375rem] max-sm:grid-cols-1">
+          <dt className="text-ink-soft">Nome técnico</dt>
+          <dd className="font-semibold"><GlossaryText>{risk.threat}</GlossaryText></dd>
           <dt className="text-ink-soft">Porque é {level === 'alto' ? 'alto' : level === 'medio' ? 'médio' : 'baixo'}</dt>
           <dd className="font-semibold">{describeRule(risk.probability, risk.impact)} <span className="font-normal text-muted">(probabilidade × impacto)</span></dd>
           <dt className="text-ink-soft">O que está a ser feito</dt>
@@ -165,8 +180,14 @@ export function RiskReadDrawer({ open, onClose, risk, assets, users, actions, li
             <h3 className="text-[0.9375rem] font-bold">Ações do roadmap que reduzem este risco</h3>
             {linked.map((a) => (
               <div key={a.id} className="rounded-[12px] border border-line-soft px-4 py-3">
-                <p className="text-[0.9375rem] font-semibold">{a.description}</p>
-                <p className="text-[0.75rem] text-muted">#{a.priority} no roadmap · {a.legalObligation}</p>
+                <p className="text-[0.9375rem] font-semibold"><GlossaryText>{a.description}</GlossaryText></p>
+                <p className="text-[0.75rem] text-muted">{rank.get(a.id) ?? a.priority}.ª no roadmap</p>
+                {a.legalObligation && (
+                  <details className="mt-1 text-[0.75rem] text-muted">
+                    <summary className="cursor-pointer font-semibold">Base legal</summary>
+                    <p className="mt-1">{a.legalObligation}</p>
+                  </details>
+                )}
               </div>
             ))}
           </section>
