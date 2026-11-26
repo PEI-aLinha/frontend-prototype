@@ -53,10 +53,10 @@ function IdentifyFields({ values: v, onChange, errors, assets }: StepProps) {
   const set = <K extends keyof RiskFormValues>(k: K, val: RiskFormValues[K]) => onChange({ ...v, [k]: val })
   return (
     <div className="flex flex-col gap-5">
-      <Field label={<><Term k="ativo">Ativo</Term> afetado</>} optional hint={v.assetId === NO_ASSET ? 'Sem ativo: o risco é sobre a organização no seu todo.' : undefined}>
+      <Field label="Ativo afetado" term={<Term k="ativo" icon>O que é?</Term>} optional hint={v.assetId === NO_ASSET ? 'Sem ativo: o risco é sobre a organização no seu todo.' : undefined}>
         {(p) => <Select id={p.id} value={v.assetId} onChange={(x) => set('assetId', x)} options={[{ value: NO_ASSET, label: 'Sem ativo concreto' }, ...assets.map((a) => ({ value: a.id, label: a.name, hint: ASSET_TYPE_LABEL[a.type] }))]} />}
       </Field>
-      <Field label={<Term k="ameaca" />} error={errors.threat} hint="O que pode correr mal, em poucas palavras.">
+      <Field label="Ameaça" term={<Term k="ameaca" icon>O que é?</Term>} error={errors.threat} hint="O que pode correr mal, em poucas palavras.">
         {(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={v.threat} onChange={(e) => set('threat', e.target.value)} placeholder="Ex.: Ransomware no servidor de produção" />}
       </Field>
       <Field label="Descrição" optional hint="O que pode acontecer e porquê. Para a equipa técnica.">

@@ -30,7 +30,7 @@ export function AssetFields({ id, values: v, onChange, services, owners, errors,
           {(p) => <TextInput id={p.id} value={v.location} onChange={(e) => set('location', e.target.value)} placeholder="Ex.: Pavilhão 2" />}
         </Field>
       </div>
-      <Field label={<><Term k="servicoCritico">Serviço crítico</Term> que suporta</>} hint="Se este ativo falhar, que atividade da empresa para?">
+      <Field label="Serviço crítico que suporta" term={<Term k="servicoCritico" icon>O que é?</Term>} hint="Se este ativo falhar, que atividade da empresa para?">
         {(p) => (
           <Select id={p.id} value={v.service} onChange={(x) => set('service', x)} options={[
             ...services.map((s) => ({ value: s.id, label: s.name })),
