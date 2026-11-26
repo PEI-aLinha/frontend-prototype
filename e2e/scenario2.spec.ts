@@ -75,7 +75,7 @@ test('Scenario 2 — Marta registers the ransomware risk, links actions and the 
   // 6. Validation
   await page.getByRole('button', { name: 'Validar roadmap' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Validar roadmap' }).click()
-  await expect(page.getByText('Roadmap validado · o Rui foi notificado')).toBeVisible()
+  await expect(page.getByText('Roadmap validado · notificação enviada a Rui Santos')).toBeVisible()
   await expect(page.getByText('Proposta pela IA · por validar').first()).toBeHidden()
   await expect(page.getByText(/Roadmap validado por Marta Ferreira/)).toBeVisible()
   await expect(page.getByRole('region', { name: 'Resumo do plano' })).toContainText('2 → 3')

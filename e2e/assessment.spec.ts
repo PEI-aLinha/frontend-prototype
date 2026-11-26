@@ -6,7 +6,7 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   await expect(page.getByRole('link', { name: 'Responder à próxima pergunta' })).toHaveAttribute('href', `${ORG}/avaliacao/sec-acessos/q-acessos-wifi`)
   await openTopic(page, 'Controlo de acessos')
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '7')
-  await page.getByRole('link', { name: 'Ver perguntas de Controlo de acessos', exact: true }).click()
+  await page.getByRole('link', { name: /de Controlo de acessos$/ }).click()
 
   await expect(page.getByRole('heading', { level: 1, name: 'Controlo de acessos' })).toBeVisible()
   await expect(page.getByText('7 de 9 perguntas respondidas')).toBeVisible()
@@ -40,7 +40,7 @@ test('Assessment — Rui answers a question and the progress is kept', async ({ 
   // The answer survives a reload and can be changed later.
   await page.reload()
   await openTopic(page, 'Controlo de acessos')
-  await page.getByRole('link', { name: 'Ver perguntas de Controlo de acessos', exact: true }).click()
+  await page.getByRole('link', { name: /de Controlo de acessos$/ }).click()
   await expect(page.getByText('8 de 9 perguntas respondidas')).toBeVisible()
   await page.getByRole('link', { name: /Wi-Fi para visitantes/ }).click()
   await expect(page.getByRole('radio', { name: /^Sim/ })).toBeChecked()
@@ -79,7 +79,7 @@ test('Assessment — Rui delegates a question, Pedro answers it and Rui sees the
   await page.getByText('Em parte', { exact: true }).click()
   await page.getByLabel('Comentário').fill('Falta nos portáteis.')
   await page.getByRole('button', { name: 'Enviar resposta' }).click()
-  await expect(page.getByRole('status').filter({ hasText: 'Resposta enviada ao Rui Santos' })).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Resposta enviada a Rui Santos' })).toBeVisible()
 
   await page.goto(`${ORG}/avaliacao/sec-incidentes/q-inc-antivirus?as=rui`)
   const analystAnswer = page.getByRole('region', { name: 'Resposta do analista' })
@@ -106,7 +106,7 @@ test('Assessment — the analyst cannot open it and it is read-only after submis
 
 test('Assessment — Rui answers the last questions and submits the assessment', async ({ page }) => {
   await start(page, `${ORG}/avaliacao`, 'rui')
-  await expect(page.getByText('Faltam 7 perguntas.')).toBeVisible()
+  await expect(page.getByText('34 de 41 perguntas respondidas')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Submeter avaliação' })).toHaveCount(0)
 
   // The home page always opens the next open question (the one waiting for Pedro is skipped).

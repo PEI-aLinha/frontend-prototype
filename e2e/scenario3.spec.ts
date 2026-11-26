@@ -21,7 +21,7 @@ test('Scenario 3 — Rui sees the risks read-only after validation', async ({ pa
   await expect(page.getByRole('heading', { name: 'Riscos', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Novo risco' })).toHaveCount(0)
   await page.getByRole('row', { name: /Ransomware/ }).or(page.getByRole('button', { name: /Um vírus pode bloquear/ })).first().click()
-  await expect(page.getByText('O que isto significa para a empresa')).toBeVisible()
+  await expect(page.getByText('Em mais detalhe')).toBeVisible()
   await expect(page.getByRole('dialog').getByText('Média × Alto = Alto')).toBeVisible()
   await shot(page, 'c3-03-risco')
 })
@@ -50,7 +50,7 @@ test('Scenario 3 — Rui gets three figures, each sending him to the page its nu
   await expect(level).toHaveAttribute('href', `${ORG}/avaliacao`)
   await expect(level).toContainText('2 → 3')
   await expect(level).toContainText('de 5')
-  await expect(level).toContainText('Objetivo: Definido')
+  await expect(level).toContainText('objetivo (Definido)')
 
   const risks = summary.getByRole('link', { name: /Riscos em aberto/ })
   await expect(risks).toHaveAttribute('href', `${ORG}/riscos`)
@@ -173,7 +173,8 @@ test('Scenario 3 — the risk register moves actions down as well as up, for the
 test('Permissions — before validation Rui cannot see risks and Pedro never can', async ({ page }) => {
   await start(page, `${ORG}/riscos`, 'rui', 'c2')
   await page.goto(`${ORG}/riscos?as=rui`)
-  await expect(page.getByText('Este ecrã não está disponível para o seu papel')).toBeVisible()
+  // The designated manager is told why and for how long, not that the screen is not for his role.
+  await expect(page.getByRole('heading', { name: 'Os riscos ainda não estão disponíveis' })).toBeVisible()
   await page.goto(`${ORG}/riscos?as=pedro`)
   await expect(page.getByText('Este ecrã não está disponível para o seu papel')).toBeVisible()
 })

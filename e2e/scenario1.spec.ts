@@ -12,7 +12,7 @@ test('Scenario 1 — Rui assigns registration, Pedro registers the technical ass
   await shot(page, 'c1-07-ativos')
 
   // 07b — Assign registration modal
-  await page.getByRole('button', { name: 'Atribuir ao Pedro' }).click()
+  await page.getByRole('button', { name: 'Atribuir o registo' }).click()
   const dialog = page.getByRole('dialog', { name: 'Atribuir registo de ativos' })
   await expect(dialog).toBeVisible()
   await expect(dialog.getByLabel('O que registar')).toHaveValue('Servidores, rede e sistemas de produção')
@@ -21,7 +21,7 @@ test('Scenario 1 — Rui assigns registration, Pedro registers the technical ass
   await dialog.getByRole('button', { name: 'Atribuir' }).click()
 
   // 07c — toast + chip
-  await expect(page.getByRole('status').filter({ hasText: 'Tarefa enviada ao Pedro Almeida' })).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Tarefa enviada a Pedro Almeida' })).toBeVisible()
   await expect(page.getByText('Atribuído · até qui., 15 out.')).toBeVisible()
   await shot(page, 'c1-07c-atribuido')
 
@@ -59,7 +59,7 @@ test('Scenario 1 — Rui assigns registration, Pedro registers the technical ass
   await page.getByLabel(/Localização/).fill('Pavilhão 2')
   await shot(page, 'c1-11-registar')
   await page.getByRole('button', { name: 'Guardar e concluir' }).click()
-  await expect(page.getByText('Tarefa concluída · o Rui foi notificado')).toBeVisible()
+  await expect(page.getByText('Tarefa concluída · notificação enviada a Rui Santos')).toBeVisible()
   await expect(page.getByText('Tem 1 tarefa atribuída por Rui Santos.')).toBeVisible()
 
   // Delegated technical question, with informational-only AI help
@@ -72,7 +72,7 @@ test('Scenario 1 — Rui assigns registration, Pedro registers the technical ass
   await page.getByLabel(/Comentário/).fill('Só o meu e o do Rui.')
   await shot(page, 'c1-10-pergunta')
   await page.getByRole('button', { name: 'Enviar resposta' }).click()
-  await expect(page.getByText('Resposta enviada ao Rui Santos')).toBeVisible()
+  await expect(page.getByText('Resposta enviada a Rui Santos')).toBeVisible()
   await expect(page.getByText('Não tem tarefas pendentes. Avisámos Rui Santos.')).toBeVisible()
 
   // Pedro only sees the assets of his task
@@ -83,13 +83,13 @@ test('Scenario 1 — Rui assigns registration, Pedro registers the technical ass
   // Back to Rui
   await switchPersona(page, 'Rui Santos')
   await page.goto(`${ORG}/ativos`)
-  await expect(page.getByText('4 registados pelo Pedro Almeida')).toBeVisible()
+  await expect(page.getByText('4 registados por Pedro Almeida')).toBeVisible()
   await expect(page.getByText('Inventário completo')).toBeVisible()
   await expect(page.getByText('PLC das linhas de montagem').locator('visible=true').first()).toBeVisible()
 
   await page.goto(`${ORG}/avaliacao`)
   await openTopic(page, 'Controlo de acessos')
-  await expect(page.getByText('1 pergunta delegada ao Pedro Almeida').first()).toBeVisible()
+  await expect(page.getByText('1 pergunta delegada a Pedro Almeida').first()).toBeVisible()
   await expect(page.getByRole('progressbar', { name: 'Progresso de Controlo de acessos' })).toHaveAttribute('aria-valuenow', '8')
   await shot(page, 'c1-12-avaliacao')
   await shot(page, 'c1-07d-completo')
