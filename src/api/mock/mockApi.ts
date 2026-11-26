@@ -1,6 +1,6 @@
 import {
   ApiError, type Api, type Asset, type AssetInput, type AuditEntry, type CriticalService, type DemoActor,
-  type Id, type RemediationAction, type Risk, type RiskInput, type Task, type User,
+  type DeletedAsset, type Id, type RemediationAction, type Risk, type RiskInput, type Task, type User,
 } from '../contracts'
 import { auditEntry, getState, newId, now, setState, simulate } from './store'
 import { notify } from './notify'
@@ -103,7 +103,8 @@ export function createMockApi(getActor: ActorProvider): Api {
     },
 
     notifications: {
-      list: () => simulate(() => getState().notifications.filter((n) => n.userId === getActor().userId)),
+      // Newest first, whatever order they were created in.
+      list: () => simulate(() => getState().notifications.filter((n) => n.userId === getActor().userId).toSorted((a, b) => b.createdAt.localeCompare(a.createdAt))),
       markRead: (id) => simulate(() => {
         setState((s) => ({ ...s, notifications: s.notifications.map((n) => (n.id === id && n.userId === getActor().userId ? { ...n, read: true } : n)) }))
       }),
@@ -230,11 +231,13 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       deleteAsset: (org, id) => simulate(() => {
+        let removed!: DeletedAsset
         if (actor().role !== 'responsavel') deny()
         write((s, me) => {
           const a = s.assets.find((x) => x.id === id)
           if (!a) throw new ApiError('Ativo não encontrado', 404)
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'delete', entityType: 'asset', entityId: id, summary: `Removeu o ativo "${a.name}"`, before: pickAsset(a), after: null })
+          removed = { asset: a, riskIds: s.risks.filter((r) => r.assetId === id).map((r) => r.id), dependantIds: s.assets.filter((x) => x.dependsOn?.includes(id)).map((x) => x.id) }
           return {
             ...s,
             assets: s.assets.filter((x) => x.id !== id).map((x) => ({ ...x, dependsOn: x.dependsOn?.filter((d) => d !== id) })),
@@ -242,6 +245,23 @@ export function createMockApi(getActor: ActorProvider): Api {
             audit: [...s.audit, entry],
           }
         })
+        return removed
+      }),
+
+      restoreAsset: (org, removed) => simulate(() => {
+        if (actor().role !== 'responsavel') deny()
+        const { asset, riskIds, dependantIds } = removed
+        write((s, me) => {
+          if (s.assets.some((x) => x.id === asset.id)) throw new ApiError('O ativo já existe.', 409)
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'create', entityType: 'asset', entityId: asset.id, summary: `Repôs o ativo "${asset.name}"`, before: null, after: pickAsset(asset) })
+          return {
+            ...s,
+            assets: [...s.assets.map((x) => (dependantIds.includes(x.id) ? { ...x, dependsOn: [...(x.dependsOn ?? []), asset.id] } : x)), asset],
+            risks: s.risks.map((r) => (riskIds.includes(r.id) && r.assetId === null ? { ...r, assetId: asset.id } : r)),
+            audit: [...s.audit, entry],
+          }
+        })
+        return asset
       }),
 
       listTasks: (org) => simulate(() => {
@@ -305,7 +325,12 @@ export function createMockApi(getActor: ActorProvider): Api {
           const assignee = s.users.find((u) => u.id === t.assigneeId)
           const summary = change.status === 'cancelada' ? `Cancelou a tarefa "${t.title}"` : `Mudou o prazo da tarefa "${t.title}" para ${shortDayPt(change.dueDate!)}`
           const entry = auditEntry({ organizationId: org, userId: me.id, action: 'update', entityType: 'task', entityId: id, summary, before: { dueDate: t.dueDate, status: t.status }, after: { dueDate: task.dueDate, status: task.status } })
-          const next = { ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }
+          let next = { ...s, tasks: s.tasks.map((x) => (x.id === id ? task : x)), audit: [...s.audit, entry] }
+          // A withdrawn request to connect a system leaves it available again, as before the request.
+          if (change.status === 'cancelada' && t.kind === 'integracao' && t.provider && s.connections[t.provider]?.status === 'pedido') {
+            const provider = t.provider
+            next = { ...next, connections: Object.fromEntries(Object.entries(s.connections).filter(([k]) => k !== provider)) as typeof s.connections }
+          }
           return assignee ? notify(next, { organizationId: org, userId: assignee.id, kind: 'tarefa', title: change.status === 'cancelada' ? 'Tarefa cancelada' : 'Prazo alterado', body: change.status === 'cancelada' ? `${me.name} cancelou: ${t.title}.` : `${t.title} · novo prazo ${shortDayPt(change.dueDate!)}`, link: `${orgPath(s, org)}/tarefas` }) : next
         })
         return task
@@ -469,6 +494,23 @@ export function createMockApi(getActor: ActorProvider): Api {
           const owner = designatedManager(s, org)
           const next = { ...s, roadmap: { ...s.roadmap, [org]: status }, portfolio, audit: [...s.audit, entry] }
           return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'roadmap', title: 'Roadmap e riscos validados', body: `${me.name} validou o plano de ação. Já pode ver os riscos da empresa.`, link: `${orgPath(s, org)}/riscos` }) : next
+        })
+        return status
+      }),
+
+      reopenRoadmap: (org, reason) => simulate(() => {
+        if (actor().role !== 'consultor') deny()
+        if (!reason.trim()) throw new ApiError('Diga ao cliente porque reabre o roadmap.', 422)
+        const current = getState().roadmap[org]
+        if (!current?.validated) return current
+        let status = current
+        write((s, me) => {
+          status = { ...s.roadmap[org], validated: false, validatedAt: null, validatedBy: null }
+          const entry = auditEntry({ organizationId: org, userId: me.id, action: 'update', entityType: 'roadmap', entityId: org, summary: `Reabriu o roadmap: ${reason.trim()}`, before: { validated: true }, after: { validated: false } })
+          const portfolio = s.portfolio.map((p) => (p.organization.id === org ? { ...p, stage: 'Avaliação concluída', stageTone: 'signal' as const, nextStep: 'Rever e validar de novo o roadmap' } : p))
+          const owner = designatedManager(s, org)
+          const next = { ...s, roadmap: { ...s.roadmap, [org]: status }, portfolio, audit: [...s.audit, entry] }
+          return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'roadmap', title: 'Roadmap em revisão', body: `${me.name} reabriu o plano de ação: ${reason.trim()}`, link: `${orgPath(s, org)}/roadmap` }) : next
         })
         return status
       }),

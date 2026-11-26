@@ -88,8 +88,13 @@ export function newId(prefix: string): Id {
   return `${prefix}-${Date.now().toString(36)}${seq}`
 }
 
+/** The scenario's day at the real time of day: writes line up with the seeded dates and deadlines. */
 export function now(): string {
-  return new Date().toISOString()
+  const real = new Date()
+  const [y, m, d] = state.today.split('-').map(Number)
+  const stamp = new Date(real)
+  stamp.setFullYear(y, m - 1, d)
+  return stamp.toISOString()
 }
 
 export function auditEntry(entry: Omit<AuditEntry, 'id' | 'createdAt' | 'actorType'> & { actorType?: AuditEntry['actorType'] }): AuditEntry {

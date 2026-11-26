@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { MessageSquare, CirclePlus } from 'lucide-react'
 import type { Asset } from '../../api/contracts'
-import { useAddComment, useAudit, useComments, useDeleteAsset, useSaveAsset } from '../../api/queries'
+import { useAddComment, useAudit, useComments, useDeleteAsset, useRestoreAsset, useSaveAsset } from '../../api/queries'
 import { ASSET_TYPE_LABEL, dateTime, RISK_STATUS_LABEL, TREATMENT_LABEL } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
@@ -32,6 +32,7 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
   const toast = useToast()
   const save = useSaveAsset(org.id)
   const remove = useDeleteAsset(org.id)
+  const restore = useRestoreAsset(org.id)
   const editable = mode === 'new' ? can('create', 'asset') : can('edit', 'asset')
   const form = useAssetForm(asset ? valuesFromAsset(asset) : emptyValues({ ownerId: 'u-rui' }))
   const owners = inventory.users.filter((u) => u.role !== 'consultor')
@@ -47,8 +48,17 @@ export function AssetDrawer({ inventory, asset, mode, open, onClose }: Props) {
   const doDelete = () => {
     if (!asset) return
     remove.mutate(asset.id, {
-      onSuccess: () => {
-        toast.show(`"${asset.name}" removido`, 'success', { label: 'Anular', onClick: () => save.mutate({ input: toInput(valuesFromAsset(asset), asset.taskId) }) })
+      onSuccess: (removed) => {
+        // Say what the removal touched, so "Anular" is an informed choice, and put it all back if chosen.
+        const risks = removed.riskIds.length
+        const touched = risks ? ` · ${risks} ${risks === 1 ? 'risco ficou' : 'riscos ficaram'} sem ativo` : ''
+        toast.show(`"${asset.name}" removido${touched}`, 'success', {
+          label: 'Anular',
+          onClick: () => restore.mutate(removed, {
+            onSuccess: () => toast.show(`"${asset.name}" reposto`),
+            onError: (e) => toast.show(e.message, 'error'),
+          }),
+        })
         onClose()
       },
       onError: (e) => toast.show(e.message, 'error'),

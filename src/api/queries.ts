@@ -1,7 +1,7 @@
 // TanStack Query hooks on top of the contracts. Components use only these, never the mock.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './client'
-import type { AssetBulkChange, AssetInput, ChatConversation, ChatMessageInput, QuestionAnswer, DelegateQuestionInput, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, QualificationInput, RegistrationInput, RiskInput, ScopeInput, TaskInput, WorkAssignmentInput } from './contracts'
+import type { AssetBulkChange, AssetInput, ChatConversation, DeletedAsset, ChatMessageInput, QuestionAnswer, DelegateQuestionInput, DiscoveryDecision, ProviderId, RiskStatusChange, CriticalService, Id, ProposeActionInput, QualificationInput, RegistrationInput, RiskInput, ScopeInput, TaskInput, WorkAssignmentInput } from './contracts'
 
 export const keys = {
   org: (slug: string) => ['org', slug] as const,
@@ -158,6 +158,11 @@ export function useDeleteAsset(org: Id) {
   return useMutation({ mutationFn: (id: Id) => api.assets.deleteAsset(org, id), onSuccess: () => invalidate('assets', 'audit', 'risks') })
 }
 
+export function useRestoreAsset(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (removed: DeletedAsset) => api.assets.restoreAsset(org, removed), onSuccess: () => invalidate('assets', 'audit', 'risks') })
+}
+
 export function useSaveService(org: Id) {
   const invalidate = useInvalidate()
   return useMutation({
@@ -204,6 +209,11 @@ export function useValidateRoadmap(org: Id) {
   return useMutation({ mutationFn: () => api.assessment.validateRoadmap(org), onSuccess: () => invalidate('roadmap', 'portfolio', 'audit', 'risks', 'links', 'assessment') })
 }
 
+export function useReopenRoadmap(org: Id) {
+  const invalidate = useInvalidate()
+  return useMutation({ mutationFn: (reason: string) => api.assessment.reopenRoadmap(org, reason), onSuccess: () => invalidate('roadmap', 'portfolio', 'audit', 'risks', 'links', 'assessment') })
+}
+
 export const useNotifications = () => useQuery({ queryKey: keys.notifications(), queryFn: () => api.notifications.list() })
 export const useToday = () => useQuery({ queryKey: keys.today(), queryFn: () => api.directory.getToday(), staleTime: Infinity })
 
@@ -219,7 +229,7 @@ export function useMarkAllNotificationsRead() {
 
 export function useUpdateTask(org: Id) {
   const invalidate = useInvalidate()
-  return useMutation({ mutationFn: ({ id, change }: { id: Id; change: { dueDate?: string; status?: 'cancelada' } }) => api.assets.updateTask(org, id, change), onSuccess: () => invalidate('tasks', 'audit') })
+  return useMutation({ mutationFn: ({ id, change }: { id: Id; change: { dueDate?: string; status?: 'cancelada' } }) => api.assets.updateTask(org, id, change), onSuccess: () => invalidate('tasks', 'audit', 'assessment', 'integrations') })
 }
 
 export function useRemindTask(org: Id) {
