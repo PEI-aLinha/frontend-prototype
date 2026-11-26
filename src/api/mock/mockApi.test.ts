@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createMockApi } from './mockApi'
-import { resetDemo } from './store'
+import { resetDemo, setState } from './store'
 import { ORG_ID, PEDRO, RUI, MARTA, ASSET_TASK_ID } from './seed'
 
 let who = RUI
@@ -49,6 +49,16 @@ describe('mock API permissions', () => {
     expect((await api.audit.list(ORG_ID)).map((e) => e.summary)).toContain('Reabriu o roadmap: Falta ligar um risco')
     who = RUI
     await expect(api.assets.listRisks(ORG_ID)).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('lets only the consultant assigned to the organization validate or reopen its roadmap', async () => {
+    who = MARTA
+    await api.assessment.validateRoadmap(ORG_ID)
+    setState((s) => ({ ...s, organizations: s.organizations.map((o) => (o.id === ORG_ID ? { ...o, consultantId: 'u-other-consultant' } : o)) }))
+    await expect(api.assessment.reopenRoadmap(ORG_ID, 'Rever')).rejects.toMatchObject({ status: 403 })
+    await expect(api.assessment.validateRoadmap(ORG_ID)).rejects.toMatchObject({ status: 403 })
+    expect((await api.assessment.getRoadmapStatus(ORG_ID)).validated).toBe(true)
+    await expect(api.assessment.reopenRoadmap('org-unknown', 'Rever')).rejects.toMatchObject({ status: 404 })
   })
 
   it('requires a linked action to mitigate and a justification to accept', async () => {

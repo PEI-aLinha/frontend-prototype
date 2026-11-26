@@ -35,6 +35,12 @@ function orgPath(s: Readonly<DemoState>, org: Id): string {
   return `/org/${s.organizations.find((o) => o.id === org)?.slug ?? org}`
 }
 
+/** Only the consultant assigned to the organization acts on its roadmap (as listPortfolio shows them only theirs). */
+function requireAssignedConsultant(s: Readonly<DemoState>, org: Id, me: User): void {
+  requireOrg(s, org)
+  if (me.role !== 'consultor' || s.organizations.find((o) => o.id === org)?.consultantId !== me.id) deny()
+}
+
 function deny(): never {
   throw new ApiError('Não tem permissão para esta ação.', 403)
 }
@@ -489,7 +495,7 @@ export function createMockApi(getActor: ActorProvider): Api {
       }),
 
       validateRoadmap: (org) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        requireAssignedConsultant(getState(), org, actor())
         const current = getState().roadmap[org]
         if (current?.validated) return current
         if (!current?.assessmentCompletedAt) throw new ApiError('A avaliação ainda não foi submetida.', 422)
@@ -503,13 +509,15 @@ export function createMockApi(getActor: ActorProvider): Api {
           return owner ? notify(next, { organizationId: org, userId: owner.id, kind: 'roadmap', title: 'Roadmap e riscos validados', body: `${me.name} validou o plano de ação. Já pode ver os riscos da empresa.`, link: `${orgPath(s, org)}/riscos` }) : next
         })
         return status
+        if (!current) throw new ApiError('Organização não encontrada', 404)
       }),
 
       reopenRoadmap: (org, reason) => simulate(() => {
-        if (actor().role !== 'consultor') deny()
+        requireAssignedConsultant(getState(), org, actor())
         if (!reason.trim()) throw new ApiError('Diga ao cliente porque reabre o roadmap.', 422)
         const current = getState().roadmap[org]
-        if (!current?.validated) return current
+        if (!current) throw new ApiError('Organização não encontrada', 404)
+        if (!current.validated) return current
         let status = current
         write((s, me) => {
           status = { ...s.roadmap[org], validated: false, validatedAt: null, validatedBy: null }
