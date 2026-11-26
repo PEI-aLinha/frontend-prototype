@@ -41,7 +41,7 @@ export function AcceptInvitePage() {
     onSuccess: ({ user, organizationSlug }) => {
       // The person joins in the analyst role of the demo (persona "Pedro" slot), with their own identity.
       signInAs('pedro', { userId: user.id, name: user.name, firstName: user.name.split(' ')[0], initials: user.initials })
-      navigate(`/org/${organizationSlug}/tarefas`)
+      void navigate(`/org/${organizationSlug}/tarefas`)
     },
   })
 

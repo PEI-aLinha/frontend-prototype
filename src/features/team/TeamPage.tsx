@@ -123,7 +123,7 @@ export function TeamPage() {
     { id: 'acoes', header: () => <span className="sr-only">Ações</span>, enableSorting: false, meta: { width: 220, align: 'right' }, cell: ({ row }) => actions(row.original) },
   ]
 
-  if (users.isError || tasks.isError) return <ErrorState error={users.error ?? tasks.error} onRetry={() => { users.refetch(); tasks.refetch() }} />
+  if (users.isError || tasks.isError) return <ErrorState error={users.error ?? tasks.error} onRetry={() => { void users.refetch(); void tasks.refetch() }} />
   const list = tasks.data ?? []
   const pending = list.filter((t) => t.status === 'pendente')
   const closed = list.filter((t) => t.status !== 'pendente')

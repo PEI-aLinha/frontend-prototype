@@ -60,7 +60,7 @@ export function CommandMenu({ open, onOpenChange, sections }: { open: boolean; o
   }, [entries, q])
   const groups = [...new Set(results.map((r) => r.group))]
 
-  const go = (e: Entry | undefined) => { if (!e) return; onOpenChange(false); setQ(''); navigate(e.to) }
+  const go = (e: Entry | undefined) => { if (!e) return; onOpenChange(false); setQ(''); void navigate(e.to) }
 
   return (
     <Dialog.Root open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) setQ('') }}>

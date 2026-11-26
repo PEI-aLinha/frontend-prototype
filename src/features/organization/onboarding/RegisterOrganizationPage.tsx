@@ -72,7 +72,7 @@ export function RegisterOrganizationPage() {
         const name = account!.name.trim()
         const parts = name.split(/\s+/)
         signInAs('rui', { userId: org.registeredBy!, name, firstName: parts[0], initials: (parts[0][0] + (parts.length > 1 ? parts.at(-1)![0] : '')).toUpperCase() })
-        navigate('/registo/concluido')
+        void navigate('/registo/concluido')
       },
     })
   }

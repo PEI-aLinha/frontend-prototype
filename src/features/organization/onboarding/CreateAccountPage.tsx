@@ -66,7 +66,7 @@ export function CreateAccountPage() {
       onSuccess: (available) => {
         if (!available) { setTakenEmail(email); refs.current.email?.focus(); return }
         setAccount({ name: form.name.trim(), email })
-        navigate('/registo/seguranca')
+        void navigate('/registo/seguranca')
       },
     })
   }

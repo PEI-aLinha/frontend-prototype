@@ -36,7 +36,7 @@ export function RiskStatusActions({ risk, onDone }: { risk: Risk; onDone: () => 
         <form noValidate className="flex flex-col gap-2" onSubmit={(e) => {
           e.preventDefault()
           if (reason.trim().length < 5) { setError('Explique em poucas palavras porque arquiva.'); return }
-          run({ status: 'arquivado', reason }, 'Risco arquivado')
+          void run({ status: 'arquivado', reason }, 'Risco arquivado')
         }}>
           <Field label="Motivo do arquivo" error={error}>{(p) => <TextInput id={p.id} invalid={p.invalid} aria-describedby={p.describedBy} value={reason} onChange={(e) => { setReason(e.target.value); setError(undefined) }} placeholder="Ex.: servidor desativado em novembro" autoFocus />}</Field>
           <div className="flex gap-2">

@@ -17,7 +17,7 @@ export function SectionPage() {
   const back = <Link to={`/org/${org.slug}/avaliacao`} className="-mb-4 inline-flex items-center gap-1.5 text-[0.9375rem] font-bold text-brand hover:underline"><ArrowLeft className="size-4" aria-hidden /><span className="sr-only">Voltar à </span>Avaliação</Link>
 
   const error = assessment.error ?? questions.error
-  if (error) return <>{back}<ErrorState error={error} onRetry={() => { assessment.refetch(); questions.refetch() }} /></>
+  if (error) return <>{back}<ErrorState error={error} onRetry={() => { void assessment.refetch(); void questions.refetch() }} /></>
   if (!assessment.data || !questions.data) return <SkeletonRows rows={6} />
   const section = assessment.data.sections.find((s) => s.id === sectionId)
   if (!section) return <>{back}<EmptyState headingLevel={1} title="Secção não encontrada" action={<Link to={`/org/${org.slug}/avaliacao`} className="text-[0.9375rem] font-bold text-brand hover:underline">Voltar à Avaliação</Link>}>Esta secção não existe nesta avaliação. Escolha outra na lista.</EmptyState></>

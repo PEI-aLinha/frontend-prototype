@@ -37,7 +37,7 @@ export function PersonaSwitcher() {
 
   const switchTo = (key: PersonaKey) => {
     setPersona(key)
-    navigate(homePath(key))
+    void navigate(homePath(key))
   }
 
   const jump = (id: SnapshotId) => {
@@ -49,11 +49,11 @@ export function PersonaSwitcher() {
       // No account exists yet: drop any identity from the previous run (e.g. an accepted invite), keeping the
       // current persona so its layout does not redirect before reaching the registration.
       setPersona(persona.key)
-      navigate('/registo/conta')
+      void navigate('/registo/conta')
     } else {
       const target: PersonaKey = id === 'c2' ? 'marta' : 'rui'
       setPersona(target)
-      navigate(homePath(target))
+      void navigate(homePath(target))
     }
     toast.show(`Dados repostos: ${SNAPSHOTS.find((s) => s.id === id)?.label}`)
   }
@@ -71,7 +71,7 @@ export function PersonaSwitcher() {
     setFailing(!failing)
     // Turning it on leaves what is on screen (and any unsaved input) alone: the next load or save fails.
     // Turning it off reloads, so the pages that failed recover.
-    if (failing) qc.invalidateQueries()
+    if (failing) void qc.invalidateQueries()
   }
 
   return (

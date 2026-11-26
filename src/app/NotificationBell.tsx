@@ -23,7 +23,7 @@ export function NotificationBell({ compact }: { compact?: boolean }) {
 
   const open = (n: AppNotification) => {
     if (!n.read) markRead.mutate(n.id)
-    if (n.link) navigate(n.link)
+    if (n.link) void navigate(n.link)
   }
 
   return (

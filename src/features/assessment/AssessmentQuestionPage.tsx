@@ -45,7 +45,7 @@ export function AssessmentQuestionPage() {
   const nextQuestions = useAssessmentQuestions(nextSection && org.id, nextSection?.id ?? '')
 
   const error = assessment.error ?? questions.error
-  if (error) return <ErrorState error={error} onRetry={() => { assessment.refetch(); questions.refetch() }} />
+  if (error) return <ErrorState error={error} onRetry={() => { void assessment.refetch(); void questions.refetch() }} />
   if (!assessment.data || !questions.data) return <SkeletonRows rows={4} />
   const section = sections[at]
   const index = questions.data.findIndex((q) => q.id === questionId)
@@ -189,7 +189,7 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
 
   const leave = (action: Leaving, path: string, message?: string, tone: 'success' | 'info' = 'success') => {
     setIntent(action)
-    const go = () => { if (message && !noteOnly) toast.show(message, tone); navigate(path) }
+    const go = () => { if (message && !noteOnly) toast.show(message, tone); void navigate(path) }
     if (!choice || !changed) { go(); return }
     saving.current = true
     setLeaving(action)

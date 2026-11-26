@@ -60,7 +60,7 @@ export function RegisterAssetsPage() {
           return
         }
         complete.mutate(task.id, {
-          onSuccess: () => { toast.show(`Tarefa concluída · notificação enviada a ${assigner ?? 'quem a pediu'}`); navigate(`/org/${org.slug}/tarefas`) },
+          onSuccess: () => { toast.show(`Tarefa concluída · notificação enviada a ${assigner ?? 'quem a pediu'}`); void navigate(`/org/${org.slug}/tarefas`) },
           onError: (e) => toast.show(e.message, 'error'),
         })
       },
@@ -69,7 +69,7 @@ export function RegisterAssetsPage() {
   }
 
   const finishWithoutNew = () => complete.mutate(task.id, {
-    onSuccess: () => { toast.show(`Tarefa concluída · notificação enviada a ${assigner ?? 'quem a pediu'}`); navigate(`/org/${org.slug}/tarefas`) },
+    onSuccess: () => { toast.show(`Tarefa concluída · notificação enviada a ${assigner ?? 'quem a pediu'}`); void navigate(`/org/${org.slug}/tarefas`) },
     onError: (e) => toast.show(e.message, 'error'),
   })
 

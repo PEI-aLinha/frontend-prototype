@@ -36,7 +36,7 @@ export function QuestionPage() {
   const submit = () => {
     if (!choice) { setError('Escolha uma resposta.'); return }
     answer.mutate({ taskId: task.id, answer: { choice, note } }, {
-      onSuccess: () => { toast.show(`Resposta enviada a ${from}`); navigate(`/org/${org.slug}/tarefas`) },
+      onSuccess: () => { toast.show(`Resposta enviada a ${from}`); void navigate(`/org/${org.slug}/tarefas`) },
       onError: (e) => toast.show(e.message, 'error'),
     })
   }

@@ -75,7 +75,7 @@ export function HomePage() {
     return (
       <>
         <PageHeader eyebrow={org.name} title={`Olá, ${persona.firstName}`} />
-        <ErrorState error={failed.error} onRetry={() => { assessment.refetch(); roadmap.refetch(); tasks.refetch(); assets.refetch() }} />
+        <ErrorState error={failed.error} onRetry={() => { void assessment.refetch(); void roadmap.refetch(); void tasks.refetch(); void assets.refetch() }} />
       </>
     )
   }

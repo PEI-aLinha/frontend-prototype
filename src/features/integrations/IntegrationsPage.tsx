@@ -147,7 +147,7 @@ export function IntegrationsPage() {
   return (
     <>
       <PageHeader title="Integrações" subtitle={isConsultant ? 'Evidências recolhidas automaticamente dos sistemas do cliente.' : 'Ligue os sistemas que a empresa já usa para manter o inventário e as evidências em dia.'} />
-      {error ? <ErrorState error={error} onRetry={() => { integrations.refetch(); discoveries.refetch(); evidence.refetch() }} /> : !integrations.data ? <SkeletonRows rows={4} /> : (
+      {error ? <ErrorState error={error} onRetry={() => { void integrations.refetch(); void discoveries.refetch(); void evidence.refetch() }} /> : !integrations.data ? <SkeletonRows rows={4} /> : (
         <>
           {!isConsultant && (
             <section aria-labelledby="int-catalog" className="flex flex-col gap-3">

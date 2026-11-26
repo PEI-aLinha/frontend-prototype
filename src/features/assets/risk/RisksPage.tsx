@@ -120,7 +120,7 @@ export function RisksPage() {
         </div>
       )}
       {!editable && <Note>Registo validado pela consultora{validator ? ` ${validator}` : ''}. Só de leitura: se algo não estiver certo, fale com ela.</Note>}
-      {error ? <ErrorState error={error} onRetry={() => { risks.refetch(); links.refetch(); assets.refetch(); actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
+      {error ? <ErrorState error={error} onRetry={() => { void risks.refetch(); void links.refetch(); void assets.refetch(); void actions.refetch() }} /> : !ready ? <SkeletonRows rows={6} /> : (
         <>
           {nextAction}
 

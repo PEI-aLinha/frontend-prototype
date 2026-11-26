@@ -74,7 +74,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   }, [evidence.data])
 
   if (actions.isError || status.isError || users.isError) {
-    return <ErrorState error={actions.error ?? status.error ?? users.error} onRetry={() => { actions.refetch(); status.refetch(); users.refetch() }} />
+    return <ErrorState error={actions.error ?? status.error ?? users.error} onRetry={() => { void actions.refetch(); void status.refetch(); void users.refetch() }} />
   }
   // Only the risk-prioritized order moves anything; the base order is the AI's proposal as-is.
   const byRisk = view === 'riscos'
