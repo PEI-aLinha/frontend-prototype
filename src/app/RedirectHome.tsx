@@ -12,7 +12,7 @@ export function RedirectHome({ reason }: { reason: string }) {
   useEffect(() => {
     if (shown.current) return
     shown.current = true
-    toast.show(reason)
+    toast.show(reason, 'info')
   }, [reason, toast])
   return <Navigate to={homePath(persona.key)} replace />
 }
