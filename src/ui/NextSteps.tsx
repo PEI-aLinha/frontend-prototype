@@ -6,6 +6,8 @@ import { cn } from './cn'
 export interface NextStep {
   label: string
   hint?: string
+  /** Short factual figure about the step (e.g. "7 ativos"); stays visible once the step is done. */
+  meta?: string
   done: boolean
   to?: string
   cta?: string
@@ -59,6 +61,7 @@ export function NextSteps({ title = 'O que fazer a seguir', description, steps }
                 <p className={cn('text-[0.9375rem]', s.done ? 'text-ink-soft line-through decoration-line' : 'font-bold')}>{s.label}</p>
                 {s.hint && !s.done && <p className="text-[0.8125rem] text-ink-soft">{s.hint}</p>}
               </div>
+              {s.meta && <span className="num shrink-0 text-[0.8125rem] text-ink-soft max-md:hidden">{s.meta}</span>}
               {/* Outlined: the step is already marked by its tint and filled number; the page's primary action lives elsewhere. */}
               {current && s.to && (
                 <Link to={s.to} className="inline-flex shrink-0 items-center gap-1 rounded-[9px] border border-brand bg-paper px-3.5 py-2 text-[0.8125rem] font-bold text-brand hover:bg-signal-soft">

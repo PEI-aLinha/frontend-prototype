@@ -1,12 +1,12 @@
 import { Link, useNavigate } from 'react-router'
-import { useAssessment, useAssets, useConsultant, useRisks, useRoadmapStatus, useServices, useTasks, useUsers } from '../../api/queries'
+import { useAssessment, useAssets, useConsultant, useRisks, useRoadmapStatus, useTasks, useUsers } from '../../api/queries'
 import { dateTime, RISK_LEVEL_LABEL, shortDate } from '../../config/labels'
 import { useSession } from '../../core/session'
 import { useTenant } from '../../core/tenant'
 import { useCan } from '../../core/useCan'
 import { PageTour } from '../../core/onboarding/PageTour'
 import { computeRiskLevel } from '../assets/risk/computeRiskLevel'
-import { Button, buttonClass, ErrorState, HighlightCard, NextSteps, Note, PageHeader, ProgressBar, RiskLevelBadge, StatCard } from '../../ui'
+import { Button, buttonClass, ErrorState, HighlightCard, NextSteps, Note, PageHeader, ProgressBar } from '../../ui'
 import type { Level } from '../../api/contracts'
 import { ConsultantCard, nis2Status } from '../organization/public'
 
@@ -17,7 +17,6 @@ export function HomePage() {
   const can = useCan()
   const navigate = useNavigate()
   const assets = useAssets(org.id)
-  const services = useServices(org.id)
   const tasks = useTasks(org.id)
   const roadmap = useRoadmapStatus(org.id)
   const assessment = useAssessment(org.id)
@@ -28,6 +27,8 @@ export function HomePage() {
   const consultant = useConsultant(org.id).data?.name ?? 'A equipa aLinha'
 
   const assetTask = tasks.data?.find((t) => t.kind === 'ativos')
+  const analyst = users.data?.find((u) => u.role === 'analista')
+  const analystFirst = analyst?.name.split(' ')[0]
   const inventoryDone = assetTask?.status === 'concluida'
   const validated = roadmap.data?.validated
   const submitted = !!roadmap.data?.assessmentCompletedAt
@@ -37,6 +38,7 @@ export function HomePage() {
   const levels = (risks.data ?? []).map((r) => ({ level: computeRiskLevel(r.probability, r.impact).level, status: r.status }))
   const top: Level | null = levels.some((l) => l.level === 'alto') ? 'alto' : levels.some((l) => l.level === 'medio') ? 'medio' : levels.length ? 'baixo' : null
   const topCount = levels.filter((l) => l.level === top).length
+  const openCount = levels.filter((l) => l.status === 'por_tratar' || l.status === 'em_tratamento').length
   const topTreating = levels.filter((l) => l.level === top).every((l) => l.status === 'em_tratamento' || l.status === 'aceite')
 
   const base = `/org/${org.slug}`
@@ -57,6 +59,19 @@ export function HomePage() {
   const subtitle = validated ? `${consultant} validou os resultados e o roadmap.` : submitted ? 'A avaliação foi submetida. Avisamos quando os resultados estiverem validados.' : fresh ? 'Pode começar pela avaliação quando quiser.' : 'Pode terminar a avaliação quando quiser.'
 
   const failed = [assessment, roadmap, tasks, assets].find((q) => q.isError)
+  const steps = [
+    { label: 'Registar os ativos que conhece', hint: 'Programas e serviços do dia a dia: ERP, email, portáteis.', done: (assets.data?.length ?? 0) > 0, to: `${base}/ativos?novo=1`, cta: 'Adicionar ativo' },
+    ...(analyst || assetTask ? [] : [{ label: 'Convidar o técnico de informática', hint: 'Quem trata dos servidores e da rede. Recebe um convite por email e só vê o que lhe pedir.', done: false, to: `${base}/equipa?convidar=1`, cta: 'Convidar' }]),
+    { label: analystFirst ? `Pedir ao ${analystFirst} o registo técnico` : 'Pedir ao técnico o registo técnico', hint: 'Servidores, rede e máquinas da fábrica. Recebe uma tarefa.', done: !!assetTask, to: `${base}/ativos?atribuir=1`, cta: 'Atribuir' },
+    { label: analystFirst ? `Esperar que o ${analystFirst} conclua o registo` : 'Esperar que o técnico conclua o registo', hint: assetTask ? `${assetTask.dueDate ? `Prazo: ${assetTask.dueDate.split('-').reverse().slice(0, 2).join('/')}. ` : ''}Recebe uma notificação quando ele terminar.` : undefined, done: inventoryDone, to: `${base}/ativos`, cta: 'Ver inventário' },
+    { label: 'Terminar e submeter a avaliação', hint: 'O questionário de maturidade NIS2 + RGPD.', done: submitted, to: `${base}/avaliacao`, cta: 'Continuar' },
+    { label: 'A consultora valida resultados, roadmap e riscos', hint: 'Não precisa de fazer nada: é avisado quando terminar.', done: !!validated },
+    { label: 'Acompanhar os riscos e o plano de ação', hint: seeRisks && top ? `${topCount} ${topCount === 1 ? 'risco' : 'riscos'} ${RISK_LEVEL_LABEL[top].toLowerCase()}${topCount === 1 ? '' : 's'} ${topTreating ? 'em tratamento' : 'por tratar'} · ${levels.length} riscos, ${openCount} em aberto. Comece por ${topCount === 1 ? 'esse' : 'esses'}.` : 'Comece pelos riscos altos.', done: false, to: validated ? `${base}/riscos` : undefined, cta: 'Ver riscos' },
+  ]
+  const current = steps.find((st) => !st.done)
+  // The hero only carries a button when the current step is the assessment itself; otherwise the checklist owns the primary action.
+  const heroOwnsAction = !!validated || current?.label === 'Terminar e submeter a avaliação'
+
   if (failed) {
     return (
       <>
@@ -81,9 +96,11 @@ export function HomePage() {
         eyebrow="Avaliação de maturidade · NIS2 + RGPD"
         title={validated ? 'Resultados e roadmap validados' : submitted ? 'Submetida para validação' : notStarted ? 'Avaliação por começar' : assessment.data ? `${answered} de ${total} perguntas respondidas` : '…'}
         action={validated ? (
-          <Link to={`${base}/roadmap`} className={buttonClass({ variant: 'inverse' })}>Ver roadmap →</Link>
+          <Link to={`${base}/roadmap`} className={buttonClass({ variant: 'inverse' })}>Ver roadmap</Link>
+        ) : heroOwnsAction ? (
+          <Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{submitted ? 'Ver avaliação' : notStarted ? 'Começar avaliação' : 'Continuar avaliação'}</Button>
         ) : (
-          <Button variant="inverse" disabled={!assessment.data} onClick={() => navigate(assessmentPath)}>{submitted ? 'Ver avaliação →' : notStarted ? 'Começar avaliação →' : 'Continuar avaliação →'}</Button>
+          <Link to={assessmentPath} className="text-[0.9375rem] font-bold text-white underline decoration-white/40 underline-offset-4 hover:decoration-white">{submitted ? 'Ver avaliação' : notStarted ? 'Ver a avaliação' : 'Continuar avaliação'}</Link>
         )}
       >
         {/* Only while answering: once submitted the bar is always full and says nothing. */}
@@ -92,33 +109,16 @@ export function HomePage() {
       </HighlightCard>
 
       <div data-tour="home-steps">
-        <NextSteps steps={[
-          { label: 'Registar os ativos que conhece', hint: 'Programas e serviços do dia a dia: ERP, email, portáteis.', done: (assets.data?.length ?? 0) > 0, to: `${base}/ativos?novo=1`, cta: 'Adicionar ativo' },
-          { label: 'Pedir ao Pedro o registo técnico', hint: 'Servidores, rede e máquinas da fábrica. Ele recebe uma tarefa.', done: !!assetTask, to: `${base}/ativos?atribuir=1`, cta: 'Atribuir' },
-          { label: 'Esperar que o Pedro conclua o registo', hint: assetTask ? `${assetTask.dueDate ? `Prazo: ${assetTask.dueDate.split('-').reverse().slice(0, 2).join('/')}. ` : ''}Recebe uma notificação quando ele terminar.` : undefined, done: inventoryDone, to: `${base}/ativos`, cta: 'Ver inventário' },
-          { label: 'Terminar e submeter a avaliação', hint: 'O questionário de maturidade NIS2 + RGPD.', done: submitted, to: `${base}/avaliacao`, cta: 'Continuar' },
-          { label: 'A consultora valida resultados, roadmap e riscos', hint: 'Não precisa de fazer nada: é avisado quando terminar.', done: !!validated },
-          { label: 'Acompanhar os riscos e o plano de ação', hint: 'Comece pelos riscos altos.', done: false, to: validated ? `${base}/riscos` : undefined, cta: 'Ver riscos' },
-      ]} />
+        <NextSteps steps={steps} />
       </div>
 
-      <section aria-labelledby="home-summary-title" className="grid gap-4 md:grid-cols-3 md:items-start" data-tour="home-summary">
-        <h2 id="home-summary-title" className="sr-only">Resumo</h2>
-         {seeRisks && risks.data && top ? (
-           <Link to={`${base}/riscos`} className="contents">
-             <StatCard label="Riscos" accent={<RiskLevelBadge level={top} />}
-               value={`${topCount} ${topCount === 1 ? 'risco' : 'riscos'} ${RISK_LEVEL_LABEL[top].toLowerCase()}${topCount === 1 ? '' : 's'} · ${topTreating ? 'em tratamento' : 'por tratar'}`}
-               caption={`${levels.length} riscos registados pela consultora`} />
-           </Link>
-         ) : (
-          <Link to={`${base}/enquadramento`} className="contents">
-            <StatCard label="Enquadramento" value={nis2?.label ?? '—'} caption={nis2?.official ? `Oficial · CNCS · Ato de ${shortDate(nis2.date!)}` : 'Sugestão indicativa · aguarda o CNCS'} />
-          </Link>
-        )}
-        <Link to={`${base}/ativos`} className="contents">
-          <StatCard label="Ativos" value={assets.data ? `${assets.data.length} ativos` : '…'} caption={`${services.data ? `${services.data.length} ${services.data.length === 1 ? 'serviço crítico' : 'serviços críticos'}` : '…'} · ${inventoryDone ? 'completo' : assetTask ? 'registo técnico atribuído' : 'falta o registo técnico'}`} />
-        </Link>
-        <ConsultantCard orgId={org.id} />
+      <section aria-label="Contexto" className="grid gap-x-10 gap-y-4 border-t border-line-soft pt-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]" data-tour="home-summary">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-sm font-bold text-ink-soft">Enquadramento NIS2</h2>
+          <p><Link to={`${base}/enquadramento`} className="font-bold text-ink underline decoration-line-soft underline-offset-4 hover:decoration-brand">{nis2?.label ?? '—'}</Link></p>
+          <p className="text-sm text-ink-soft">{nis2?.official ? `Oficial · CNCS · Ato de ${shortDate(nis2.date!)}` : 'Sugestão indicativa · aguarda o CNCS'}</p>
+        </div>
+        <ConsultantCard orgId={org.id} inline />
       </section>
     </>
   )
