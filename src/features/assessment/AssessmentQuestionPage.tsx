@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ArrowLeft, Check, UserRound, ArrowRight } from 'lucide-react'
 import type { AnswerChoice, AssessmentQuestion, Task, TeamMember, User } from '../../api/contracts'
-import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUsers } from '../../api/queries'
+import { useAssessment, useAssessmentQuestions, useDelegateQuestion, useMembers, useSaveAnswer, useTasks, useToday, useUpdateTask, useUsers } from '../../api/queries'
 import { dateTime, shortDay } from '../../config/labels'
 import { useTenant } from '../../core/tenant'
 import { AIBadge, Button, Card, Chip, DateInput, EmptyState, ErrorState, Eyebrow, Field, Modal, Note, OptionGroup, PageHeader, ProgressBar, Select, SkeletonRows, TextArea, useToast } from '../../ui'
@@ -153,7 +153,8 @@ function AnswerForm({ question, nav, overviewPath }: { question: AssessmentQuest
       <Field label="Comentário" optional hint="Ajuda a consultora a perceber a resposta. Ex.: em que sistemas falta.">
         {(p) => <TextArea id={p.id} aria-describedby={p.describedBy} value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} />}
       </Field>
-      <QuestionNav nav={nav} leaving={leaving} onGo={(path, action) => leave(action, path)}>
+      {/* Moving on without an answer is allowed, but said: the question stays in the overview as "Por responder". */}
+      <QuestionNav nav={nav} leaving={leaving} onGo={(path, action) => leave(action, path, action === 'next' && !choice && !question.answer ? 'Pergunta deixada por responder. Pode voltar a ela na Avaliação.' : undefined)}>
         <Button variant="secondary" loading={leaving === 'later'} disabled={!!leaving}
           onClick={() => leave('later', overviewPath, 'Progresso guardado. Pode continuar quando quiser.')}>Guardar e continuar depois</Button>
       </QuestionNav>
@@ -178,14 +179,22 @@ function Delegation({ question, task, assignee, open }: { question: AssessmentQu
   const org = useTenant()
   const members = useMembers(org.id)
   const [delegating, setDelegating] = useState(false)
+  const toast = useToast()
+  const cancel = useUpdateTask(org.id)
   const analysts = members.data?.filter((m) => m.role === 'analista' && m.status === 'ativo' && m.userId) ?? []
   const who = assignee?.name ?? 'analista'
 
   if (task?.status === 'pendente') {
+    // Withdrawing the request gives the question back, to answer here or delegate to someone else.
+    const withdraw = () => cancel.mutate({ id: task.id, change: { status: 'cancelada' } }, {
+      onSuccess: () => toast.show(`Pedido a ${who} cancelado. Pode responder aqui ou delegar a outra pessoa.`),
+      onError: (e) => toast.show(e.message, 'error'),
+    })
     return (
       <Note icon={false}>
-        <span className="flex items-start gap-2"><UserRound className="mt-[2px] size-4 shrink-0" aria-hidden />
-          <span>Delegada a {who}: à espera de resposta{task.dueDate ? ` (prazo ${shortDay(task.dueDate)})` : ''}. Só vê esta pergunta.</span>
+        <span className="flex flex-wrap items-start gap-2"><UserRound className="mt-[2px] size-4 shrink-0" aria-hidden />
+          <span className="min-w-0 flex-1">Delegada a {who}: à espera de resposta{task.dueDate ? ` (prazo ${shortDay(task.dueDate)})` : ''}. Só vê esta pergunta.</span>
+          {open && <Button size="sm" variant="ghost" loading={cancel.isPending} onClick={withdraw}>Cancelar pedido</Button>}
         </span>
       </Note>
     )

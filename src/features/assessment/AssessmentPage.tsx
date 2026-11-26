@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle2, ChevronDown, Clock } from 'lucide-react'
 import type { AssessmentSection } from '../../api/contracts'
 import { useAssessment, useSubmitAssessment, useUsers } from '../../api/queries'
 import { MATURITY_LABEL } from '../../config/labels'
+import { PageTour } from '../../core/onboarding/PageTour'
 import { useTenant } from '../../core/tenant'
 import { Avatar, Button, Card, Chip, ErrorState, Eyebrow, Modal, NextSteps, PageHeader, ProgressBar, SkeletonRows, cn, useToast } from '../../ui'
 
@@ -20,13 +21,16 @@ export function AssessmentPage() {
   const answered = a?.sections.reduce((n, s) => n + s.answered, 0) ?? 0
   const total = a?.sections.reduce((n, s) => n + s.total, 0) ?? 0
   const name = (id: string) => users.data?.find((u) => u.id === id)
+  // Whoever the questions were delegated to; the step stays generic until someone is.
+  const delegate = a?.sections.flatMap((s) => s.delegated)[0]
+  const delegateFirst = delegate ? name(delegate.assigneeId)?.name.split(' ')[0] : undefined
 
   return (
     <>
-      <PageHeader eyebrow={org.name} title="Avaliação" subtitle="Questionário de maturidade em cibersegurança, alinhado com o Decreto-Lei 125/2025 (NIS2)." />
+      <PageHeader title="Avaliação" subtitle="Questionário de maturidade em cibersegurança, alinhado com o Decreto-Lei 125/2025 (NIS2)." help={<PageTour id="avaliacao" ready={!!a} />} />
       {!a ? <SkeletonRows rows={6} /> : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4" data-tour="assessment-progress">
             <ProgressCard to={a.nextQuestion ? `${a.nextQuestion.sectionId}/${a.nextQuestion.questionId}` : undefined}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Eyebrow>Progresso</Eyebrow>
@@ -43,14 +47,14 @@ export function AssessmentPage() {
                 <Button onClick={() => setConfirming(true)}>Submeter avaliação</Button>
               </Card>
             )}
-            <SectionsTable sections={a.sections} userName={(id) => name(id)?.name} initials={(id) => name(id)?.initials} />
+            <SectionsTable current={a.nextQuestion?.sectionId} sections={a.sections} userName={(id) => name(id)?.name} initials={(id) => name(id)?.initials} />
           </div>
-          <aside className="flex flex-col gap-4">
-            <NextSteps steps={[
-              { label: 'Responder a todas as secções', done: a.status !== 'em_curso', hint: a.status === 'em_curso' ? `Faltam ${total - answered} perguntas.` : undefined },
-              { label: 'Receber as respostas do Pedro', done: a.sections.every((s) => s.delegated.every((d) => d.status === 'concluida')) },
-              { label: 'Validação pela consultora', done: a.status === 'validada', hint: 'A Marta revê as respostas e valida o roadmap.' },
-              { label: 'Ver resultados e roadmap', done: false, to: a.status === 'validada' ? `/org/${org.slug}/roadmap` : undefined, cta: 'Abrir' },
+          <aside className="flex flex-col gap-4" data-tour="assessment-next">
+            {/* The progress card already counts the answers; this list only holds what happens outside this page. */}
+            <NextSteps title="Depois das suas respostas" steps={[
+              ...(delegate ? [{ label: `Receber as respostas do ${delegateFirst ?? 'técnico'}`, done: a.sections.every((s) => s.delegated.every((d) => d.status === 'concluida')) }] : []),
+              { label: 'Submeter a avaliação', done: a.status !== 'em_curso', hint: a.status === 'em_curso' ? 'Fica disponível quando todas as perguntas tiverem resposta.' : undefined },
+              { label: 'A consultora valida o roadmap', done: a.status === 'validada', hint: a.status === 'validada' ? undefined : 'Não precisa de fazer nada: é avisado quando terminar.', to: a.status === 'validada' ? `/org/${org.slug}/roadmap` : undefined, cta: 'Ver roadmap' },
             ]} />
           </aside>
         </div>
@@ -83,20 +87,20 @@ function SubmitModal({ onClose }: { onClose: () => void }) {
 function ProgressCard({ to, children }: { to?: string; children: ReactNode }) {
   if (!to) return <Card className="flex flex-col gap-3">{children}</Card>
   return (
-    <Link to={to} aria-label="Responder à próxima pergunta" className="group flex items-center gap-4 rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] transition-[border-color,box-shadow] hover:border-brand hover:shadow-[0_2px_10px_rgb(var(--shadow-rgb)/0.06)]">
+    <Link to={to} aria-label="Continuar: responder à próxima pergunta" className="group flex items-center gap-4 rounded-[14px] border border-line-soft bg-paper px-5 py-[18px] transition-[border-color,box-shadow] hover:border-brand hover:shadow-[0_2px_10px_rgb(var(--shadow-rgb)/0.06)]">
       <div className="flex min-w-0 flex-1 flex-col gap-3">{children}</div>
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-white transition-transform group-hover:translate-x-0.5"><ArrowRight className="size-5" aria-hidden /></span>
+      <span className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-brand px-4 text-sm font-bold text-white">Continuar<ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden /></span>
     </Link>
   )
 }
 
-/** Questions grouped by topic: collapsed by default; each topic expands to its progress, delegations and link. */
-function SectionsTable({ sections, userName, initials }: { sections: AssessmentSection[]; userName: (id: string) => string | undefined; initials: (id: string) => string | undefined }) {
-  const [open, setOpen] = useState(false)
-  const [expanded, setExpanded] = useState<string | null>(null)
+/** Questions grouped by topic: open on the topic in progress, so the person sees where they are without clicking. */
+function SectionsTable({ current, sections, userName, initials }: { current?: string; sections: AssessmentSection[]; userName: (id: string) => string | undefined; initials: (id: string) => string | undefined }) {
+  const [open, setOpen] = useState(true)
+  const [expanded, setExpanded] = useState<string | null>(current ?? null)
   const total = sections.reduce((n, s) => n + s.total, 0)
   return (
-    <section aria-labelledby="sections-title" className="rounded-[14px] border border-line-soft bg-paper">
+    <section aria-labelledby="sections-title" data-tour="assessment-sections" className="rounded-[14px] border border-line-soft bg-paper">
       <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-controls="sections-list" className="flex w-full items-center gap-3 px-5 py-3.5 text-left">
         <span className="min-w-0 flex-1">
           <span id="sections-title" className="block text-sm font-bold">Perguntas por tópico</span>
