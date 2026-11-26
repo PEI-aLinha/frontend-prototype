@@ -32,6 +32,12 @@ describe('mock API permissions', () => {
     expect((await api.assets.listRisks(ORG_ID)).length).toBeGreaterThan(0)
   })
 
+  it('refuses to validate the roadmap while the assessment is still being answered', async () => {
+    resetDemo('c1')
+    who = MARTA
+    await expect(api.assessment.validateRoadmap(ORG_ID)).rejects.toMatchObject({ status: 422 })
+  })
+
   it('lets only the consultant reopen a validated roadmap, with a reason, and hides the risks again', async () => {
     who = MARTA
     await api.assessment.validateRoadmap(ORG_ID)

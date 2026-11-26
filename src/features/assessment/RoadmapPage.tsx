@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ArrowDown, ArrowUp, CheckCircle2, Download, Plus, Grid3x3 } from 'lucide-react'
+import { ArrowDown, ArrowUp, CheckCircle2, Download, History, Plus, Grid3x3 } from 'lucide-react'
 import type { CollectedEvidence, Id, RemediationAction, User } from '../../api/contracts'
 import { useActions, useAssessment, useAudit, useEvidence, useRiskLinks, useRisks, useRoadmapStatus, useUsers, useValidateRoadmap } from '../../api/queries'
 import { ACTION_STATUS_LABEL, dateTime, MATURITY_LABEL, shortDate } from '../../config/labels'
@@ -87,6 +87,8 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
   // An action only falls when a risk-linked one passes it, so every fall has a cause worth naming.
   const dropped = byRisk ? ranked.filter((r) => r.rank > r.baseRank).length : 0
   const validated = status.data?.validated
+  // A plan built on an unfinished assessment must not reach the client: validation waits for the submission.
+  const assessmentOpen = assessment.data?.status === 'em_curso'
   // Until the status resolves, `validated` is undefined and the page would claim the roadmap is not validated yet.
   const pending = status.isPending
   // The mock stores ids, so both people are resolved from the directory the page already loads.
@@ -121,11 +123,11 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
         help={<PageTour id={consultant ? 'roadmap-consultor' : 'roadmap-cliente'} ready={!pending && !!actions.data} />}
         subtitle={`Ações para fechar as lacunas da avaliação, ordenadas por prioridade.${frameworks.length ? ` Âmbito: ${frameworks.join(' · ')}.` : ''}`}
         actions={<div className="flex flex-wrap items-center gap-3 max-md:w-full">
-          {canExport && <Button className="max-md:flex-1" variant="secondary" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA', consultant ? 'consultant' : 'client', { frameworks, validated: !!validated, validator, validatedAt: status.data?.validatedAt ?? undefined })} title="Abre a janela de impressão: escolha Guardar como PDF">Exportar PDF</Button>}
+          {canExport && <Button className="max-md:flex-1" variant="ghost" icon={<Download className="size-4" aria-hidden />} onClick={() => printResults(org.name, summary, { ranked, users: users.data ?? [], evidence: evidenceByAction, risks: risks.data ?? [] }, byRisk ? 'priorizado pelos riscos' : 'ordem proposta pela IA', consultant ? 'consultant' : 'client', { frameworks, validated: !!validated, validator, validatedAt: status.data?.validatedAt ?? undefined })} title="Abre a janela de impressão: escolha Guardar como PDF">Exportar PDF</Button>}
           {can('create', 'roadmap') && <Button className="max-md:flex-1" variant="secondary" icon={<Plus className="size-4" aria-hidden />} onClick={() => setProposing(true)}>Propor ação</Button>}
-          {can('view', 'history') && <Button variant="link" onClick={() => setShowHistory(true)}>Histórico</Button>}
+          {can('view', 'history') && <Button variant="ghost" icon={<History className="size-4" aria-hidden />} onClick={() => setShowHistory(true)}>Histórico</Button>}
           {!pending && can('validate', 'roadmap') && validated && <Button variant="secondary" onClick={() => setReopening(true)}>Reabrir validação</Button>}
-          {!pending && !!actions.data && can('validate', 'roadmap') && !validated && <Button className="max-md:ml-auto" icon={<CheckCircle2 className="size-4" aria-hidden />} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
+          {!pending && !!actions.data && can('validate', 'roadmap') && !validated && <Button className="max-md:ml-auto" icon={<CheckCircle2 className="size-4" aria-hidden />} disabled={assessmentOpen} aria-describedby={assessmentOpen ? 'validate-blocked' : undefined} onClick={() => setConfirm(true)}>Validar roadmap</Button>}
         </div>}
       />
 
@@ -134,7 +136,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
       ) : (
         <div role="note" className="flex flex-wrap items-center gap-3 rounded-[14px] border border-line-soft bg-paper-soft px-4 py-3">
           <Chip tone="signal">{status.data?.assessmentCompletedAt ? `Avaliação concluída · ${shortDate(status.data.assessmentCompletedAt)}` : 'Avaliação em curso'}</Chip>
-           <span className="text-sm text-ink-soft">O roadmap foi proposto pela IA a partir das lacunas. A prioridade final é validada pela consultora.</span>
+           <span id="validate-blocked" className="text-sm text-ink-soft">{consultant && assessmentOpen ? 'Pode validar o roadmap quando o cliente submeter a avaliação. Até lá, as lacunas ainda podem mudar.' : 'O roadmap foi proposto pela IA a partir das lacunas. A prioridade final é validada pela consultora.'}</span>
           <span className="ml-auto"><AIBadge /></span>
         </div>
       )}
@@ -144,7 +146,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
         <section aria-labelledby="resumo-titulo" data-tour="roadmap-summary" className="grid overflow-hidden rounded-[14px] border border-line-soft md:grid-cols-3 md:divide-x divide-line-soft max-md:divide-y">
           <h2 id="resumo-titulo" className="sr-only">Resumo do plano</h2>
           {[
-            { to: consultant ? undefined : `${base}/avaliacao`, label: 'Maturidade', value: assessment.isError || !assessment.data ? '—' : `${summary.maturity ?? '—'} → ${summary.targetMaturity ?? '—'}`, unit: 'de 5', caption: assessment.isError ? 'Não foi possível carregar a avaliação' : !assessment.data ? 'A carregar a avaliação' : `Objetivo: ${summary.targetMaturity ? MATURITY_LABEL[summary.targetMaturity] : '—'}` },
+            { to: consultant ? undefined : `${base}/avaliacao`, label: 'Maturidade', value: assessment.isError || !assessment.data ? '—' : summary.maturity ? `${summary.maturity} → ${summary.targetMaturity ?? '—'}` : String(summary.targetMaturity ?? '—'), unit: 'de 5', caption: assessment.isError ? 'Não foi possível carregar a avaliação' : !assessment.data ? 'A carregar a avaliação' : summary.maturity ? `Objetivo: ${summary.targetMaturity ? MATURITY_LABEL[summary.targetMaturity] : '—'}` : 'Objetivo. O nível atual aparece depois de submeter' },
             { to: `${base}/riscos`, label: 'Riscos em aberto', value: risksLoading ? '…' : risksFailed ? '—' : String(summary.openRisks), unit: risksReady ? `de ${summary.allRisks}` : '', caption: risksLoading ? 'A carregar os riscos' : risksFailed ? 'Não foi possível carregar os riscos' : `${summary.allRisks - summary.openRisks} ${summary.allRisks - summary.openRisks === 1 ? 'aceite ou tratado' : 'aceites ou tratados'} · ${risksUnlinkedLabel.toLowerCase()}` },
             { to: `${base}/integracoes`, label: 'Evidências recolhidas', value: evidenceLoading ? '…' : evidenceFailed ? '—' : String(evidenceCount), unit: `de ${ranked.length}`, caption: evidenceLoading ? 'A carregar as evidências' : evidenceFailed ? 'Não foi possível carregar as evidências' : `${provenCount} ${provenCount === 1 ? 'comprovada' : 'comprovadas'}` },
           ].map((m) => {
@@ -217,7 +219,7 @@ export function RoadmapPage({ signals, frameworks }: { signals: RiskSignal[]; fr
        <Modal open={confirm} onOpenChange={setConfirm} chip={<Chip>Decisão da consultora</Chip>} title="Validar o roadmap?"
          description={`${manager ? `O ${manager}` : 'O cliente'} passa a ver o roadmap e o registo de riscos em só leitura, com linguagem simples. Se mudar alguma coisa depois, o cliente vê a alteração e fica registada no histórico.`}
          footer={<><Button variant="secondary" onClick={() => setConfirm(false)}>Cancelar</Button><Button loading={validate.isPending} onClick={() => validate.mutate(undefined, {
-           onSuccess: () => { setConfirm(false); toast.show(`Roadmap validado · ${manager ? `o ${manager.split(' ')[0]}` : 'o cliente'} foi notificado`) },
+           onSuccess: () => { setConfirm(false); toast.show(`Roadmap validado · notificação enviada a ${manager ?? 'o cliente'}`) },
            onError: (e) => toast.show(e.message, 'error'),
          })}>Validar roadmap</Button></>}>
          {(raisedByRisks === 0 || highWithoutAction > 0) && (

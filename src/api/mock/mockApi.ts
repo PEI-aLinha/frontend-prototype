@@ -486,6 +486,7 @@ export function createMockApi(getActor: ActorProvider): Api {
         if (actor().role !== 'consultor') deny()
         const current = getState().roadmap[org]
         if (current?.validated) return current
+        if (!current?.assessmentCompletedAt) throw new ApiError('A avaliação ainda não foi submetida.', 422)
         let status = current
         write((s, me) => {
           status = { ...s.roadmap[org], validated: true, validatedAt: now(), validatedBy: me.id }
@@ -519,7 +520,17 @@ export function createMockApi(getActor: ActorProvider): Api {
         const me = actor()
         if (me.role !== 'consultor') deny()
         // Each consultant only sees the organizations assigned to them.
-        return getState().portfolio.filter((p) => p.organization.consultantId === me.id)
+        // The phase is read from the same roadmap record the client's screens use, so both sides always agree.
+        const s = getState()
+        return s.portfolio.filter((p) => p.organization.consultantId === me.id).map((p) => {
+          const r = s.roadmap[p.organization.id]
+          if (!r || !p.organization.profile) return p
+          if (r.validated) return { ...p, stage: 'Roadmap validado', stageTone: 'neutral' as const, nextStep: p.stage === 'Roadmap validado' ? p.nextStep : 'Acompanhar ações de risco alto' }
+          if (r.assessmentCompletedAt) return { ...p, stage: 'Avaliação concluída', stageTone: 'signal' as const, nextStep: p.stage === 'Avaliação concluída' ? p.nextStep : 'Rever e validar o roadmap' }
+          // Earlier phases (just registered, answering) keep their own wording; only a later claim is corrected.
+          if (p.stage !== 'Avaliação concluída' && p.stage !== 'Roadmap validado') return p
+          return { ...p, stage: 'Avaliação em curso', stageTone: 'neutral' as const, nextStep: 'Esperar que o cliente submeta a avaliação' }
+        })
       }),
     },
   }
